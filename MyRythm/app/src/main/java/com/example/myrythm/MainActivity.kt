@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.myrythm.ui.theme.MyRythmTheme
+import com.example.news.NewsMainScreen
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,16 +21,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyRythmTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                // ✅ 앱 실행 시 NewsScreen을 기본 화면으로 띄움
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    NewsMainScreen()
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
