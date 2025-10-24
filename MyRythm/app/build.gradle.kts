@@ -40,6 +40,9 @@ android {
 }
 
 dependencies {
+
+    implementation(project(":common:design"))
+
     implementation(project(":feature:main"))
     implementation(project(":feature:map"))
     implementation(project(":feature:login"))
