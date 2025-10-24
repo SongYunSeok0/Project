@@ -5,6 +5,7 @@ pluginManagement {
                 includeGroupByRegex("com\\.android.*")
                 includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("androidx.*")
+                includeGroupByRegex("org\\.jetbrains\\.kotlin.*") // ✅ 이 한 줄 추가!
             }
         }
         mavenCentral()
@@ -31,3 +32,4 @@ include(":feature:map")
 include(":data")
 include(":domain")
 include(":common")
+include(":common:design")
