@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -28,15 +27,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.common.design.R
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.LoadState
 import java.net.URLEncoder
 
-/* -------------------------------------------------------------------------- */
-/*                                 TOP BAR                                    */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------ TopBar ------------------------------ */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +48,7 @@ fun NewsTopBar(
     onBackClick: (() -> Unit)? = null
 ) {
     CenterAlignedTopAppBar(
+        windowInsets = WindowInsets(0, 0, 0, 0), // 인셋 수동 관리
         title = {
             if (isSearchMode) {
                 TextField(
@@ -57,7 +56,7 @@ fun NewsTopBar(
                     onValueChange = onSearchQueryChange,
                     placeholder = { Text("뉴스 검색...", color = Color.Gray) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { onSearchSubmit() }),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
@@ -66,15 +65,10 @@ fun NewsTopBar(
                         unfocusedIndicatorColor = Color.Transparent,
                         cursorColor = Color(0xFF009688)
                     ),
-                    modifier = Modifier.fillMaxWidth(0.9f)
+                    modifier = Modifier.fillMaxWidth()
                 )
             } else {
-                Text(
-                    text = "뉴스",
-                    color = Color.Black,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("뉴스", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         },
         navigationIcon = {
@@ -91,11 +85,11 @@ fun NewsTopBar(
         actions = {
             if (isSearchMode) {
                 IconButton(onClick = onSearchCancel) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "닫기", tint = Color.Black)
+                    Icon(Icons.Default.Close, contentDescription = "닫기", tint = Color.Black)
                 }
             } else {
                 IconButton(onClick = onSearchClicked) {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = "검색", tint = Color.Black)
+                    Icon(Icons.Default.Search, contentDescription = "검색", tint = Color.Black)
                 }
             }
         },
@@ -106,26 +100,32 @@ fun NewsTopBar(
     )
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                 MAIN SCREEN                                */
-/* -------------------------------------------------------------------------- */
+/* ------------------------------ Screen ------------------------------ */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsScreen(
     navController: NavController,
-    viewModel: NewsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: NewsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onBack: (() -> Unit)? = null
 ) {
     var selectedCategory by remember { mutableStateOf("건강") }
     var isSearchMode by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val pager = remember(selectedCategory) {
-        viewModel.getNewsPager(selectedCategory)
-    }.collectAsLazyPagingItems()
+    val pager = remember(selectedCategory) { viewModel.getNewsPager(selectedCategory) }
+        .collectAsLazyPagingItems()
+
+    val internalCanGoBack = navController.previousBackStackEntry != null
+    val backHandler: (() -> Unit)? = when {
+        onBack != null -> onBack
+        internalCanGoBack -> { { navController.popBackStack() } }
+        else -> null
+    }
 
     Scaffold(
         containerColor = Color(0xFFF9F9FB),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), // 인셋 수동 관리
         topBar = {
             NewsTopBar(
                 isSearchMode = isSearchMode,
@@ -141,9 +141,10 @@ fun NewsScreen(
                     if (searchQuery.isNotBlank()) {
                         selectedCategory = searchQuery
                         isSearchMode = false
+                        pager.refresh()
                     }
-                },        onBackClick = { navController.popBackStack() }
-
+                },
+                onBackClick = backHandler
             )
         }
     ) { innerPadding ->
@@ -161,22 +162,18 @@ fun NewsScreen(
                 fontWeight = FontWeight.SemiBold
             )
 
-            // ✅ 카테고리 배너
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 BannerCard("건강 뉴스", "최신 건강 정보", Modifier.weight(1f)) {
-                    selectedCategory = "건강"
-                    pager.refresh()
+                    selectedCategory = "건강"; pager.refresh()
                 }
                 BannerCard("의학 뉴스", "최신 의학 연구", Modifier.weight(1f)) {
-                    selectedCategory = "의학"
-                    pager.refresh()
+                    selectedCategory = "의학"; pager.refresh()
                 }
                 BannerCard("복약 안전", "올바른 복용법", Modifier.weight(1f)) {
-                    selectedCategory = "복약"
-                    pager.refresh()
+                    selectedCategory = "복약"; pager.refresh()
                 }
             }
 
@@ -191,7 +188,10 @@ fun NewsScreen(
                 items(pager.itemSnapshotList.items) { item ->
                     item?.let {
                         NewsCard(
-                            title = it.title.replace("<b>", "").replace("</b>", "").replace("&quot;", "\""),
+                            title = it.title
+                                .replace("<b>", "")
+                                .replace("</b>", "")
+                                .replace("&quot;", "\""),
                             info = it.pubDate.take(16),
                             imageUrl = it.image
                                 ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
@@ -203,7 +203,6 @@ fun NewsScreen(
                     }
                 }
 
-                // ✅ 로딩 표시
                 if (pager.loadState.refresh is LoadState.Loading ||
                     pager.loadState.append is LoadState.Loading
                 ) {
@@ -213,9 +212,7 @@ fun NewsScreen(
                                 .fillMaxWidth()
                                 .padding(20.dp),
                             contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        ) { CircularProgressIndicator() }
                     }
                 }
             }
@@ -223,9 +220,7 @@ fun NewsScreen(
     }
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                 COMPONENTS                                 */
-/* -------------------------------------------------------------------------- */
+/* --------------------------- UI Components --------------------------- */
 
 @Composable
 fun BannerCard(
@@ -246,7 +241,6 @@ fun BannerCard(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -257,7 +251,6 @@ fun BannerCard(
                     )
                 )
         )
-
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -295,7 +288,6 @@ fun NewsCard(
                 .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )
-
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxHeight()
@@ -315,10 +307,13 @@ fun NewsCard(
     }
 }
 
+/* ------------------------------ Preview ------------------------------ */
+
 @Preview(showBackground = true)
 @Composable
 fun NewsScreenPreview() {
     MaterialTheme {
-        NewsScreen(navController = NavController(LocalContext.current))
+        val nav = rememberNavController()
+        NewsScreen(navController = nav, onBack = {})
     }
 }
