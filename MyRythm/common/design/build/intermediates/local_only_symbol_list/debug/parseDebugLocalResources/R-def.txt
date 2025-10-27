@@ -1,0 +1,12 @@
+R_DEF: Internal format may change without notice
+local
+drawable arrow
+drawable back
+drawable camera
+drawable edit
+drawable heart
+drawable height
+drawable line
+drawable pill
+drawable save
+drawable weight
