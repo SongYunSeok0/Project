@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppRoot() {
-    var currentScreen by remember { mutableStateOf("SignUp") } // 기본 화면 설정
+    var currentScreen by remember { mutableStateOf("Home") } // 기본 화면 설정
 
     Scaffold(
         topBar = { if( currentScreen !in listOf("Home", "News", "Map","Login","Pwd","SignUp")){
@@ -69,12 +69,14 @@ fun AppRoot() {
             )
         } },
         bottomBar = {
-            AppBottomBar(
-                currentScreen = currentScreen,
-                onTabSelected = { screen ->
-                    currentScreen = screen
-                }
-            )
+            if (currentScreen !in listOf("Login", "Pwd", "SignUp")) {
+                AppBottomBar(
+                    currentScreen = currentScreen,
+                    onTabSelected = { screen ->
+                        currentScreen = screen
+                    }
+                )
+            }
         }
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
