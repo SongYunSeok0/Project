@@ -23,7 +23,7 @@ import com.example.myrythm.ui.theme.MyRythmTheme
 import com.example.design.AppTopBar
 import com.example.mypage.EditScreen
 import com.example.mypage.HeartRateScreen
-import com.example.mypage.mypageScreen
+import com.example.mypage.MyPageScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +61,7 @@ fun AppRoot() {
         Column(modifier = Modifier.padding(paddingValues)) {
             when (currentScreen) {
                 "Home" -> EditScreen()
-                "MyPage" -> mypageScreen()
+                "MyPage" -> MyPageScreen()
                 "Schedule" -> HeartRateScreen()
             }
         }
