@@ -31,13 +31,18 @@ fun NewsDetailScreen(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        navController.navigate("news_list") {
+                            popUpTo("news_list") { inclusive = true }
+                        }
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.back),
                             contentDescription = "뒤로가기",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = Color.Black
                         )
                     }
+
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color(0xFFDFF6F3),
