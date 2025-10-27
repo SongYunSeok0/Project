@@ -1,20 +1,5 @@
 package com.example.main
 
-/*
-package com.sesac.t
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.sesac.t.ui.theme.TTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,58 +8,49 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.height // Modifier.height 사용을 위해 추가
-import androidx.compose.foundation.layout.width // Modifier.width 사용을 위해 추가
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            TTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    GeneratedCode(
-                        // innerPadding을 GeneratedCode의 Modifier에 적용
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
-        }
-    }
-}
+import com.example.common.design.R
 
 @Composable
-fun GeneratedCode(modifier: Modifier = Modifier) {
-    // 사용할 임시 벡터 리소스 ID
-    val tempIconResId = R.drawable.ic_android_black_24dp
+fun MainScreen(modifier: Modifier = Modifier) {
+    // 사용할 임시 벡터 리소스 ID (실제 아이콘으로 교체 필요)
+    val tempIconResId = R.drawable.logo // 또는 다른 실제 drawable 리소스
 
     Box(
         modifier = modifier
-            .fillMaxSize() // 최상위 Box는 fillMaxSize를 사용 (requiredWidth/Height 제거)
+            .fillMaxSize()
             .background(color = Color.White)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize() // Column도 fillMaxSize를 사용하거나, 필요한 만큼만 height 지정
+                .fillMaxSize()
                 .background(color = Color(0xfffcfcfc))
-                .padding(bottom = 58.dp) // 하단 FAB/네비게이션 바 공간 확보
+                .padding(bottom = 58.dp)
         ) {
             // 상단 바
             Box(
@@ -87,18 +63,15 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // 남은 공간을 모두 차지
+                    .weight(1f)
                     .background(color = Color(0xfffcfcfc))
             ) {
-                // ... (메인 콘텐츠 레이아웃은 그대로 유지) ...
-
-                // 기존의 Absolute Positioning 로직을 유지
                 Column(
                     modifier = Modifier
                         .requiredWidth(width = 396.dp)
                         .requiredHeight(height = 77.dp)
                         .background(color = Color.White)
-                        .padding(start = 24.dp, // 하드코딩된 소수점 대신 깔끔한 dp 사용 권장
+                        .padding(start = 24.dp,
                             end = 24.dp,
                             top = 16.dp,
                             bottom = 0.dp)
@@ -300,14 +273,12 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
             }
         }
 
-        // 1. FloatingActionButton을 메인 Column 밖으로 이동시키고 하단에 고정합니다.
-        // 이 부분은 BottomAppBar로 바꾸는 것이 Compose 관례에 더 맞습니다.
-        // 현재 로직을 최대한 유지하기 위해 Box에 고정합니다.
+        // 하단 네비게이션 바
         Box(
             modifier = Modifier
-                .align(Alignment.BottomCenter) // 하단 중앙에 정렬
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(58.dp) // FAB 컨테이너의 높이
+                .height(58.dp)
                 .background(Color.White.copy(alpha = 0.48f))
         ) {
             Column(
@@ -328,7 +299,7 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .offset(x = (-127.55).dp, y = 0.dp) // (413/2) - 285.45 = 127.55
+                    .offset(x = (-127.55).dp, y = 0.dp)
                     .requiredWidth(width = 24.dp)
                     .requiredHeight(height = 28.dp)
             ) {
@@ -339,14 +310,14 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
                         .requiredWidth(width = 24.dp)
                         .requiredHeight(height = 28.dp))
             }
-            // 실제 FAB 버튼 (중앙)
+            // FAB 버튼 (중앙)
             FloatingActionButton(
                 onClick = { },
                 containerColor = Color(0xff6ae0d9).copy(alpha = 0.5f),
-                shape = RoundedCornerShape(24855100.dp),
+                shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
-                    .align(Alignment.TopCenter) // 컨테이너의 TopCenter에 위치
-                    .offset(x = 0.dp, y = (-23.99).dp) // 위로 튀어나오게 조정
+                    .align(Alignment.TopCenter)
+                    .offset(x = 0.dp, y = (-23.99).dp)
             ) {
                 Image(
                     painter = painterResource(id = tempIconResId),
@@ -359,9 +330,6 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
 
 @Preview(widthDp = 412, heightDp = 1090)
 @Composable
-fun GeneratedCodePreview() {
-    TTheme {
-        GeneratedCode(Modifier)
-    }
+fun MainScreenPreview() {
+    MainScreen(Modifier)
 }
- */
