@@ -35,6 +35,7 @@ fun RegiScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
     val meds = remember { mutableStateListOf("") }
 
     Scaffold(
+
         containerColor = Color.White,
         topBar = {
             CenterAlignedTopAppBar(
