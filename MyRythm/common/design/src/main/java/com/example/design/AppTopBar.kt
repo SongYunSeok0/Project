@@ -61,14 +61,14 @@ fun AppBottomBar(
     Box(
         Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(80.dp)
             .background(Color.White)
     ) {
         // 하단 네비게이션 아이콘들
         Row(
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 40.dp),
+                .padding(horizontal = 70.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -77,7 +77,8 @@ fun AppBottomBar(
                 Icon(
                     imageVector = Icons.Default.Home,
                     contentDescription = "홈",
-                    tint = if (currentScreen == "Home") Color(0xff6ae0d9) else Color.Gray
+                    tint = if (currentScreen == "Home") Color(0xff6ae0d9) else Color.Gray,
+                    modifier = Modifier.size(36.dp)
                 )
             }
 
@@ -86,7 +87,8 @@ fun AppBottomBar(
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "마이",
-                    tint = if (currentScreen == "MyPage") Color(0xff6ae0d9) else Color.Gray
+                    tint = if (currentScreen == "MyPage") Color(0xff6ae0d9) else Color.Gray,
+                    modifier = Modifier.size(36.dp)
                 )
             }
         }
