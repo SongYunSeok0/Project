@@ -18,7 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.common.R // R.drawable.heart, R.drawable.arrow, R.drawable.line 등 리소스는 common 모듈에서 가져옵니다.
+import com.example.common.design.R // R.drawable.heart, R.drawable.arrow, R.drawable.line 등 리소스는 common 모듈에서 가져옵니다.
 
 
 @Composable
