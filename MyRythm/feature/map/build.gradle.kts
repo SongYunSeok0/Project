@@ -62,4 +62,9 @@ dependencies {
     implementation("com.naver.maps:map-sdk:3.23.0")
     implementation("io.github.fornewid:naver-map-compose:1.5.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.google.android.gms:play-services-location:20.0.0")
+    // Google Play 서비스 위치 API 추가
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+    implementation("androidx.activity:activity-compose:1.9.0")
+
 }
