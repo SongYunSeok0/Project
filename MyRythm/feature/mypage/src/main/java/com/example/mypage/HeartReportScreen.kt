@@ -1,5 +1,6 @@
 package com.example.mypage
 
+import android.R.attr.x
 import android.graphics.Path
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -18,7 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.common.R // R.drawable.heart, R.drawable.arrow, R.drawable.line 등 리소스는 common 모듈에서 가져옵니다.
+import com.example.common.design.R // R.drawable.heart, R.drawable.arrow, R.drawable.line 등 리소스는 common 모듈에서 가져옵니다.
 
 
 @Composable
@@ -72,11 +74,26 @@ fun HeartRateScreen() {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(
-                            text = "178",
-                            color = Color(0xff101828),
-                            fontSize = 60.sp
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.heartrate),
+                                contentDescription = "Heart Line Background",
+                                modifier = Modifier
+                                    .height(90.dp)
+                                    .width(300.dp)
+                                    .alpha(0.60f)
+                                    .offset(x = 80.dp, y= -10.dp),
+                                colorFilter = ColorFilter.tint(Color(0xffff6b6b))
+                            )
+
+                            Text(
+                                text = "112",
+                                color = Color(0xff101828),
+                                fontSize = 60.sp
+                            )
+                        }
 
                         Text(
                             text = "BPM",

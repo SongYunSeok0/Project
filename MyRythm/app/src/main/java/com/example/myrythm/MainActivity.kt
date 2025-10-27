@@ -21,9 +21,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.design.AppBottomBar
 import com.example.myrythm.ui.theme.MyRythmTheme
 import com.example.design.AppTopBar
+import com.example.map.MapScreen
 import com.example.mypage.EditScreen
 import com.example.mypage.HeartRateScreen
-import com.example.mypage.mypageScreen
+import com.example.mypage.MyPageScreen
+import com.example.news.NewsMainScreen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,13 +64,12 @@ fun AppRoot() {
         Column(modifier = Modifier.padding(paddingValues)) {
             when (currentScreen) {
                 "Home" -> EditScreen()
-                "MyPage" -> mypageScreen()
+                "MyPage" -> MapScreen()
                 "Schedule" -> HeartRateScreen()
             }
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
