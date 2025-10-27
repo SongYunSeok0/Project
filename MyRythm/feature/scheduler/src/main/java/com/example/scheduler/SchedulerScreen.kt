@@ -37,67 +37,7 @@ fun SchedulerScreen(modifier: Modifier = Modifier) {
     var selectedDay by remember { mutableIntStateOf(21) }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
-                },
-                title = { Text("복약 리포트", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {},
-                containerColor = Mint.copy(alpha = 0.35f)
-            ) {
-                Box(
-                    Modifier
-                        .size(56.dp)
-                        .clip(CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        Modifier
-                            .height(24.dp)
-                            .width(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xff6ec9dd))
-                    )
-                }
-            }
-        },
-        bottomBar = {
-            BottomAppBar(
-                tonalElevation = 0.dp,
-                containerColor = Color.White
-            ) {
-                Spacer(Modifier.weight(1f))
-                Box(
-                    Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Transparent)
-                )
-                Spacer(Modifier.weight(1f))
-                Column(
-                    Modifier.padding(end = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(Modifier.size(12.dp).clip(CircleShape).background(Color(0xff8f8f8f)))
-                    Spacer(Modifier.height(6.dp))
-                    Box(
-                        Modifier
-                            .size(width = 22.dp, height = 8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xff9f9f9f))
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-            }
-        }
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { inner ->
         Column(
             Modifier

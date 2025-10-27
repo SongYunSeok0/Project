@@ -33,40 +33,16 @@ import com.example.common.design.R
 @Composable
 fun CameraScreen(modifier: Modifier = Modifier) {
     Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "처방전 인식",
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(fontSize = 16.sp, letterSpacing = 1.sp)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { /* ← 여기에 뒤로가기 동작 */ }) {
-                        Image(
-                            painter = painterResource(id = R.drawable.back),
-                            contentDescription = "뒤로가기",
-                            modifier = Modifier.size(24.dp),
-                            colorFilter = ColorFilter.tint(Color(0xFF6AE0D9))
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFE4F5F4)
-                )
-            )
-        }
+
+
     ) { innerPadding ->
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp),           // 좌우 여백
+                .padding(top = 20.dp)
+                .padding(horizontal = 20.dp),           // 좌우 여백
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // 프리뷰 박스
             Surface(

@@ -65,7 +65,7 @@ fun SignupScreen(modifier: Modifier = Modifier) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .padding(innerPadding)
+
                 .fillMaxSize()
                 .background(AuthBackground)
                 .padding(horizontal = 24.dp, vertical = 30.dp)

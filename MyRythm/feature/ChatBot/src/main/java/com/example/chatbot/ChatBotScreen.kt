@@ -29,25 +29,7 @@ import com.example.common.design.R
 @Composable
 fun GeneratedCode(modifier: Modifier = Modifier) {
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "챗봇",
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(fontSize = 16.sp, letterSpacing = 1.sp)
-                    )
-                },
-                navigationIcon = {
-                    Image(
-                        painter = painterResource(id = R.drawable.upload),
-                        contentDescription = "back",
-                        modifier = Modifier.size(22.dp) // 음수 패딩 제거
-                    )
-                }
-            )
-        }
+
     ) { inner ->
         // 콘텐츠 + 하단 입력창(Scaffold bottomBar 미사용)
         Box(

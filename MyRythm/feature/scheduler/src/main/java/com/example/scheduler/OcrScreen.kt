@@ -37,32 +37,6 @@ fun PrescriptionScanScreen(
     onBack: () -> Unit = {}
 ) {
     Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "처방전 인식",
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(fontSize = 16.sp, letterSpacing = 1.sp)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.back),
-                            contentDescription = "뒤로가기",
-                            tint = Color(0xFF6AE0D9),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFE4F5F4)
-                )
-            )
-        },
         modifier = modifier
     ) { innerPadding ->
         Column(

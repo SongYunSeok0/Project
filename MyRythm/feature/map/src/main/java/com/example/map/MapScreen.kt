@@ -141,7 +141,8 @@ fun MapTopAppBar() {
         // 상단바 배경색
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = Color(0xFFB5E5E1).copy(alpha = 0.36f)
-        )
+        ),
+        windowInsets = WindowInsets(0, 0, 0, 0)
     )
 }
 

@@ -36,33 +36,11 @@ fun RegiScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
 
     Scaffold(
 
-        containerColor = Color.White,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "스케줄 등록",
-                        color = Color.Black,
-                        style = TextStyle(fontSize = 16.sp, letterSpacing = 1.sp)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.back),
-                            contentDescription = "뒤로가기",
-                            tint = Mint
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
-            )
-        }
     ) { inner ->
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(inner)
+                .padding(top = 20.dp)
                 .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
@@ -211,7 +189,7 @@ fun RegiScreen(modifier: Modifier = Modifier, onBack: () -> Unit = {}) {
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(30.dp))
         }
     }
 }

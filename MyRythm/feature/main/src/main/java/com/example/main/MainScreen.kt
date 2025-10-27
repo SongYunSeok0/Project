@@ -4,23 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,299 +23,105 @@ import androidx.compose.ui.unit.sp
 import com.example.common.design.R
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
-    // 사용할 임시 벡터 리소스 ID (실제 아이콘으로 교체 필요)
-    val tempIconResId = R.drawable.logo // 또는 다른 실제 drawable 리소스
+fun MainScreen() {
 
-    Box(
-        modifier = modifier
+    val tempIconResId = R.drawable.logo
+
+    Column(
+        modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.White)
+            .background(Color(0xfffcfcfc))
+            .padding(horizontal = 20.dp, vertical = 24.dp)
+            .padding(top = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = Color(0xfffcfcfc))
-                .padding(bottom = 58.dp)
+
+        // 1) 챗봇 / 스케줄러
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 상단 바
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .background(color = Color.White)
-            )
-            // 메인 콘텐츠
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(color = Color(0xfffcfcfc))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .requiredWidth(width = 396.dp)
-                        .requiredHeight(height = 77.dp)
-                        .background(color = Color.White)
-                        .padding(start = 24.dp,
-                            end = 24.dp,
-                            top = 16.dp,
-                            bottom = 0.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .requiredHeight(height = 36.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = tempIconResId),
-                            contentDescription = "Icon",
-                            modifier = Modifier
-                                .requiredSize(size = 24.dp))
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 0.dp,
-                            y = 76.72.dp)
-                        .width(396.dp)
-                        .height(872.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(alignment = Alignment.TopStart)
-                            .offset(x = 23.99.dp,
-                                y = 23.99.dp)
-                            .width(348.dp)
-                            .height(128.dp)
-                    ) {
-                        // 챗봇
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .width(166.dp)
-                                .height(128.dp)
-                                .clip(shape = RoundedCornerShape(14.dp))
-                                .background(color = Color(0xffe8f5f4))
-                                .border(border = BorderStroke(0.74.dp, Color(0xfff3f4f6)), shape = RoundedCornerShape(14.dp))
-                        ) {
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "RobotIcon", modifier = Modifier.requiredSize(size = 32.dp))
-                            Text(text = "챗봇", color = Color(0xff1e2939), lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                        // 스케줄러
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .align(alignment = Alignment.TopStart)
-                                .offset(x = 181.78.dp, y = 0.dp)
-                                .width(166.dp)
-                                .height(128.dp)
-                                .clip(shape = RoundedCornerShape(14.dp))
-                                .background(color = Color(0xfff0e8f5))
-                                .border(border = BorderStroke(0.74.dp, Color(0xfff3f4f6)), shape = RoundedCornerShape(14.dp))
-                        ) {
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 32.dp))
-                            Text(text = "스케줄러", color = Color(0xff1e2939), lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                    }
-
-                    // 걸음수/심박수 블록
-                    Box(
-                        modifier = Modifier
-                            .align(alignment = Alignment.TopStart)
-                            .offset(x = 23.99.dp, y = 168.28.dp)
-                            .width(348.dp)
-                            .height(128.dp)
-                    ) {
-                        // 걸음수
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .width(166.dp)
-                                .height(128.dp)
-                                .clip(shape = RoundedCornerShape(14.dp))
-                                .background(color = Color(0xffe8f0f5))
-                                .border(border = BorderStroke(0.74.dp, Color(0xfff3f4f6)), shape = RoundedCornerShape(14.dp))
-                        ) {
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 32.dp))
-                            Text(text = "걸음수", color = Color(0xff1e2939), lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                        // 최근 심박 수
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .align(alignment = Alignment.TopStart)
-                                .offset(x = 181.78.dp, y = 0.dp)
-                                .width(166.dp)
-                                .height(128.dp)
-                                .clip(shape = RoundedCornerShape(14.dp))
-                                .background(color = Color(0xffffe8e8))
-                                .border(border = BorderStroke(0.74.dp, Color(0xfff3f4f6)), shape = RoundedCornerShape(14.dp))
-                        ) {
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 32.dp))
-                            Text(text = "최근 심박 수", color = Color(0xff1e2939), lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                    }
-
-                    // 복용까지 남은 시간 블록
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.Top),
-                        modifier = Modifier
-                            .align(alignment = Alignment.TopStart)
-                            .offset(x = 23.99.dp, y = 312.56.dp)
-                            .width(348.dp)
-                            .height(180.dp)
-                            .clip(shape = RoundedCornerShape(14.dp))
-                            .background(color = Color(0xffb5d8f5))
-                            .padding(24.dp)
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(24.dp)
-                        ) {
-                            Text(text = "복용까지 남은 시간", color = Color(0xff1e2939), lineHeight = 1.5.em, style = TextStyle(fontSize = 16.sp))
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 24.dp))
-                        }
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(96.dp)
-                                .padding(top = 16.dp)
-                        ) {
-                            Text(text = "2:30", color = Color(0xff1e2939), textAlign = TextAlign.Center, lineHeight = 1.11.em, style = MaterialTheme.typography.displaySmall)
-                            Text(text = "10분 전 알림 예정", color = Color(0xff4a5565), textAlign = TextAlign.Center, lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                    }
-
-                    // 지도/뉴스 블록
-                    Box(
-                        modifier = Modifier
-                            .align(alignment = Alignment.TopStart)
-                            .offset(x = 23.99.dp, y = 508.5.dp)
-                            .width(348.dp)
-                            .height(128.dp)
-                    ) {
-                        // 지도
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .width(166.dp)
-                                .height(128.dp)
-                                .clip(shape = RoundedCornerShape(14.dp))
-                                .background(color = Color(0xffe8f5f0))
-                                .border(border = BorderStroke(0.74.dp, Color(0xfff3f4f6)), shape = RoundedCornerShape(14.dp))
-                        ) {
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 32.dp))
-                            Text(text = "지도", color = Color(0xff1e2939), lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                        // 뉴스
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .align(alignment = Alignment.TopStart)
-                                .offset(x = 181.78.dp, y = 0.dp)
-                                .width(166.dp)
-                                .height(128.dp)
-                                .clip(shape = RoundedCornerShape(14.dp))
-                                .background(color = Color(0xfffff4e8))
-                                .border(border = BorderStroke(0.74.dp, Color(0xfff3f4f6)), shape = RoundedCornerShape(14.dp))
-                        ) {
-                            Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 32.dp))
-                            Text(text = "뉴스", color = Color(0xff1e2939), lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                        }
-                    }
-
-                    // 건강 인사이트 블록
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(11.99.dp, Alignment.CenterVertically),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .align(alignment = Alignment.TopStart)
-                            .offset(x = 23.99.dp, y = 652.78.dp)
-                            .width(348.dp)
-                            .height(195.dp)
-                            .clip(shape = RoundedCornerShape(14.dp))
-                            .background(color = Color(0xffe8f5f4))
-                    ) {
-                        Image(painter = painterResource(id = tempIconResId), contentDescription = "Icon", modifier = Modifier.requiredSize(size = 48.dp))
-                        Text(text = "건강 인사이트", color = Color(0xff1e2939), lineHeight = 1.5.em, style = TextStyle(fontSize = 16.sp))
-                        Text(text = "오늘의 건강 데이터를 확인하세요", color = Color(0xff4a5565), textAlign = TextAlign.Center, lineHeight = 1.43.em, style = TextStyle(fontSize = 14.sp))
-                    }
-                }
-            }
+            FeatureCard("챗봇", Color(0xffe8f5f4), tempIconResId, Modifier.weight(1f).height(140.dp))
+            FeatureCard("스케줄러", Color(0xfff0e8f5), tempIconResId, Modifier.weight(1f).height(140.dp))
         }
 
-        // 하단 네비게이션 바
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(58.dp)
-                .background(Color.White.copy(alpha = 0.48f))
+
+        // 2) 걸음수 / 최근 심박수
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .offset(x = 103.15.dp, y = 0.dp)
-                    .requiredSize(size = 24.dp)
+            FeatureCard("걸음수", Color(0xffe8f0f5), tempIconResId, Modifier.weight(1f).height(140.dp))
+            FeatureCard("최근 심박 수", Color(0xffffe8e8), tempIconResId, Modifier.weight(1f).height(140.dp))
+        }
+
+
+        // 3) 복용까지 남은 시간
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0xffb5d8f5))
+                .padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = tempIconResId),
-                    contentDescription = "HomeIcon",
-                    modifier = Modifier.requiredSize(size = 24.dp))
+                Text("복용까지 남은 시간", fontSize = 16.sp, color = Color(0xff1e2939))
+                Image(painterResource(tempIconResId), null, Modifier.size(24.dp))
             }
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .offset(x = (-127.55).dp, y = 0.dp)
-                    .requiredWidth(width = 24.dp)
-                    .requiredHeight(height = 28.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = tempIconResId),
-                    contentDescription = "ProfileIcon",
-                    modifier = Modifier
-                        .requiredWidth(width = 24.dp)
-                        .requiredHeight(height = 28.dp))
-            }
-            // FAB 버튼 (중앙)
-            FloatingActionButton(
-                onClick = { },
-                containerColor = Color(0xff6ae0d9).copy(alpha = 0.5f),
-                shape = RoundedCornerShape(50.dp),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(x = 0.dp, y = (-23.99).dp)
-            ) {
-                Image(
-                    painter = painterResource(id = tempIconResId),
-                    contentDescription = "Icon",
-                    modifier = Modifier.requiredSize(size = 32.dp))
-            }
+            Spacer(Modifier.height(12.dp))
+            Text("2:30", style = MaterialTheme.typography.displaySmall, color = Color(0xff1e2939))
+            Text("10분 전 알림 예정", fontSize = 14.sp, color = Color(0xff4a5565))
+        }
+
+
+        // 4) 지도 / 뉴스
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            FeatureCard("지도", Color(0xffe8f5f0), tempIconResId, Modifier.weight(1f).height(140.dp))
+            FeatureCard("뉴스", Color(0xfffff4e8), tempIconResId, Modifier.weight(1f).height(140.dp))
+        }
+
+
+        // 5) 건강 인사이트
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0xffe8f5f4))
+                .padding(vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(painterResource(tempIconResId), null, Modifier.size(48.dp))
+            Text("건강 인사이트", fontSize = 16.sp, color = Color(0xff1e2939))
+            Text("오늘의 건강 데이터를 확인하세요", fontSize = 14.sp, color = Color(0xff4a5565), textAlign = TextAlign.Center)
         }
     }
 }
 
-@Preview(widthDp = 412, heightDp = 1090)
 @Composable
-fun MainScreenPreview() {
-    MainScreen(Modifier)
+fun FeatureCard(title: String, bg: Color, icon: Int, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(bg)
+            .border(BorderStroke(0.7.dp, Color(0xfff3f4f6)), RoundedCornerShape(14.dp))
+            .padding(vertical = 22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Image(painterResource(icon), title, Modifier.size(32.dp))
+        Text(title, fontSize = 14.sp, color = Color(0xff1e2939), lineHeight = 1.43.em)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 412, heightDp = 1000)
+@Composable
+fun PreviewMain() {
+    MainScreen()
 }
