@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.design.AppBottomBar
 import com.example.myrythm.ui.theme.MyRythmTheme
 import com.example.design.AppTopBar
+import com.example.map.MapScreen
 import com.example.mypage.EditScreen
 import com.example.mypage.HeartRateScreen
 import com.example.mypage.MyPageScreen
@@ -63,7 +64,7 @@ fun AppRoot() {
         Column(modifier = Modifier.padding(paddingValues)) {
             when (currentScreen) {
                 "Home" -> EditScreen()
-                "MyPage" -> NewsMainScreen()
+                "MyPage" -> MapScreen()
                 "Schedule" -> HeartRateScreen()
             }
         }
