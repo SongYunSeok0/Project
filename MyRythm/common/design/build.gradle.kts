@@ -32,10 +32,6 @@ android {
     kotlinOptions { jvmTarget = "21" }
 
     buildFeatures { compose = true }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "2.0.21"
-    }
 }
 
 kotlin {
