@@ -138,30 +138,7 @@ fun HeartRateScreen() {
     }
 }
 
-@Composable
-fun LineChart(
-    data: List<Float>,
-    modifier: Modifier = Modifier,
-    lineColor: Color = Color(0xff6ae0d9)
-) {
-    Canvas(modifier = modifier) {
-        if (data.isEmpty()) return@Canvas
 
-        val maxValue = data.maxOrNull() ?: 0f
-        val minValue = data.minOrNull() ?: 0f
-        val widthPerPoint = size.width / (data.size - 1)
-
-        val path = Path()
-        data.forEachIndexed { index, value ->
-            val x = index * widthPerPoint
-            val y = size.height - (value - minValue) / (maxValue - minValue) * size.height
-
-            if (index == 0) path.moveTo(x, y)
-            else path.lineTo(x, y)
-        }
-
-    }
-}
 
 @Preview(widthDp = 392, heightDp = 1271)
 @Composable
