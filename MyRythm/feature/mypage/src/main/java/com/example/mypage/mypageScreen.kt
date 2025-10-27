@@ -56,7 +56,7 @@ fun MyPageScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            MenuItem("내 정보 수정")
+            MenuItem("내 정보 수정") //99번째 줄에서 수정
             MenuItem("심박수")
             MenuItem("복약 그래프")
             MenuItem("FAQ 문의사항")
@@ -95,7 +95,9 @@ fun InfoCard(title: String, value: String, iconRes: Int) {
 fun MenuItem(title: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().height(64.dp).clickable { }.padding(horizontal = 0.dp)
+        modifier = Modifier.fillMaxWidth().height(64.dp)
+            .clickable { /* 여기다 추가 */ }
+            .padding(horizontal = 0.dp)
     ) {
         Box(
             modifier = Modifier.size(48.dp).clip(CircleShape)
