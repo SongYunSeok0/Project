@@ -51,6 +51,7 @@ fun HeartRateScreen() {
                         )
                         .padding(24.dp)
                 ) {
+
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally, // 카드 내부 중앙 정렬
