@@ -24,6 +24,8 @@ import com.example.design.AppTopBar
 import com.example.mypage.EditScreen
 import com.example.mypage.HeartRateScreen
 import com.example.mypage.MyPageScreen
+import com.example.news.NewsMainScreen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +63,7 @@ fun AppRoot() {
         Column(modifier = Modifier.padding(paddingValues)) {
             when (currentScreen) {
                 "Home" -> EditScreen()
-                "MyPage" -> MyPageScreen()
+                "MyPage" -> NewsMainScreen()
                 "Schedule" -> HeartRateScreen()
             }
         }
