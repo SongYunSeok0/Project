@@ -17,7 +17,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
-
+}
 kotlin {
     jvmToolchain(21)
 }
