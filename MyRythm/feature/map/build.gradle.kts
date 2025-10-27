@@ -66,5 +66,10 @@ dependencies {
     // Google Play 서비스 위치 API 추가
     implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("androidx.activity:activity-compose:1.9.0")
+    // 네트워크 통신을 위한 Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
 
 }
