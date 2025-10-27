@@ -15,7 +15,7 @@ pluginManagement {
                 includeGroupByRegex("com\\.android.*")
                 includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("androidx.*")
-                includeGroupByRegex("org\\.jetbrains\\.kotlin.*") // ✅ 이 한 줄 추가!
+                includeGroupByRegex("org\\.jetbrains\\.kotlin.*")
             }
         }
         mavenCentral()
@@ -35,19 +35,21 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MyRythm"
-include(":app")
-include(":feature")
-include(":feature:login")
-include(":feature:main")
-include(":feature:mypage")
-include(":feature:scheduler")
-include(":feature:news")
-include(":feature:map")
-include(":feature:ChatBot")
-include(":data")
-include(":domain")
-include(":common")
-include(":common:design")
+
+include(
+    ":app",
+    ":common",
+    ":common:design",
+    ":data",
+    ":domain",
+    ":feature:login",
+    ":feature:main",
+    ":feature:map",
+    ":feature:mypage",
+    ":feature:news",
+    ":feature:scheduler",
+    ":feature:ChatBot"
+)
 
 // 5. --- allprojects 대신 사용할 올바른 코드 ---
 // 각 하위 프로젝트(모듈)가 평가되기 전에 공통 로직을 실행
