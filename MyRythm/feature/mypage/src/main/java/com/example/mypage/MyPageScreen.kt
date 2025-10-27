@@ -21,9 +21,16 @@ import androidx.compose.ui.unit.sp
 import com.example.common.design.R
 
 @Composable
-fun MyPageScreen(modifier: Modifier = Modifier) {
+fun MyPageScreen(
+    modifier: Modifier = Modifier,
+    onEditClick: () -> Unit = {},
+    onHeartClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
+) {
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 24.dp)
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp)
     ) {
         Spacer(Modifier.height(16.dp))
 
@@ -56,11 +63,11 @@ fun MyPageScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            MenuItem("내 정보 수정")
-            MenuItem("심박수")
-            MenuItem("복약 그래프")
-            MenuItem("FAQ 문의사항")
-            MenuItem("로그아웃")
+            MenuItem("내 정보 수정", onEditClick)
+            MenuItem("심박수", onHeartClick)
+            MenuItem("복약 그래프") { }
+            MenuItem("FAQ 문의사항") { }
+            MenuItem("로그아웃", onLogoutClick)
         }
     }
 }
@@ -79,7 +86,9 @@ fun InfoCard(title: String, value: String, iconRes: Int) {
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(40.dp).clip(CircleShape)
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
                 .background(Color(0xff6ae0d9).copy(alpha = 0.2f))
         ) {
             Image(painter = painterResource(id = iconRes), contentDescription = null, modifier = Modifier.size(24.dp))
@@ -92,13 +101,19 @@ fun InfoCard(title: String, value: String, iconRes: Int) {
 }
 
 @Composable
-fun MenuItem(title: String) {
+fun MenuItem(title: String, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().height(64.dp).clickable { }.padding(horizontal = 0.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clickable { onClick() }
+            .padding(horizontal = 0.dp)
     ) {
         Box(
-            modifier = Modifier.size(48.dp).clip(CircleShape)
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
                 .background(Color(0xff407ce2).copy(alpha = 0.13f))
         )
         Spacer(Modifier.width(16.dp))

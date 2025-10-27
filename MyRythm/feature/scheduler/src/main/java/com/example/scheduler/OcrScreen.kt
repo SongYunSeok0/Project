@@ -5,14 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,56 +16,29 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.common.design.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OcrScreen(
     modifier: Modifier = Modifier,
-    onBack: () -> Unit = {}
+    onConfirm: () -> Unit = {},
+    onRetake: () -> Unit = {},
 ) {
     Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "처방전 인식",
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(fontSize = 16.sp, letterSpacing = 1.sp)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.back),
-                            contentDescription = "뒤로가기",
-                            tint = Color(0xFF6AE0D9),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFE4F5F4)
-                )
-            )
-        },
+        contentWindowInsets = WindowInsets(0,0,0,0),
         modifier = modifier
-    ) { innerPadding ->
+    ) { _: PaddingValues ->
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .padding(horizontal = 24.dp)
         ) {
-            // 미리보기 영역
+            // 미리보기
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -81,12 +47,11 @@ fun OcrScreen(
                     .background(Color(0xFFF3F4F6))
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.upload), // 플레이스홀더
+                    painter = painterResource(id = R.drawable.upload),
                     contentDescription = "preview",
                     contentScale = ContentScale.Inside,
                     modifier = Modifier.fillMaxSize()
                 )
-                // 우상단 원형 액션 버튼
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -127,47 +92,36 @@ fun OcrScreen(
                 }
             }
 
-            // 하단 버튼들
+            // 하단 버튼
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // 확인 및 등록
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF6AE0D9),
+                Button(
+                    onClick = onConfirm,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .shadow(4.dp, RoundedCornerShape(14.dp))
+                        .shadow(4.dp, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
                 ) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "확인 및 등록",
-                            color = Color.White,
-                            lineHeight = 1.5.em,
-                            style = TextStyle(fontSize = 16.sp)
-                        )
-                    }
+                    Text("확인 및 등록", color = Color.White, fontSize = 16.sp, lineHeight = 1.5.em)
                 }
 
-                // 다시 촬영 (외곽선 버튼)
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
-                    border = BorderStroke(1.5.dp, Color(0xFF6AE0D9)),
+                OutlinedButton(
+                    onClick = onRetake,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.5.dp, Color(0xFF6AE0D9)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF6AE0D9)
+                    )
                 ) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "다시 촬영",
-                            color = Color(0xFF6AE0D9),
-                            lineHeight = 1.5.em,
-                            style = TextStyle(fontSize = 16.sp)
-                        )
-                    }
+                    Text("다시 촬영", fontSize = 16.sp, lineHeight = 1.5.em)
                 }
             }
         }

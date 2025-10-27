@@ -1,18 +1,15 @@
 package com.example.scheduler
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,18 +26,26 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.common.design.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val Mint = Color(0xFF6AE0D9)
+
 @Composable
-fun CameraScreen(modifier: Modifier = Modifier) {
+fun CameraScreen(
+    modifier: Modifier = Modifier,
+    onTakePhoto: () -> Unit = {},                 // ← OCR로 이동
+    onPickFromGallery: (Uri?) -> Unit = {}        // ← 선택 결과 전달(원하면 OCR로 이동)
+) {
+    val galleryPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri -> onPickFromGallery(uri) }
+
     Scaffold(
-
-
-    ) { innerPadding ->
+        contentWindowInsets = WindowInsets(0,0,0,0)
+    ) { inner ->
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(top = 20.dp)
-                .padding(horizontal = 20.dp),           // 좌우 여백
+                .padding(inner)
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -48,15 +53,16 @@ fun CameraScreen(modifier: Modifier = Modifier) {
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 color = Color(0xFFF9F9F9),
-                border = BorderStroke(1.66.dp, Color(0xFF6AE0D9)),
-                modifier = Modifier.fillMaxWidth()
+                border = BorderStroke(1.66.dp, Mint),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(459.dp)
                 ) {
-                    // 카메라 심볼
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
@@ -66,12 +72,11 @@ fun CameraScreen(modifier: Modifier = Modifier) {
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.camera),
-                            contentDescription = "Camera Icon",
+                            contentDescription = null,
                             modifier = Modifier.size(48.dp),
-                            colorFilter = ColorFilter.tint(Color(0xFF6AE0D9))
+                            colorFilter = ColorFilter.tint(Mint)
                         )
                     }
-                    // 안쪽 테두리 프레임
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -79,12 +84,8 @@ fun CameraScreen(modifier: Modifier = Modifier) {
                             .width(277.dp)
                             .height(392.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .border(
-                                border = BorderStroke(1.66.dp, Color.White),
-                                shape = RoundedCornerShape(10.dp)
-                            )
+                            .border(BorderStroke(1.66.dp, Color.White), RoundedCornerShape(10.dp))
                     )
-                    // 안내 텍스트 칩
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -115,93 +116,60 @@ fun CameraScreen(modifier: Modifier = Modifier) {
                     .background(Color(0xFFE4F5F4))
                     .padding(16.dp)
             ) {
-                Text(
-                    text = "📋 촬영 가이드",
-                    color = Color(0xFF5DB0A8),
-                    lineHeight = 1.43.em,
-                    style = TextStyle(fontSize = 14.sp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = "• 밝은 곳에서 촬영하면 인식률이 높아집니다",
-                    color = Color(0xFF6F8BA4),
-                    lineHeight = 1.43.em,
-                    style = TextStyle(fontSize = 14.sp)
-                )
-                Text(
-                    text = "• 글씨가 선명하게 보이는지 확인해주세요",
-                    color = Color(0xFF6F8BA4),
-                    lineHeight = 1.43.em,
-                    style = TextStyle(fontSize = 14.sp)
-                )
+                Text("📋 촬영 가이드", color = Color(0xFF5DB0A8), fontSize = 14.sp)
+                Text("• 밝은 곳에서 촬영하면 인식률이 높아집니다", color = Color(0xFF6F8BA4), fontSize = 14.sp)
+                Text("• 글씨가 선명하게 보이는지 확인해주세요", color = Color(0xFF6F8BA4), fontSize = 14.sp)
             }
 
             // 버튼 영역
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // 촬영 버튼
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+
+                Button(
+                    onClick = onTakePhoto,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF6AE0D9))
-                        .shadow(1.dp, RoundedCornerShape(14.dp))
-                        .padding(horizontal = 16.dp)
+                        .shadow(1.dp, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Mint)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.camera),
-                        contentDescription = "Camera Icon",
+                        contentDescription = null,
                         modifier = Modifier.size(20.dp),
                         colorFilter = ColorFilter.tint(Color.White)
                     )
                     Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = "사진 촬영",
-                        color = Color.White,
-                        lineHeight = 1.5.em,
-                        style = TextStyle(fontSize = 16.sp)
-                    )
+                    Text("사진 촬영", color = Color.White, fontSize = 16.sp)
                 }
 
-                // 갤러리 선택 버튼
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
+                OutlinedButton(
+                    onClick = { galleryPicker.launch("image/*") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(59.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF6AE0D9))
-                        .shadow(1.dp, RoundedCornerShape(14.dp))
-                        .border(
-                            BorderStroke(1.66.dp, Color(0xFF6AE0D9)),
-                            RoundedCornerShape(14.dp)
-                        )
-                        .padding(horizontal = 16.dp)
+                        .height(56.dp)
+                        .shadow(1.dp, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.White,
+                        contentColor = Mint
+                    ),
+                    border = BorderStroke(1.66.dp, Mint)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.upload),
-                        contentDescription = "Upload Icon",
+                        contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        colorFilter = ColorFilter.tint(Color(0xFFFFFFFF))
+                        colorFilter = ColorFilter.tint(Mint)
                     )
                     Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = "갤러리에서 선택",
-                        color = Color(0xFFFFFFFF),
-                        lineHeight = 1.5.em,
-                        style = TextStyle(fontSize = 16.sp)
-                    )
+                    Text("갤러리에서 선택", fontSize = 16.sp)
                 }
             }
         }
     }
 }
+
 
 @Preview(widthDp = 392, heightDp = 917, showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable

@@ -13,4 +13,6 @@ object Routes {
     const val OCR = "ocr"
     const val REGI = "regi"
     const val CHATBOT = "chatbot"
+    const val HEART = "heart"
+    const val EDIT = "edit"
 }

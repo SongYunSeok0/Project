@@ -26,23 +26,22 @@ fun NewsDetailScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("뉴스",
-                    color = Color.Black,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "뉴스",
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.navigate("news_list") {
-                            popUpTo("news_list") { inclusive = true }
-                        }
-                    }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             painter = painterResource(id = R.drawable.back),
                             contentDescription = "뒤로가기",
                             tint = Color.Black
                         )
                     }
-
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color(0xFFDFF6F3),

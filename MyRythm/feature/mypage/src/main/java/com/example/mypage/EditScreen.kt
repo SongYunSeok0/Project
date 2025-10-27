@@ -24,7 +24,7 @@ import com.example.common.design.R
 
 
 @Composable
-fun EditScreen(modifier: Modifier = Modifier) {
+fun EditScreen(modifier: Modifier = Modifier,  onDone: () -> Unit = {}) {
     var selectedGender by remember { mutableStateOf("남성") }
     var selectedBloodType by remember { mutableStateOf("A형") }
 
@@ -133,9 +133,7 @@ fun EditScreen(modifier: Modifier = Modifier) {
                 .clip(RoundedCornerShape(14.dp))
                 .background(Color(0xff6ae0d9))
                 .padding(horizontal = 16.dp)
-                .clickable {
-                    // 저장 로직 추가 가능
-                },
+                .clickable { onDone() },
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
