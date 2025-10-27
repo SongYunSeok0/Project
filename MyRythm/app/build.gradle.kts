@@ -4,21 +4,24 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-
 android {
     namespace = "com.example.myrythm"
-    compileSdk = rootProject.extra.get("compileSdk") as Int
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.myrythm"
-        minSdk = rootProject.extra.get("minSdk") as Int
-        targetSdk = rootProject.extra.get("targetSdk") as Int
+        minSdk = 24
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["NAVER_MAP_CLIENT_ID"] = rootProject.extra.get("NAVER_MAP_CLIENT_ID") as? String ?: ""
         manifestPlaceholders["NAVER_MAP_CLIENT_SECRET"] = rootProject.extra.get("NAVER_MAP_CLIENT_SECRET") as? String ?: ""
+
+        buildConfigField("String", "NAVER_CLIENT_ID", "\"${project.findProperty("NAVER_CLIENT_ID") ?: ""}\"")
+        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"${project.findProperty("NAVER_CLIENT_SECRET") ?: ""}\"")
+
     }
 
     buildTypes {
@@ -33,22 +36,38 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "21"
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "2.0.21"
     }
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
+
 dependencies {
+
+    implementation(project(":common:design"))
+
     implementation(project(":feature:main"))
     implementation(project(":feature:map"))
     implementation(project(":feature:login"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

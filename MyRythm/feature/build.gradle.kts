@@ -10,6 +10,7 @@ android {
 
     defaultConfig {
         minSdk = 24
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -23,7 +24,6 @@ android {
             )
         }
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -37,34 +37,27 @@ android {
     buildFeatures {
         compose = true
     }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
-    }
 }
 
 dependencies {
-    // ✅ AndroidX 기본
+
+    implementation(project(":common:design"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    // ✅ Compose BOM (버전 통합)
     implementation(platform(libs.androidx.compose.bom))
-
-    // ✅ Compose UI 세트
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.animation:animation")
-
-    // ✅ 디버그용 툴링
     debugImplementation("androidx.compose.ui:ui-tooling")
-
-    // ✅ 테스트
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("androidx.compose.material:material-icons-core:1.7.3")
+    implementation("androidx.compose.material:material-icons-extended:1.7.3")
 }

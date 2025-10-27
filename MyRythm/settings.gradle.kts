@@ -10,13 +10,18 @@ if (localPropertiesFile.exists()) {
 // pluginManagement 블록: Gradle 플러그인을 어디서 찾을지 설정
 pluginManagement {
     repositories {
-        google()
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+                includeGroupByRegex("org\\.jetbrains\\.kotlin.*") // ✅ 이 한 줄 추가!
+            }
+        }
         mavenCentral()
         gradlePluginPortal()
     }
 }
-
-// dependencyResolutionManagement 블록: 라이브러리를 어디서 찾을지 설정
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -29,7 +34,6 @@ dependencyResolutionManagement {
     }
 }
 
-// 프로젝트의 루트 이름과 포함된 모듈들을 정의
 rootProject.name = "MyRythm"
 include(":app")
 include(":feature")
@@ -39,9 +43,11 @@ include(":feature:mypage")
 include(":feature:scheduler")
 include(":feature:news")
 include(":feature:map")
+include(":feature:ChatBot")
 include(":data")
 include(":domain")
 include(":common")
+include(":common:design")
 
 // 5. --- allprojects 대신 사용할 올바른 코드 ---
 // 각 하위 프로젝트(모듈)가 평가되기 전에 공통 로직을 실행
