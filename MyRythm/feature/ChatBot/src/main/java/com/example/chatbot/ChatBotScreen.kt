@@ -27,7 +27,7 @@ import com.example.common.design.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GeneratedCode(modifier: Modifier = Modifier) {
+fun ChatBotScreen(modifier: Modifier = Modifier) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -181,6 +181,6 @@ fun GeneratedCode(modifier: Modifier = Modifier) {
 
 @Preview(widthDp = 412, heightDp = 917)
 @Composable
-private fun GeneratedCodePreview() {
-    GeneratedCode()
+private fun ChatBotScreenPreview() {
+    ChatBotScreen()
 }

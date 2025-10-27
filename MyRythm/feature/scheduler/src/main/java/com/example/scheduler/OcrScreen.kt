@@ -32,7 +32,7 @@ import com.example.common.design.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrescriptionScanScreen(
+fun OcrScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {}
 ) {
@@ -176,6 +176,6 @@ fun PrescriptionScanScreen(
 
 @Preview(widthDp = 412, heightDp = 851, showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
-private fun PrescriptionScanScreenPreview() {
-    PrescriptionScanScreen()
+private fun OcrScreenPreview() {
+    OcrScreen()
 }

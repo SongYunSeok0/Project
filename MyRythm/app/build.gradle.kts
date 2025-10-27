@@ -46,10 +46,6 @@ android {
         compose = true
         buildConfig = true
     }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "2.0.21"
-    }
 }
 
 kotlin {
@@ -58,16 +54,18 @@ kotlin {
 
 
 dependencies {
-
+    implementation(project(":common"))
     implementation(project(":common:design"))
-
     implementation(project(":feature:main"))
     implementation(project(":feature:map"))
     implementation(project(":feature:login"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))
+    implementation(project(":feature:ChatBot"))
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
