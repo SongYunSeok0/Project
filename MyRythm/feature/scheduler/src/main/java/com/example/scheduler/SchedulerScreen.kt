@@ -32,7 +32,7 @@ private val DividerGreen = Color(0xff59c606)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SchedulerScreem(modifier: Modifier = Modifier) {
+fun SchedulerScreen(modifier: Modifier = Modifier) {
     var selectedTab by remember { mutableIntStateOf(1) }
     var selectedDay by remember { mutableIntStateOf(21) }
 
@@ -258,6 +258,6 @@ private fun DoneText() {
 
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun SchedulerScreemPreview() {
-    SchedulerScreem()
+private fun SchedulerScreenPreview() {
+    SchedulerScreen()
 }
