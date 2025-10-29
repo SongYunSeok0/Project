@@ -40,7 +40,7 @@ fun LoginScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xff6ae0d9))
+            .background(Color(0xffb5e5e1))
             .padding(horizontal = 32.dp, vertical = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -59,7 +59,7 @@ fun LoginScreen(
         // 🔹 텍스트 로고
         Text(
             text = "My Rhythm",
-            color = Color(0xFFC9F8F6),
+            color = Color(0xff5db0a8),
             fontSize = 65.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = BalooThambi
