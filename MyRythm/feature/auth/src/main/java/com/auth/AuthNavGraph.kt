@@ -1,0 +1,50 @@
+package com.auth
+
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import androidx.navigation.navigation
+import com.navigation.*
+
+fun NavGraphBuilder.authNavGraph(nav: NavController) {
+    navigation<AuthGraph>(startDestination = LoginRoute) {
+
+        composable<LoginRoute> {
+            LoginScreen(
+                onLogin = { _, _ ->
+                    nav.navigate(MainRoute) {
+                        popUpTo(AuthGraph) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onForgotPassword = { nav.navigate(PwdRoute) },
+                onSignUp = { nav.navigate(SignupRoute) }
+            )
+        }
+
+        composable<PwdRoute> {
+            PwdScreen(
+                onConfirm = { _, _ ->
+                    nav.navigate(LoginRoute) {
+                        popUpTo(PwdRoute) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onBackToLogin = { nav.navigate(LoginRoute) }
+            )
+        }
+
+        composable<SignupRoute> {
+            SignupScreen(
+                onSignupComplete = {
+                    nav.navigate(LoginRoute) {
+                        popUpTo(SignupRoute) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onBackToLogin = { nav.navigate(LoginRoute) }
+            )
+        }
+    }
+}
+

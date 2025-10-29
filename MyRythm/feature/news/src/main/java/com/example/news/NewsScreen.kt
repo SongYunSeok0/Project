@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.common.design.R
+import com.common.design.R
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.LoadState
 import java.net.URLEncoder

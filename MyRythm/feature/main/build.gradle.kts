@@ -31,21 +31,24 @@ android {
     kotlinOptions {
         jvmTarget = "21"
     }
+
+    buildFeatures {
+        compose = true                       // ← 추가
+    }
 }
 
 dependencies {
-
     implementation(project(":common:design"))
+    implementation(project(":navigation"))
 
     implementation(platform("androidx.compose:compose-bom:2024.09.02"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
-
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-tooling-preview")
-
-
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

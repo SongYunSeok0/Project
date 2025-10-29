@@ -6,7 +6,10 @@ plugins {
 }
 
 android {
-    namespace = "com.example.map"
+
+
+    namespace = "com.map"
+
     compileSdk = rootProject.extra.get("compileSdk") as Int
 
     defaultConfig {
@@ -36,13 +39,11 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
-    }
-
 }
 
 dependencies {
+    implementation(project(":navigation"))
+    implementation(project(":common:design"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -52,6 +53,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation(libs.androidx.navigation.compose)
+
     implementation(project(":feature"))
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.ui:ui")
@@ -62,6 +66,7 @@ dependencies {
     implementation("com.naver.maps:map-sdk:3.23.0")
     implementation("io.github.fornewid:naver-map-compose:1.5.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
     implementation("com.google.android.gms:play-services-location:20.0.0")
     // Google Play 서비스 위치 API 추가
     implementation("com.google.android.gms:play-services-location:21.2.0")
@@ -69,4 +74,5 @@ dependencies {
     // 네트워크 통신을 위한 Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
 }

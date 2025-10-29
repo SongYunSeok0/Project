@@ -46,8 +46,10 @@ kotlin {
 
 dependencies {
     implementation(project(":feature"))
+    implementation(project(":navigation"))
     implementation(project(":common:design"))
     implementation(libs.ui.tooling.preview)
+    implementation(libs.androidx.navigation.compose)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     // AndroidX 기본

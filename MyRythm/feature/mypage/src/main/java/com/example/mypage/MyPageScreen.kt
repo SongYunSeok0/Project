@@ -18,7 +18,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.common.design.R
+import com.common.design.R
 
 @Composable
 fun MyPageScreen(modifier: Modifier = Modifier) {

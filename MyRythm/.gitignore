@@ -13,5 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+<<<<<<< HEAD
 build/
 */build/
+=======
+>>>>>>> rnb
