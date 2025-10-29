@@ -28,7 +28,6 @@ import androidx.core.content.ContextCompat
 import com.example.map.data.NaverSearchApi
 import com.example.map.data.PlaceItem
 import com.google.android.gms.location.LocationServices
-import com.naver.maps.geometry.Coord
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
 import com.naver.maps.map.CameraUpdate
@@ -150,11 +149,10 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     )
                 }
 
-                // ★★★★★ 진짜 최종 수정: Coord.toLatLng() 사용 ★★★★★
                 places.forEach { place ->
                     val position: LatLng? = try {
-                        // API 응답 좌표를 Coord 객체로 생성 후 toLatLng() 호출
-                        Coord(place.mapx.toDouble(), place.mapy.toDouble()).toLatLng()
+                        // mapx, mapy가 10^7 배수로 되어 있으므로 나누기 필요
+                        LatLng(place.mapy.toDouble() / 1e7, place.mapx.toDouble() / 1e7)
                     } catch (e: Exception) {
                         Log.e("MapScreen", "좌표 변환 실패: ${place.title}", e)
                         null
@@ -173,6 +171,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         )
                     }
                 }
+
             }
 
             CurrentLocationChip(modifier = Modifier.align(Alignment.TopStart).padding(16.dp))
