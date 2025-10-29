@@ -5,9 +5,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.chatbot.ChatBotScreen
-import com.login.LoginScreen
-import com.login.PwdScreen
-import com.login.SignupScreen
+import com.auth.LoginScreen
+import com.auth.PwdScreen
+import com.auth.SignupScreen
 import com.main.MainScreen
 import com.map.MapScreen
 import com.mypage.EditScreen

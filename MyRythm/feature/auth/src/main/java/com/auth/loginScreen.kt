@@ -1,4 +1,4 @@
-package com.login
+package com.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image

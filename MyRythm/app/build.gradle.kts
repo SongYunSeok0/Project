@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.parcelize)
 }
 
 android {
@@ -58,7 +60,7 @@ dependencies {
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
     implementation(project(":feature:map"))
-    implementation(project(":feature:login"))
+    implementation(project(":feature:auth"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))

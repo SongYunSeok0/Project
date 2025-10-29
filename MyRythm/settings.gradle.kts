@@ -42,7 +42,7 @@ include(
     ":common:design",
     ":data",
     ":domain",
-    ":feature:login",
+    ":feature:auth",
     ":feature:main",
     ":feature:map",
     ":feature:mypage",

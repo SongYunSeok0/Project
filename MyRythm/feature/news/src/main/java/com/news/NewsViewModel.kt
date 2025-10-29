@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.example.news.BuildConfig
 import com.news.data.RetrofitInstance
 import com.news.data.NaverNewsItem
 import com.news.data.NaverNewsPagingSource

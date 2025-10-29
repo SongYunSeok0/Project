@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.chatbot"
+    namespace = "com.chatbot"
     compileSdk = 36
 
     defaultConfig {
