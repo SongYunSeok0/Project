@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.auth"
+    namespace = "com.example.login"
     compileSdk = 36
 
     defaultConfig {

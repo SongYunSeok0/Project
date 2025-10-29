@@ -50,9 +50,6 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "1.9.23" }
-kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version = "1.9.23" }
-
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 

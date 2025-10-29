@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.news"
+    namespace = "com.example.news"
     compileSdk = 36
 
     defaultConfig {

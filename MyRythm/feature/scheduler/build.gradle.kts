@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.scheduler"
+    namespace = "com.example.scheduler"
     compileSdk = 36
 
     defaultConfig { minSdk = 24 }
