@@ -54,11 +54,12 @@ kotlin {
 
 
 dependencies {
+    implementation(project(":navigation"))
     implementation(project(":common"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
     implementation(project(":feature:map"))
-    implementation(project(":feature:login"))
+    implementation(project(":feature:auth"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))

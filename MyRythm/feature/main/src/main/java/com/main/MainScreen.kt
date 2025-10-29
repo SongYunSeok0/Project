@@ -23,11 +23,13 @@ import com.common.design.R
 
 @Composable
 fun MainScreen(
-    onChatbotClick: () -> Unit = {},
-    onSchedulerClick: () -> Unit = {},
-    onHeartClick: () -> Unit = {},
-    onMapClick: () -> Unit = {},
-    onNewsClick: () -> Unit = {},
+    onOpenChatBot:   () -> Unit = {},
+    onOpenScheduler: () -> Unit = {},
+    onOpenSteps:     () -> Unit = {},
+    onOpenHeart:     () -> Unit = {},
+    onOpenMap:       () -> Unit = {},
+    onOpenNews:      () -> Unit = {},
+    onFabCamera:     () -> Unit = {} // 현재 화면에서는 미사용
 ) {
     val tempIconResId = R.drawable.logo
 
@@ -40,23 +42,37 @@ fun MainScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            FeatureCard("챗봇", Color(0xffe8f5f4), tempIconResId,
-                Modifier.weight(1f).height(140.dp)
-            ) { onChatbotClick() }
-
-            FeatureCard("스케줄러", Color(0xfff0e8f5), tempIconResId,
-                Modifier.weight(1f).height(140.dp)
-            ) { onSchedulerClick() }
+            FeatureCard(
+                title = "챗봇",
+                bg = Color(0xffe8f5f4),
+                icon = tempIconResId,
+                modifier = Modifier.weight(1f).height(140.dp),
+                onClick = onOpenChatBot
+            )
+            FeatureCard(
+                title = "스케줄러",
+                bg = Color(0xfff0e8f5),
+                icon = tempIconResId,
+                modifier = Modifier.weight(1f).height(140.dp),
+                onClick = onOpenScheduler
+            )
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            FeatureCard("걸음수", Color(0xffe8f0f5), tempIconResId,
-                Modifier.weight(1f).height(140.dp)
-            ) { /* 필요 시 콜백 추가 */ }
-
-            FeatureCard("최근 심박 수", Color(0xffffe8e8), tempIconResId,
-                Modifier.weight(1f).height(140.dp)
-            ) { onHeartClick() }
+            FeatureCard(
+                title = "걸음수",
+                bg = Color(0xffe8f0f5),
+                icon = tempIconResId,
+                modifier = Modifier.weight(1f).height(140.dp),
+                onClick = onOpenSteps
+            )
+            FeatureCard(
+                title = "최근 심박 수",
+                bg = Color(0xffffe8e8),
+                icon = tempIconResId,
+                modifier = Modifier.weight(1f).height(140.dp),
+                onClick = onOpenHeart
+            )
         }
 
         Column(
@@ -64,7 +80,7 @@ fun MainScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(Color(0xffb5d8f5))
-                .clickable { /* 필요 시 콜백 추가 */ }
+                .clickable { onOpenScheduler() } // 남은시간 카드 → 스케줄러로 이동
                 .padding(20.dp)
         ) {
             Row(
@@ -81,13 +97,20 @@ fun MainScreen(
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            FeatureCard("지도", Color(0xffe8f5f0), tempIconResId,
-                Modifier.weight(1f).height(140.dp)
-            ) { onMapClick() }
-
-            FeatureCard("뉴스", Color(0xfffff4e8), tempIconResId,
-                Modifier.weight(1f).height(140.dp)
-            ) { onNewsClick() }
+            FeatureCard(
+                title = "지도",
+                bg = Color(0xffe8f5f0),
+                icon = tempIconResId,
+                modifier = Modifier.weight(1f).height(140.dp),
+                onClick = onOpenMap
+            )
+            FeatureCard(
+                title = "뉴스",
+                bg = Color(0xfffff4e8),
+                icon = tempIconResId,
+                modifier = Modifier.weight(1f).height(140.dp),
+                onClick = onOpenNews
+            )
         }
 
         Column(
@@ -95,7 +118,7 @@ fun MainScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(Color(0xffe8f5f4))
-                .clickable { /* 필요 시 콜백 추가 */ }
+                .clickable { /* 필요 시 다른 목적지로 연결 */ }
                 .padding(vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -122,7 +145,7 @@ fun FeatureCard(
             .clip(RoundedCornerShape(14.dp))
             .background(bg)
             .border(BorderStroke(0.7.dp, Color(0xfff3f4f6)), RoundedCornerShape(14.dp))
-            .clickable { onClick() }
+            .clickable(onClick = onClick)
             .padding(vertical = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center

@@ -27,13 +27,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.common.design.R
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.LoadState
-import java.net.URLEncoder
 
 /* ------------------------------ TopBar ------------------------------ */
 
@@ -49,7 +46,7 @@ fun NewsTopBar(
     onBackClick: (() -> Unit)? = null
 ) {
     CenterAlignedTopAppBar(
-        windowInsets = WindowInsets(0, 0, 0, 0), // 인셋 수동 관리
+        windowInsets = WindowInsets(0, 0, 0, 0),
         title = {
             if (isSearchMode) {
                 TextField(
@@ -106,9 +103,9 @@ fun NewsTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsScreen(
-    navController: NavController,
-    viewModel: NewsViewModel = viewModel(),
-    onBack: (() -> Unit)? = null
+    onOpenDetail: (String) -> Unit,
+    onBack: (() -> Unit)? = null,
+    viewModel: NewsViewModel = viewModel()
 ) {
     var selectedCategory by remember { mutableStateOf("건강") }
     var isSearchMode by remember { mutableStateOf(false) }
@@ -117,16 +114,9 @@ fun NewsScreen(
     val pager = remember(selectedCategory) { viewModel.getNewsPager(selectedCategory) }
         .collectAsLazyPagingItems()
 
-    val internalCanGoBack = navController.previousBackStackEntry != null
-    val backHandler: (() -> Unit)? = when {
-        onBack != null -> onBack
-        internalCanGoBack -> { { navController.popBackStack() } }
-        else -> null
-    }
-
     Scaffold(
         containerColor = Color(0xFFF9F9FB),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0), // 인셋 수동 관리
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             NewsTopBar(
                 isSearchMode = isSearchMode,
@@ -145,7 +135,7 @@ fun NewsScreen(
                         pager.refresh()
                     }
                 },
-                onBackClick = backHandler
+                onBackClick = onBack
             )
         }
     ) { innerPadding ->
@@ -189,17 +179,10 @@ fun NewsScreen(
                 items(pager.itemSnapshotList.items) { item ->
                     item?.let {
                         NewsCard(
-                            title = it.title
-                                .replace("<b>", "")
-                                .replace("</b>", "")
-                                .replace("&quot;", "\""),
+                            title = it.title.replace("<b>", "").replace("</b>", "").replace("&quot;", "\""),
                             info = it.pubDate.take(16),
-                            imageUrl = it.image
-                                ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
-                            onClick = {
-                                val encodedUrl = URLEncoder.encode(it.link, "UTF-8")
-                                navController.navigate("news_detail/$encodedUrl")
-                            }
+                            imageUrl = it.image ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
+                            onClick = { onOpenDetail(it.link) }
                         )
                     }
                 }
@@ -293,17 +276,8 @@ fun NewsCard(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxHeight()
         ) {
-            Text(
-                text = title,
-                fontSize = 14.sp,
-                color = Color(0xFF3B566E),
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = info,
-                fontSize = 12.sp,
-                color = Color(0xFF6F8BA4)
-            )
+            Text(text = title, fontSize = 14.sp, color = Color(0xFF3B566E), fontWeight = FontWeight.Medium)
+            Text(text = info, fontSize = 12.sp, color = Color(0xFF6F8BA4))
         }
     }
 }
@@ -314,7 +288,6 @@ fun NewsCard(
 @Composable
 fun NewsScreenPreview() {
     MaterialTheme {
-        val nav = rememberNavController()
-        NewsScreen(navController = nav, onBack = {})
+        NewsScreen(onOpenDetail = {}, onBack = {})
     }
 }

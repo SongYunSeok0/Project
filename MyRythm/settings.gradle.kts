@@ -1,6 +1,9 @@
 import java.io.File
 import java.util.Properties
 
+include(":navigation")
+
+
 val localProperties = Properties()
 val localPropertiesFile = File(settings.rootDir, "local.properties")
 if (localPropertiesFile.exists()) {
@@ -42,7 +45,8 @@ include(
     ":common:design",
     ":data",
     ":domain",
-    ":feature:login",
+    ":navigation",
+    ":feature:auth",
     ":feature:main",
     ":feature:map",
     ":feature:mypage",
