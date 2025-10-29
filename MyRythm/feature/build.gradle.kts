@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(project(":common:design"))
 
     implementation(libs.androidx.core.ktx)

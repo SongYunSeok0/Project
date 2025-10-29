@@ -54,6 +54,7 @@ kotlin {
 
 
 dependencies {
+    implementation(project(":navigation"))
     implementation(project(":common"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))

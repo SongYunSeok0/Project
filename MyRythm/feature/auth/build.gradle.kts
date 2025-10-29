@@ -41,6 +41,7 @@ android {
 dependencies {
 
     implementation(project(":common:design"))
+    implementation(project(":navigation"))
     implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation(platform("androidx.compose:compose-bom:2024.09.02"))
     implementation("androidx.compose.ui:ui")

@@ -19,10 +19,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
-import com.sesac.design.ui.theme.AuthBackground
-import com.sesac.design.ui.theme.AuthOnPrimary
-import com.sesac.design.ui.theme.AuthOnSecondray
-import com.sesac.design.ui.theme.AuthSecondrayButton
+import com.ui.theme.AuthBackground
+import com.ui.theme.AuthOnPrimary
+import com.ui.theme.AuthOnSecondray
+import com.ui.theme.AuthSecondrayButton
 
 @Composable
 fun SignupScreen(
