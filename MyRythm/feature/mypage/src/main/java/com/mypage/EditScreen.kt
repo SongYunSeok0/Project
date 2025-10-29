@@ -24,7 +24,7 @@ import com.common.design.R
 
 
 @Composable
-fun EditScreen(modifier: Modifier = Modifier,  onDone: () -> Unit = {}) {
+fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: () -> Unit = {}) {
     var selectedGender by remember { mutableStateOf("남성") }
     var selectedBloodType by remember { mutableStateOf("A형") }
 

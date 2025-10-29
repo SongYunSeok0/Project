@@ -36,13 +36,10 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
-    }
-
 }
 
 dependencies {
+    implementation(project(":navigation"))
     implementation(project(":common:design"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -52,6 +49,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.navigation.compose)
     implementation(project(":feature"))
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.ui:ui")

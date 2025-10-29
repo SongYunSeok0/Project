@@ -40,6 +40,7 @@ android {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
+    implementation(project(":navigation"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -57,4 +58,6 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    implementation(libs.androidx.navigation.compose)
 }
