@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.map"
+    namespace = "com.map"
     compileSdk = rootProject.extra.get("compileSdk") as Int
 
     defaultConfig {
@@ -43,7 +43,7 @@ android {
 }
 
 dependencies {
-
+    implementation(project(":common:design"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.common.design.R // common 모듈의 R 사용
+import com.common.design.R // common 모듈의 R 사용
 import com.sesac.design.ui.theme.AuthLogoSize
 import com.sesac.design.ui.theme.AuthTextLogoHeight
 import com.sesac.design.ui.theme.AuthTextLogoWidth

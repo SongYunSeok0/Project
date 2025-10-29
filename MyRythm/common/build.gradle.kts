@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.common"
+    namespace = "com.common"
     compileSdk = 36
 
     defaultConfig {
@@ -34,7 +34,6 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.ui:ui")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
