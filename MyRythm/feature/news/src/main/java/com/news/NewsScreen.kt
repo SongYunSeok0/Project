@@ -1,4 +1,4 @@
-package com.news
+package com.example.news
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,12 +27,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.common.design.R
 
-/* ------------------------------ TopBar ------------------------------ */
+/*                                 TOP BAR                                    */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +47,6 @@ fun NewsTopBar(
     onBackClick: (() -> Unit)? = null
 ) {
     CenterAlignedTopAppBar(
-        windowInsets = WindowInsets(0, 0, 0, 0),
         title = {
             if (isSearchMode) {
                 TextField(
@@ -103,8 +103,8 @@ fun NewsTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsScreen(
+    nav: NavController,
     onOpenDetail: (String) -> Unit,
-    onBack: (() -> Unit)? = null,
     viewModel: NewsViewModel = viewModel()
 ) {
     var selectedCategory by remember { mutableStateOf("건강") }
@@ -135,7 +135,9 @@ fun NewsScreen(
                         pager.refresh()
                     }
                 },
-                onBackClick = onBack
+                onBackClick = {
+                    nav.popBackStack() // 이전 화면으로 돌아가기
+                }
             )
         }
     ) { innerPadding ->
@@ -153,6 +155,7 @@ fun NewsScreen(
                 fontWeight = FontWeight.SemiBold
             )
 
+            // ✅ 카테고리 배너
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -187,6 +190,7 @@ fun NewsScreen(
                     }
                 }
 
+                // ✅ 로딩 표시
                 if (pager.loadState.refresh is LoadState.Loading ||
                     pager.loadState.append is LoadState.Loading
                 ) {
@@ -288,6 +292,6 @@ fun NewsCard(
 @Composable
 fun NewsScreenPreview() {
     MaterialTheme {
-        NewsScreen(onOpenDetail = {}, onBack = {})
+        NewsScreen(navController = NavController(LocalContext.current))
     }
 }

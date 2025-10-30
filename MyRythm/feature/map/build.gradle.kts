@@ -6,8 +6,6 @@ plugins {
 }
 
 android {
-
-
     namespace = "com.map"
 
     compileSdk = rootProject.extra.get("compileSdk") as Int
@@ -61,23 +59,28 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
 
+    implementation(project(":navigation"))
+    implementation(project(":common:design"))
+    implementation(project(":feature"))
     implementation(platform(libs.androidx.compose.bom))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.foundation:foundation")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.compose.library)
+    implementation(libs.bundles.core)
+    implementation(libs.bundles.test)
 
-    implementation("androidx.compose.runtime:runtime")
     implementation("com.naver.maps:map-sdk:3.23.0")
     implementation("io.github.fornewid:naver-map-compose:1.5.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
-    // Google Play 서비스 위치 API 추가
     implementation("com.google.android.gms:play-services-location:20.0.0")
-    implementation("androidx.activity:activity-compose:1.9.0")
+    // Google Play 서비스 위치 API 추가
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     // 네트워크 통신을 위한 Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+
+
 
 }

@@ -9,6 +9,7 @@ import com.navigation.*
 fun NavGraphBuilder.newsNavGraph(nav: NavController) {
     composable<NewsRoute> {
         NewsMainScreen(
+            nav = nav,
             onOpenDetail = { url -> nav.navigate(NewsDetailRoute(url)) }
         )
     }
