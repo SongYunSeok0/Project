@@ -2,10 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.example.mypage"
+    namespace = "com.mypage"
     compileSdk = 36
 
     defaultConfig {
@@ -46,7 +47,6 @@ kotlin {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":navigation"))
     implementation(project(":common:design"))
 
     implementation(libs.androidx.navigation.compose)
@@ -63,5 +63,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling.preview)
 }

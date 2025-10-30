@@ -7,12 +7,10 @@ import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.Query
 
 // API 응답 구조에 맞는 데이터 클래스
 data class SearchResult(
-    val items: List<PlaceItem>
     val lastBuildDate: String? = null,
     val total: Int = 0,
     val start: Int = 1,
@@ -24,7 +22,7 @@ data class SearchResult(
 data class PlaceItem(
     val title: String,
     val link: String? = null,
-    val category: String? = null,   // ← 업종/분류 문자열 (예: "병원 > 종합병원")
+    val category: String? = null,
     val telephone: String? = null,
     val address: String,
     val roadAddress: String? = null,

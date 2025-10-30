@@ -33,7 +33,6 @@ android {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":navigation"))
     implementation(project(":common:design"))
 
     implementation(platform(libs.androidx.compose.bom))
