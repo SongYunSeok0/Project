@@ -3,21 +3,21 @@ package com.navigation
 import kotlinx.serialization.Serializable
 
 /* 루트 그래프 */
-@Serializable object AuthGraph
-@Serializable object MainGraph
+@Serializable data object AuthGraph
+@Serializable data object MainGraph
 
 /* Auth */
-@Serializable object LoginRoute
-@Serializable object PwdRoute
-@Serializable object SignupRoute
+@Serializable data object LoginRoute
+@Serializable data object PwdRoute
+@Serializable data object SignupRoute
 
 /* 메인 탭 */
-@Serializable object MainRoute        // 홈
-@Serializable object MapRoute
-@Serializable object NewsRoute
-@Serializable object SchedulerRoute
-@Serializable object MyPageRoute
-@Serializable object ChatBotRoute
+@Serializable data object MainRoute        // 홈
+@Serializable data object MapRoute
+@Serializable data  object NewsRoute
+@Serializable data object SchedulerRoute
+@Serializable data object MyPageRoute
+@Serializable data object ChatBotRoute
 
 /* 상세/하위 */
 @Serializable data class NewsDetailRoute(val url: String)
