@@ -60,7 +60,7 @@ fun LoginScreen(
         Text(
             text = "My Rhythm",
             color = Color(0xFFC9F8F6),
-            fontSize = 65.sp,
+            fontSize = 50.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = BalooThambi
         )
