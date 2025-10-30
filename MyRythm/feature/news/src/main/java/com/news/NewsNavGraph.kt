@@ -9,6 +9,7 @@ import com.navigation.*
 fun NavGraphBuilder.newsNavGraph(nav: NavController) {
     composable<NewsRoute> {
         NewsMainScreen(
+            nav = nav,
             onOpenDetail = { url -> nav.navigate(NewsDetailRoute(url)) }
         )
     }
@@ -16,4 +17,5 @@ fun NavGraphBuilder.newsNavGraph(nav: NavController) {
         val r = e.toRoute<NewsDetailRoute>()
         NewsDetailScreen(url = r.url, onBack = { nav.navigateUp() })
     }
+
 }

@@ -9,8 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -19,12 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import com.design.AppTopBar
 import com.map.data.NaverSearchApi
 import com.map.data.PlaceItem
 import com.google.android.gms.location.LocationServices
@@ -36,10 +36,10 @@ import com.naver.maps.map.overlay.OverlayImage
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
+import com.common.design.R
 @OptIn(ExperimentalNaverMapApi::class)
 @Composable
-fun MapScreen(modifier: Modifier = Modifier) {
+fun MapScreen(navController: NavController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val cameraPositionState = rememberCameraPositionState {
@@ -61,6 +61,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
             .build()
             .create(NaverSearchApi::class.java)
     }
+
 
     fun searchPlaces(query: String, coordinate: LatLng?) {
         if (coordinate == null) {
@@ -126,10 +127,19 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 onChipSelected = { type ->
                     selectedPlace = null
                     searchPlaces(type, myLocation)
+                },
+                showBack = true,
+                onBackClick = {
+                    if (selectedPlace != null) {
+                        selectedPlace = null // 시트 닫기
+                    } else {
+                        navController.popBackStack() // 이전 화면으로 돌아가기
+                    }
                 }
+
             )
         },
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             NaverMap(
@@ -143,7 +153,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 myLocation?.let { location ->
                     Marker(
                         state = MarkerState(position = location),
-                        icon = OverlayImage.fromResource(R.drawable.icon),
+                        icon = OverlayImage.fromResource(R.drawable.pill),
                         captionText = "내 위치",
                         zIndex = 10
                     )
@@ -161,7 +171,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     if (position != null) {
                         Marker(
                             state = MarkerState(position = position),
-                            icon = OverlayImage.fromResource(R.drawable.icon),
+                            icon = OverlayImage.fromResource(R.drawable.pill),
                             captionText = place.title.replace(Regex("<.*?>"), ""),
                             onClick = {
                                 selectedPlace = place
@@ -216,7 +226,7 @@ fun PlaceInfoSheet(
                     modifier = Modifier.weight(1f)
                 )
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    painter = painterResource(id = R.drawable.close),
                     contentDescription = "닫기",
                     modifier = Modifier
                         .size(24.dp)
@@ -236,49 +246,46 @@ fun PlaceInfoSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapTopAppBar(onChipSelected: (String) -> Unit) {
+fun MapTopAppBar(
+    onChipSelected: (String) -> Unit,
+    showBack: Boolean = true,
+    onBackClick: () -> Unit = {}
+) {
     var selectedChip by remember { mutableStateOf("병원") }
 
-    CenterAlignedTopAppBar(
-        title = { Text("지도", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-        actions = {
-            Row(modifier = Modifier.padding(end = 8.dp)) {
+    Column {
+        // 공통 탑바
+        AppTopBar(
+            title = "지도",
+            showBack = showBack,
+            onBackClick = onBackClick
+        )
+
+        // FilterChip
+        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+            val chips = listOf("병원", "약국")
+            chips.forEach { chip ->
                 FilterChip(
-                    selected = selectedChip == "병원",
+                    selected = selectedChip == chip,
                     onClick = {
-                        if (selectedChip != "병원") {
-                            selectedChip = "병원"
-                            onChipSelected("병원")
+                        if (selectedChip != chip) {
+                            selectedChip = chip
+                            onChipSelected(chip)
                         }
                     },
-                    label = { Text("병원") },
+                    label = { Text(chip) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Color(0xFF6AE0D9),
                         selectedLabelColor = Color.White
                     ),
                     modifier = Modifier.padding(end = 8.dp)
                 )
-                FilterChip(
-                    selected = selectedChip == "약국",
-                    onClick = {
-                        if (selectedChip != "약국") {
-                            selectedChip = "약국"
-                            onChipSelected("약국")
-                        }
-                    },
-                    label = { Text("약국") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF6AE0D9),
-                        selectedLabelColor = Color.White
-                    )
-                )
             }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color(0xFFB5E5E1).copy(alpha = 0.36f)
-        )
-    )
+        }
+    }
 }
+
+
 
 @Composable
 fun CurrentLocationChip(modifier: Modifier = Modifier) {
@@ -297,10 +304,3 @@ fun CurrentLocationChip(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun MapScreenPreview() {
-    MaterialTheme {
-        MapScreen()
-    }
-}

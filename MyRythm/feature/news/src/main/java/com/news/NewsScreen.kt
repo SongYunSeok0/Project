@@ -23,10 +23,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
@@ -103,8 +103,8 @@ fun NewsTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsScreen(
+    nav: NavController,
     onOpenDetail: (String) -> Unit,
-    onBack: (() -> Unit)? = null,
     viewModel: NewsViewModel = viewModel()
 ) {
     var selectedCategory by remember { mutableStateOf("건강") }
@@ -135,7 +135,9 @@ fun NewsScreen(
                         pager.refresh()
                     }
                 },
-                onBackClick = onBack
+                onBackClick = {
+                    nav.popBackStack() // 이전 화면으로 돌아가기
+                }
             )
         }
     ) { innerPadding ->
@@ -283,11 +285,3 @@ fun NewsCard(
 }
 
 /* ------------------------------ Preview ------------------------------ */
-
-@Preview(showBackground = true)
-@Composable
-fun NewsScreenPreview() {
-    MaterialTheme {
-        NewsScreen(onOpenDetail = {}, onBack = {})
-    }
-}
