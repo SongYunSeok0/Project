@@ -60,26 +60,17 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-
     implementation(project(":navigation"))
-
     implementation(project(":feature"))
     implementation(project(":common:design"))
 
     // ✅ Compose 필수 라이브러리
-    implementation("androidx.activity:activity-compose:1.9.2")
-    implementation("androidx.compose.ui:ui:1.7.3")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.7.3")
-    implementation("androidx.compose.material3:material3:1.3.0")
-    implementation("androidx.compose.foundation:foundation:1.7.3")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.4")
-    implementation("androidx.compose.material:material-icons-extended:1.7.3")
-    implementation("androidx.paging:paging-runtime-ktx:3.3.2")
-    implementation("androidx.paging:paging-compose:3.3.2")
-    implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.compose.library)
+    implementation(libs.bundles.core)
+    implementation(libs.bundles.test)
 
     // ✅ Retrofit & Coroutine
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -88,11 +79,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("org.jsoup:jsoup:1.16.1")
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+    implementation("androidx.paging:paging-compose:3.3.2")
 
-    // ✅ 디버그용 UI 도구
-    debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }

@@ -104,7 +104,7 @@ fun AppRoot() {
             NavHost(navController = nav, startDestination = AuthGraph) {
                 authNavGraph(nav)
                 mainNavGraph(nav)
-                mapNavGraph()
+                mapNavGraph(nav)
                 newsNavGraph(nav)
                 schedulerNavGraph(nav)
                 mypageNavGraph(nav)
