@@ -1,7 +1,9 @@
 import java.io.File
 import java.util.Properties
 
+
 include(":navigation")
+
 
 
 val localProperties = Properties()
@@ -19,6 +21,7 @@ pluginManagement {
                 includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("androidx.*")
                 includeGroupByRegex("org\\.jetbrains\\.kotlin.*")
+
             }
         }
         mavenCentral()
@@ -39,6 +42,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "MyRythm"
 
+
 include(
     ":app",
     ":common",
@@ -54,6 +58,7 @@ include(
     ":feature:scheduler",
     ":feature:ChatBot"
 )
+
 
 // 5. --- allprojects 대신 사용할 올바른 코드 ---
 // 각 하위 프로젝트(모듈)가 평가되기 전에 공통 로직을 실행

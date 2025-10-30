@@ -5,11 +5,13 @@ plugins {
 }
 
 android {
+
     namespace = "com.myrythm"
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.myrythm"
+
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -46,6 +48,7 @@ android {
         compose = true
         buildConfig = true
     }
+
 }
 
 kotlin {
@@ -54,6 +57,7 @@ kotlin {
 
 
 dependencies {
+
     implementation(project(":navigation"))
     implementation(project(":common"))
     implementation(project(":common:design"))
@@ -67,6 +71,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation("androidx.navigation:navigation-compose:2.8.4")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

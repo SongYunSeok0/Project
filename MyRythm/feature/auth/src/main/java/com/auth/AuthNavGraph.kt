@@ -1,4 +1,3 @@
-// feature/auth/src/main/java/com/auth/AuthNavGraph.kt
 package com.auth
 
 import androidx.navigation.NavController
@@ -12,8 +11,7 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
 
         composable<LoginRoute> {
             LoginScreen(
-                onLogin = { id, pw ->
-                    // TODO 실제 로그인 처리 후 성공 시 이동
+                onLogin = { _, _ ->
                     nav.navigate(MainRoute) {
                         popUpTo(AuthGraph) { inclusive = true }
                         launchSingleTop = true
@@ -24,8 +22,29 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
             )
         }
 
-        // PwdScreen/SignupScreen이 파라미터 없으므로 그대로 호출
-        composable<PwdRoute>   { PwdScreen() }
-        composable<SignupRoute>{ SignupScreen() }
+        composable<PwdRoute> {
+            PwdScreen(
+                onConfirm = { _, _ ->
+                    nav.navigate(LoginRoute) {
+                        popUpTo(PwdRoute) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onBackToLogin = { nav.navigate(LoginRoute) }
+            )
+        }
+
+        composable<SignupRoute> {
+            SignupScreen(
+                onSignupComplete = {
+                    nav.navigate(LoginRoute) {
+                        popUpTo(SignupRoute) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onBackToLogin = { nav.navigate(LoginRoute) }
+            )
+        }
     }
 }
+
