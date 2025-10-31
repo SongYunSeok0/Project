@@ -2,55 +2,22 @@ package com.map.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.material3.*
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,24 +28,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import com.common.design.R
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-
 import com.map.data.NaverSearchService
 import com.map.data.PlaceItem
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
 import com.naver.maps.map.CameraUpdate
-import com.naver.maps.map.compose.ExperimentalNaverMapApi
-import com.naver.maps.map.compose.LocationTrackingMode
-import com.naver.maps.map.compose.MapProperties
-import com.naver.maps.map.compose.MapUiSettings
-import com.naver.maps.map.compose.Marker
-import com.naver.maps.map.compose.MarkerState
-import com.naver.maps.map.compose.NaverMap
-import com.naver.maps.map.compose.rememberCameraPositionState
-import com.naver.maps.map.compose.rememberFusedLocationSource
+import com.naver.maps.map.compose.*
 import com.naver.maps.map.overlay.OverlayImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -91,29 +50,54 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
-import com.common.design.R
 
 data class PlaceWithLatLng(
     val item: PlaceItem,
     val position: LatLng
 )
 
-/* -------------------- 업종 화이트리스트 -------------------- */
+/* -------------------- 업종 화이트/블랙 리스트 -------------------- */
 
-private val HOSPITAL_CATS = listOf(
-    "병원","종합병원","일반병원","의원","치과","한의원",
+private val NEGATIVE_KEYWORDS = listOf(
+    "기공소","용품","재료","장비","기기","상사","도매","유통","제조","판매",
+    "쇼핑몰","원자재","도구","부자재","공구"
+)
+
+private val HOSPITAL_POSITIVE = listOf(
+    "종합병원","일반병원","병원","의원","치과의원","치과병원","한의원",
     "내과","외과","정형외과","소아청소년과","산부인과",
     "이비인후과","안과","피부과","비뇨의학과","정신건강의학과",
     "재활의학과","응급의료","가정의학과"
-)
-private val PHARMACY_CATS = listOf("약국")
+).map { it.lowercase() }
+
+private fun cleanHtml(s: String) = s.replace(Regex("<.*?>"), "").trim()
+
+/** 네이버 category 문자열을 예쁘게 표시용으로 정리 */
+private fun cleanCategoryForDisplay(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    // 예: "병원,의원>치과" -> "치과"
+    val last = raw.split(">").last().trim()
+    // "병원,의원" 같은 상위군 제거
+    return last.replace("병원,의원", "").trim().trim('>', ' ')
+}
 
 private fun isAllowedByCategory(item: PlaceItem, mode: String): Boolean {
-    val c = item.category?.lowercase() ?: return false
+    val name = cleanHtml(item.title).lowercase()
+    val cat  = (item.category ?: "").lowercase()
+
+    // 블랙리스트: 이름/카테고리에 제외어가 하나라도 있으면 탈락
+    if (NEGATIVE_KEYWORDS.any { bad -> name.contains(bad) || cat.contains(bad) }) {
+        return false
+    }
+
     return if (mode == "약국") {
-        PHARMACY_CATS.any { c.contains(it.lowercase()) }
+        // 약국은 '약국'이 카테고리 또는 이름에 포함
+        cat.contains("약국") || name.contains("약국")
     } else {
-        HOSPITAL_CATS.any { c.contains(it.lowercase()) }
+        // 병원/의원 계열 우선: 카테고리 기반
+        if (HOSPITAL_POSITIVE.any { key -> cat.contains(key) }) return true
+        // 폴백: 이름 키워드(블랙리스트는 이미 제외됨)
+        name.contains("병원") || name.contains("의원") || name.contains("치과")
     }
 }
 
@@ -122,6 +106,7 @@ private fun isAllowedByCategory(item: PlaceItem, mode: String): Boolean {
 @OptIn(ExperimentalNaverMapApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
+    var showBottomSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
     val context = LocalContext.current
@@ -136,11 +121,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
     var hasLocationPermission by remember { mutableStateOf(false) }
     var places by remember { mutableStateOf<List<PlaceWithLatLng>>(emptyList()) }
     var selected by remember { mutableStateOf<PlaceWithLatLng?>(null) }
-    var selectedChip by remember { mutableStateOf("병원") }
+    var selectedChip by remember { mutableStateOf("병원") } // 검색 기본 업종
 
     var mapCenter by remember { mutableStateOf<LatLng?>(null) }
-    var showSearchHere by remember { mutableStateOf(false) }
-
 
     // 권한
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -174,7 +157,6 @@ fun MapScreen(modifier: Modifier = Modifier) {
     LaunchedEffect(cameraPositionState) {
         snapshotFlow { cameraPositionState.isMoving }.collectLatest { moving ->
             if (moving) {
-                showSearchHere = true
                 trackingMode = LocationTrackingMode.NoFollow
             } else {
                 mapCenter = cameraPositionState.position.target
@@ -222,7 +204,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
         return 2 * R * asin(min(1.0, sqrt(h)))
     }
 
-    // 검색: 반경 + 업종 필터
+    // 검색: 반경 + 업종 필터 (+ 블랙리스트 적용)
     fun searchPlaces(query: String, center: LatLng?, radiusMeters: Int = 1500) {
         if (center == null) {
             Log.w("MapScreen", "현재 위치 없음. 검색 중단")
@@ -231,16 +213,19 @@ fun MapScreen(modifier: Modifier = Modifier) {
         scope.launch {
             try {
                 val hint = areaHint(center)
-                // 핵심 수정: 힌트 + 사용자가 원하는 키워드 동시 사용
                 val q = listOf(hint, query).filter { it.isNotBlank() }.joinToString(" ")
 
                 val result = NaverSearchService.api.searchPlaces(
-                    query = q,
-                    display = 50,
-                    start = 1,
-                    sort = "sim"
+                    query = q, display = 50, start = 1, sort = "sim"
                 )
-                Log.d("MapScreen", "q=\"$q\" total=${result.total}, items=${result.items.size}, center=$center")
+
+                // 디버그: 전화번호/카테고리 확인
+                result.items.forEach { item ->
+                    Log.d(
+                        "SearchResult",
+                        "이름=${cleanHtml(item.title)}, 전화번호=${item.telephone ?: ""}, 카테고리=${item.category ?: ""}"
+                    )
+                }
 
                 val converted = result.items.mapNotNull { p ->
                     try {
@@ -255,10 +240,11 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
                 val filtered = converted.filter { pw ->
                     distanceMeters(center, pw.position) <= radiusMeters &&
-                            isAllowedByCategory(pw.item, selectedChip) // 업종 화이트리스트 통과만 표시
+                            isAllowedByCategory(pw.item, selectedChip)
                 }
+
                 places = filtered
-                Log.d("MapScreen", "반경 ${radiusMeters}m 업종='${selectedChip}' 결과 ${filtered.size}개")
+                Log.d("MapScreen", "q=\"$q\" 반경 ${radiusMeters}m 업종='${selectedChip}' 결과 ${filtered.size}개")
             } catch (e: Exception) {
                 places = emptyList()
                 Log.e("MapScreen", "API 검색 실패", e)
@@ -277,12 +263,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 )
                 mapCenter = here
                 if (places.isEmpty()) searchPlaces(selectedChip, here)
-                showSearchHere = false
             }
         }
     }
-
-
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -299,9 +282,10 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 Marker(
                     state = MarkerState(position = pw.position),
                     icon = OverlayImage.fromResource(R.drawable.icon),
-                    captionText = pw.item.title.replace(Regex("<.*?>"), ""),
+                    captionText = cleanHtml(pw.item.title),
                     onClick = {
                         selected = pw
+                        showBottomSheet = true
                         cameraPositionState.move(CameraUpdate.scrollTo(pw.position))
                         true
                     }
@@ -309,7 +293,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // ✅ 검색창 UI (상단에 배치)
+        // 상단 검색창
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -338,8 +322,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 onClick = {
                     val center = mapCenter ?: myLocation
                     selected = null
-                    searchPlaces(searchQuery.ifBlank { "병원" }, center)
-                    showSearchHere = false
+                    // 검색어 비어있으면 업종 기본값(병원)으로
+                    val q = searchQuery.ifBlank { "병원" }
+                    searchPlaces(q, center)
                 },
                 shape = RoundedCornerShape(30.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
@@ -348,27 +333,24 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // 기존 "이 위치에서 검색" 칩 유지
-        SearchHereChip(
-            visible = showSearchHere && mapCenter != null,
-            onClick = {
-                val center = mapCenter ?: myLocation
-                selected = null
-                searchPlaces(searchQuery.ifBlank { "병원" }, center)
-                showSearchHere = false
-            },
-            modifier = Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
-                .offset(y = 60.dp) // 검색창 아래로 살짝 내림
-        )
-
-        // 장소 정보 카드
-        selected?.let { pw ->
-            PlaceInfoSheet(
-                place = pw.item,
-                onClose = { selected = null }
-            )
+        // 하단 시트
+        if (selected != null && showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showBottomSheet = false
+                    selected = null
+                },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            ) {
+                PlaceInfoContent(
+                    place = selected!!.item,
+                    onClose = {
+                        showBottomSheet = false
+                        selected = null
+                    },
+                    myLocation = myLocation
+                )
+            }
         }
 
         // 내 위치 버튼
@@ -386,78 +368,117 @@ fun MapScreen(modifier: Modifier = Modifier) {
     }
 }
 
-
-/* -------------------- 하단 UI -------------------- */
+/* -------------------- 하단 시트 컨텐츠 -------------------- */
 
 @Composable
-fun PlaceInfoSheet(
+fun PlaceInfoContent(
     place: PlaceItem,
-    modifier: Modifier = Modifier,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    myLocation: LatLng?
 ) {
-    Card(
-        modifier = modifier
+    val context = LocalContext.current
+
+    val cleanTitle = cleanHtml(place.title)
+    val prettyCategory = cleanCategoryForDisplay(place.category)
+
+    Column(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        shape = RoundedCornerShape(16.dp)
+            .padding(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        // 상호명 (뒤에 업종 붙임)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = cleanTitle + if (prettyCategory.isNotBlank()) " · $prettyCategory" else "",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // 주소
+        Text(text = place.address.ifBlank { "주소 정보 없음" })
+
+        // 전화(대부분 빈 값일 수 있음)
+        place.telephone?.takeIf { it.isNotBlank() }?.let {
+            Text(text = "전화번호: $it")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            // 길찾기 (네이버 지도 앱 우선, 없으면 웹 Fallback)
+            Button(
+                onClick = {
+                    val start = myLocation
+                    val destX = place.mapx.toDoubleOrNull() // 네이버 검색 API TM128 X
+                    val destY = place.mapy.toDoubleOrNull() // 네이버 검색 API TM128 Y
+                    val placeName = cleanTitle
+
+                    if (start != null && destX != null && destY != null) {
+                        try {
+                            // 출발지 주소 변환(표시용)
+                            val geocoder = Geocoder(context, Locale.KOREA)
+                            val addressList = geocoder.getFromLocation(start.latitude, start.longitude, 1)
+                            val startAddress = addressList?.firstOrNull()?.getAddressLine(0) ?: "내 위치"
+
+                            // ✅ 네이버 지도 앱
+                            // 앱은 WGS84 위경도 사용
+                            val appUrl = "nmap://route/public" +
+                                    "?slat=${start.latitude}&slng=${start.longitude}" +
+                                    "&sname=${Uri.encode(startAddress)}" +
+                                    // 목적지는 검색 API 좌표가 TM128 이므로 WGS84로 이미 변환된 마커 좌표를 쓰는 게 이상적이나
+                                    // 여기서는 웹 fallback 대비 이름 중심으로 처리 (앱이 자동보정)
+                                    "&dlat=${destY / 1e7}&dlng=${destX / 1e7}" +
+                                    "&dname=${Uri.encode(placeName)}&appname=com.myrythm"
+
+                            Log.d("MapDebug", "App URL = $appUrl")
+
+                            val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse(appUrl))
+                            appIntent.addCategory(Intent.CATEGORY_BROWSABLE)
+
+                            try {
+                                context.startActivity(appIntent) // 앱 시도
+                            } catch (e: Exception) {
+                                // ❌ 앱 없음 → 웹으로
+                                Log.w("MapDebug", "네이버 지도 앱 없음, 웹으로 이동")
+
+                                // ✅ 네이버 웹(빠른길찾기) - TM128 사용
+                                val webUrl =
+                                    "https://map.naver.com/p/directions/" +
+                                            "${start.longitude},${start.latitude},${Uri.encode(startAddress)},0,FROM_COORD/" +
+                                            "${destX},${destY},${Uri.encode(placeName)},0,TO_COORD/-/transit?c=16.00,0,0,0,dh"
+
+                                Log.d("MapDebug", "Web URL = $webUrl")
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl)))
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MapDebug", "길찾기 처리 실패", e)
+                            Toast.makeText(context, "길찾기를 시작할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "위치 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
             ) {
-                Text(
-                    text = place.title.replace(Regex("<.*?>"), ""),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "닫기",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { onClose() }
-                )
+                Text("길찾기")
             }
-            Spacer(modifier = Modifier.padding(top = 8.dp))
-            Text(text = place.address, fontSize = 14.sp, color = Color.Gray)
-            place.category?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF607D8B)
-                )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(onClick = onClose) {
+                Text("닫기")
             }
         }
     }
 }
 
-
-@Composable
-fun SearchHereChip(
-    visible: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (!visible) return
-    Surface(
-        modifier = modifier.zIndex(1f),
-        shape = RoundedCornerShape(50),
-        color = Color.White,
-        shadowElevation = 4.dp,
-        onClick = onClick
-    ) {
-        Text(
-            text = "이 위치에서 검색",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            fontSize = 14.sp,
-            color = Color(0xFF4A5565)
-        )
-    }
-}
+/* -------------------- 공용 UI -------------------- */
 
 @Composable
 fun RoundRecenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
