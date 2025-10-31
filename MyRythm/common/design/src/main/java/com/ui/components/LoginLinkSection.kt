@@ -10,10 +10,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ui.theme.AuthLinkButtonShape
-import com.ui.theme.AuthLoginSecondrayButton
-import com.ui.theme.PointText
-import com.ui.theme.PrimaryText
+import com.sesac.design.ui.theme.AuthLinkButtonShape
+import com.ui.theme.AuthBlue
+import com.ui.theme.BasicBlack
+import com.ui.theme.LoginSecondrayButton
 import com.ui.theme.ShadowElevationLink
 
 /**
@@ -33,7 +33,7 @@ fun LoginLinkSection(
         // 안내 텍스트
         Text(
             text = "이미 계정이 있으신가요?",
-            color = PrimaryText,
+            color = BasicBlack,
             fontSize = 14.sp,
             letterSpacing = 0.84.sp
         )
@@ -43,7 +43,7 @@ fun LoginLinkSection(
         Surface(
             onClick = onLoginClick,
             shape = AuthLinkButtonShape,
-            color = AuthLoginSecondrayButton,
+            color = LoginSecondrayButton,
             modifier = Modifier
                 .height(28.dp)
                 .clip(shape = AuthLinkButtonShape)
@@ -55,7 +55,7 @@ fun LoginLinkSection(
             ) {
                 Text(
                     text = "로그인",
-                    color = PointText,
+                    color = AuthBlue,
                     fontSize = 14.sp,
                     letterSpacing = 0.84.sp
                 )

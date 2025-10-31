@@ -16,10 +16,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.common.design.R
+import com.ui.theme.AppTypography
 
 @Composable
 fun MainScreen(
@@ -152,5 +154,17 @@ fun FeatureCard(
     ) {
         Image(painterResource(icon), title, Modifier.size(32.dp))
         Text(title, fontSize = 14.sp, color = Color(0xff1e2939), lineHeight = 1.43.em)
+    }
+}
+
+@Preview(showBackground = true, name = "메인 화면 미리보기")
+@Composable
+fun MainScreenPreview() {
+    // 미리보기 환경에 필요한 MaterialTheme과 AppTypography를 적용합니다.
+    MaterialTheme(
+        typography = AppTypography
+    ) {
+        // 원본 MainScreen 컴포저블을 렌더링합니다.
+        MainScreen()
     }
 }

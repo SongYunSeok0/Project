@@ -34,6 +34,10 @@ android {
 }
 
 dependencies {
+
+    implementation("io.coil-kt.coil3:coil-network-okhttp:stable-version")
+    implementation("io.coil-kt.coil3:coil-compose:stable-version")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
