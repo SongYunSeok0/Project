@@ -13,8 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
@@ -22,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,7 +59,7 @@ data class PlaceWithLatLng(
 
 private val NEGATIVE_KEYWORDS = listOf(
     "기공소","용품","재료","장비","기기","상사","도매","유통","제조","판매",
-    "쇼핑몰","원자재","도구","부자재","공구"
+    "쇼핑몰","원자재","도구","부자재","공구","배달","오토바이"
 )
 
 private val HOSPITAL_POSITIVE = listOf(
@@ -77,7 +76,6 @@ private fun cleanCategoryForDisplay(raw: String?): String {
     if (raw.isNullOrBlank()) return ""
     // 예: "병원,의원>치과" -> "치과"
     val last = raw.split(">").last().trim()
-    // "병원,의원" 같은 상위군 제거
     return last.replace("병원,의원", "").trim().trim('>', ' ')
 }
 
@@ -91,12 +89,9 @@ private fun isAllowedByCategory(item: PlaceItem, mode: String): Boolean {
     }
 
     return if (mode == "약국") {
-        // 약국은 '약국'이 카테고리 또는 이름에 포함
         cat.contains("약국") || name.contains("약국")
     } else {
-        // 병원/의원 계열 우선: 카테고리 기반
         if (HOSPITAL_POSITIVE.any { key -> cat.contains(key) }) return true
-        // 폴백: 이름 키워드(블랙리스트는 이미 제외됨)
         name.contains("병원") || name.contains("의원") || name.contains("치과")
     }
 }
@@ -106,6 +101,8 @@ private fun isAllowedByCategory(item: PlaceItem, mode: String): Boolean {
 @OptIn(ExperimentalNaverMapApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
+    val focusManager = LocalFocusManager.current
+
     var showBottomSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
@@ -121,9 +118,14 @@ fun MapScreen(modifier: Modifier = Modifier) {
     var hasLocationPermission by remember { mutableStateOf(false) }
     var places by remember { mutableStateOf<List<PlaceWithLatLng>>(emptyList()) }
     var selected by remember { mutableStateOf<PlaceWithLatLng?>(null) }
-    var selectedChip by remember { mutableStateOf("병원") } // 검색 기본 업종
+
+    // ✅ 토글 상태: "병원" / "약국"
+    var selectedChip by remember { mutableStateOf("병원") }
 
     var mapCenter by remember { mutableStateOf<LatLng?>(null) }
+
+    // ✅ “이 위치에서 검색” 칩 표시 여부
+    var showSearchHere by remember { mutableStateOf(false) }
 
     // 권한
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -153,13 +155,16 @@ fun MapScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    // 카메라 이동 감지
+    // 카메라 이동 감지 → 이동하면 칩 보이기
     LaunchedEffect(cameraPositionState) {
         snapshotFlow { cameraPositionState.isMoving }.collectLatest { moving ->
             if (moving) {
                 trackingMode = LocationTrackingMode.NoFollow
+                showSearchHere = true           // 이동이 시작되면 칩 표시
             } else {
                 mapCenter = cameraPositionState.position.target
+                // 멈췄을 때도 칩은 유지(사용자가 눌러서 검색하게). 필요하면 여기서 true로 다시 보장 가능
+                showSearchHere = true
             }
         }
     }
@@ -263,6 +268,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 )
                 mapCenter = here
                 if (places.isEmpty()) searchPlaces(selectedChip, here)
+                showSearchHere = false // 초진입 시 칩 숨김
             }
         }
     }
@@ -293,45 +299,98 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // 상단 검색창
-        Row(
+        // 상단 검색영역(검색창 + 토글칩) 오버레이
+        Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
-                .zIndex(1f),
-            verticalAlignment = Alignment.CenterVertically
+                .zIndex(1f)
+                .fillMaxWidth()
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text("병원, 약국 등 검색어를 입력하세요") },
-                singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(30.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    val center = mapCenter ?: myLocation
-                    selected = null
-                    // 검색어 비어있으면 업종 기본값(병원)으로
-                    val q = searchQuery.ifBlank { "병원" }
-                    searchPlaces(q, center)
-                },
-                shape = RoundedCornerShape(30.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
+            // 검색창 + 버튼
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("검색", color = Color.White)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("병원, 약국 등 검색어를 입력하세요") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF38B6B2),
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = Color(0xFF38B6B2)
+                    )
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = {
+                        val center = mapCenter ?: myLocation
+                        selected = null
+                        val q = searchQuery.ifBlank { selectedChip }
+                        focusManager.clearFocus(force = true)
+                        showSearchHere = false // 수동 검색 시 칩 숨김
+                        searchPlaces(q, center)
+                    },
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
+                ) {
+                    Text("검색", color = Color.White)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 병원/약국 토글 칩
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = selectedChip == "병원",
+                    onClick = {
+                        selectedChip = "병원"
+                        val center = mapCenter ?: myLocation
+                        selected = null
+                        showSearchHere = false
+                        searchPlaces(searchQuery.ifBlank { selectedChip }, center)
+                    },
+                    label = { Text("병원") }
+                )
+
+                FilterChip(
+                    selected = selectedChip == "약국",
+                    onClick = {
+                        selectedChip = "약국"
+                        val center = mapCenter ?: myLocation
+                        selected = null
+                        showSearchHere = false
+                        searchPlaces(searchQuery.ifBlank { selectedChip }, center)
+                    },
+                    label = { Text("약국") }
+                )
             }
         }
+
+        // ✅ “이 위치에서 검색” 칩 (검색창 아래에 띄우기)
+        SearchHereChip(
+            visible = showSearchHere && mapCenter != null,
+            onClick = {
+                val center = mapCenter ?: myLocation
+                selected = null
+                focusManager.clearFocus(force = true)
+                searchPlaces(searchQuery.ifBlank { selectedChip }, center)
+                showSearchHere = false
+            },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 12.dp)
+                .offset(y = 72.dp) // 검색창/칩 아래로 적당히 내림
+        )
 
         // 하단 시트
         if (selected != null && showBottomSheet) {
@@ -359,6 +418,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 myLocation?.let {
                     cameraPositionState.move(CameraUpdate.scrollTo(it))
                     trackingMode = LocationTrackingMode.Follow
+                    showSearchHere = false
                 }
             },
             modifier = Modifier
@@ -416,8 +476,8 @@ fun PlaceInfoContent(
             Button(
                 onClick = {
                     val start = myLocation
-                    val destX = place.mapx.toDoubleOrNull() // 네이버 검색 API TM128 X
-                    val destY = place.mapy.toDoubleOrNull() // 네이버 검색 API TM128 Y
+                    val destX = place.mapx.toDoubleOrNull() // TM128 X
+                    val destY = place.mapy.toDoubleOrNull() // TM128 Y
                     val placeName = cleanTitle
 
                     if (start != null && destX != null && destY != null) {
@@ -427,13 +487,10 @@ fun PlaceInfoContent(
                             val addressList = geocoder.getFromLocation(start.latitude, start.longitude, 1)
                             val startAddress = addressList?.firstOrNull()?.getAddressLine(0) ?: "내 위치"
 
-                            // ✅ 네이버 지도 앱
-                            // 앱은 WGS84 위경도 사용
+                            // 네이버 지도 앱
                             val appUrl = "nmap://route/public" +
                                     "?slat=${start.latitude}&slng=${start.longitude}" +
                                     "&sname=${Uri.encode(startAddress)}" +
-                                    // 목적지는 검색 API 좌표가 TM128 이므로 WGS84로 이미 변환된 마커 좌표를 쓰는 게 이상적이나
-                                    // 여기서는 웹 fallback 대비 이름 중심으로 처리 (앱이 자동보정)
                                     "&dlat=${destY / 1e7}&dlng=${destX / 1e7}" +
                                     "&dname=${Uri.encode(placeName)}&appname=com.myrythm"
 
@@ -445,10 +502,9 @@ fun PlaceInfoContent(
                             try {
                                 context.startActivity(appIntent) // 앱 시도
                             } catch (e: Exception) {
-                                // ❌ 앱 없음 → 웹으로
+                                // 앱 없음 → 웹
                                 Log.w("MapDebug", "네이버 지도 앱 없음, 웹으로 이동")
 
-                                // ✅ 네이버 웹(빠른길찾기) - TM128 사용
                                 val webUrl =
                                     "https://map.naver.com/p/directions/" +
                                             "${start.longitude},${start.latitude},${Uri.encode(startAddress)},0,FROM_COORD/" +
@@ -479,6 +535,31 @@ fun PlaceInfoContent(
 }
 
 /* -------------------- 공용 UI -------------------- */
+
+@Composable
+fun SearchHereChip(
+    visible: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+    Surface(
+        modifier = modifier
+            .zIndex(1f)
+            .wrapContentWidth(),
+        shape = RoundedCornerShape(50),
+        color = Color.White,
+        shadowElevation = 4.dp,
+        onClick = onClick
+    ) {
+        Text(
+            text = "이 위치에서 검색",
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            fontSize = 14.sp,
+            color = Color(0xFF4A5565)
+        )
+    }
+}
 
 @Composable
 fun RoundRecenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {

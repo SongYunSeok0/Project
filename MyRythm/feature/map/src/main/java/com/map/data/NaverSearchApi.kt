@@ -35,7 +35,7 @@ interface NaverSearchApi {
     @GET("v1/search/local.json")
     suspend fun searchPlaces(
         @Query("query") query: String,
-        @Query("display") display: Int = 30,
+        @Query("display") display: Int = 50,
         @Query("start") start: Int = 1,
         @Query("sort") sort: String = "sim"
     ): SearchResult
