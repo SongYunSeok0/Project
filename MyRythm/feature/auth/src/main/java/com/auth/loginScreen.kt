@@ -50,22 +50,18 @@ fun LoginScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // ==========================================================
-            // 💡 [ID 필드]: AuthInputField 컴포넌트 사용으로 대체
             // AuthInputField.kt 컴포넌트 불러오기
             AuthInputField(
                 value = id,
                 onValueChange = { id = it },
                 hint = "아이디",
-                modifier = Modifier.fillMaxWidth(), // AuthInputField가 내부적으로 높이와 스타일을 처리합니다.
+                modifier = Modifier.fillMaxWidth(),
                 imeAction = ImeAction.Next
             )
 
             Spacer(Modifier.height(12.dp))
 
-            // ==========================================================
-            // 💡 [PW 필드]: AuthInputField 컴포넌트 사용으로 대체 (isPassword = true 설정)
-            // 비밀번호 토글 버튼 로직은 AuthInputField.kt 컴포넌트 내에 존재함
+            // AuthInputField.kt 컴포넌트 불러오기 : 비밀번호 토글 버튼 로직은 AuthInputField.kt 컴포넌트 내에 존재함
             AuthInputField(
                 value = pw,
                 onValueChange = { pw = it },
@@ -87,12 +83,9 @@ fun LoginScreen(
                     .padding(vertical = 4.dp)
             )
 
-            // 🔹 버튼 전 여백 가변
             Spacer(Modifier.height(18.dp))
 
-            // ==========================================================
-            // 💡 [로그인 버튼]: 기존 Button → AuthPrimaryButton으로 변경
-            // 클릭 효과(useClickEffect) 포함, 로그인 테마 적용
+            // AuthButton.kt 컴포넌트 불러오기 : 클릭 효과(useClickEffect) 포함, 로그인 테마 적용
             AuthPrimaryButton(
                 text = "로그인",
                 onClick = { onLogin(id, pw) },
@@ -105,8 +98,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // ==========================================================
-            // 💡 [회원가입 버튼]: 기존 OutlinedButton → AuthSecondaryButton으로 변경
             AuthSecondaryButton(
                 text = "회원가입",
                 onClick = onSignUp,

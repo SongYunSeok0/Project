@@ -70,8 +70,9 @@ fun PwdScreen(
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next
                 )
-                // 입력 필드와 버튼 사이 간격 (고정: 8.dp)
+
                 Spacer(Modifier.width(8.dp))
+
                 AuthActionButton(
                     text = if (sent) "전송됨" else "전송",
                     onClick = {
@@ -85,7 +86,6 @@ fun PwdScreen(
                 )
             }
 
-            // 입력 필드 간격 (고정: 12.dp)
             Spacer(Modifier.height(12.dp))
 
             // 인증번호 입력
@@ -97,12 +97,8 @@ fun PwdScreen(
                 imeAction = ImeAction.Done
             )
 
-            // *** 핵심 간격 블록 (LoginScreen과 동일 높이 유지) ***
-            // LoginScreen의 '비밀번호 찾기 링크 및 여백' 블록(총 높이 58.dp)을 정확히 대체하여 수직 위치를 일치시킵니다.
             Spacer(Modifier.height(58.dp))
-            // ********************
 
-            // 확인 버튼
             AuthPrimaryButton(
                 text = "확인",
                 onClick = { onConfirm(code) },
@@ -115,7 +111,6 @@ fun PwdScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // 로그인으로 이동 버튼
             AuthSecondaryButton(
                 text = "로그인으로",
                 onClick = onGoLogin,
@@ -125,10 +120,7 @@ fun PwdScreen(
                 useLoginTheme = true
             )
 
-            // 3. [반응형] 하단 여백: 남은 공간을 채워 콘텐츠를 위로 밀어냅니다. (수직 중앙 정렬을 위함)
             Spacer(Modifier.weight(1f))
-
-            // 하단에 최소한의 안전 여백을 둡니다. (선택적)
             Spacer(Modifier.height(30.dp))
         }
     }

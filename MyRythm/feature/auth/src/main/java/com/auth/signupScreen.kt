@@ -37,7 +37,6 @@ fun SignupScreen(
     onComplete: () -> Unit = {},
     onWriteLater: () -> Unit = {}
 ) {
-    // 스크롤 상태 정의 (반응형의 핵심)
     val scrollState = rememberScrollState()
 
     // 입력 상태
@@ -64,12 +63,11 @@ fun SignupScreen(
                 .fillMaxSize()
                 .background(AuthBackground)
                 .padding(horizontal = 24.dp, vertical = 30.dp)
-                .verticalScroll(scrollState) // 세로 스크롤 적용
+                .verticalScroll(scrollState)
         ) {
             AuthLogoIcon()
             Spacer(Modifier.height(24.dp))
 
-            // 이름 필드
             AuthInputField(
                 value = name,
                 onValueChange = { name = it },
@@ -80,7 +78,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ID 필드
             AuthInputField(
                 value = id,
                 onValueChange = { id = it },
@@ -91,7 +88,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 비밀번호 필드
             AuthInputField(
                 value = password,
                 onValueChange = { password = it },
