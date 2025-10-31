@@ -2,10 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.example.mypage"
+    namespace = "com.mypage"
     compileSdk = 36
 
     defaultConfig {
@@ -46,34 +47,22 @@ kotlin {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":navigation"))
     implementation(project(":common:design"))
-    implementation(libs.ui.tooling.preview)
-    implementation(libs.androidx.navigation.compose)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    // AndroidX 기본
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    implementation(libs.androidx.navigation.compose)
+    //기본
+    implementation(libs.bundles.compose.library)
+    implementation(libs.bundles.core)
 
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
 
-    // Compose UI 세트
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.runtime:runtime")
-    implementation("androidx.compose.animation:animation")
-
-    // 디버그용 툴링
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     // 테스트
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling.preview)
 }

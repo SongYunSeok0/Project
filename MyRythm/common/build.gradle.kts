@@ -5,44 +5,31 @@ plugins {
 }
 
 android {
-    namespace = "com.common"
+    namespace = "com.common.design"
     compileSdk = 36
 
-    defaultConfig {
-        minSdk = 24
+    defaultConfig { minSdk = 24 }
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
+    buildFeatures { compose = true }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+        isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions {
-        jvmTarget = "21"
-    }
+}
+kotlin {
+    jvmToolchain(21)
 }
 
 dependencies {
 
-    implementation("io.coil-kt.coil3:coil-network-okhttp:stable-version")
-    implementation("io.coil-kt.coil3:coil-compose:stable-version")
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.compose.runtime)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.compose.library)
+    implementation(libs.bundles.core)
+    implementation(libs.bundles.test)
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
 }

@@ -1,0 +1,374 @@
+Index: feature/auth/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>plugins {\r\n    id(\"com.android.library\")\r\n    id(\"org.jetbrains.kotlin.android\")\r\n    alias(libs.plugins.kotlin.compose)\r\n}\r\n\r\nandroid {\r\n    namespace = \"com.example.login\"\r\n    compileSdk = 36\r\n\r\n    defaultConfig {\r\n        minSdk = 24\r\n\r\n        testInstrumentationRunner = \"androidx.test.runner.AndroidJUnitRunner\"\r\n        consumerProguardFiles(\"consumer-rules.pro\")\r\n    }\r\n\r\n    buildTypes {\r\n        release {\r\n            isMinifyEnabled = false\r\n            proguardFiles(\r\n                getDefaultProguardFile(\"proguard-android-optimize.txt\"),\r\n                \"proguard-rules.pro\"\r\n            )\r\n        }\r\n    }\r\n\r\n    compileOptions {\r\n        sourceCompatibility = JavaVersion.VERSION_21\r\n        targetCompatibility = JavaVersion.VERSION_21\r\n    }\r\n    kotlinOptions {\r\n        jvmTarget = \"21\"\r\n    }\r\n\r\n    buildFeatures {\r\n        compose = true\r\n    }\r\n}\r\n\r\ndependencies {\r\n\r\n    implementation(project(\":common:design\"))\r\n    implementation(project(\":navigation\"))\r\n    implementation(\"androidx.navigation:navigation-compose:2.8.4\")\r\n    implementation(platform(\"androidx.compose:compose-bom:2024.09.02\"))\r\n    implementation(\"androidx.compose.ui:ui\")\r\n    implementation(\"androidx.compose.foundation:foundation\")\r\n    implementation(\"androidx.compose.material3:material3\")\r\n    implementation(libs.androidx.foundation)\r\n\r\n    debugImplementation(\"androidx.compose.ui:ui-tooling\")\r\n    debugImplementation(\"androidx.compose.ui:ui-tooling-preview\")\r\n    implementation(\"androidx.compose.material:material-icons-extended\")\r\n\r\n    implementation(libs.androidx.core.ktx)\r\n    implementation(libs.androidx.appcompat)\r\n    implementation(libs.material)\r\n    implementation(libs.androidx.compose.runtime)\r\n    testImplementation(libs.junit)\r\n    androidTestImplementation(libs.androidx.junit)\r\n    androidTestImplementation(libs.androidx.espresso.core)\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/feature/auth/build.gradle.kts b/feature/auth/build.gradle.kts
+--- a/feature/auth/build.gradle.kts	(revision d55999c01687f652b820f90021b0360f80d626c1)
++++ b/feature/auth/build.gradle.kts	(date 1761727762656)
+@@ -49,10 +49,18 @@
+     implementation("androidx.compose.material3:material3")
+     implementation(libs.androidx.foundation)
+ 
++    implementation("com.squareup.retrofit2:retrofit:2.9.0")
++    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
++    implementation("com.squareup.okhttp3:okhttp:4.10.0")
++    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
++    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
++    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
++
+     debugImplementation("androidx.compose.ui:ui-tooling")
+     debugImplementation("androidx.compose.ui:ui-tooling-preview")
+     implementation("androidx.compose.material:material-icons-extended")
+ 
++
+     implementation(libs.androidx.core.ktx)
+     implementation(libs.androidx.appcompat)
+     implementation(libs.material)
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    xmlns:tools=\"http://schemas.android.com/tools\">\r\n\r\n    <uses-permission android:name=\"android.permission.INTERNET\" />\r\n    <uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />\r\n    <uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />\r\n\r\n    <application\r\n        android:name=\".common.MyRythmApplication\"\r\n        android:allowBackup=\"true\"\r\n        android:dataExtractionRules=\"@xml/data_extraction_rules\"\r\n        android:fullBackupContent=\"@xml/backup_rules\"\r\n        android:icon=\"@mipmap/ic_launcher\"\r\n        android:label=\"@string/app_name\"\r\n        android:roundIcon=\"@mipmap/ic_launcher_round\"\r\n        android:supportsRtl=\"true\"\r\n        android:theme=\"@style/Theme.MyRythm\"\r\n        tools:targetApi=\"31\">\r\n\r\n        <meta-data\r\n            android:name=\"com.naver.maps.map.NCP_KEY_ID\"\r\n            android:value=\"${NAVER_MAP_CLIENT_ID}\" />\r\n\r\n        <activity\r\n            android:name=\".MainActivity\"\r\n            android:exported=\"true\"\r\n            android:label=\"@string/app_name\"\r\n            android:theme=\"@style/Theme.MyRythm\">\r\n            <intent-filter>\r\n                <action android:name=\"android.intent.action.MAIN\" />\r\n                <category android:name=\"android.intent.category.LAUNCHER\" />\r\n            </intent-filter>\r\n        </activity>\r\n    </application>\r\n\r\n</manifest>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision d55999c01687f652b820f90021b0360f80d626c1)
++++ b/app/src/main/AndroidManifest.xml	(date 1761729628473)
+@@ -2,6 +2,7 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:tools="http://schemas.android.com/tools">
+ 
++    <!-- ✅ 인터넷 및 위치 권한 -->
+     <uses-permission android:name="android.permission.INTERNET" />
+     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+@@ -16,22 +17,26 @@
+         android:roundIcon="@mipmap/ic_launcher_round"
+         android:supportsRtl="true"
+         android:theme="@style/Theme.MyRythm"
+-        tools:targetApi="31">
++        tools:targetApi="31"
++        android:usesCleartextTraffic="true"
++        android:networkSecurityConfig="@xml/network_security_config">
+ 
+-        <meta-data
+-            android:name="com.naver.maps.map.NCP_KEY_ID"
+-            android:value="${NAVER_MAP_CLIENT_ID}" />
++    <!-- ✅ 네이버 지도 API 키 -->
++    <meta-data
++        android:name="com.naver.maps.map.NCP_KEY_ID"
++        android:value="${NAVER_MAP_CLIENT_ID}" />
+ 
+-        <activity
+-            android:name=".MainActivity"
+-            android:exported="true"
+-            android:label="@string/app_name"
+-            android:theme="@style/Theme.MyRythm">
+-            <intent-filter>
+-                <action android:name="android.intent.action.MAIN" />
+-                <category android:name="android.intent.category.LAUNCHER" />
+-            </intent-filter>
+-        </activity>
+-    </application>
++    <!-- ✅ 기본 Activity -->
++    <activity
++        android:name=".MainActivity"
++        android:exported="true"
++        android:label="@string/app_name"
++        android:theme="@style/Theme.MyRythm">
++        <intent-filter>
++            <action android:name="android.intent.action.MAIN" />
++            <category android:name="android.intent.category.LAUNCHER" />
++        </intent-filter>
++    </activity>
++</application>
+ 
+-</manifest>
++    </manifest>
+Index: feature/auth/src/main/java/com/auth/AuthNavGraph.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// feature/auth/src/main/java/com/auth/AuthNavGraph.kt\r\npackage com.auth\r\n\r\nimport androidx.navigation.NavController\r\nimport androidx.navigation.NavGraphBuilder\r\nimport androidx.navigation.compose.composable\r\nimport androidx.navigation.navigation\r\nimport com.navigation.*\r\n\r\nfun NavGraphBuilder.authNavGraph(nav: NavController) {\r\n    navigation<AuthGraph>(startDestination = LoginRoute) {\r\n\r\n        composable<LoginRoute> {\r\n            LoginScreen(\r\n                onLogin = { id, pw ->\r\n                    // TODO 실제 로그인 처리 후 성공 시 이동\r\n                    nav.navigate(MainRoute) {\r\n                        popUpTo(AuthGraph) { inclusive = true }\r\n                        launchSingleTop = true\r\n                    }\r\n                },\r\n                onForgotPassword = { nav.navigate(PwdRoute) },\r\n                onSignUp = { nav.navigate(SignupRoute) }\r\n            )\r\n        }\r\n\r\n        // PwdScreen/SignupScreen이 파라미터 없으므로 그대로 호출\r\n        composable<PwdRoute>   { PwdScreen() }\r\n        composable<SignupRoute>{ SignupScreen() }\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/AuthNavGraph.kt b/feature/auth/src/main/java/com/auth/AuthNavGraph.kt
+--- a/feature/auth/src/main/java/com/auth/AuthNavGraph.kt	(revision d55999c01687f652b820f90021b0360f80d626c1)
++++ b/feature/auth/src/main/java/com/auth/AuthNavGraph.kt	(date 1761728046053)
+@@ -5,6 +5,9 @@
+ import androidx.navigation.NavGraphBuilder
+ import androidx.navigation.compose.composable
+ import androidx.navigation.navigation
++import com.example.login.ui.LoginScreen
++import com.example.login.ui.PwdScreen
++import com.example.login.ui.SignupScreen
+ import com.navigation.*
+ 
+ fun NavGraphBuilder.authNavGraph(nav: NavController) {
+@@ -12,8 +15,7 @@
+ 
+         composable<LoginRoute> {
+             LoginScreen(
+-                onLogin = { id, pw ->
+-                    // TODO 실제 로그인 처리 후 성공 시 이동
++                onLogin = { _, _ ->
+                     nav.navigate(MainRoute) {
+                         popUpTo(AuthGraph) { inclusive = true }
+                         launchSingleTop = true
+@@ -24,8 +26,29 @@
+             )
+         }
+ 
+-        // PwdScreen/SignupScreen이 파라미터 없으므로 그대로 호출
+-        composable<PwdRoute>   { PwdScreen() }
+-        composable<SignupRoute>{ SignupScreen() }
++        composable<PwdRoute> {
++            PwdScreen(
++                onConfirm = { _, _ ->
++                    nav.navigate(LoginRoute) {
++                        popUpTo(PwdRoute) { inclusive = true }
++                        launchSingleTop = true
++                    }
++                },
++                onBackToLogin = { nav.navigate(LoginRoute) }
++            )
++        }
++
++        composable<SignupRoute> {
++            SignupScreen(
++                onSignupComplete = {
++                    nav.navigate(LoginRoute) {
++                        popUpTo(SignupRoute) { inclusive = true }
++                        launchSingleTop = true
++                    }
++                },
++                onBackToLogin = { nav.navigate(LoginRoute) }
++            )
++        }
+     }
+ }
++
+Index: feature/auth/src/main/java/com/auth/data/api/RetrofitClient.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/data/api/RetrofitClient.kt b/feature/auth/src/main/java/com/auth/data/api/RetrofitClient.kt
+new file mode 100644
+--- /dev/null	(date 1761729824345)
++++ b/feature/auth/src/main/java/com/auth/data/api/RetrofitClient.kt	(date 1761729824345)
+@@ -0,0 +1,16 @@
++package com.auth.data.api
++
++import retrofit2.Retrofit
++import retrofit2.converter.gson.GsonConverterFactory
++
++object RetrofitClient {
++    private const val BASE_URL = "http://10.0.2.2:8000/"
++
++    val instance: UserApi by lazy {
++        retrofit2.Retrofit.Builder()
++            .baseUrl(BASE_URL)
++            .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
++            .build()
++            .create(UserApi::class.java)
++    }
++}
+Index: feature/auth/src/main/java/com/auth/data/api/UserApi.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/data/api/UserApi.kt b/feature/auth/src/main/java/com/auth/data/api/UserApi.kt
+new file mode 100644
+--- /dev/null	(date 1761729815275)
++++ b/feature/auth/src/main/java/com/auth/data/api/UserApi.kt	(date 1761729815275)
+@@ -0,0 +1,16 @@
++package com.auth.data.api
++
++import com.auth.data.model.LoginResponse
++import com.auth.data.model.UserLoginRequest
++import com.auth.data.model.UserSignupRequest
++import retrofit2.Response
++import retrofit2.http.Body
++import retrofit2.http.POST
++
++interface UserApi {
++    @POST("api/users/")
++    suspend fun signup(@Body user: UserSignupRequest): Response<Unit>
++
++    @POST("api/token/")
++    suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>
++}
+Index: app/src/main/res/xml/network_security_config.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/xml/network_security_config.xml b/app/src/main/res/xml/network_security_config.xml
+new file mode 100644
+--- /dev/null	(date 1761729501574)
++++ b/app/src/main/res/xml/network_security_config.xml	(date 1761729501574)
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<network-security-config>
++    <domain-config cleartextTrafficPermitted="true">
++        <domain includeSubdomains="true">10.0.2.2</domain>
++        <domain includeSubdomains="true">127.0.0.1</domain>
++        <domain includeSubdomains="true">localhost</domain>
++    </domain-config>
++</network-security-config>
+Index: feature/auth/src/main/java/com/auth/data/model/LoginResponse.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/data/model/LoginResponse.kt b/feature/auth/src/main/java/com/auth/data/model/LoginResponse.kt
+new file mode 100644
+--- /dev/null	(date 1761728839866)
++++ b/feature/auth/src/main/java/com/auth/data/model/LoginResponse.kt	(date 1761728839866)
+@@ -0,0 +1,7 @@
++package com.auth.data.model
++
++
++data class LoginResponse(
++    val access: String,
++    val refresh: String
++)
+\ No newline at end of file
+Index: feature/auth/src/main/java/com/auth/data/model/UserSignupRequest.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/data/model/UserSignupRequest.kt b/feature/auth/src/main/java/com/auth/data/model/UserSignupRequest.kt
+new file mode 100644
+--- /dev/null	(date 1761728839889)
++++ b/feature/auth/src/main/java/com/auth/data/model/UserSignupRequest.kt	(date 1761728839889)
+@@ -0,0 +1,18 @@
++package com.auth.data.model
++
++import com.google.gson.annotations.SerializedName
++
++data class UserSignupRequest(
++    @SerializedName("username") val id: String,
++    val password: String,
++    val name: String,
++    val birth_date: String,
++    val gender: String,
++    val phone: String,
++    val preferences: Map<String, Any> = emptyMap()
++)
++
++data class UserLoginRequest(
++    val username: String,
++    val password: String
++)
+\ No newline at end of file
+Index: feature/auth/src/main/java/com/auth/viewmodel/LoginViewModel.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/viewmodel/LoginViewModel.kt b/feature/auth/src/main/java/com/auth/viewmodel/LoginViewModel.kt
+new file mode 100644
+--- /dev/null	(date 1761729955677)
++++ b/feature/auth/src/main/java/com/auth/viewmodel/LoginViewModel.kt	(date 1761729955677)
+@@ -0,0 +1,53 @@
++package com.auth.viewmodel
++
++import android.util.Log
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import com.auth.data.api.RetrofitClient
++import com.auth.data.api.UserApi
++import com.auth.data.model.UserLoginRequest
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.launch
++import kotlinx.coroutines.withContext
++
++class LoginViewModel : ViewModel() {
++
++    private val api = RetrofitClient.instance
++
++    fun login(id: String, pw: String, onResult: (Boolean, String) -> Unit) {
++        viewModelScope.launch(Dispatchers.IO) {
++            try {
++                Log.d("LoginViewModel", "📤 로그인 요청 전송: id=$id, pw=$pw")
++
++                val response = api.login(UserLoginRequest(id, pw))
++
++                if (response.isSuccessful) {
++                    val body = response.body()
++                    Log.d("LoginViewModel", "✅ 서버 응답 성공: $body")
++
++                    if (body?.access != null) {
++                        // ✅ UI 콜백은 메인 스레드로 전환
++                        withContext(Dispatchers.Main) {
++                            onResult(true, "로그인 성공")
++                        }
++                    } else {
++                        withContext(Dispatchers.Main) {
++                            onResult(false, "로그인 실패: 잘못된 정보입니다.")
++                        }
++                    }
++                } else {
++                    Log.e("LoginViewModel", "❌ 서버 오류: ${response.code()}")
++                    withContext(Dispatchers.Main) {
++                        onResult(false, "서버 오류: ${response.code()}")
++                    }
++                }
++
++            } catch (e: Exception) {
++                Log.e("LoginViewModel", "🚨 네트워크 예외 발생: ${e.message}", e)
++                withContext(Dispatchers.Main) {
++                    onResult(false, "네트워크 오류: ${e.localizedMessage}")
++                }
++            }
++        }
++    }
++}
+Index: feature/auth/src/main/java/com/auth/viewmodel/PwdViewModel.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/viewmodel/PwdViewModel.kt b/feature/auth/src/main/java/com/auth/viewmodel/PwdViewModel.kt
+new file mode 100644
+--- /dev/null	(date 1761726575060)
++++ b/feature/auth/src/main/java/com/auth/viewmodel/PwdViewModel.kt	(date 1761726575060)
+@@ -0,0 +1,3 @@
++package com.auth.viewmodel
++
++//나중에 firebase 연동 후
+\ No newline at end of file
+Index: feature/auth/src/main/java/com/auth/viewmodel/SignupViewModel.kt.kt
+===================================================================
+diff --git a/feature/auth/src/main/java/com/auth/viewmodel/SignupViewModel.kt.kt b/feature/auth/src/main/java/com/auth/viewmodel/SignupViewModel.kt.kt
+new file mode 100644
+--- /dev/null	(date 1761729890615)
++++ b/feature/auth/src/main/java/com/auth/viewmodel/SignupViewModel.kt.kt	(date 1761729890615)
+@@ -0,0 +1,38 @@
++package com.auth.viewmodel
++
++import android.util.Log
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import com.auth.data.api.RetrofitClient
++import com.auth.data.api.UserApi
++import com.auth.data.model.UserSignupRequest
++import kotlinx.coroutines.launch
++
++class SignupViewModel : ViewModel() {
++
++    fun signup(user: UserSignupRequest, onResult: (Boolean, String) -> Unit) {
++        viewModelScope.launch {
++            try {
++                Log.d("SignupViewModel", "📤 회원가입 요청 전송: $user")
++
++                // ✅ Retrofit에서 UserApi 생성
++                val api = RetrofitClient.instance
++                val response = api.signup(user)
++
++                if (response.isSuccessful) {
++                    Log.d("SignupViewModel", "✅ 서버 응답 성공: ${response.code()}")
++                    onResult(true, "회원가입 성공!")
++                } else {
++                    Log.e(
++                        "SignupViewModel",
++                        "❌ 서버 응답 실패: ${response.code()} ${response.errorBody()?.string()}"
++                    )
++                    onResult(false, "회원가입 실패 (${response.code()})")
++                }
++            } catch (e: Exception) {
++                Log.e("SignupViewModel", "🚨 요청 에러: ${e.message}", e)
++                onResult(false, "네트워크 에러: ${e.message}")
++            }
++        }
++    }
++}

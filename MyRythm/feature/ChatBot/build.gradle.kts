@@ -2,10 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.example.chatbot"
+    namespace = "com.chatbot"
     compileSdk = 36
 
     defaultConfig {
@@ -40,24 +41,16 @@ android {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
-    implementation(project(":navigation"))
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation(platform("androidx.compose:compose-bom:2024.10.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.compose.library)
+    implementation(libs.bundles.core)
+    implementation(libs.bundles.test)
+
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     debugImplementation("androidx.compose.ui:ui-tooling")
-
-    implementation(libs.androidx.navigation.compose)
 }

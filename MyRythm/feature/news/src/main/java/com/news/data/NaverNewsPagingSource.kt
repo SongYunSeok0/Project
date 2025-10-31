@@ -2,7 +2,7 @@ package com.news.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.news.BuildConfig
+import com.news.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup

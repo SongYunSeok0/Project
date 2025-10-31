@@ -1,3 +1,6 @@
+// 1031 주석처리 - pwdScreen.kt에서 메시지가 아닌 로그인으로 버튼 활용
+
+/*
 package com.ui.components
 
 import androidx.compose.foundation.layout.*
@@ -10,16 +13,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sesac.design.ui.theme.AuthLinkButtonShape
+import com.ui.theme.AuthLinkButtonShape
 import com.ui.theme.AuthBlue
 import com.ui.theme.BasicBlack
 import com.ui.theme.LoginSecondrayButton
 import com.ui.theme.ShadowElevationLink
 
+*/
 /**
  * "이미 계정이 있으신가요? 로그인" 형태의 하단 링크 섹션
  * @param onLoginClick '로그인' 버튼 클릭 시 실행될 람다 함수
- */
+ *//*
+
 @Composable
 fun LoginLinkSection(
     onLoginClick: () -> Unit,
@@ -63,3 +68,4 @@ fun LoginLinkSection(
         }
     }
 }
+*/

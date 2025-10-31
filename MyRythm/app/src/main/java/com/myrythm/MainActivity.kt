@@ -18,16 +18,14 @@ import com.design.AppBottomBar
 import com.design.AppTopBar
 import com.myrythm.ui.theme.MyRythmTheme
 
-import com.navigation.*
-
 // 각 feature 모듈 NavGraph
-import com.auth.authNavGraph
-import com.main.mainNavGraph
-import com.map.mapNavGraph
-import com.news.newsNavGraph
-import com.scheduler.schedulerNavGraph
-import com.mypage.mypageNavGraph
-import com.chatbot.chatbotNavGraph
+import com.auth.navigation.*
+import com.main.navigation.*
+import com.map.navigation.*
+import com.news.navigation.*
+import com.scheduler.navigation.*
+import com.mypage.navigation.*
+import com.chatbot.navigation.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,7 +64,7 @@ fun AppRoot() {
         launchSingleTop = true
         restoreState = true
     }
-    fun goScheduleFlow() = nav.navigate(CameraRoute()) {
+    fun goScheduleFlow() = nav.navigate(CameraRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true

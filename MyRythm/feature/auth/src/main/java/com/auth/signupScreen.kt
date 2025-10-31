@@ -186,7 +186,7 @@ fun SignupScreen(
             AuthPrimaryButton(
                 text = "회원 가입 완료",
                 onClick = { onComplete() },
-                modifier = Modifier.fillMaxWidth().height(62.dp)
+                modifier = Modifier.fillMaxWidth().height(56.dp)
             )
 
             Spacer(Modifier.height(16.dp))
