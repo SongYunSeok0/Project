@@ -91,7 +91,7 @@ fun MainFeatureCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(painterResource(icon), title, Modifier.size(32.dp))
+        Image(painterResource(icon), title, Modifier.size(40.dp))
         Text(title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface

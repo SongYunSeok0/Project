@@ -35,7 +35,15 @@ fun MainScreen(
     onFabCamera:     () -> Unit = {} // 현재 화면에서는 미사용
 ) {
     val tempIconResId = R.drawable.logo
+
     val chatBotIconResId = R.drawable.robot
+    val schedulerIconResId = R.drawable.schedule
+    val stepIconResId = R.drawable.step
+    val rateIconResId = R.drawable.rate
+
+    val mapIconResId = R.drawable.map
+    val newsIconResId = R.drawable.news
+
 
     Column(
         modifier = Modifier
@@ -57,7 +65,7 @@ fun MainScreen(
             MainFeatureCard(
                 title = "스케줄러",
                 bg = Color(0x33EB80FF),
-                icon = tempIconResId,
+                icon = schedulerIconResId,
                 onClick = onOpenScheduler,
                 modifier = Modifier.weight(1f).height(140.dp)
             )
@@ -67,14 +75,14 @@ fun MainScreen(
             MainFeatureCard(
                 title = "걸음수",
                 bg = Color(0x33AD9ABC),
-                icon = tempIconResId,
+                icon = stepIconResId,
                 onClick = onOpenSteps,
                 modifier = Modifier.weight(1f).height(140.dp)
             )
             MainFeatureCard(
                 title = "최근 심박 수",
                 bg = Color(0x33FF7367),
-                icon = tempIconResId,
+                icon = rateIconResId,
                 onClick = onOpenHeart,
                 modifier = Modifier.weight(1f).height(140.dp)
             )
@@ -96,7 +104,7 @@ fun MainScreen(
                 Text("복용까지 남은 시간", fontSize = 16.sp, color = Color(0xff1e2939))
                 Image(painterResource(tempIconResId),
                     null,
-                    Modifier.size(32.dp))
+                    Modifier.size(48.dp))
             }
             Spacer(Modifier.height(12.dp))
             Text("2:30", style = MaterialTheme.typography.displaySmall, color = Color(0xff1e2939))
@@ -107,14 +115,14 @@ fun MainScreen(
             FeatureCard(
                 title = "지도",
                 bg = Color(0x33C5FF80),
-                icon = tempIconResId,
+                icon = mapIconResId,
                 modifier = Modifier.weight(1f).height(140.dp),
                 onClick = onOpenMap
             )
             FeatureCard(
                 title = "뉴스",
                 bg = Color(0x33FFEF6C),
-                icon = tempIconResId,
+                icon = newsIconResId,
                 modifier = Modifier.weight(1f).height(140.dp),
                 onClick = onOpenNews
             )
