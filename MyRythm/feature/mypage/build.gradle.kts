@@ -2,10 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.example.mypage"
+    namespace = "com.mypage"
     compileSdk = 36
 
     defaultConfig {
@@ -46,7 +47,6 @@ kotlin {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":navigation"))
     implementation(project(":common:design"))
 
     implementation(libs.androidx.navigation.compose)
@@ -60,5 +60,9 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     // 테스트
-    implementation(libs.bundles.test)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling.preview)
 }

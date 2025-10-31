@@ -3,11 +3,12 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    id("org.jetbrains.kotlin.plugin.compose") // ✅ Compose 플러그인
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.example.news"
+    namespace = "com.news"
     compileSdk = 36
 
     defaultConfig {
@@ -60,8 +61,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":navigation"))
-    implementation(project(":feature"))
     implementation(project(":common:design"))
 
     // ✅ Compose 필수 라이브러리
@@ -82,5 +81,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation("androidx.paging:paging-compose:3.3.2")
 
+    // ✅ 디버그용 UI 도구
+    debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

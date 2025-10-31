@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -39,7 +40,11 @@ android {
 
 dependencies {
     implementation(project(":common:design"))
-    implementation(project(":navigation"))
+    implementation(project(":feature:mypage"))
+    implementation(project(":feature:scheduler"))
+    implementation(project(":feature:map"))
+    implementation(project(":feature:news"))
+    implementation(project(":feature:chatbot"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)

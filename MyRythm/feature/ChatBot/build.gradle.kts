@@ -2,10 +2,11 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.example.chatbot"
+    namespace = "com.chatbot"
     compileSdk = 36
 
     defaultConfig {
@@ -40,7 +41,6 @@ android {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
-    implementation(project(":navigation"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)
@@ -52,5 +52,5 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
-
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }
