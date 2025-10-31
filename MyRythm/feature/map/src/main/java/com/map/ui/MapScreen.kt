@@ -26,6 +26,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -34,9 +36,12 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -117,6 +122,8 @@ private fun isAllowedByCategory(item: PlaceItem, mode: String): Boolean {
 @OptIn(ExperimentalNaverMapApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
+    var searchQuery by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
@@ -277,112 +284,108 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
 
 
-        Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
 
-            NaverMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                uiSettings = MapUiSettings(isLocationButtonEnabled = false),
-                locationSource = if (hasLocationPermission) locationSource else null,
-                properties = MapProperties(locationTrackingMode = trackingMode),
-                onMapClick = { _, _ -> selected = null }
-            ) {
-                places.forEach { pw ->
-                    Marker(
-                        state = MarkerState(position = pw.position),
-                        icon = OverlayImage.fromResource(R.drawable.icon),
-                        captionText = pw.item.title.replace(Regex("<.*?>"), ""),
-                        onClick = {
-                            selected = pw
-                            cameraPositionState.move(CameraUpdate.scrollTo(pw.position))
-                            true
-                        }
-                    )
-                }
+        // 지도
+        NaverMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            uiSettings = MapUiSettings(isLocationButtonEnabled = false),
+            locationSource = if (hasLocationPermission) locationSource else null,
+            properties = MapProperties(locationTrackingMode = trackingMode),
+            onMapClick = { _, _ -> selected = null }
+        ) {
+            places.forEach { pw ->
+                Marker(
+                    state = MarkerState(position = pw.position),
+                    icon = OverlayImage.fromResource(R.drawable.icon),
+                    captionText = pw.item.title.replace(Regex("<.*?>"), ""),
+                    onClick = {
+                        selected = pw
+                        cameraPositionState.move(CameraUpdate.scrollTo(pw.position))
+                        true
+                    }
+                )
             }
+        }
 
-            SearchHereChip(
-                visible = showSearchHere && mapCenter != null,
+        // ✅ 검색창 UI (상단에 배치)
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .zIndex(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("병원, 약국 등 검색어를 입력하세요") },
+                singleLine = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(30.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
                 onClick = {
                     val center = mapCenter ?: myLocation
                     selected = null
-                    searchPlaces(selectedChip, center)
+                    searchPlaces(searchQuery.ifBlank { "병원" }, center)
                     showSearchHere = false
                 },
-                modifier = Modifier
-                    .padding(12.dp).align(Alignment.TopCenter)
-            )
-
-            selected?.let { pw ->
-                PlaceInfoSheet(
-                    place = pw.item,
-                    modifier = Modifier,
-                    onClose = { selected = null }
-                )
-            }
-
-            RoundRecenterButton(
-                onClick = {
-                    myLocation?.let {
-                        cameraPositionState.move(CameraUpdate.scrollTo(it))
-                        trackingMode = LocationTrackingMode.Follow
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-            )
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)      // 칩 묶음을 오른쪽 아래 배치
-                    .offset(x = (-20).dp, y = (5).dp) // 전체 묶음 위치 미세 조정
+                shape = RoundedCornerShape(30.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
             ) {
-                
-                FilterChip(
-                    selected = selectedChip == "병원",
-                    onClick = {
-                        if (selectedChip != "병원") {
-                            selectedChip = "병원"; selected = null
-                            val center = mapCenter ?: myLocation
-                            searchPlaces("병원", center)
-                        }
-                    },
-                    label = { Text("병원", fontSize = 20.sp) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = Color.White,
-                        selectedContainerColor = Color(0xFF6AE0D9),
-                        selectedLabelColor = Color.White
-                    ),
-                    modifier = Modifier.wrapContentWidth() // 칩 간 간격 대신 Spacer 안 써도 됨
-                )
-
-                FilterChip(
-                    selected = selectedChip == "약국",
-                    onClick = {
-                        if (selectedChip != "약국") {
-                            selectedChip = "약국"; selected = null
-                            val center = mapCenter ?: myLocation
-                            searchPlaces("약국", center)
-                        }
-                    },
-                    label = { Text("약국", fontSize = 20.sp) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = Color.White,
-                        selectedContainerColor = Color(0xFF6AE0D9),
-                        selectedLabelColor = Color.White
-                    ),
-                    modifier = Modifier.wrapContentWidth()
-                )
+                Text("검색", color = Color.White)
             }
-
-
-
-
-
-
         }
+
+        // 기존 "이 위치에서 검색" 칩 유지
+        SearchHereChip(
+            visible = showSearchHere && mapCenter != null,
+            onClick = {
+                val center = mapCenter ?: myLocation
+                selected = null
+                searchPlaces(searchQuery.ifBlank { "병원" }, center)
+                showSearchHere = false
+            },
+            modifier = Modifier
+                .padding(12.dp)
+                .align(Alignment.TopCenter)
+                .offset(y = 60.dp) // 검색창 아래로 살짝 내림
+        )
+
+        // 장소 정보 카드
+        selected?.let { pw ->
+            PlaceInfoSheet(
+                place = pw.item,
+                onClose = { selected = null }
+            )
+        }
+
+        // 내 위치 버튼
+        RoundRecenterButton(
+            onClick = {
+                myLocation?.let {
+                    cameraPositionState.move(CameraUpdate.scrollTo(it))
+                    trackingMode = LocationTrackingMode.Follow
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        )
+    }
 }
+
 
 /* -------------------- 하단 UI -------------------- */
 
