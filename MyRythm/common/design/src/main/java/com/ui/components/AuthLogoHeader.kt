@@ -56,6 +56,20 @@ fun AuthLogoHeader(
     }
 }
 
+@Composable
+fun AuthLogoIcon(
+    iconSize: Dp = 120.dp,
+    modifier: Modifier = Modifier
+) {
+    Image(
+        painter = painterResource(id = R.drawable.logo),
+        contentDescription = "Mini logo Icon",
+        modifier = Modifier
+            .size(iconSize)
+            .clip(CircleShape)
+    )
+}
+
 
 /*
 package com.ui.components

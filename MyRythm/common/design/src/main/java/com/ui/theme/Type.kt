@@ -1,16 +1,20 @@
 package com.ui.theme
+import com.common.design.R
 import androidx.compose.material3.Typography
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 // 앱의 모든 텍스트 스타일 정의. (Typography 객체, FontFamily 정의).
 
-// 기본 폰트 사이즈
+// 기본 폰트
 val defaultFontFamily = FontFamily.Default
-
+val pretendard = FontFamily(
+    Font(R.font.pretendardvariable, FontWeight.Normal)
+)
 val AppTypography = Typography(
     // 제목 글씨
     headlineMedium = TextStyle(
@@ -22,11 +26,11 @@ val AppTypography = Typography(
     ),
     // 카드 제목, 섹션 제목 등
     titleMedium = TextStyle(
-        fontFamily = defaultFontFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = pretendard,
+        fontWeight = FontWeight.Normal,
         fontSize = 20.sp,
         lineHeight = 24.sp,
-        letterSpacing = 0.15.sp
+        letterSpacing = 0.5.sp
     ),
     // 주요 버튼 글씨
     labelLarge = TextStyle(

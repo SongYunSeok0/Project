@@ -66,11 +66,7 @@ fun SignupScreen(
                 .padding(horizontal = 24.dp, vertical = 30.dp)
                 .verticalScroll(scrollState) // 세로 스크롤 적용
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = "logo",
-                modifier = Modifier.size(120.dp).clip(CircleShape)
-            )
+            AuthLogoIcon()
             Spacer(Modifier.height(24.dp))
 
             // 이름 필드
@@ -146,14 +142,16 @@ fun SignupScreen(
                     imeAction = ImeAction.Next
                 )
                 Spacer(Modifier.width(8.dp))
-                AuthSecondaryButton(
+                AuthActionButton(
                     text = if (sent) "전송됨" else "전송",
                     onClick = {
                         sent = true
                         onSendCode(phone)
                     },
                     enabled = !sent && phone.isNotBlank(),
-                    modifier = Modifier.height(56.dp).widthIn(min = 90.dp)
+                    modifier = Modifier
+                        .height(56.dp)
+                        .widthIn(min = 90.dp)
                 )
             }
 

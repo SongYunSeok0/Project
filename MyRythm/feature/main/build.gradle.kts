@@ -39,12 +39,19 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature"))
     implementation(project(":common:design"))
+
     implementation(project(":feature:mypage"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:map"))
     implementation(project(":feature:news"))
     implementation(project(":feature:chatbot"))
+
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)

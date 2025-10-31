@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.common.design.R
+import com.ui.components.MainFeatureCard
 import com.ui.theme.AppTypography
 
 @Composable
@@ -34,6 +35,7 @@ fun MainScreen(
     onFabCamera:     () -> Unit = {} // 현재 화면에서는 미사용
 ) {
     val tempIconResId = R.drawable.logo
+    val chatBotIconResId = R.drawable.robot
 
     Column(
         modifier = Modifier
@@ -43,37 +45,38 @@ fun MainScreen(
             .padding(top = 10.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            FeatureCard(
+            MainFeatureCard(
                 title = "챗봇",
-                bg = Color(0xffe8f5f4),
-                icon = tempIconResId,
-                modifier = Modifier.weight(1f).height(140.dp),
-                onClick = onOpenChatBot
+                bg = Color(0x3380E1FF),
+                icon = chatBotIconResId,
+                onClick = onOpenChatBot,
+                modifier = Modifier.weight(1f).height(140.dp)
             )
-            FeatureCard(
+            MainFeatureCard(
                 title = "스케줄러",
-                bg = Color(0xfff0e8f5),
+                bg = Color(0x33EB80FF),
                 icon = tempIconResId,
-                modifier = Modifier.weight(1f).height(140.dp),
-                onClick = onOpenScheduler
+                onClick = onOpenScheduler,
+                modifier = Modifier.weight(1f).height(140.dp)
             )
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            FeatureCard(
+            MainFeatureCard(
                 title = "걸음수",
-                bg = Color(0xffe8f0f5),
+                bg = Color(0x33AD9ABC),
                 icon = tempIconResId,
-                modifier = Modifier.weight(1f).height(140.dp),
-                onClick = onOpenSteps
+                onClick = onOpenSteps,
+                modifier = Modifier.weight(1f).height(140.dp)
             )
-            FeatureCard(
+            MainFeatureCard(
                 title = "최근 심박 수",
-                bg = Color(0xffffe8e8),
+                bg = Color(0x33FF7367),
                 icon = tempIconResId,
-                modifier = Modifier.weight(1f).height(140.dp),
-                onClick = onOpenHeart
+                onClick = onOpenHeart,
+                modifier = Modifier.weight(1f).height(140.dp)
             )
         }
 
@@ -81,7 +84,7 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xffb5d8f5))
+                .background(Color(0x3320FFE5))
                 .clickable { onOpenScheduler() } // 남은시간 카드 → 스케줄러로 이동
                 .padding(20.dp)
         ) {
@@ -91,7 +94,9 @@ fun MainScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("복용까지 남은 시간", fontSize = 16.sp, color = Color(0xff1e2939))
-                Image(painterResource(tempIconResId), null, Modifier.size(24.dp))
+                Image(painterResource(tempIconResId),
+                    null,
+                    Modifier.size(32.dp))
             }
             Spacer(Modifier.height(12.dp))
             Text("2:30", style = MaterialTheme.typography.displaySmall, color = Color(0xff1e2939))
@@ -101,14 +106,14 @@ fun MainScreen(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             FeatureCard(
                 title = "지도",
-                bg = Color(0xffe8f5f0),
+                bg = Color(0x33C5FF80),
                 icon = tempIconResId,
                 modifier = Modifier.weight(1f).height(140.dp),
                 onClick = onOpenMap
             )
             FeatureCard(
                 title = "뉴스",
-                bg = Color(0xfffff4e8),
+                bg = Color(0x33FFEF6C),
                 icon = tempIconResId,
                 modifier = Modifier.weight(1f).height(140.dp),
                 onClick = onOpenNews
@@ -119,7 +124,7 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xffe8f5f4))
+                .background(Color(0x666AC0E0))
                 .clickable { /* 필요 시 다른 목적지로 연결 */ }
                 .padding(vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
