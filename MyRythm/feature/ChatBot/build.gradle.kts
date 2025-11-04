@@ -41,6 +41,7 @@ android {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)
@@ -51,6 +52,8 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 }

@@ -48,6 +48,7 @@ kotlin {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     implementation(libs.androidx.navigation.compose)
     //기본
@@ -65,4 +66,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 }

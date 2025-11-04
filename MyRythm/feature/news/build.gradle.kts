@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -49,6 +51,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
+    }
+
     kotlinOptions {
         jvmTarget = "21"
     }
@@ -62,6 +68,7 @@ android {
 
 dependencies {
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     // ✅ Compose 필수 라이브러리
     implementation(platform(libs.androidx.compose.bom))
@@ -75,7 +82,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("org.jsoup:jsoup:1.16.1")
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
@@ -87,4 +94,16 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-compiler:2.52")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+
+    kapt("androidx.hilt:hilt-compiler:1.2.0")
+
+    // 기타 androidx.lifecycle.viewmodel.ktx 등도 필요할 수 있음
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.3")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 }

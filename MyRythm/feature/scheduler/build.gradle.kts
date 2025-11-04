@@ -34,6 +34,7 @@ android {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)
@@ -51,4 +52,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 }

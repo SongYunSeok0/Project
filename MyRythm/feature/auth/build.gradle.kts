@@ -42,6 +42,7 @@ android {
 dependencies {
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
+    implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)
@@ -60,5 +61,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 
 }

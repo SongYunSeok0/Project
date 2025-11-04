@@ -45,6 +45,7 @@ dependencies {
     implementation(project(":feature:map"))
     implementation(project(":feature:news"))
     implementation(project(":feature:chatbot"))
+    implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.navigation.compose)
@@ -52,4 +53,6 @@ dependencies {
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 }

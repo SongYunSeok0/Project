@@ -6,23 +6,25 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+    plugins {
+        id("com.google.dagger.hilt.android") version "2.52" apply false
+    }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
         maven { url = uri("https://repository.map.naver.com/archive/maven") }
     }
+
 }
 
 include(
     ":app",
     ":common",
     ":common:design",
-    ":data",
-    ":domain",
     ":feature:auth",
     ":feature:main",
     ":feature:map",
@@ -31,3 +33,5 @@ include(
     ":feature:scheduler",
     ":feature:chatbot"
 )
+include(":data")
+include(":domain")

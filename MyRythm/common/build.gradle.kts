@@ -32,4 +32,6 @@ dependencies {
     implementation(libs.bundles.test)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+
 }

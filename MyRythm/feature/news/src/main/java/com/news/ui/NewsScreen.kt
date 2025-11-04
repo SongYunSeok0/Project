@@ -1,17 +1,13 @@
 package com.news.ui
 
-import android.net.Uri
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +30,10 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.common.design.R
 import com.news.NewsViewModel
+import androidx.paging.compose.items
+import com.data.remote.model.NaverNewsResponse
+
+
 
 
 
@@ -71,13 +70,13 @@ fun NewsScreen( // ← 네비그래프와 맞추기 위해 이름 변경
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                BannerCard("건강 뉴스", "최신 건강 정보", Modifier.weight(1f)) {
+                BannerCard("건강 뉴스", "최신 건강 정보", modifier = Modifier.weight(1f)) {
                     selectedCategory = "건강"; pager.refresh()
                 }
-                BannerCard("의학 뉴스", "최신 의학 연구", Modifier.weight(1f)) {
+                BannerCard("의학 뉴스", "최신 의학 연구", modifier = Modifier.weight(1f)) {
                     selectedCategory = "의학"; pager.refresh()
                 }
-                BannerCard("복약 안전", "올바른 복용법", Modifier.weight(1f)) {
+                BannerCard("복약 안전", "올바른 복용법", modifier = Modifier.weight(1f)) {
                     selectedCategory = "복약"; pager.refresh()
                 }
             }
@@ -141,12 +140,10 @@ fun NewsScreen( // ← 네비그래프와 맞추기 위해 이름 변경
             )
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(pager.itemSnapshotList.items) { item ->
+                items(pager) { item ->
                     item?.let {
-                        // ✅ 안전한 URL 선택 (originallink 우선, 없으면 link)
-                        val url = (it.originallink?.takeIf { s -> s.isNotBlank() } ?: it.link).trim()
+                        val url = it.link.trim()
 
-                        // 타이틀의 HTML 태그 간단 정리
                         val cleanTitle = it.title
                             .replace("<b>", "")
                             .replace("</b>", "")
@@ -156,31 +153,23 @@ fun NewsScreen( // ← 네비그래프와 맞추기 위해 이름 변경
                             title = cleanTitle,
                             info = it.pubDate.take(16),
                             imageUrl = it.image ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
-                            onClick = {
-                                if (url.isNotEmpty()) {
-                                    // ⚠️ 인코딩은 NavGraph에서 처리하지만, 이중 안전망을 원하면 아래 라인 사용
-                                    // onOpenDetail(Uri.encode(url))
-                                    onOpenDetail(url)
-                                }
-                            }
+                            onClick = { onOpenDetail(url) }
                         )
                     }
                 }
 
-                // 로딩 표시
                 if (pager.loadState.refresh is LoadState.Loading ||
                     pager.loadState.append is LoadState.Loading
                 ) {
                     item {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
+                            modifier = Modifier.fillMaxWidth().padding(20.dp),
                             contentAlignment = Alignment.Center
                         ) { CircularProgressIndicator() }
                     }
                 }
             }
+
         }
 
 }

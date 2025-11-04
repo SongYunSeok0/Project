@@ -39,6 +39,7 @@ android {
 dependencies {
     // 모듈
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     // Compose BOM + 기본 세트
     implementation(platform(libs.androidx.compose.bom))
