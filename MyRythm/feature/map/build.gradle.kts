@@ -63,4 +63,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    //병원정보 하단시트
+    implementation("androidx.compose.material3:material3:1.3.1")
 }
