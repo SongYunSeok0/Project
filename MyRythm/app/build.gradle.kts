@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -73,6 +75,10 @@ dependencies {
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:chatbot"))
 
+    // domain & data modules
+    implementation(project(":domain"))
+    implementation(project(":data"))
+
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation(platform(libs.androidx.compose.bom))
@@ -83,4 +89,13 @@ dependencies {
     implementation(libs.bundles.test)
 
     implementation("com.naver.maps:map-sdk:3.23.0")
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-compiler:2.52")
+    implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.9.0")
+
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
 }

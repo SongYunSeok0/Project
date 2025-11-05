@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
+    id("com.google.dagger.hilt.android") version "2.52" apply false
 }
 
 // --- 이 블록을 파일 맨 아래에 추가하세요 ---
