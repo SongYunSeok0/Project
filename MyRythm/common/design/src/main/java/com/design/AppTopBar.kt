@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -102,5 +103,29 @@ fun AppBottomBar(
                 modifier = Modifier.size(36.dp)
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AppBarPreview() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF8F8F8)),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        AppTopBar(
+            title = "메인 화면",
+            showBack = true,
+            onBackClick = {}
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        AppBottomBar(
+            currentScreen = "Home",
+            onTabSelected = {}
+        )
     }
 }

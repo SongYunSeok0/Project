@@ -48,7 +48,7 @@ fun MainScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xfffcfcfc))
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp, vertical = 24.dp)
             .padding(top = 10.dp)
             .verticalScroll(rememberScrollState()),

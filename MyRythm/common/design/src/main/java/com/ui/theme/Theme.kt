@@ -21,6 +21,7 @@ private val LightColorScheme = lightColorScheme(
     onSurface = OnSurface,
     background = BackGround,
     onBackground = BasicBlack,
+    secondary = Color(0x4DB5E5E1),
 
     // 오류 팝업
     error = Color.Red,
@@ -60,5 +61,20 @@ fun AppTheme(
             shapes = AppShapes,            // Shape.kt에서 정의된 Shapes (AuthFieldShape, CardShape, DialogShape 포함)
             content = content
         )
+    }
+}
+
+@Composable
+fun OnlyColorTheme(content: @Composable () -> Unit) {
+    // 현재 테마의 폰트 / 모양 유지, 컬러만 맨 위에서 지정한 걸로 변경
+    val currentTypography = MaterialTheme.typography
+    val currentShapes = MaterialTheme.shapes
+
+    MaterialTheme(
+        colorScheme = LightColorScheme,
+        typography = currentTypography,
+        shapes = currentShapes
+    ) {
+        content()
     }
 }

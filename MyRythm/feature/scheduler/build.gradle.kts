@@ -42,6 +42,10 @@ dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
+
+    // FAQ 탭 부분 PrimaryTabRow 사용 의존성 추가 (3부터가능)
+    implementation(libs.androidx.material3)
+
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation(libs.kotlinx.serialization.json)
 
