@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.myrythm"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -53,7 +53,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = "21" }
     buildFeatures {
@@ -79,23 +78,21 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
 
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.bundles.test)
 
-    implementation("com.naver.maps:map-sdk:3.23.0")
+    implementation(libs.naver.map.sdk)
 
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.52")
-    kapt("com.google.dagger:hilt-compiler:2.52")
-    implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.9.0")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation(libs.kotlinx.metadata.jvm)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+
 
 }

@@ -6,6 +6,7 @@ junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.8.6"
+lifecycle = "2.8.6"
 
 # compose
 activityCompose = "1.9.3"
@@ -22,6 +23,23 @@ foundation = "1.9.4"
 navigation = "2.9.5"
 serialization = "1.7.3"
 jetbrainsKotlinJvm = "2.0.21"
+materialIconsExtended = "1.7.8"
+
+naver-map = "3.23.0"
+hilt = "2.52"
+kotlinx-metadata = "0.9.0"
+retrofit = "2.11.0"
+okhttp = "4.10.0"
+coroutines = "1.7.3"
+room = "2.6.1"
+naver-map-compose = "1.5.0"
+play-services-location = "20.0.0"
+accompanist = "0.34.0"
+compose-animation = "1.7.0"
+coil = "2.7.0"
+jsoup = "1.16.1"
+paging = "3.3.2"
+
 
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -31,7 +49,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-
+lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 
 # Compose BOM은 platform()으로만 사용
@@ -54,6 +72,41 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-compose-ui-geometry = { group = "androidx.compose.ui", name = "ui-geometry", version.ref = "uiGeometry" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+naver-map-sdk = { group = "com.naver.maps", name = "map-sdk", version.ref = "naver-map" }
+
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+
+kotlinx-metadata-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version.ref = "kotlinx-metadata" }
+
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+compose-animation = { group = "androidx.compose.animation", name = "animation" }
+# OkHttp
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
+# Coroutines
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+naver-map-compose = { group = "io.github.fornewid", name = "naver-map-compose", version.ref = "naver-map-compose" }
+
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+
+compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -74,6 +127,7 @@ core = [
 compose-library = [
     "androidx-compose-runtime",
     "androidx-activity-compose",
+    "androidx-material-icons-extended",
     "androidx-foundation",
     "androidx-foundation-layout",
     "androidx-ui",
@@ -81,7 +135,7 @@ compose-library = [
     "androidx-ui-tooling",
     "androidx-ui-tooling-preview",
     "androidx-material3",
-    "androidx-navigation-compose"
+    "androidx-navigation-compose",
 ]
 
 test = [

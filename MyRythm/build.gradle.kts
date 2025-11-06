@@ -13,6 +13,6 @@ plugins {
 // 프로젝트의 모든 모듈에서 공통으로 사용할 버전 변수를 정의합니다.
 ext {
     set("compileSdk", 36)
-    set("minSdk", 24)
+    set("minSdk", 26)
     set("targetSdk", 36)
 }

@@ -9,7 +9,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -50,7 +50,7 @@ dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
 
-    implementation("androidx.compose.animation:animation")
-    implementation("androidx.compose.material:material-icons-core:1.7.3")
-    implementation("androidx.compose.material:material-icons-extended:1.7.3")
+    implementation(libs.compose.animation)
+
+
 }

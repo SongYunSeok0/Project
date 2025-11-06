@@ -10,7 +10,7 @@ android {
     namespace = "com.example.scheduler"
     compileSdk = 36
 
-    defaultConfig { minSdk = 24 }
+    defaultConfig { minSdk = 26 }
 
     buildTypes {
         release {
@@ -37,19 +37,11 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
-    implementation("androidx.compose.material:material-icons-extended:1.5.0")
-    implementation("androidx.activity:activity-compose:1.9.3")
     implementation(libs.kotlinx.serialization.json)
-
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+
 }

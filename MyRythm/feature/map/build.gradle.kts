@@ -45,26 +45,19 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
-    implementation(libs.androidx.navigation.compose)
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.bundles.test)
 
     // ★ 네이버 지도 + Compose
-    implementation("com.naver.maps:map-sdk:3.23.0")
-    implementation("io.github.fornewid:naver-map-compose:1.5.0")
+    implementation(libs.naver.map.sdk)
+    implementation(libs.naver.map.compose)
 
     // ★ 현재 코드에서 FusedLocationProviderClient 직접 사용하므로 필요
-    implementation("com.google.android.gms:play-services-location:20.0.0")
+    implementation(libs.play.services.location)
 
     // 기타
-    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation(libs.accompanist.permissions)
 
-    // 테스트
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.retrofit)
 
-    //병원정보 하단시트
-    implementation("androidx.compose.material3:material3:1.3.1")
 }
