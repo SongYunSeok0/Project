@@ -1,20 +1,35 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-<<<<<<< HEAD
+# === Gradle ===
+.gradle/
 build/
 */build/
-=======
->>>>>>> rnb
+!gradle/wrapper/gradle-wrapper.jar
+
+# === IntelliJ / Android Studio ===
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# === Log / Local files ===
+local.properties
+*.log
+
+# === OS-generated files ===
+.DS_Store
+Thumbs.db
+
+# === Kotlin/Jetpack Compose ===
+*.apk
+*.aab
+
+# === Python virtual env (optional) ===
+venv/
+.env/
+
+# === Android Keystore (보안 중요) ===
+*.jks
+*.keystore
+
+# === Misc ===
+captures/
