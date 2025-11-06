@@ -66,6 +66,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
-
 }

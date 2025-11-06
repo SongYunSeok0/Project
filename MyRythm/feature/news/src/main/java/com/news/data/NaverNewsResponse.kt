@@ -1,12 +1,11 @@
-package com.data.remote.dto
-
+package com.news.data
 
 //data모듈의 remote/dto 로 옮겨야함
 data class NaverNewsResponse(
-    val items: List<NewsItem>
+    val items: List<NaverNewsItem>
 )
 
-data class NewsItem(
+data class NaverNewsItem(
     val title: String,
     val originallink: String,
     val link: String,

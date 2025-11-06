@@ -52,8 +52,6 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     debugImplementation("androidx.compose.ui:ui-tooling")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
-
 }

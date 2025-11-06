@@ -53,6 +53,4 @@ dependencies {
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.material:material-icons-core:1.7.3")
     implementation("androidx.compose.material:material-icons-extended:1.7.3")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
-
 }

@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -55,11 +55,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-
     kotlinOptions { jvmTarget = "21" }
     buildFeatures {
         compose = true
@@ -71,8 +66,6 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":data"))
-    implementation(project(":domain"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
     implementation(project(":feature:map"))
@@ -81,6 +74,10 @@ dependencies {
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:chatbot"))
+
+    // domain & data modules
+    implementation(project(":domain"))
+    implementation(project(":data"))
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -92,15 +89,13 @@ dependencies {
     implementation(libs.bundles.test)
 
     implementation("com.naver.maps:map-sdk:3.23.0")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Hilt
     implementation("com.google.dagger:hilt-android:2.52")
     kapt("com.google.dagger:hilt-compiler:2.52")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+    implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.9.0")
 
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
-
-
-    // 기타 androidx.lifecycle.viewmodel.ktx 등도 필요할 수 있음
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
 }

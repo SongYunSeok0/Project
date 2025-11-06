@@ -53,6 +53,4 @@ dependencies {
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
-
 }

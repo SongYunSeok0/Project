@@ -1,38 +1,21 @@
 package com.myrythm
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.auth.navigation.AuthGraph
-import com.auth.navigation.LoginRoute
-import com.auth.navigation.PwdRoute
-import com.auth.navigation.SignupRoute
-import com.auth.navigation.authNavGraph
-import com.chatbot.navigation.ChatBotRoute
-import com.chatbot.navigation.chatbotNavGraph
+import com.auth.navigation.*
+import com.chatbot.navigation.*
 import com.design.AppBottomBar
 import com.design.AppTopBar
-import com.main.navigation.MainRoute
-import com.main.navigation.mainNavGraph
-import com.map.navigation.MapRoute
-import com.map.navigation.mapNavGraph
-import com.mypage.navigation.EditProfileRoute
-import com.mypage.navigation.HeartReportRoute
-import com.mypage.navigation.MyPageRoute
-import com.mypage.navigation.mypageNavGraph
-import com.news.navigation.NewsRoute
-import com.news.navigation.newsNavGraph
-import com.scheduler.navigation.CameraRoute
-import com.scheduler.navigation.OcrRoute
-import com.scheduler.navigation.RegiRoute
-import com.scheduler.navigation.SchedulerRoute
-import com.scheduler.navigation.schedulerNavGraph
+import com.main.navigation.*
+import com.map.navigation.*
+import com.mypage.navigation.*
+import com.news.navigation.*
+import com.scheduler.navigation.*
 
 @Composable
 fun AppRoot() {
@@ -40,7 +23,7 @@ fun AppRoot() {
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // 현재 라우트 판별
+    // 라우트 구분
     fun isRoute(obj: Any) = routeName == obj::class.qualifiedName
     fun isOf(vararg objs: Any) = objs.any { isRoute(it) }
 
@@ -51,9 +34,7 @@ fun AppRoot() {
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 
-
-
-    // 탭 이동
+    // 탭 이동 함수
     fun goHome() = nav.navigate(MainRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
@@ -79,13 +60,15 @@ fun AppRoot() {
                     onBackClick = {
                         if (nav.previousBackStackEntry != null) nav.popBackStack()
                         else goHome()
+                    },
+                    showSearch = isNews, // ✅ 뉴스화면일 때만 검색버튼 표시
+                    onSearchClick = {
+                        // ✅ NewsScreen에 검색창 표시 신호 전달
+                        nav.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("openSearch", true)
                     }
                 )
-
-
-
-
-
             }
         },
         bottomBar = {
@@ -108,7 +91,7 @@ fun AppRoot() {
                 authNavGraph(nav)
                 mainNavGraph(nav)
                 mapNavGraph()
-                newsNavGraph(nav)
+                newsNavGraph(nav) // ✅ 여기서 NewsScreen 내부에서 검색창 표시됨
                 schedulerNavGraph(nav)
                 mypageNavGraph(nav)
                 chatbotNavGraph()
