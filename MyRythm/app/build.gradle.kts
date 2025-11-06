@@ -98,4 +98,15 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
+    // CameraX
+    implementation("androidx.camera:camera-core:1.4.0")
+    implementation("androidx.camera:camera-camera2:1.4.0")
+    implementation("androidx.camera:camera-lifecycle:1.4.0")
+    implementation("androidx.camera:camera-view:1.4.0")
+
+    // EXIF (사진 회전 보정)
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // ML Kit (한글 OCR)
+    implementation("com.google.mlkit:text-recognition-korean:16.0.1")
 }

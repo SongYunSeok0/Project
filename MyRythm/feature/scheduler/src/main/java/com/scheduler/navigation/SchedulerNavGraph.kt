@@ -4,35 +4,42 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.scheduler.ui.SchedulerScreen
-import com.scheduler.ui.RegiScreen
-import com.scheduler.ui.OcrScreen
-import com.scheduler.ui.CameraScreen
-import kotlinx.serialization.ExperimentalSerializationApi
+import com.scheduler.ui.*
 
-@OptIn(ExperimentalSerializationApi::class)
 fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
 
-    // 스케줄 메인
-    composable<SchedulerRoute> {
-        SchedulerScreen()
-    }
+    composable<SchedulerRoute> { SchedulerScreen() }
 
-    // 일정 등록
     composable<RegiRoute> { backStackEntry ->
-        val route = backStackEntry.toRoute<RegiRoute>()
-        RegiScreen()
+        val r = backStackEntry.toRoute<RegiRoute>()
+        RegiScreen(
+            drugNames = unpackNames(r.drugNamesCsv), // 문자열 → 리스트
+            times     = r.times,
+            days      = r.days
+        )
     }
 
-    // OCR 스캔
     composable<OcrRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<OcrRoute>()
-        OcrScreen()
+        OcrScreen(
+            imagePath = route.path,
+            onConfirm = { names, times, days ->
+                nav.navigate(
+                    RegiRoute(
+                        drugNamesCsv = packNames(names), // 리스트 → 문자열
+                        times        = times,
+                        days         = days
+                    )
+                )
+            },
+            onRetake = { nav.popBackStack() }
+        )
     }
 
-    // 카메라
-    composable<CameraRoute> { backStackEntry ->
-        val route = backStackEntry.toRoute<CameraRoute>()
-        CameraScreen()
+    composable<CameraRoute> {
+        CameraScreen(
+            onOpenOcr = { path -> nav.navigate(OcrRoute(path)) },
+            onOpenRegi = { nav.navigate(RegiRoute()) }
+        )
     }
 }
