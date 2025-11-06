@@ -5,12 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,10 +17,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
 
-
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: () -> Unit = {}) {
+fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: () -> Unit = {}) {
+    var name by remember { mutableStateOf("김이름") }
+    var height by remember { mutableStateOf("170") }
+    var weight by remember { mutableStateOf("47") }
+    var age by remember { mutableStateOf("25") }
     var selectedGender by remember { mutableStateOf("남성") }
     var selectedBloodType by remember { mutableStateOf("A형") }
 
@@ -34,7 +33,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 유저 프로필 영역
+        // 🔹 프로필 영역
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
@@ -65,7 +64,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
             Spacer(modifier = Modifier.width(16.dp))
 
             Column {
-                Text(text = "김이름", fontSize = 16.sp, color = Color(0xff221f1f))
+                Text(text = name, fontSize = 16.sp, color = Color(0xff221f1f))
                 Text(
                     text = "프로필 사진 변경",
                     fontSize = 14.sp,
@@ -81,10 +80,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
                     .height(40.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color(0xff6ae0d9))
-
-                    .clickable {
-                        // 저장 로직 추가 가능
-                    },
+                    .clickable { /* 편집 모드 로직 */ },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -93,21 +89,19 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
-
                     Text(text = "편집", color = Color.White, fontSize = 16.sp)
                 }
             }
-
         }
 
-        // 입력 필드들
+        // 🔹 입력 필드
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EditableField(label = "이름", value = "김이름")
-            EditableField(label = "키 (cm)", value = "170")
-            EditableField(label = "몸무게 (kg)", value = "47")
-            EditableField(label = "나이", value = "25")
+            EditableField(label = "이름", value = name, onValueChange = { name = it })
+            EditableField(label = "키 (cm)", value = height, onValueChange = { height = it })
+            EditableField(label = "몸무게 (kg)", value = weight, onValueChange = { weight = it })
+            EditableField(label = "나이", value = age, onValueChange = { age = it })
 
-            // ✅ 성별 선택 버튼
+            // ✅ 성별 선택
             SelectableButtonGroup(
                 label = "성별",
                 options = listOf("남성", "여성"),
@@ -115,7 +109,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
                 onOptionSelected = { selectedGender = it }
             )
 
-            // ✅ 혈액형 선택 버튼
+            // ✅ 혈액형 선택
             SelectableButtonGroup(
                 label = "혈액형",
                 options = listOf("A형", "B형", "AB형", "O형"),
@@ -124,7 +118,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
             )
         }
 
-        // 수정 완료 버튼
+        // 🔹 수정 완료 버튼
         Spacer(modifier = Modifier.height(16.dp))
         Box(
             modifier = Modifier
@@ -132,7 +126,6 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
                 .height(56.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(Color(0xff6ae0d9))
-                .padding(horizontal = 16.dp)
                 .clickable { onDone() },
             contentAlignment = Alignment.Center
         ) {
@@ -146,6 +139,27 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier,  onDone: (
                 Text(text = "수정 완료", color = Color.White, fontSize = 16.sp)
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditableField(label: String, value: String, onValueChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(text = label, fontSize = 14.sp, color = Color(0xff3b566e))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
+            )
+        )
     }
 }
 
@@ -180,26 +194,6 @@ fun SelectableButtonGroup(
                     )
                 }
             }
-        }
-    }
-}
-
-
-
-@Composable
-fun EditableField(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = label, fontSize = 14.sp, color = Color(0xff3b566e))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xffdddddd))
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(text = value, fontSize = 14.sp, color = Color(0xff3b566e).copy(alpha = 0.5f))
         }
     }
 }
