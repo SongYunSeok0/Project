@@ -1,4 +1,4 @@
-package com.myrythm.ui.theme
+package com.myrhythm.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package com.myrythm
+package com.myrhythm
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,7 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.design.AppBottomBar
 import com.design.AppTopBar
-import com.myrythm.ui.theme.MyRythmTheme
+import com.myrhythm.ui.theme.MyRythmTheme
 
 // 각 feature 모듈 NavGraph
 import com.auth.navigation.*

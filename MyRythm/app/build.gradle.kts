@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.myrythm"
+    namespace = "com.myrhythm"
     compileSdk = 36
 
     defaultConfig {
@@ -83,4 +83,6 @@ dependencies {
     implementation(libs.bundles.test)
 
     implementation("com.naver.maps:map-sdk:3.23.0")
+
+    implementation("com.kakao.sdk:v2-user")
 }

@@ -1,4 +1,4 @@
-package com.myrythm.navigation
+package com.myrhythm.navigation
 
 object Routes {
     const val LOGIN = "login"

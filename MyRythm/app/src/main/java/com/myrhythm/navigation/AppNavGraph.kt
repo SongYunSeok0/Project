@@ -1,4 +1,4 @@
-package com.myrythm.navigation
+package com.myrhythm.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
