@@ -69,7 +69,7 @@ fun RegiScreen(
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
 
-    // 총일수 라벨 계산(양쪽 날짜가 있으면 포함일수로 계산)
+    // 총일수 라벨
     val totalDaysLabel by remember(startDate, endDate) {
         mutableStateOf(
             run {
@@ -91,20 +91,15 @@ fun RegiScreen(
         val state = rememberDatePickerState(
             initialSelectedDateMillis = strToMillis(startDate) ?: System.currentTimeMillis()
         )
-
         DatePickerDialog(
             onDismissRequest = { showStart = false },
             confirmButton = {
-                // ✅ Mint 채워진 버튼
                 Button(
                     onClick = {
                         state.selectedDateMillis?.let { startDate = fmt.format(Date(it)) }
                         showStart = false
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Mint,
-                        contentColor = Color.White
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Color.White),
                     shape = RoundedCornerShape(8.dp)
                 ) { Text("확인") }
             },
@@ -112,26 +107,16 @@ fun RegiScreen(
                 OutlinedButton(
                     onClick = { showStart = false },
                     border = BorderStroke(1.dp, Mint),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor = Mint
-                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = Mint),
                     shape = RoundedCornerShape(8.dp)
                 ) { Text("취소") }
             },
-            // ✅ 하단 영역 흰색
-            colors = DatePickerDefaults.colors(
-                containerColor = Color.White
-            )
+            colors = DatePickerDefaults.colors(containerColor = Color.White)
         ) {
             MaterialTheme(
                 colorScheme = MaterialTheme.colorScheme.copy(
-                    primary = Mint,
-                    onPrimary = Color.White,
-                    secondary = Mint,
-                    surface = Color.White,
-                    onSurface = Color(0xFF0A0A0A),
-                    surfaceVariant = Color.White,
+                    primary = Mint, onPrimary = Color.White, secondary = Mint,
+                    surface = Color.White, onSurface = Color(0xFF0A0A0A), surfaceVariant = Color.White
                 )
             ) {
                 DatePicker(
@@ -157,7 +142,6 @@ fun RegiScreen(
         }
     }
 
-// END
     if (showEnd) {
         val state = rememberDatePickerState(
             initialSelectedDateMillis = strToMillis(endDate) ?: System.currentTimeMillis()
@@ -165,35 +149,29 @@ fun RegiScreen(
         DatePickerDialog(
             onDismissRequest = { showEnd = false },
             confirmButton = {
-                TextButton(onClick = {
-                    state.selectedDateMillis?.let { endDate = fmt.format(Date(it)) }
-                    showEnd = false
-                }) { Text("확인", color = Mint) }
+                Button(
+                    onClick = {
+                        state.selectedDateMillis?.let { endDate = fmt.format(Date(it)) }
+                        showEnd = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Color.White),
+                    shape = RoundedCornerShape(8.dp)
+                ) { Text("확인") }
             },
             dismissButton = {
                 OutlinedButton(
                     onClick = { showEnd = false },
                     border = BorderStroke(1.dp, Mint),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor = Mint
-                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = Mint),
                     shape = RoundedCornerShape(8.dp)
                 ) { Text("취소") }
             },
-            // ✅ 하단 영역 흰색
-            colors = DatePickerDefaults.colors(
-                containerColor = Color.White
-            )
+            colors = DatePickerDefaults.colors(containerColor = Color.White)
         ) {
             MaterialTheme(
                 colorScheme = MaterialTheme.colorScheme.copy(
-                    primary = Mint,
-                    onPrimary = Color.White,
-                    secondary = Mint,
-                    surface = Color.White,
-                    onSurface = Color(0xFF0A0A0A),
-                    surfaceVariant = Color.White,
+                    primary = Mint, onPrimary = Color.White, secondary = Mint,
+                    surface = Color.White, onSurface = Color(0xFF0A0A0A), surfaceVariant = Color.White
                 )
             ) {
                 DatePicker(
@@ -227,7 +205,6 @@ fun RegiScreen(
         startDate = todayStr()
         endDate = days?.let {
             val c2 = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, it.coerceAtLeast(1) - 1) }
-            // 위에서 포함일수 계산이므로 종료일은 (시작+일수-1)로 세팅
             fmt.format(c2.time)
         } ?: ""
         times?.let {
@@ -256,8 +233,15 @@ fun RegiScreen(
     // 횟수 변경 시 시간 자동 보정
     LaunchedEffect(dosePerDay, tab) {
         intakeTimes.clear()
-        if (tab == RegiTab.SUPPLEMENT && dosePerDay == 1) intakeTimes.add("12:00")
-        else intakeTimes.addAll(presetTimes(dosePerDay))
+        if (tab == RegiTab.SUPPLEMENT) {
+            if (dosePerDay == 1) {
+                intakeTimes.add("12:00")
+            } else {
+                repeat(dosePerDay) { intakeTimes.add("") } // 사용자가 직접 입력
+            }
+        } else {
+            intakeTimes.addAll(presetTimes(dosePerDay))
+        }
     }
 
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
@@ -377,17 +361,15 @@ fun RegiScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("복용 횟수(하루) *", color = SectionTitle, fontSize = 14.sp)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    IconButton(onClick = {
-                        if (tab == RegiTab.SUPPLEMENT) return@IconButton
-                        dosePerDay = (dosePerDay - 1).coerceAtLeast(1)
-                    }) { Icon(Icons.Filled.Remove, contentDescription = "minus", tint = Mint) }
+                    IconButton(onClick = { dosePerDay = (dosePerDay - 1).coerceAtLeast(1) }) {
+                        Icon(Icons.Filled.Remove, contentDescription = "minus", tint = Mint)
+                    }
                     Spacer(Modifier.weight(1f))
                     Text("${dosePerDay}회", color = Mint, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.weight(1f))
-                    IconButton(onClick = {
-                        if (tab == RegiTab.SUPPLEMENT) return@IconButton
-                        dosePerDay = (dosePerDay + 1).coerceAtMost(6)
-                    }) { Icon(Icons.Filled.Add, contentDescription = "plus", tint = Mint) }
+                    IconButton(onClick = { dosePerDay = (dosePerDay + 1).coerceAtMost(6) }) {
+                        Icon(Icons.Filled.Add, contentDescription = "plus", tint = Mint)
+                    }
                 }
             }
 
@@ -402,23 +384,15 @@ fun RegiScreen(
             // 복용 기간 + 총일수 라벨
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "복용 기간* ",
-                        color = SectionTitle,
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        text = totalDaysLabel,
-                        color = Color(0xFF6F8BA4),
-                        fontSize = 13.sp
-                    )
+                    Text(text = "복용 기간* ", color = SectionTitle, fontSize = 14.sp)
+                    Text(text = totalDaysLabel, color = Color(0xFF6F8BA4), fontSize = 13.sp)
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     DateBox("시작일", startDate, Modifier.weight(1f)) { showStart = true }
-                    DateBox("종료일", endDate, Modifier.weight(1f)) { showEnd = true }
+                    DateBox("종료일", endDate,   Modifier.weight(1f)) { showEnd = true }
                 }
             }
 
@@ -428,7 +402,7 @@ fun RegiScreen(
                     Text("식사 관계", color = SectionTitle, fontSize = 14.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         SegChip("식전", selected = meal == MealRelation.BEFORE, modifier = Modifier.weight(1f)) { meal = MealRelation.BEFORE }
-                        SegChip("식후", selected = meal == MealRelation.AFTER, modifier = Modifier.weight(1f)) { meal = MealRelation.AFTER }
+                        SegChip("식후", selected = meal == MealRelation.AFTER,  modifier = Modifier.weight(1f)) { meal = MealRelation.AFTER }
                         SegChip("관계없음", selected = meal == MealRelation.NONE, modifier = Modifier.weight(1f)) { meal = MealRelation.NONE }
                     }
                 }
