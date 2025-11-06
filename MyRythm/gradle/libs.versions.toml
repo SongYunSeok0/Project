@@ -32,6 +32,7 @@ materialIconsExtended = "1.7.8"
 
 naver-map = "3.23.0"
 hilt = "2.52"
+hiltNavigationCompose = "1.2.0"
 kotlinx-metadata = "0.9.0"
 retrofit = "2.11.0"
 okhttp = "4.10.0"
@@ -40,10 +41,14 @@ room = "2.6.1"
 naver-map-compose = "1.5.0"
 play-services-location = "20.0.0"
 accompanist = "0.34.0"
-compose-animation = "1.7.0"
 coil = "2.7.0"
 jsoup = "1.16.1"
 paging = "3.3.2"
+moshi = "1.15.0"
+ksp = "2.0.21-1.0.28"
+
+datastore = "1.1.1"
+securityCrypto = "1.1.0"
 
 
 [libraries]
@@ -82,6 +87,7 @@ naver-map-sdk = { group = "com.naver.maps", name = "map-sdk", version.ref = "nav
 
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 
 kotlinx-metadata-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version.ref = "kotlinx-metadata" }
 
@@ -127,6 +133,15 @@ androidx-concurrent-futures-ktx = { group = "androidx.concurrent", name = "concu
 mlkit-text-recognition        = { group = "com.google.mlkit", name = "text-recognition",          version.ref = "mlkitText" }
 mlkit-text-recognition-korean = { group = "com.google.mlkit", name = "text-recognition-korean",   version.ref = "mlkitText" }
 androidx-exifinterface        = { group = "androidx.exifinterface", name = "exifinterface",       version.ref = "exifinterface" }
+javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
+
+moshi = { group = "com.squareup.moshi", name = "moshi", version.ref = "moshi" }
+moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
+moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshi" }
+moshi-converter = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit" }
+
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -135,6 +150,8 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
 [bundles]
 core = [

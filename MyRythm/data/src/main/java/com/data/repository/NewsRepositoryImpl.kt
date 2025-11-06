@@ -1,7 +1,7 @@
 package com.data.repository
 
-import com.myrythm.domain.model.News
-import com.myrythm.domain.repository.NewsRepository
+import com.domain.model.News
+import com.domain.repository.NewsRepository
 
 
 class NewsRepositoryImpl(

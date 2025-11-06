@@ -3,11 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "com.example.login"
+    namespace = "com.auth"
     compileSdk = 36
 
     defaultConfig {
@@ -44,6 +44,8 @@ dependencies {
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
     implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":core"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.kotlinx.serialization.json)
@@ -65,4 +67,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 }

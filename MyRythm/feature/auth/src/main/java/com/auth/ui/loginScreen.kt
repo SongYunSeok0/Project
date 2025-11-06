@@ -1,6 +1,5 @@
 package com.auth.ui
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,11 +16,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.auth.viewmodel.AuthViewModel
 import com.common.design.R
-import com.auth.viewmodel.LoginViewModel
 
 val BalooThambi = FontFamily(Font(R.font.baloo_thambi, FontWeight.Bold))
 
@@ -29,7 +29,7 @@ val BalooThambi = FontFamily(Font(R.font.baloo_thambi, FontWeight.Bold))
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: AuthViewModel = hiltViewModel(),
     onLogin: (String, String) -> Unit = { _, _ -> },
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {}
@@ -45,7 +45,6 @@ fun LoginScreen(
             .padding(horizontal = 32.dp, vertical = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 🔹 로고 이미지
         Image(
             painter = painterResource(R.drawable.logo),
             contentDescription = "앱 로고",
@@ -57,7 +56,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 텍스트 로고
         Text(
             text = "My Rhythm",
             color = Color(0xFFC9F8F6),
@@ -68,7 +66,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(60.dp))
 
-        // 🔹 아이디 입력
         OutlinedTextField(
             value = id,
             onValueChange = { id = it },
@@ -86,12 +83,12 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 비밀번호 입력
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("비밀번호") },
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -104,7 +101,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 🔹 비밀번호 찾기
         Text(
             text = "비밀번호를 잊으셨나요?",
             color = Color(0xff77a3a1),
@@ -117,14 +113,11 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 🔹 로그인 버튼
         Button(
             onClick = {
                 viewModel.login(id, password) { success, msg ->
                     message = msg
-                    if (success) {
-                        onLogin(id, password)
-                    }
+                    if (success) onLogin(id, password)
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xff6ac0e0)),
@@ -143,16 +136,11 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 🔹 회원가입 버튼
         Row(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "계정이 없으신가요?",
-                color = Color.Black,
-                fontSize = 14.sp
-            )
+            Text(text = "계정이 없으신가요?", color = Color.Black, fontSize = 14.sp)
             Spacer(modifier = Modifier.width(8.dp))
             Surface(
                 shape = RoundedCornerShape(8.dp),

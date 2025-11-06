@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
 
 }
@@ -55,4 +56,12 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
     implementation(libs.mlkit.text.recognition.korean)
     implementation(libs.androidx.exifinterface)
+
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 }

@@ -7,10 +7,9 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
-    }
+    jvmToolchain(21) // compilerOptions 대신 이 한 줄이면 충분
 }
 dependencies{
-
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.javax.inject)
 }

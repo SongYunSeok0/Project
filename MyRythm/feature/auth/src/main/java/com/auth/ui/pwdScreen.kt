@@ -1,6 +1,5 @@
 package com.auth.ui
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,7 +44,6 @@ fun PwdScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            // 🔹 로고
             Image(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = "앱 로고",
@@ -57,7 +55,6 @@ fun PwdScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 🔹 텍스트 로고
             Text(
                 text = "My Rhythm",
                 color = Color(0xff5db0a8),
@@ -68,7 +65,6 @@ fun PwdScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // 🔹 휴대폰 번호 입력
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -107,7 +103,6 @@ fun PwdScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 🔹 인증번호 입력
             OutlinedTextField(
                 value = code,
                 onValueChange = { code = it },
@@ -130,7 +125,6 @@ fun PwdScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 🔹 확인 버튼
             Button(
                 onClick = {
                     if (phone.isNotBlank() && code.isNotBlank()) {
@@ -162,17 +156,12 @@ fun PwdScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 🔹 로그인 링크
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "이미 계정이 있으신가요?",
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
+                Text(text = "이미 계정이 있으신가요?", color = Color.Black, fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),

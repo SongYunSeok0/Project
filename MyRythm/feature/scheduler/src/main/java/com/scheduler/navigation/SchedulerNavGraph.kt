@@ -4,18 +4,27 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.scheduler.ui.*
+import com.scheduler.ui.CameraScreen
+import com.scheduler.ui.OcrScreen
+import com.scheduler.ui.RegiScreen
+import com.scheduler.ui.SchedulerScreen
 
-fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
-
-    composable<SchedulerRoute> { SchedulerScreen() }
+fun NavGraphBuilder.schedulerNavGraph(
+    nav: NavHostController,
+    userId: String
+) {
+    composable<SchedulerRoute> {
+        SchedulerScreen()
+    }
 
     composable<RegiRoute> { backStackEntry ->
         val r = backStackEntry.toRoute<RegiRoute>()
         RegiScreen(
-            drugNames = unpackNames(r.drugNamesCsv), // 문자열 → 리스트
+            userId    = r.userId,
+            drugNames = unpackNames(r.drugNamesCsv),
             times     = r.times,
-            days      = r.days
+            days      = r.days,
+            onCompleted = { nav.popBackStack() }
         )
     }
 
@@ -26,7 +35,8 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
             onConfirm = { names, times, days ->
                 nav.navigate(
                     RegiRoute(
-                        drugNamesCsv = packNames(names), // 리스트 → 문자열
+                        userId       = userId,
+                        drugNamesCsv = packNames(names),
                         times        = times,
                         days         = days
                     )
@@ -38,8 +48,8 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
 
     composable<CameraRoute> {
         CameraScreen(
-            onOpenOcr = { path -> nav.navigate(OcrRoute(path)) },
-            onOpenRegi = { nav.navigate(RegiRoute()) }
+            onOpenOcr  = { path -> nav.navigate(OcrRoute(path)) },
+            onOpenRegi = { nav.navigate(RegiRoute(userId = userId)) }
         )
     }
 }

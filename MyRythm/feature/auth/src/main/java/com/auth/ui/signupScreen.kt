@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,28 +21,25 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.common.design.R
-import com.auth.data.model.UserSignupRequest
-import com.auth.viewmodel.SignupViewModel
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.data.network.dto.user.UserSignupRequest
 import com.ui.theme.AuthBackground
 import com.ui.theme.AuthOnPrimary
 import com.ui.theme.AuthOnSecondray
 import com.ui.theme.AuthSecondrayButton
+import com.auth.viewmodel.AuthViewModel
 
 val ButtonDisabled = AuthSecondrayButton.copy(alpha = 0.5f)
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupScreen(
-    viewModel: SignupViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = hiltViewModel(),
     onSignupComplete: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
-    // 입력 상태
     var id by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -69,7 +67,6 @@ fun SignupScreen(
                 .padding(horizontal = 24.dp, vertical = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 로고
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "MyRhythm Logo Icon",
@@ -81,7 +78,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // My Rhythm 텍스트
             Text(
                 text = "My Rhythm",
                 color = Color(0xff5db0a8),
@@ -92,7 +88,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 아이디 입력
             OutlinedTextField(
                 value = id,
                 onValueChange = { id = it },
@@ -109,7 +104,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 비밀번호 입력
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -128,7 +122,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 이름 입력
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -145,7 +138,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 생년월일
             Text(
                 text = "생년월일",
                 color = AuthOnPrimary,
@@ -155,10 +147,7 @@ fun SignupScreen(
                     .padding(bottom = 8.dp)
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = birthYear,
                     onValueChange = { birthYear = it },
@@ -205,11 +194,7 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 키 / 몸무게
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = height,
                     onValueChange = { height = it },
@@ -242,7 +227,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 전화번호 인증
             Text(
                 text = "전화번호 인증 *",
                 color = AuthOnPrimary,
@@ -252,10 +236,7 @@ fun SignupScreen(
                     .padding(bottom = 8.dp)
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
@@ -286,10 +267,7 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it },
@@ -318,7 +296,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 회원가입 버튼
             Button(
                 onClick = {
                     val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
@@ -356,7 +333,6 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 이미 계정이 있으신가요? → 로그인
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -364,14 +340,8 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
             ) {
-                Text(
-                    text = "이미 계정이 있으신가요?",
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
-
+                Text(text = "이미 계정이 있으신가요?", color = Color.Black, fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = Color.White,

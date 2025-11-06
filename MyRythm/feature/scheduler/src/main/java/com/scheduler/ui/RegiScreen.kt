@@ -23,6 +23,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.domain.model.MealRelation
+import com.domain.model.PlanType
+import com.scheduler.viewmodel.PlanViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -31,7 +35,6 @@ private val CardBg = Color(0xFFF9FAFB)
 private val SectionTitle = Color(0xFF3B566E)
 private val Hint = Color(0x800A0A0A)
 
-enum class MealRelation { BEFORE, AFTER, NONE }
 private enum class RegiTab { DISEASE, SUPPLEMENT }
 
 private fun presetTimes(n: Int): List<String> = when (n) {
@@ -45,19 +48,23 @@ private fun presetTimes(n: Int): List<String> = when (n) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegiScreen(
+    userId: String,
     modifier: Modifier = Modifier,
     drugNames: List<String> = emptyList(),
     times: Int? = null,
     days: Int? = null,
-    onSubmit: () -> Unit = {},
+    viewModel: PlanViewModel = hiltViewModel(),
+    onCompleted: () -> Unit = {},
 ) {
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
     var disease by remember { mutableStateOf("") }
     var supplement by remember { mutableStateOf("") }
 
-    val meds = remember { mutableStateListOf<String>().apply { if (drugNames.isNotEmpty()) addAll(drugNames) else add("") } }
+    val meds = remember {
+        mutableStateListOf<String>().apply { if (drugNames.isNotEmpty()) addAll(drugNames) else add("") }
+    }
 
-    var dosePerDay by remember { mutableIntStateOf(3) }
+    var dose by remember { mutableIntStateOf(3) }
     var meal by remember { mutableStateOf(MealRelation.AFTER) }
     var memo by remember { mutableStateOf("") }
     val intakeTimes = remember { mutableStateListOf<String>() }
@@ -66,15 +73,14 @@ fun RegiScreen(
     fun todayStr() = fmt.format(Calendar.getInstance().time)
     fun strToMillis(s: String): Long? = runCatching { fmt.parse(s)?.time }.getOrNull()
 
-    var startDate by remember { mutableStateOf("") }
-    var endDate by remember { mutableStateOf("") }
+    var startDay by remember { mutableStateOf("") }
+    var endDay by remember { mutableStateOf("") }
 
-    // 총일수 라벨
-    val totalDaysLabel by remember(startDate, endDate) {
+    val totalDaysLabel by remember(startDay, endDay) {
         mutableStateOf(
             run {
-                val s = strToMillis(startDate)
-                val e = strToMillis(endDate)
+                val s = strToMillis(startDay)
+                val e = strToMillis(endDay)
                 if (s != null && e != null && e >= s) {
                     val daysInclusive = ((e - s) / (1000L * 60 * 60 * 24)).toInt() + 1
                     "(${daysInclusive}일)"
@@ -83,20 +89,19 @@ fun RegiScreen(
         )
     }
 
-    // DatePickers
     var showStart by remember { mutableStateOf(false) }
     var showEnd by remember { mutableStateOf(false) }
 
     if (showStart) {
         val state = rememberDatePickerState(
-            initialSelectedDateMillis = strToMillis(startDate) ?: System.currentTimeMillis()
+            initialSelectedDateMillis = strToMillis(startDay) ?: System.currentTimeMillis()
         )
         DatePickerDialog(
             onDismissRequest = { showStart = false },
             confirmButton = {
                 Button(
                     onClick = {
-                        state.selectedDateMillis?.let { startDate = fmt.format(Date(it)) }
+                        state.selectedDateMillis?.let { startDay = fmt.format(Date(it)) }
                         showStart = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Color.White),
@@ -144,14 +149,14 @@ fun RegiScreen(
 
     if (showEnd) {
         val state = rememberDatePickerState(
-            initialSelectedDateMillis = strToMillis(endDate) ?: System.currentTimeMillis()
+            initialSelectedDateMillis = strToMillis(endDay) ?: System.currentTimeMillis()
         )
         DatePickerDialog(
             onDismissRequest = { showEnd = false },
             confirmButton = {
                 Button(
                     onClick = {
-                        state.selectedDateMillis?.let { endDate = fmt.format(Date(it)) }
+                        state.selectedDateMillis?.let { endDay = fmt.format(Date(it)) }
                         showEnd = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Mint, contentColor = Color.White),
@@ -199,48 +204,44 @@ fun RegiScreen(
 
     // 초기 세팅
     LaunchedEffect(Unit) {
-        dosePerDay = 3
+        dose = 3
         intakeTimes.clear()
         intakeTimes.addAll(presetTimes(3))
-        startDate = todayStr()
-        endDate = days?.let {
+        startDay = todayStr()
+        endDay = days?.let {
             val c2 = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, it.coerceAtLeast(1) - 1) }
             fmt.format(c2.time)
         } ?: ""
         times?.let {
-            dosePerDay = it.coerceIn(1, 6)
+            dose = it.coerceIn(1, 6)
             intakeTimes.clear()
-            intakeTimes.addAll(presetTimes(dosePerDay))
+            intakeTimes.addAll(presetTimes(dose))
         }
     }
 
     // 탭 변경
     LaunchedEffect(tab) {
         if (tab == RegiTab.SUPPLEMENT) {
-            dosePerDay = 1
+            dose = 1
             intakeTimes.clear()
             intakeTimes.add("12:00")
-            startDate = todayStr()
-            endDate = ""
+            startDay = todayStr()
+            endDay = ""
         } else {
-            dosePerDay = 3
+            dose = 3
             intakeTimes.clear()
             intakeTimes.addAll(presetTimes(3))
-            if (startDate.isBlank()) startDate = todayStr()
+            if (startDay.isBlank()) startDay = todayStr()
         }
     }
 
     // 횟수 변경 시 시간 자동 보정
-    LaunchedEffect(dosePerDay, tab) {
+    LaunchedEffect(dose, tab) {
         intakeTimes.clear()
         if (tab == RegiTab.SUPPLEMENT) {
-            if (dosePerDay == 1) {
-                intakeTimes.add("12:00")
-            } else {
-                repeat(dosePerDay) { intakeTimes.add("") } // 사용자가 직접 입력
-            }
+            if (dose == 1) intakeTimes.add("12:00") else repeat(dose) { intakeTimes.add("") }
         } else {
-            intakeTimes.addAll(presetTimes(dosePerDay))
+            intakeTimes.addAll(presetTimes(dose))
         }
     }
 
@@ -361,13 +362,13 @@ fun RegiScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("복용 횟수(하루) *", color = SectionTitle, fontSize = 14.sp)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    IconButton(onClick = { dosePerDay = (dosePerDay - 1).coerceAtLeast(1) }) {
+                    IconButton(onClick = { dose = (dose - 1).coerceAtLeast(1) }) {
                         Icon(Icons.Filled.Remove, contentDescription = "minus", tint = Mint)
                     }
                     Spacer(Modifier.weight(1f))
-                    Text("${dosePerDay}회", color = Mint, style = MaterialTheme.typography.titleMedium)
+                    Text("${dose}회", color = Mint, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { dosePerDay = (dosePerDay + 1).coerceAtMost(6) }) {
+                    IconButton(onClick = { dose = (dose + 1).coerceAtMost(6) }) {
                         Icon(Icons.Filled.Add, contentDescription = "plus", tint = Mint)
                     }
                 }
@@ -391,8 +392,8 @@ fun RegiScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    DateBox("시작일", startDate, Modifier.weight(1f)) { showStart = true }
-                    DateBox("종료일", endDate,   Modifier.weight(1f)) { showEnd = true }
+                    DateBox("시작일", startDay, Modifier.weight(1f)) { showStart = true }
+                    DateBox("종료일", endDay,   Modifier.weight(1f)) { showEnd = true }
                 }
             }
 
@@ -428,7 +429,34 @@ fun RegiScreen(
             }
 
             Button(
-                onClick = onSubmit,
+                onClick = {
+                    val type = if (tab == RegiTab.DISEASE) PlanType.DISEASE else PlanType.SUPPLEMENT
+                    val mealRel = if (type == PlanType.DISEASE) meal else null
+                    val startMs = strToMillis(startDay) ?: System.currentTimeMillis()
+                    val endMs = strToMillis(endDay)
+
+                    val cleanTimes = intakeTimes.map { it.trim() }.filter { it.isNotEmpty() }
+                    val cleanMeds  = if (type == PlanType.DISEASE)
+                        meds.map { it.trim() }.filter { it.isNotEmpty() } else emptyList()
+
+                    viewModel.create(
+                        userId = userId,
+                        type = type,
+                        diseaseName = if (type == PlanType.DISEASE)
+                            disease.trim().takeIf { it.isNotEmpty() } else null,
+                        supplementName = if (type == PlanType.SUPPLEMENT)
+                            supplement.trim().takeIf { it.isNotEmpty() } else null,
+                        dosePerDay = dose,
+                        mealRelation = mealRel,
+                        memo = memo.trim().takeIf { it.isNotEmpty() },
+                        startDay = startMs,
+                        endDay = endMs,
+                        meds = cleanMeds,
+                        times = cleanTimes
+                    )
+                    onCompleted()
+                },
+
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
@@ -516,6 +544,7 @@ private fun SegChip(
 @Composable
 private fun RegiScreenPreview() {
     RegiScreen(
+        userId = "preview-user",
         drugNames = listOf("아세트아미노펜정", "세파클러캡슐"),
         times = 3,
         days = 7
