@@ -29,13 +29,18 @@ android {
         val openId     = props.getProperty("NAVER_CLIENT_ID", "")
         val openSecret = props.getProperty("NAVER_CLIENT_SECRET", "")
 
+        val kakaoAppKey = props.getProperty("KAKAO_NATIVE_APP_KEY", "")
+
         // AndroidManifest placeholders (네이버 지도 SDK용)
         manifestPlaceholders["NAVER_MAP_CLIENT_ID"] = mapId
         manifestPlaceholders["NAVER_MAP_CLIENT_SECRET"] = mapSecret
+        manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoAppKey
 
         // BuildConfig (오픈 API 호출용)
         buildConfigField("String", "NAVER_CLIENT_ID", "\"$openId\"")
         buildConfigField("String", "NAVER_CLIENT_SECRET", "\"$openSecret\"")
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoAppKey\"")
+
     }
 
     buildTypes {
@@ -53,7 +58,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions { jvmTarget = "21" }
+    //kotlinOptions { jvmTarget = "21" }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -84,5 +89,5 @@ dependencies {
 
     implementation("com.naver.maps:map-sdk:3.23.0")
 
-    implementation("com.kakao.sdk:v2-user")
+    implementation("com.kakao.sdk:v2-user:2.11.0")
 }

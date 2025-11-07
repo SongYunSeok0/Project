@@ -41,9 +41,8 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
 
-            <!-- 카카오로그인연동용 / 네이티브앱키는 현재 하드코딩, 이후 깃이그노어로옮기기+프로퍼티로필요-->
             <data android:host="oauth"
-                android:scheme="kakaocc55afc291b3623100865916610483b7" />
+                android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" />
 
         </intent-filter>
     </activity>

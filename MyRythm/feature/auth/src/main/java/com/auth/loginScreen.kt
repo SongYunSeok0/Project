@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.auth.viewmodel.LoginViewModel
 import com.common.design.R
 import com.ui.components.AuthInputField
 import com.ui.components.*
@@ -25,6 +26,7 @@ import com.ui.theme.loginTheme
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
+    //viewModel: LoginViewModel = hiltViewModel(),
     onLogin: (id: String, pw: String) -> Unit = { _, _ -> },
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {}
