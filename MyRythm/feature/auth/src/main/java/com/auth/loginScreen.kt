@@ -1,20 +1,29 @@
 package com.auth
 
+import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.auth.viewmodel.LoginViewModel
 import com.common.design.R
 import com.ui.components.AuthInputField
@@ -26,7 +35,7 @@ import com.ui.theme.loginTheme
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    //viewModel: LoginViewModel = hiltViewModel(),
+    viewModel: LoginViewModel = viewModel(),
     onLogin: (id: String, pw: String) -> Unit = { _, _ -> },
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {}
@@ -34,83 +43,179 @@ fun LoginScreen(
     var id by remember { mutableStateOf("") }
     var pw by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.loginTheme.loginBackground)
     ) {
-        Column(
+        // 기존 Column을 LazyColumn으로 변경하여 스크롤 가능하도록 수정
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // LazyColumn의 contentPadding을 상하 패딩으로 사용하여 전체 콘텐츠를 감쌈
+            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            Spacer(Modifier.weight(0.7f))
+            // 1. 상단 여백 (기존 weight(0.7f) 역할을 고정 높이로 대략 대체)
+            item {
+                Spacer(Modifier.height(100.dp))
+            }
 
-            // 로고 컴포넌트
-            AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm)
+            // 2. 로고 컴포넌트
+            item {
+                AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm)
+            }
 
-            Spacer(Modifier.height(10.dp))
+            // 3. 필드 및 버튼
+            item {
+                Spacer(Modifier.height(10.dp))
 
-            // AuthInputField.kt 컴포넌트 불러오기
-            AuthInputField(
-                value = id,
-                onValueChange = { id = it },
-                hint = "아이디",
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next
-            )
+                // AuthInputField.kt 컴포넌트 불러오기
+                AuthInputField(
+                    value = id,
+                    onValueChange = { id = it },
+                    hint = "아이디",
+                    modifier = Modifier.fillMaxWidth(),
+                    imeAction = ImeAction.Next
+                )
 
-            Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-            // AuthInputField.kt 컴포넌트 불러오기 : 비밀번호 토글 버튼 로직은 AuthInputField.kt 컴포넌트 내에 존재함
-            AuthInputField(
-                value = pw,
-                onValueChange = { pw = it },
-                hint = "비밀번호",
-                isPassword = true,
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Done
-            )
+                // AuthInputField.kt 컴포넌트 불러오기 : 비밀번호 토글 버튼 로직은 AuthInputField.kt 컴포넌트 내에 존재함
+                AuthInputField(
+                    value = pw,
+                    onValueChange = { pw = it },
+                    hint = "비밀번호",
+                    isPassword = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    imeAction = ImeAction.Done
+                )
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
 
-            Text(
-                text = "비밀번호를 잊으셨나요?",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.loginTheme.loginTertiary,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .clickable { onForgotPassword() }
-                    .padding(vertical = 4.dp)
-            )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "비밀번호를 잊으셨나요?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.loginTheme.loginTertiary,
+                        modifier = Modifier
+                            .clickable { onForgotPassword() }
+                            .padding(vertical = 4.dp)
+                    )
+                }
 
-            Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(18.dp))
 
-            // AuthButton.kt 컴포넌트 불러오기 : 클릭 효과(useClickEffect) 포함, 로그인 테마 적용
-            AuthPrimaryButton(
-                text = "로그인",
-                onClick = { onLogin(id, pw) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                useLoginTheme = true,
-                useClickEffect = true
-            )
+                // AuthButton.kt 컴포넌트 불러오기 : 클릭 효과(useClickEffect) 포함, 로그인 테마 적용
+                AuthPrimaryButton(
+                    text = "로그인",
+                    //onClick = { onLogin(id, pw) },
+                    onClick = {
+                        viewModel.login(id, pw) { success, message ->
+                            if (success) {
+                                onLogin(id, pw)
+                            } else {
+                                Log.e("LoginScreen", "로그인 실패: $message")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    useLoginTheme = true,
+                    useClickEffect = true
+                )
 
-            Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(14.dp))
 
-            AuthSecondaryButton(
-                text = "회원가입",
-                onClick = onSignUp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                useLoginTheme = true
-            )
-            Spacer(Modifier.weight(1f))
+                AuthSecondaryButton(
+                    text = "회원가입",
+                    onClick = onSignUp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    useLoginTheme = true
+                )
 
-            Spacer(Modifier.height(30.dp))
+                Spacer(Modifier.height(30.dp))
+            }
+
+
+            // 1107 16:48 추가중
+            item {
+                var expandedSns by remember { mutableStateOf(false) }
+                // 아이콘 리소스 제거 (R.drawable.up_chevron 등)
+
+                // SNS 토글 헤더 (글자만 표시, 클릭 영역은 Row 전체)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expandedSns = !expandedSns }
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "SNS 연동 로그인을 하시겠어요?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.loginTheme.loginTertiary
+                    )
+                    Spacer(Modifier.width(8.dp)) // 가운데 정렬을 위한 여백은 유지
+                }
+
+                // 조건부 렌더링: 확장되었을 때만 소셜 로그인 이미지 버튼 표시
+                if (expandedSns) {
+                    Spacer(Modifier.height(14.dp)) // 헤더와 버튼 사이 여백
+
+                    // 카카오 로그인 버튼 (PNG 이미지)
+                    Image(
+                        painter = painterResource(R.drawable.kakao_login_button), // 이미지 버튼 리소스 ID 가정
+                        contentDescription = "카카오톡 로그인",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                viewModel.kakaoOauth(context) { success, message ->
+                                    if (success) {
+                                        // 소셜 로그인 성공 시 onLogin 호출
+                                        onLogin("", "")
+                                    } else {
+                                        Log.e("LoginScreen", "카카오 로그인 실패: $message")
+                                    }
+                                }
+                            },
+                        contentScale = ContentScale.FillBounds
+                    )
+
+                    Spacer(Modifier.height(14.dp))
+
+                    // 구글 로그인 버튼 (PNG 이미지)
+                    Image(
+                        painter = painterResource(R.drawable.kakao_login_button), // 이미지 버튼 리소스 ID 가정
+                        contentDescription = "구글 로그인",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { /* onGoogleLogin() 호출 */ },
+                        contentScale = ContentScale.FillBounds
+                    )
+
+                    Spacer(Modifier.height(30.dp)) // SNS 버튼 아래 여백
+                }
+            }
+
+            // 하단 여백 (기존 weight(1f) 역할을 고정 높이로 대략 대체)
+            item {
+                Spacer(Modifier.height(30.dp))
+            }
         }
     }
 }

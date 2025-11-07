@@ -60,4 +60,5 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("com.kakao.sdk:v2-user:2.11.0")
+    implementation(libs.androidx.compose.ui)
 }

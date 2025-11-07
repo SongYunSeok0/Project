@@ -1,4 +1,8 @@
 package com.auth.viewmodel
 
-class PwdViewModel {
-}
+import androidx.lifecycle.ViewModel
+
+/*
+class PwdViewModel : ViewModel() {
+    fun missingPwd()
+}*/

@@ -99,6 +99,8 @@ fun PwdScreen(
 
             Spacer(Modifier.height(58.dp))
 
+            // 1107 추가 필요 - 뷰모델과 연계 + 확인 누를 경우 유저정보 중 비번 재설정창 이동 필요,
+            // 뷰 새로 만들어야하고 pwd뷰모델은 아직 없음, 유저정보에 폰번있으니 그걸로 회원받아서비번만수정하게
             AuthPrimaryButton(
                 text = "확인",
                 onClick = { onConfirm(code) },

@@ -1,5 +1,6 @@
 package com.auth
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.auth.data.model.UserSignupRequest
+import com.auth.viewmodel.SignupViewModel
 import com.common.design.R
 // 공통 입력 필드 및 버튼 컴포넌트를 임포트합니다.
 import com.ui.components.*
@@ -27,10 +31,11 @@ import com.ui.theme.defaultFontFamily
 @Composable
 fun SignupScreen(
     modifier: Modifier = Modifier,
+    viewModel: SignupViewModel = viewModel(),
     onSendCode: (phone: String) -> Unit = {},
     onVerify: (code: String) -> Unit = {},
-    onComplete: () -> Unit = {},
-    onWriteLater: () -> Unit = {}
+    onSignupComplete: () -> Unit = {},
+    onBackToLogin: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -174,7 +179,23 @@ fun SignupScreen(
             // 회원 가입 완료 버튼 (메인)
             AuthPrimaryButton(
                 text = "회원 가입 완료",
-                onClick = { onComplete() },
+                onClick = {
+                    val user = UserSignupRequest(
+                        id = id,
+                        password = password,
+                        name = name,
+                        birth_date = "$year-$month-$day",
+                        gender = "gender", // 성별 (예: "male", "female", "unknown")
+                        phone = phone
+                    )
+                    viewModel.signup(user) { success, message ->
+                        if (success) {
+                            onSignupComplete()
+                        } else {
+                            Log.e("SignupScreen", "회원가입 실패: $message")
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             )
 
@@ -186,7 +207,7 @@ fun SignupScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onWriteLater() }
+                    .clickable { onBackToLogin }
                     .padding(vertical = 8.dp)
             ) {
                 Text("나중에 작성하기",
