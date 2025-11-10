@@ -51,7 +51,7 @@ fun PwdScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.weight(0.7f))
+            Spacer(Modifier.height(50.dp))
 
             // 로고
             AuthLogoHeader(textLogoResId = R.drawable.auth_myrhythm)

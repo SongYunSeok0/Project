@@ -58,7 +58,13 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     implementation("androidx.compose.material:material-icons-extended")
-
     implementation("com.kakao.sdk:v2-user:2.11.0")
     implementation(libs.androidx.compose.ui)
+
+    // 스트럭처로 구글 로그인 연동용 라이브러리 의존성 추가(최신버전이용)
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+    // 구글 로그인 하위버전 호환용 라이브러리 추가
+    implementation("androidx.credentials:credentials:1.2.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 }

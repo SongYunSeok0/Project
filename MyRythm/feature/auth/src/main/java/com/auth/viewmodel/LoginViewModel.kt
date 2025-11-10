@@ -55,17 +55,27 @@
 package com.auth.viewmodel
 
 import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.CustomCredential
 import android.util.Log
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.auth.data.api.RetrofitClient
 import com.auth.data.model.SocialLoginRequest
 import com.auth.data.model.UserLoginRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -121,7 +131,7 @@ class LoginViewModel : ViewModel() {
     }
 
     // 1107
-    fun kakaoOauth(context: Context, onResult: (Boolean, String) -> Unit) {
+    fun kakaoOAuth(context: Context, onResult: (Boolean, String) -> Unit) {
         // 로그인 조합 예제
         // 카카오계정으로 로그인 공통 callback 구성
         // 카카오톡으로 로그인 할 수 없어 카카오계정으로 로그인할 경우 사용됨
@@ -170,6 +180,21 @@ class LoginViewModel : ViewModel() {
                     UserApiClient.instance.loginWithKakaoAccount(context, callback = callback)
                 } else if (token != null) {
                     Log.i(TAG, "카카오톡으로 로그인 성공 ${token.accessToken}")
+
+                    // 서버 연동 호출
+                    UserApiClient.instance.me { user, error ->
+                        if (error != null) {
+                            Log.e(TAG, "사용자 ID 요청 실패", error)
+                            onResult(false, "사용자 정보 요청 실패")
+                        } else if (user != null) {
+                            handleKakaoLogin(
+                                accessToken = token.accessToken,
+                                socialId = user.id.toString(),
+                                provider = "kakao",
+                                onResult = onResult
+                            )
+                        }
+                    }
                 }
             }
         } else {
@@ -184,7 +209,7 @@ class LoginViewModel : ViewModel() {
         provider: String,
         onResult: (Boolean, String) -> Unit
     ) {
-        // 🚨 중요: 이 부분에 실제 서버 API (소셜 로그인용) 호출 로직을 구현해야 합니다.
+        // 이 부분에 실제 서버 API (소셜 로그인용) 호출 로직을 구현해야 합니다.
         //서버 연동 로직 (handleSocialLogin) Placeholder 실행
         Log.w(
             TAG,
@@ -232,6 +257,124 @@ class LoginViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 Log.e(TAG, " 네트워크 예외 발생: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    onResult(false, "네트워크 오류: ${e.localizedMessage}")
+                }
+            }
+        }
+    }
+
+    // 구글 프로토콜은 카카오와 다름
+    fun googleOAuth(context: Context, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val credentialManager = CredentialManager.create(context)
+
+                // 가이드 request 부분
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(true)
+                    .setServerClientId(WEB_CLIENT_ID)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                // 가이드 signIn() 내부 로직
+                delay(250)
+
+                try {
+                    val result = credentialManager.getCredential(context, request)
+                    // Toast 대신 handleGoogleCredential 호출
+                    handleGoogleCredential(result, onResult)
+
+                } catch (e: NoCredentialException) {
+                    val googleIdOptionAll = GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(WEB_CLIENT_ID)
+                        .build()
+
+                    val requestAll = GetCredentialRequest.Builder()
+                        .addCredentialOption(googleIdOptionAll)
+                        .build()
+
+                    val resultAll = credentialManager.getCredential(context, requestAll)
+                    handleGoogleCredential(resultAll, onResult)
+                }
+
+            } catch (e: GetCredentialCancellationException) {
+                Log.e(TAG, "구글 로그인 취소", e)
+                onResult(false, "구글 로그인 취소")
+            } catch (e: Exception) {
+                Log.e(TAG, "구글 로그인 실패", e)
+                onResult(false, "구글 로그인 실패")
+            }
+        }
+    }
+
+    // 여러 토큰이 있어서 토큰 필터링 과정 필요
+    private fun handleGoogleCredential(
+        result: GetCredentialResponse,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        val credential = result.credential
+
+        // 가이드에서 필요한 부분만 (GoogleIdToken만)
+        if (credential is CustomCredential &&
+            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        ) {
+            try {
+                val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data)
+
+                // ✅ 카카오처럼 서버 전송
+                handleGoogleLogin(
+                    idToken = googleIdToken.idToken,
+                    socialId = googleIdToken.id,
+                    provider = "google",
+                    onResult = onResult
+                )
+
+            } catch (e: GoogleIdTokenParsingException) {
+                Log.e(TAG, "구글 토큰 파싱 실패", e)
+                onResult(false, "구글 토큰 파싱 실패")
+            }
+        }
+    }
+
+    // 핸들함수(레트로핏 서버 전송)
+    private fun handleGoogleLogin(
+        idToken: String,
+        socialId: String,
+        provider: String,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val request = SocialLoginRequest(
+                    socialId = socialId,
+                    provider = provider,
+                    accessToken = null,
+                    idToken = idToken
+                )
+
+                val response = RetrofitClient.instance.socialLogin(request)
+
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful) {
+                        val body = response.body()
+                        if (body?.access != null) {
+                            onResult(true, "구글 로그인 성공")
+                        } else if (body?.needAdditionalInfo == true) {
+                            // 🔹 서버에서 신규 회원임을 알려주면 추가 정보 화면으로 이동
+                            navigateToAdditionalInfoScreen(socialId, provider)
+                        } else {
+                            onResult(false, "서버 응답 데이터 오류")
+                        }
+                    } else {
+                        onResult(false, "서버 오류: ${response.code()}")
+                    }
+                }
+            } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     onResult(false, "네트워크 오류: ${e.localizedMessage}")
                 }

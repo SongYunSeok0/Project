@@ -61,7 +61,7 @@ fun LoginScreen(
         ) {
             // 1. 상단 여백 (기존 weight(0.7f) 역할을 고정 높이로 대략 대체)
             item {
-                Spacer(Modifier.height(100.dp))
+                Spacer(Modifier.height(50.dp))
             }
 
             // 2. 로고 컴포넌트
@@ -162,7 +162,7 @@ fun LoginScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "SNS 연동 로그인을 하시겠어요?",
+                        text = "SNS 연동 로그인 하기",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.loginTheme.loginTertiary
                     )
@@ -182,7 +182,7 @@ fun LoginScreen(
                             .height(56.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .clickable {
-                                viewModel.kakaoOauth(context) { success, message ->
+                                viewModel.kakaoOAuth(context) { success, message ->
                                     if (success) {
                                         // 소셜 로그인 성공 시 onLogin 호출
                                         onLogin("", "")
@@ -198,13 +198,21 @@ fun LoginScreen(
 
                     // 구글 로그인 버튼 (PNG 이미지)
                     Image(
-                        painter = painterResource(R.drawable.kakao_login_button), // 이미지 버튼 리소스 ID 가정
+                        painter = painterResource(R.drawable.google_login_button), // 이미지 버튼 리소스 ID 가정
                         contentDescription = "구글 로그인",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .clickable { /* onGoogleLogin() 호출 */ },
+                            .clickable {
+                                viewModel.googleOAuth(context) { success, message ->
+                                if (success) {
+                                    // 소셜 로그인 성공 시 onLogin 호출
+                                    onLogin("", "")
+                                } else {
+                                    Log.e("LoginScreen", "구글 로그인 실패: $message")
+                                }
+                            } },
                         contentScale = ContentScale.FillBounds
                     )
 

@@ -5,7 +5,8 @@ package com.auth.data.model
 data class SocialLoginRequest(
     val socialId: String,     // 카카오 user.id
     val provider: String,     // "kakao"
-    val accessToken: String,   // 카카오 access token
+    val accessToken: String? = null,    // 카카오 로그인 → accessToken 사용(카오 SDK에서 OAuthToken 객체를 받음)
+    val idToken: String? = null,    //구글 로그인 → idToken 사용(구글에서는 OAuth 대신 ID 토큰 (JWT) 을 받아 서버로 전송함)
 
     // 여긴 구글용
     val email: String? = null,
