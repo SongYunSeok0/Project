@@ -3,7 +3,7 @@ package com.data.db.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "user")
+@Entity(tableName = "users_user")
 data class UserEntity(
     @PrimaryKey val id: Long,
     val uuid: String,
