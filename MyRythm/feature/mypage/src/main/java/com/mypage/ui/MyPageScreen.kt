@@ -25,7 +25,7 @@ fun MyPageScreen(
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier

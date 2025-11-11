@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -37,25 +38,33 @@ class AuthViewModel @Inject constructor(
     private val _events = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val events: SharedFlow<String> = _events
 
-    /** 공용 메시지 */
     fun info(msg: String) { _events.tryEmit(msg) }
-    /** 기존 UI 호환용 */
     fun emitInfo(msg: String) = info(msg)
 
-    /** 로그인 */
-    fun login(id: String, pw: String) = viewModelScope.launch(Dispatchers.IO) {
+    /** 로그인: email/password로 고정 */
+    fun login(email: String, password: String) = viewModelScope.launch(Dispatchers.IO) {
         _state.update { it.copy(loading = true) }
-        val ok = runCatching { loginUseCase(id, pw) }.isSuccess
+        val result = runCatching { loginUseCase(email, password) }
+        val ok = result.isSuccess
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
-        _events.tryEmit(if (ok) "로그인 성공" else "로그인 실패")
+        if (ok) {
+            _events.tryEmit("로그인 성공")
+        } else {
+            _events.tryEmit(parseError(result.exceptionOrNull()) ?: "로그인 실패")
+        }
     }
 
     /** 회원가입 */
     fun signup(req: SignupRequest) = viewModelScope.launch(Dispatchers.IO) {
         _state.update { it.copy(loading = true) }
-        val ok = runCatching { signupUseCase(req) }.getOrDefault(false)
+        val result = runCatching { signupUseCase(req) }
         _state.update { it.copy(loading = false) }
-        _events.tryEmit(if (ok) "회원가입 성공" else "회원가입 실패")
+        val ok = result.getOrDefault(false)
+        if (ok) {
+            _events.tryEmit("회원가입 성공")
+        } else {
+            _events.tryEmit(parseError(result.exceptionOrNull()) ?: "회원가입 실패")
+        }
     }
 
     /** 토큰 갱신 */
@@ -69,5 +78,18 @@ class AuthViewModel @Inject constructor(
         runCatching { logoutUseCase() }
         _state.update { it.copy(isLoggedIn = false) }
         _events.tryEmit("로그아웃 완료")
+    }
+
+    /** HttpException 본문 메시지 우선 노출 */
+    private fun parseError(t: Throwable?): String? {
+        if (t == null) return null
+        return when (t) {
+            is HttpException -> {
+                val code = t.code()
+                val body = try { t.response()?.errorBody()?.string() } catch (_: Throwable) { null }
+                body?.takeIf { it.isNotBlank() } ?: "HTTP $code"
+            }
+            else -> t.message
+        }
     }
 }

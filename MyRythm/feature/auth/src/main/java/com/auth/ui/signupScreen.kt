@@ -41,7 +41,6 @@ fun SignupScreen(
     onSignupComplete: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
-    // 필수 입력(도메인 기준): email, username, phone, birthdate, gender, height, weight, + password
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -54,13 +53,12 @@ fun SignupScreen(
     var weight by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
 
-    // gender selector
-    val genders = listOf("male", "female", "unknown")
-    var gender by rememberSaveable { mutableStateOf("unknown") }
+    var gender by rememberSaveable { mutableStateOf("") }
     var genderExpanded by remember { mutableStateOf(false) }
 
     var isPhoneVerificationSent by rememberSaveable { mutableStateOf(false) }
     var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
+    var code by rememberSaveable { mutableStateOf("") }
 
     val ui = viewModel.state.collectAsState().value
     val snackbar = remember { SnackbarHostState() }
@@ -108,7 +106,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // 이메일
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -126,7 +123,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 사용자 이름
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -143,7 +139,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 비밀번호
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -171,10 +166,15 @@ fun SignupScreen(
                     .padding(bottom = 8.dp)
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 OutlinedTextField(
-                    value = birthYear, onValueChange = { birthYear = it.filter { c -> c.isDigit() }.take(4) },
-                    label = { Text("YYYY") }, modifier = Modifier.weight(1.5f),
+                    value = birthYear,
+                    onValueChange = { birthYear = it.filter { c -> c.isDigit() }.take(4) },
+                    label = { Text("YYYY") },
+                    modifier = Modifier.weight(1.5f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -185,8 +185,10 @@ fun SignupScreen(
                     )
                 )
                 OutlinedTextField(
-                    value = birthMonth, onValueChange = { birthMonth = it.filter { c -> c.isDigit() }.take(2) },
-                    label = { Text("MM") }, modifier = Modifier.weight(1f),
+                    value = birthMonth,
+                    onValueChange = { birthMonth = it.filter { c -> c.isDigit() }.take(2) },
+                    label = { Text("MM") },
+                    modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -197,8 +199,10 @@ fun SignupScreen(
                     )
                 )
                 OutlinedTextField(
-                    value = birthDay, onValueChange = { birthDay = it.filter { c -> c.isDigit() }.take(2) },
-                    label = { Text("DD") }, modifier = Modifier.weight(1f),
+                    value = birthDay,
+                    onValueChange = { birthDay = it.filter { c -> c.isDigit() }.take(2) },
+                    label = { Text("DD") },
+                    modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -212,7 +216,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // 성별
             ExposedDropdownMenuBox(
                 expanded = genderExpanded,
                 onExpandedChange = { genderExpanded = !genderExpanded },
@@ -221,7 +224,7 @@ fun SignupScreen(
                     value = when (gender) {
                         "male" -> "남성"
                         "female" -> "여성"
-                        else -> "기타/무응답"
+                        else -> ""
                     },
                     onValueChange = {},
                     readOnly = true,
@@ -238,9 +241,8 @@ fun SignupScreen(
                     )
                 )
                 ExposedDropdownMenu(expanded = genderExpanded, onDismissRequest = { genderExpanded = false }) {
-                    DropdownMenuItem(text = { Text("남성") }, onClick = { gender = "male"; genderExpanded = false })
-                    DropdownMenuItem(text = { Text("여성") }, onClick = { gender = "female"; genderExpanded = false })
-                    DropdownMenuItem(text = { Text("기타/무응답") }, onClick = { gender = "unknown"; genderExpanded = false })
+                    DropdownMenuItem(text = { Text("남성") }, onClick = { gender = "M"; genderExpanded = false })
+                    DropdownMenuItem(text = { Text("여성") }, onClick = { gender = "F"; genderExpanded = false })
                 }
             }
 
@@ -286,10 +288,13 @@ fun SignupScreen(
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
-                    value = phone, onValueChange = { phone = it },
-                    label = { Text("전화번호") }, modifier = Modifier.weight(1f),
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("전화번호") },
+                    modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    enabled = !isVerificationCompleted,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
@@ -299,8 +304,17 @@ fun SignupScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Button(
-                    onClick = { isPhoneVerificationSent = true },
-                    enabled = !isPhoneVerificationSent,
+                    onClick = {
+                        if (phone.isBlank()) {
+                            viewModel.emitInfo("전화번호를 입력하세요")
+                        } else {
+                            isPhoneVerificationSent = true
+                            isVerificationCompleted = false
+                            code = ""
+                            viewModel.emitInfo("인증번호가 전송되었습니다. 테스트 코드는 0000 입니다")
+                        }
+                    },
+                    enabled = !isVerificationCompleted, // 인증 완료되면 전송 비활성화
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isPhoneVerificationSent) SecondaryBtnDisabled else AuthSecondrayButton,
@@ -312,11 +326,13 @@ fun SignupScreen(
             Spacer(Modifier.height(12.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                var code by rememberSaveable { mutableStateOf("") }
                 OutlinedTextField(
-                    value = code, onValueChange = { code = it },
-                    label = { Text("인증번호") }, modifier = Modifier.weight(1f),
+                    value = code,
+                    onValueChange = { code = it },
+                    label = { Text("인증번호") },
+                    modifier = Modifier.weight(1f),
                     singleLine = true,
+                    enabled = isPhoneVerificationSent && !isVerificationCompleted,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
@@ -326,8 +342,21 @@ fun SignupScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Button(
-                    onClick = { isVerificationCompleted = true },
+                    onClick = {
+                        if (!isPhoneVerificationSent) {
+                            viewModel.emitInfo("먼저 인증번호를 전송하세요")
+                            return@Button
+                        }
+                        if (code == "0000") {
+                            isVerificationCompleted = true
+                            viewModel.emitInfo("전화번호 인증이 완료되었습니다")
+                        } else {
+                            isVerificationCompleted = false
+                            viewModel.emitInfo("인증번호가 올바르지 않습니다. 테스트 코드는 0000 입니다")
+                        }
+                    },
                     shape = RoundedCornerShape(8.dp),
+                    enabled = isPhoneVerificationSent && !isVerificationCompleted,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AuthSecondrayButton,
                         contentColor = AuthOnSecondray
@@ -339,7 +368,6 @@ fun SignupScreen(
 
             Button(
                 onClick = {
-                    // 필수 검증
                     val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
                     val heightOk = validNumber(height)
                     val weightOk = validNumber(weight)
@@ -347,8 +375,7 @@ fun SignupScreen(
                     if (
                         email.isBlank() || username.isBlank() || password.isBlank() ||
                         birthYear.length != 4 || birthMonth.isBlank() || birthDay.isBlank() ||
-                        !heightOk || !weightOk ||
-                        phone.isBlank()
+                        !heightOk || !weightOk || phone.isBlank()
                     ) {
                         viewModel.emitInfo("필수 항목을 정확히 입력하세요")
                         return@Button

@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework', 'drf_yasg',
-    'users', 'medications', 'alerts', 'ocr','qna',
+    'users', 'medications', 'iot','health',
     'corsheaders', 'django_extensions',
 ]
 

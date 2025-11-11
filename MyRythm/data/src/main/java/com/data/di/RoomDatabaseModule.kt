@@ -2,7 +2,7 @@ package com.data.di
 
 import android.content.Context
 import androidx.room.Room
-import com.data.db.RoomDatabase
+import com.data.db.AppRoomDatabase
 import com.data.db.dao.UserDao
 import com.data.db.dao.FavoriteDao
 import com.data.db.dao.PlanDao
@@ -19,12 +19,12 @@ object RoomDatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDb(@ApplicationContext ctx: Context): RoomDatabase =
-        Room.databaseBuilder(ctx, RoomDatabase::class.java, "app.db")
-            .addMigrations(RoomDatabase.MIGRATION_1_2)
+    fun provideDb(@ApplicationContext ctx: Context): AppRoomDatabase =
+        Room.databaseBuilder(ctx, AppRoomDatabase::class.java, "app.db")
+            .addMigrations(AppRoomDatabase.MIGRATION_1_2)
             .build()
 
-    @Provides fun provideUserDao(db: RoomDatabase): UserDao = db.userDao()
-    @Provides fun provideFavoriteDao(db: RoomDatabase): FavoriteDao = db.favoriteDao()
-    @Provides fun providePlanDao(db: RoomDatabase): PlanDao = db.planDao()
+    @Provides fun provideUserDao(db: AppRoomDatabase): UserDao = db.userDao()
+    @Provides fun provideFavoriteDao(db: AppRoomDatabase): FavoriteDao = db.favoriteDao()
+    @Provides fun providePlanDao(db: AppRoomDatabase): PlanDao = db.planDao()
 }

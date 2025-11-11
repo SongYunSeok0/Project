@@ -1,6 +1,6 @@
 package com.data.network.dto.user
 
 data class UserLoginRequest(
-    val id: String,
+    val email: String,
     val password: String
 )
