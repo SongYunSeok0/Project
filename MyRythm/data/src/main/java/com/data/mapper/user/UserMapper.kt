@@ -1,4 +1,4 @@
-package com.data.mapper
+package com.data.mapper.user
 
 import com.data.db.entity.UserEntity
 import com.data.network.dto.user.UserDto

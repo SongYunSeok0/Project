@@ -1,12 +1,14 @@
 package com.data.network.dto.user
 
+import com.squareup.moshi.Json
+
 data class UserSignupRequest(
-    val email: String,
-    val username: String,
-    val phone: String,
-    val birthDate: String,
-    val gender: String,
-    val height: Double,
-    val weight: Double,
-    val password: String
+    @Json(name = "email") val email: String,
+    @Json(name = "username") val username: String,
+    @Json(name = "phone") val phone: String,
+    @Json(name = "birth_date") val birthDate: String, // 서버와 동일하게
+    @Json(name = "gender") val gender: String,        // "M" / "F"
+    @Json(name = "height") val height: Double,
+    @Json(name = "weight") val weight: Double,
+    @Json(name = "password") val password: String
 )

@@ -27,7 +27,20 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun signup(request: SignupRequest): Boolean {
-        val res = api.signup(request.toDto())
-        return res.isSuccessful
+        return try {
+            val res = api.signup(request.toDto())
+
+            if (!res.isSuccessful) {
+                val errorBody = res.errorBody()?.string()
+                android.util.Log.e("Signup", "HTTP ${res.code()} ${res.message()}\n$errorBody")
+                return false
+            }
+
+            android.util.Log.d("Signup", "회원가입 성공: ${res.body()}")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("Signup", "네트워크 예외 발생", e)
+            false
+        }
     }
 }
