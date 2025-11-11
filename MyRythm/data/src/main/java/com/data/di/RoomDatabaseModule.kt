@@ -3,9 +3,9 @@ package com.data.di
 import android.content.Context
 import androidx.room.Room
 import com.data.db.AppRoomDatabase
-import com.data.db.dao.UserDao
 import com.data.db.dao.FavoriteDao
 import com.data.db.dao.PlanDao
+import com.data.db.dao.UserDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +21,7 @@ object RoomDatabaseModule {
     @Singleton
     fun provideDb(@ApplicationContext ctx: Context): AppRoomDatabase =
         Room.databaseBuilder(ctx, AppRoomDatabase::class.java, "app.db")
-            .addMigrations(AppRoomDatabase.MIGRATION_1_2)
+            .fallbackToDestructiveMigration()   // ← 버전 초기화 시 데이터 삭제 후 재생성
             .build()
 
     @Provides fun provideUserDao(db: AppRoomDatabase): UserDao = db.userDao()

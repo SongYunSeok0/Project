@@ -16,15 +16,25 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
 
-    @Provides @Singleton
-    fun provideLoginUseCase(repo: AuthRepository) = LoginUseCase(repo)
+    @Provides
+    @Singleton
+    fun provideLoginUseCase(
+        authRepository: AuthRepository,
+        userRepository: UserRepository
+    ) = LoginUseCase(authRepository, userRepository)
 
-    @Provides @Singleton
-    fun provideRefreshTokenUseCase(repo: AuthRepository) = RefreshTokenUseCase(repo)
+    @Provides
+    @Singleton
+    fun provideRefreshTokenUseCase(repo: AuthRepository) =
+        RefreshTokenUseCase(repo)
 
-    @Provides @Singleton
-    fun provideLogoutUseCase(repo: AuthRepository) = LogoutUseCase(repo)
+    @Provides
+    @Singleton
+    fun provideLogoutUseCase(repo: AuthRepository) =
+        LogoutUseCase(repo)
 
-    @Provides @Singleton
-    fun provideSignupUseCase(repo: UserRepository) = SignupUseCase(repo)
+    @Provides
+    @Singleton
+    fun provideSignupUseCase(repo: UserRepository) =
+        SignupUseCase(repo)
 }
