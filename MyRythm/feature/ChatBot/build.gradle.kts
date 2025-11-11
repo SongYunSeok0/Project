@@ -10,7 +10,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -29,28 +29,28 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions {
-        jvmTarget = "21"
-    }
-
     buildFeatures {
         compose = true
     }
 }
-
+kotlin {
+    jvmToolchain(21)
+}
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+
     implementation(libs.bundles.compose.library)
+
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
 
+    implementation(libs.lifecycle.viewmodel.compose)
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

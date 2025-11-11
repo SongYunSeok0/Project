@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -13,32 +15,26 @@ android {
 
     defaultConfig {
         applicationId = "com.myrythm"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // --- local.properties에서 안전하게 로드 ---
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        //manifestPlaceholders["NAVER_MAP_CLIENT_ID"] = rootProject.extra.get("NAVER_MAP_CLIENT_ID") as? String ?: ""
+        //manifestPlaceholders["NAVER_MAP_CLIENT_SECRET"] = rootProject.extra.get("NAVER_MAP_CLIENT_SECRET") as? String ?: ""
+
+        // 네이버 지도 SDK용 클라이언트 ID만 주입
         val props = Properties().apply {
             val f = rootProject.file("local.properties")
             if (f.exists()) load(f.inputStream())
         }
-        val mapId      = props.getProperty("NAVER_MAP_CLIENT_ID", "")
-        val mapSecret  = props.getProperty("NAVER_MAP_CLIENT_SECRET", "")
-        val openId     = props.getProperty("NAVER_CLIENT_ID", "")
-        val openSecret = props.getProperty("NAVER_CLIENT_SECRET", "")
+        manifestPlaceholders["NAVER_MAP_CLIENT_ID"] =
+            props.getProperty("NAVER_MAP_CLIENT_ID", "")
 
+        //카카오
         val kakaoAppKey = props.getProperty("KAKAO_NATIVE_APP_KEY", "")
-
-        // AndroidManifest placeholders (네이버 지도 SDK용)
-        manifestPlaceholders["NAVER_MAP_CLIENT_ID"] = mapId
-        manifestPlaceholders["NAVER_MAP_CLIENT_SECRET"] = mapSecret
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoAppKey
-
-        // BuildConfig (오픈 API 호출용)
-        buildConfigField("String", "NAVER_CLIENT_ID", "\"$openId\"")
-        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"$openSecret\"")
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoAppKey\"")
     }
 
@@ -51,22 +47,24 @@ android {
             )
         }
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-        isCoreLibraryDesugaringEnabled = true
     }
-    //kotlinOptions { jvmTarget = "21" }
+
+    kotlinOptions { jvmTarget = "21" }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
+
 }
 
 kotlin { jvmToolchain(21) }
 
 dependencies {
+    // 모듈 연결
     implementation(project(":common"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
@@ -76,17 +74,22 @@ dependencies {
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:chatbot"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":core"))
 
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
+    // Compose / Core
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.bundles.test)
 
-    implementation("com.naver.maps:map-sdk:3.23.0")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
+    // 테스트
+    testImplementation(libs.bundles.test)
+
+    //카카오
     implementation("com.kakao.sdk:v2-user:2.11.0")
 }

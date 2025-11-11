@@ -4,6 +4,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
+//data모듈의 remote/api로 옮겨야함
 interface NaverNewsApi {
     @GET("v1/search/news.json")
     suspend fun getNews(

@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 
+//data 모듈의 repository로 옮겨야함
 class NaverNewsPagingSource(private val query: String) :
     PagingSource<Int, NaverNewsItem>() {
 

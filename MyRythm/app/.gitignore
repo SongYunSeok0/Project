@@ -1,1 +1,16 @@
+# === Module-specific build outputs ===
 /build
+*/build
+
+# === NDK / External Build ===
+/.cxx
+/.externalNativeBuild
+
+# === Local config ===
+local.properties
+
+# === Logs ===
+*.log
+
+# === Temporary ===
+captures/

@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
@@ -62,29 +62,26 @@ android {
 
 dependencies {
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
     // ✅ Compose 필수 라이브러리
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
 
     // ✅ Retrofit & Coroutine
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("org.jsoup:jsoup:1.16.1")
-    implementation("androidx.compose.material:material-icons-extended:1.5.0")
-    implementation("androidx.paging:paging-compose:3.3.2")
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.jsoup)
+    implementation(libs.paging.compose)
+    implementation(libs.compose.runtime.livedata)
 
-    // ✅ 디버그용 UI 도구
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }

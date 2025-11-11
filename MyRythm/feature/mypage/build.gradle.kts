@@ -10,7 +10,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -28,7 +28,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -48,21 +47,17 @@ kotlin {
 dependencies {
     implementation(project(":feature"))
     implementation(project(":common:design"))
+    implementation(project(":domain"))
 
-    implementation(libs.androidx.navigation.compose)
     //기본
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
+    implementation(libs.bundles.test)
 
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
 
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
-    // 테스트
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
+
 }

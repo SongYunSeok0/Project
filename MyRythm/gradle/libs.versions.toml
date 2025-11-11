@@ -1,13 +1,19 @@
 [versions]
 agp = "8.12.3"
-kotlin = "2.2.21"
+kotlin = "2.0.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.9.4"
+lifecycleRuntimeKtx = "2.8.6"
+lifecycle = "2.8.6"
 
-# compose
+camerax = "1.3.4"
+concurrentFuturesKtx = "1.1.0"
+mlkitText = "16.0.0"
+exifinterface = "1.3.7"
+
+#compose
 activityCompose = "1.11.0"
 composeBom = "2025.10.01"
 appcompat = "1.7.1"
@@ -21,6 +27,29 @@ playServicesMaps = "19.2.0"
 foundation = "1.9.4"
 navigation = "2.9.5"
 serialization = "1.9.0"
+jetbrainsKotlinJvm = "2.0.21"
+materialIconsExtended = "1.7.8"
+
+naver-map = "3.23.0"
+hilt = "2.52"
+hiltNavigationCompose = "1.2.0"
+kotlinx-metadata = "0.9.0"
+retrofit = "2.11.0"
+okhttp = "4.10.0"
+coroutines = "1.7.3"
+room = "2.6.1"
+naver-map-compose = "1.5.0"
+play-services-location = "20.0.0"
+accompanist = "0.34.0"
+coil = "2.7.0"
+jsoup = "1.16.1"
+paging = "3.3.2"
+moshi = "1.15.0"
+ksp = "2.0.21-1.0.28"
+
+datastore = "1.1.1"
+securityCrypto = "1.1.0"
+
 ui = "1.9.4"
 googleid = "1.1.1"
 playServicesAuth = "21.4.0"
@@ -33,7 +62,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-
+lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 
 # Compose BOM은 platform()으로만 사용
@@ -45,17 +74,77 @@ androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
-
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 androidx-compose-ui-geometry = { group = "androidx.compose.ui", name = "ui-geometry", version.ref = "uiGeometry" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+naver-map-sdk = { group = "com.naver.maps", name = "map-sdk", version.ref = "naver-map" }
+
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+
+kotlinx-metadata-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version.ref = "kotlinx-metadata" }
+
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+compose-animation = { group = "androidx.compose.animation", name = "animation" }
+# OkHttp
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
+# Coroutines
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+naver-map-compose = { group = "io.github.fornewid", name = "naver-map-compose", version.ref = "naver-map-compose" }
+
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+
+compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+
+# CameraX
+androidx-camera-core        = { group = "androidx.camera", name = "camera-core",        version.ref = "camerax" }
+androidx-camera-camera2     = { group = "androidx.camera", name = "camera-camera2",     version.ref = "camerax" }
+androidx-camera-lifecycle   = { group = "androidx.camera", name = "camera-lifecycle",   version.ref = "camerax" }
+androidx-camera-view        = { group = "androidx.camera", name = "camera-view",        version.ref = "camerax" }
+androidx-camera-video       = { group = "androidx.camera", name = "camera-video",       version.ref = "camerax" }
+androidx-camera-extensions  = { group = "androidx.camera", name = "camera-extensions",  version.ref = "camerax" }
+
+# Futures (ProcessCameraProvider 코루틴 연동 시 유용)
+androidx-concurrent-futures-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "concurrentFuturesKtx" }
+
+mlkit-text-recognition        = { group = "com.google.mlkit", name = "text-recognition",          version.ref = "mlkitText" }
+mlkit-text-recognition-korean = { group = "com.google.mlkit", name = "text-recognition-korean",   version.ref = "mlkitText" }
+androidx-exifinterface        = { group = "androidx.exifinterface", name = "exifinterface",       version.ref = "exifinterface" }
+javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
+
+moshi = { group = "com.squareup.moshi", name = "moshi", version.ref = "moshi" }
+moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
+moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshi" }
+moshi-converter = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit" }
+
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
@@ -66,6 +155,9 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
 [bundles]
 core = [
@@ -78,6 +170,7 @@ core = [
 compose-library = [
     "androidx-compose-runtime",
     "androidx-activity-compose",
+    "androidx-material-icons-extended",
     "androidx-foundation",
     "androidx-foundation-layout",
     "androidx-ui",
@@ -85,7 +178,7 @@ compose-library = [
     "androidx-ui-tooling",
     "androidx-ui-tooling-preview",
     "androidx-material3",
-    "androidx-navigation-compose"
+    "androidx-navigation-compose",
 ]
 
 test = [
@@ -94,4 +187,13 @@ test = [
     "androidx-espresso-core",
     "androidx-ui-test-manifest",
     "androidx-ui-test-junit4"
+]
+
+camerax = [
+    "androidx-camera-core",
+    "androidx-camera-camera2",
+    "androidx-camera-lifecycle",
+    "androidx-camera-view",
+    "androidx-camera-video",
+    "androidx-camera-extensions"
 ]
