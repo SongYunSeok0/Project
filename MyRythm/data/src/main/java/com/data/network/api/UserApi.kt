@@ -12,7 +12,7 @@ import retrofit2.http.Path
 
 interface UserApi {
     @POST("users/signup/")
-    suspend fun signup(@Body user: UserSignupRequest): Response<Unit>
+    suspend fun signup(@Body user: UserSignupRequest): Response<LoginResponse>
 
     @POST("token/")
     suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>

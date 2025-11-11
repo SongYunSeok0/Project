@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -81,7 +82,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = id,
                 onValueChange = { id = it },
-                label = { Text("아이디") },
+                label = { Text("아이디(이메일 또는 사용자명)") },
                 singleLine = true,
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -128,8 +129,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     if (id.isBlank() || password.isBlank()) {
-                        onLogin(id, password)   // ✅ 입력 없이 진행
-                        viewModel.emitInfo("입력 없이 진행했습니다")
+                        viewModel.emitInfo("아이디와 비밀번호를 입력하세요")
                         return@Button
                     }
                     viewModel.login(id, password)
@@ -146,6 +146,20 @@ fun LoginScreen(
                     color = Color.White,
                     fontSize = 24.sp
                 )
+            }
+            Spacer(Modifier.height(10.dp))
+            
+            Button(
+                onClick = {
+                    onLogin(id, password) // ← 바로 이동
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff6ac0e0)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("임시 로그인", color = Color.White, fontSize = 24.sp)
             }
 
             Spacer(Modifier.height(24.dp))

@@ -1,8 +1,11 @@
 package com.domain.repository
+
 import com.domain.model.User
-import kotlinx.coroutines.flow.Flow
+import com.domain.model.SignupRequest
 
 interface UserRepository {
-    fun observeUser(): Flow<User?>            // Room 캐시 관찰
-    suspend fun refreshUser(uuid: String)     // 서버 → Room 동기화
+    suspend fun getUser(userId: String): User
+    suspend fun refreshUser(userId: String): User
+    suspend fun updateUser(user: User): Boolean
+    suspend fun signup(request: SignupRequest): Boolean
 }

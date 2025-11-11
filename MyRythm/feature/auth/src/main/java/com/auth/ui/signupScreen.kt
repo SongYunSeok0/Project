@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.auth.viewmodel.AuthViewModel
 import com.common.design.R
-import com.data.network.dto.user.UserSignupRequest
+import com.domain.model.SignupRequest
 import com.ui.theme.AuthBackground
 import com.ui.theme.AuthOnPrimary
 import com.ui.theme.AuthOnSecondray
@@ -41,16 +41,23 @@ fun SignupScreen(
     onSignupComplete: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
-    var id by rememberSaveable { mutableStateOf("") }
+    // 필수 입력(도메인 기준): email, username, phone, birthdate, gender, height, weight, + password
+    var email by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    var name by rememberSaveable { mutableStateOf("") }
+
     var birthYear by rememberSaveable { mutableStateOf("") }
     var birthMonth by rememberSaveable { mutableStateOf("") }
     var birthDay by rememberSaveable { mutableStateOf("") }
+
     var height by rememberSaveable { mutableStateOf("") }
     var weight by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
-    var code by rememberSaveable { mutableStateOf("") }
+
+    // gender selector
+    val genders = listOf("male", "female", "unknown")
+    var gender by rememberSaveable { mutableStateOf("unknown") }
+    var genderExpanded by remember { mutableStateOf(false) }
 
     var isPhoneVerificationSent by rememberSaveable { mutableStateOf(false) }
     var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
@@ -65,14 +72,16 @@ fun SignupScreen(
         }
     }
 
+    fun validNumber(s: String) = s.toDoubleOrNull() != null
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AuthBackground,
         snackbarHost = { SnackbarHost(snackbar) }
-    ) { innerPadding ->
+    ) { inner ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(inner)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 30.dp),
@@ -89,7 +98,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // BalooThambi 는 LoginScreen.kt에 정의된 것을 사용
             Text(
                 text = "My Rhythm",
                 color = Color(0xff5db0a8),
@@ -100,10 +108,29 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // 이메일
             OutlinedTextField(
-                value = id,
-                onValueChange = { id = it },
-                label = { Text("아이디") },
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("이메일") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // 사용자 이름
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("사용자 이름") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -116,6 +143,7 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // 비밀번호
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -132,23 +160,7 @@ fun SignupScreen(
                 )
             )
 
-            Spacer(Modifier.height(24.dp))
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("이름") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
-            )
-
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
 
             Text(
                 text = "생년월일",
@@ -161,7 +173,7 @@ fun SignupScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
-                    value = birthYear, onValueChange = { birthYear = it },
+                    value = birthYear, onValueChange = { birthYear = it.filter { c -> c.isDigit() }.take(4) },
                     label = { Text("YYYY") }, modifier = Modifier.weight(1.5f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -173,7 +185,7 @@ fun SignupScreen(
                     )
                 )
                 OutlinedTextField(
-                    value = birthMonth, onValueChange = { birthMonth = it },
+                    value = birthMonth, onValueChange = { birthMonth = it.filter { c -> c.isDigit() }.take(2) },
                     label = { Text("MM") }, modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -185,7 +197,7 @@ fun SignupScreen(
                     )
                 )
                 OutlinedTextField(
-                    value = birthDay, onValueChange = { birthDay = it },
+                    value = birthDay, onValueChange = { birthDay = it.filter { c -> c.isDigit() }.take(2) },
                     label = { Text("DD") }, modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -198,7 +210,41 @@ fun SignupScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
+
+            // 성별
+            ExposedDropdownMenuBox(
+                expanded = genderExpanded,
+                onExpandedChange = { genderExpanded = !genderExpanded },
+            ) {
+                OutlinedTextField(
+                    value = when (gender) {
+                        "male" -> "남성"
+                        "female" -> "여성"
+                        else -> "기타/무응답"
+                    },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("성별") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    )
+                )
+                ExposedDropdownMenu(expanded = genderExpanded, onDismissRequest = { genderExpanded = false }) {
+                    DropdownMenuItem(text = { Text("남성") }, onClick = { gender = "male"; genderExpanded = false })
+                    DropdownMenuItem(text = { Text("여성") }, onClick = { gender = "female"; genderExpanded = false })
+                    DropdownMenuItem(text = { Text("기타/무응답") }, onClick = { gender = "unknown"; genderExpanded = false })
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
@@ -266,6 +312,7 @@ fun SignupScreen(
             Spacer(Modifier.height(12.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                var code by rememberSaveable { mutableStateOf("") }
                 OutlinedTextField(
                     value = code, onValueChange = { code = it },
                     label = { Text("인증번호") }, modifier = Modifier.weight(1f),
@@ -292,11 +339,18 @@ fun SignupScreen(
 
             Button(
                 onClick = {
-                    if (id.isBlank() || password.isBlank() || name.isBlank() ||
-                        birthYear.isBlank() || birthMonth.isBlank() || birthDay.isBlank() ||
+                    // 필수 검증
+                    val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
+                    val heightOk = validNumber(height)
+                    val weightOk = validNumber(weight)
+
+                    if (
+                        email.isBlank() || username.isBlank() || password.isBlank() ||
+                        birthYear.length != 4 || birthMonth.isBlank() || birthDay.isBlank() ||
+                        !heightOk || !weightOk ||
                         phone.isBlank()
                     ) {
-                        viewModel.emitInfo("필수 항목을 모두 입력하세요")
+                        viewModel.emitInfo("필수 항목을 정확히 입력하세요")
                         return@Button
                     }
                     if (!isVerificationCompleted) {
@@ -304,14 +358,15 @@ fun SignupScreen(
                         return@Button
                     }
 
-                    val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
-                    val req = UserSignupRequest(
-                        id = id,
+                    val req = SignupRequest(
+                        email = email,
+                        username = username,
                         password = password,
-                        name = name,
-                        birth_date = birthDate,
-                        gender = "unknown",
-                        phone = phone
+                        phone = phone,
+                        birthDate = birthDate,
+                        gender = gender,
+                        height = height.toDouble(),
+                        weight = weight.toDouble()
                     )
                     viewModel.signup(req)
                 },
@@ -325,6 +380,24 @@ fun SignupScreen(
                 Text(
                     text = if (ui.loading) "가입 중..." else "회원가입",
                     color = AuthOnSecondray,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Button(
+                onClick = { onBackToLogin() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xffb3e5fc)),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text(
+                    text = "돌아가기",
+                    color = Color.Black,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

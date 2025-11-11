@@ -23,7 +23,7 @@ android {
 
         // 네이버 지도 SDK용 클라이언트 ID만 주입
         val props = Properties().apply {
-            val f = rootProject.file("local.properties")
+            val f = rootProject.file("secret.properties")
             if (f.exists()) load(f.inputStream())
         }
         manifestPlaceholders["NAVER_MAP_CLIENT_ID"] =
