@@ -40,7 +40,6 @@ android {
         buildConfigField("String", "NAVER_CLIENT_ID", "\"$openId\"")
         buildConfigField("String", "NAVER_CLIENT_SECRET", "\"$openSecret\"")
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoAppKey\"")
-
     }
 
     buildTypes {

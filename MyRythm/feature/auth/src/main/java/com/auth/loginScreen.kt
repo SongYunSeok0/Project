@@ -50,24 +50,18 @@ fun LoginScreen(
             .fillMaxSize()
             .background(MaterialTheme.loginTheme.loginBackground)
     ) {
-        // 기존 Column을 LazyColumn으로 변경하여 스크롤 가능하도록 수정
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            // LazyColumn의 contentPadding을 상하 패딩으로 사용하여 전체 콘텐츠를 감쌈
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
             // 1. 상단 여백 (기존 weight(0.7f) 역할을 고정 높이로 대략 대체)
-            item {
-                Spacer(Modifier.height(50.dp))
-            }
+            item { Spacer(Modifier.height(50.dp)) }
 
             // 2. 로고 컴포넌트
-            item {
-                AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm)
-            }
+            item { AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm) }
 
             // 3. 필드 및 버튼
             item {
@@ -115,7 +109,6 @@ fun LoginScreen(
                 // AuthButton.kt 컴포넌트 불러오기 : 클릭 효과(useClickEffect) 포함, 로그인 테마 적용
                 AuthPrimaryButton(
                     text = "로그인",
-                    //onClick = { onLogin(id, pw) },
                     onClick = {
                         viewModel.login(id, pw) { success, message ->
                             if (success) {
@@ -145,7 +138,6 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(30.dp))
             }
-
 
             // 1107 16:48 추가중
             item {
@@ -198,31 +190,37 @@ fun LoginScreen(
 
                     // 구글 로그인 버튼 (PNG 이미지)
                     Image(
-                        painter = painterResource(R.drawable.google_login_button), // 이미지 버튼 리소스 ID 가정
+                        painter = painterResource(R.drawable.google_login_button),
                         contentDescription = "구글 로그인",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .clickable {
-                                viewModel.googleOAuth(context) { success, message ->
-                                if (success) {
-                                    // 소셜 로그인 성공 시 onLogin 호출
-                                    onLogin("", "")
-                                } else {
-                                    Log.e("LoginScreen", "구글 로그인 실패: $message")
-                                }
-                            } },
+                                viewModel.googleOAuth(
+                                    context,
+                                    onResult = { success, message ->
+                                        if (success) {
+                                            // 소셜 로그인 성공 시 onLogin 호출
+                                            onLogin("", "")
+                                        } else {
+                                            Log.e("LoginScreen", "구글 로그인 실패: $message")
+                                        }
+                                    },
+                                    onNeedAdditionalInfo = { socialId, provider ->
+                                        // 추가 정보 필요 시 처리
+                                        Log.d(
+                                            "LoginScreen",
+                                            "추가 정보 필요: socialId=$socialId, provider=$provider"
+                                        )
+                                    }
+                                )
+                            },
                         contentScale = ContentScale.FillBounds
                     )
 
                     Spacer(Modifier.height(30.dp)) // SNS 버튼 아래 여백
                 }
-            }
-
-            // 하단 여백 (기존 weight(1f) 역할을 고정 높이로 대략 대체)
-            item {
-                Spacer(Modifier.height(30.dp))
             }
         }
     }
@@ -232,9 +230,7 @@ fun LoginScreen(
 @Composable
 private fun PreviewLogin() {
     MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Primary
-        ),
+        colorScheme = lightColorScheme(primary = Primary),
         typography = MaterialTheme.typography.copy(
             labelLarge = TextStyle(
                 fontFamily = defaultFontFamily,
@@ -243,7 +239,6 @@ private fun PreviewLogin() {
                 lineHeight = 24.sp,
                 letterSpacing = 0.5.sp
             ),
-            // 입력 필드와 본문 글씨
             bodyLarge = TextStyle(
                 fontFamily = defaultFontFamily,
                 fontWeight = FontWeight.Normal,
@@ -251,7 +246,6 @@ private fun PreviewLogin() {
                 lineHeight = 24.sp,
                 letterSpacing = 0.5.sp
             ),
-            // 안내메시지 등 작은 글씨
             bodySmall = TextStyle(
                 fontFamily = defaultFontFamily,
                 fontWeight = FontWeight.Normal,
@@ -264,8 +258,6 @@ private fun PreviewLogin() {
         LoginScreen()
     }
 }
-
-
 
 /* 1030 19:40 주석처리
 package com.auth
@@ -404,7 +396,6 @@ fun LoginScreen(
                     .padding(vertical = 4.dp)
             )
 
-            // 🔹 버튼 전 여백 가변 (아래로 내릴수록 값 줄이기)
             Spacer(Modifier.weight(0.15f))
 
             Button(
@@ -432,7 +423,7 @@ fun LoginScreen(
                 Text("회원가입", color = Color.White)
             }
 
-            Spacer(Modifier.height(120.dp)) // 하단 살짝 띄움
+            Spacer(Modifier.height(120.dp))
         }
     }
 }

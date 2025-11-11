@@ -1,3 +1,6 @@
+import java.util.Properties
+import kotlin.apply
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -6,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.login"
+    namespace = "com.auth"
     compileSdk = 36
 
     defaultConfig {
@@ -14,6 +17,17 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+        val props = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) load(f.inputStream())
+        }
+        val googleClientId = props.getProperty("GOOGLE_CLIENT_ID", "")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

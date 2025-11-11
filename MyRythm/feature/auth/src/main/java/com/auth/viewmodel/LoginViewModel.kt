@@ -74,6 +74,7 @@ import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
+import com.auth.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -265,7 +266,12 @@ class LoginViewModel : ViewModel() {
     }
 
     // 구글 프로토콜은 카카오와 다름
-    fun googleOAuth(context: Context, onResult: (Boolean, String) -> Unit) {
+    fun googleOAuth(
+        context: Context,
+        onResult: (Boolean, String) -> Unit,
+        onNeedAdditionalInfo: (String, String) -> Unit
+    ) {
+        val googleClientId = BuildConfig.GOOGLE_CLIENT_ID
         viewModelScope.launch {
             try {
                 val credentialManager = CredentialManager.create(context)
@@ -273,7 +279,7 @@ class LoginViewModel : ViewModel() {
                 // 가이드 request 부분
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(true)
-                    .setServerClientId(WEB_CLIENT_ID)
+                    .setServerClientId(googleClientId)
                     .build()
 
                 val request = GetCredentialRequest.Builder()
@@ -286,12 +292,12 @@ class LoginViewModel : ViewModel() {
                 try {
                     val result = credentialManager.getCredential(context, request)
                     // Toast 대신 handleGoogleCredential 호출
-                    handleGoogleCredential(result, onResult)
+                    handleGoogleCredential(result, onResult, onNeedAdditionalInfo)
 
                 } catch (e: NoCredentialException) {
                     val googleIdOptionAll = GetGoogleIdOption.Builder()
                         .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(WEB_CLIENT_ID)
+                        .setServerClientId(googleClientId)
                         .build()
 
                     val requestAll = GetCredentialRequest.Builder()
@@ -299,7 +305,7 @@ class LoginViewModel : ViewModel() {
                         .build()
 
                     val resultAll = credentialManager.getCredential(context, requestAll)
-                    handleGoogleCredential(resultAll, onResult)
+                    handleGoogleCredential(resultAll, onResult, onNeedAdditionalInfo)
                 }
 
             } catch (e: GetCredentialCancellationException) {
@@ -315,7 +321,8 @@ class LoginViewModel : ViewModel() {
     // 여러 토큰이 있어서 토큰 필터링 과정 필요
     private fun handleGoogleCredential(
         result: GetCredentialResponse,
-        onResult: (Boolean, String) -> Unit
+        onResult: (Boolean, String) -> Unit,
+        onNeedAdditionalInfo: (String, String) -> Unit // 여기에 handleGoogleLogin 의 콜백 전달
     ) {
         val credential = result.credential
 
@@ -331,7 +338,8 @@ class LoginViewModel : ViewModel() {
                     idToken = googleIdToken.idToken,
                     socialId = googleIdToken.id,
                     provider = "google",
-                    onResult = onResult
+                    onResult = onResult,
+                    onNeedAdditionalInfo = onNeedAdditionalInfo
                 )
 
             } catch (e: GoogleIdTokenParsingException) {
@@ -346,7 +354,8 @@ class LoginViewModel : ViewModel() {
         idToken: String,
         socialId: String,
         provider: String,
-        onResult: (Boolean, String) -> Unit
+        onResult: (Boolean, String) -> Unit,
+        onNeedAdditionalInfo: ((String, String) -> Unit)? = null
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -365,8 +374,8 @@ class LoginViewModel : ViewModel() {
                         if (body?.access != null) {
                             onResult(true, "구글 로그인 성공")
                         } else if (body?.needAdditionalInfo == true) {
-                            // 🔹 서버에서 신규 회원임을 알려주면 추가 정보 화면으로 이동
-                            navigateToAdditionalInfoScreen(socialId, provider)
+                            // 🔹 서버에서 신규 회원임을 알려주면 추가 정보 화면으로 이동 - ui에서콜백받기
+                            onNeedAdditionalInfo?.invoke(socialId, provider)
                         } else {
                             onResult(false, "서버 응답 데이터 오류")
                         }
