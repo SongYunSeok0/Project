@@ -40,6 +40,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.compose.library)
+    implementation(libs.androidx.foundation)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
     implementation(libs.kotlinx.serialization.json)

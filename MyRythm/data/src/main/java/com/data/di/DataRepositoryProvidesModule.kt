@@ -10,15 +10,16 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DataRepositoryProvidesModule {
-    @Provides
+    @Provides @Singleton
     fun provideNewsRepository(api: NewsApi): NewsRepository =
         NewsRepositoryImpl(getNewsRemote = { api.getNews() })
 
-    @Provides
+    @Provides @Singleton
     fun provideMapRepository(api: MapApi): MapRepository =
         MapRepositoryImpl(getMapDataRemote = { api.getMapData() })
 }

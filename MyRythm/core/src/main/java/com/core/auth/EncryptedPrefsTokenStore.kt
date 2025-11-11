@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.core.auth
 
 import android.content.Context
@@ -37,19 +35,23 @@ class EncryptedPrefsTokenStore(
 
     override suspend fun set(access: String?, refresh: String?) {
         prefs.edit {
-            putString(KEY_ACCESS, access)
-            putString(KEY_REFRESH, refresh)
+            if (access != null) putString(KEY_ACCESS, access) else remove(KEY_ACCESS)
+            if (refresh != null) putString(KEY_REFRESH, refresh) else remove(KEY_REFRESH)
         }
         update(access, refresh)
     }
 
     override suspend fun setAccess(access: String?) {
-        prefs.edit { putString(KEY_ACCESS, access) }
+        prefs.edit {
+            if (access != null) putString(KEY_ACCESS, access) else remove(KEY_ACCESS)
+        }
         update(access, cached.refresh)
     }
 
     override suspend fun setRefresh(refresh: String?) {
-        prefs.edit { putString(KEY_REFRESH, refresh) }
+        prefs.edit {
+            if (refresh != null) putString(KEY_REFRESH, refresh) else remove(KEY_REFRESH)
+        }
         update(cached.access, refresh)
     }
 

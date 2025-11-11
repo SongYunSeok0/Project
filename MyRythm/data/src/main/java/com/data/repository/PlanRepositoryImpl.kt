@@ -3,6 +3,7 @@ package com.data.repository
 import com.data.db.dao.PlanDao
 import com.data.mapper.toEntities
 import com.data.network.api.PlanApi
+import com.data.network.dto.plan.PlanResponse
 import com.data.network.mapper.toCreateRequest
 import com.data.network.mapper.toUpdateRequest
 import com.domain.model.Plan
@@ -25,7 +26,7 @@ class PlanRepositoryImpl @Inject constructor(
         dao.observePlans(userId).map { rows -> rows.map { it.toDomainLocal() } }
 
     override suspend fun refresh(userId: String) = withContext(Dispatchers.IO) {
-        val remote = api.getPlans()
+        val remote: List<PlanResponse> = api.getPlans()
         dao.deleteAllByUser(userId)
         remote.forEach { resp ->
             val plan = resp.toDomainRemote()

@@ -21,6 +21,6 @@ abstract class DataRepositoryBindsModule {
     @Binds
     abstract fun bindFavoriteRepository(impl: FavoriteRepositoryImpl): FavoriteRepository
 
-    @Binds @Singleton
+    @Binds
     abstract fun bindPlanRepository(impl: PlanRepositoryImpl): PlanRepository
 }

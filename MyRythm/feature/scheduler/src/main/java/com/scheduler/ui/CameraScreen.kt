@@ -32,16 +32,14 @@ import java.io.FileOutputStream
 
 private val Mint = Color(0xFF6AE0D9)
 
-/** ⚠️ 파일 내에 이 시그니처의 CameraScreen이 1개만 존재해야 함 */
 @Composable
 fun CameraScreen(
     modifier: Modifier = Modifier,
     onOpenOcr: (String) -> Unit = {},
-    onOpenRegi: () -> Unit = {},          // ✅ 기본값 제공해서 호출부/프리뷰 충돌 제거
+    onOpenRegi: () -> Unit = {},
 ) {
     val context = LocalContext.current
 
-    // CameraActivity → RESULT_OK 로 imagePath 회수
     val takePhotoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -51,7 +49,6 @@ fun CameraScreen(
         }
     }
 
-    // 갤러리 Uri → 캐시 복사 → 경로 전달
     val galleryPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -71,7 +68,6 @@ fun CameraScreen(
         ) {
             Spacer(Modifier.height(5.dp))
 
-            // 가이드 카드
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
@@ -100,7 +96,6 @@ fun CameraScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // 사진 촬영
                 Button(
                     onClick = { takePhotoLauncher.launch(Intent(context, CameraActivity::class.java)) },
                     modifier = Modifier
@@ -144,7 +139,6 @@ fun CameraScreen(
                     Text("갤러리에서 선택", fontSize = 16.sp)
                 }
 
-                // 수동 입력 → RegiScreen
                 Button(
                     onClick = onOpenRegi,
                     modifier = Modifier
@@ -168,7 +162,6 @@ fun CameraScreen(
     }
 }
 
-/** 헬퍼는 파일에서 단 한 번만 선언 */
 private fun copyUriToCache(context: Context, uri: Uri): String? = try {
     val name = "pick_${System.currentTimeMillis()}.jpg"
     val outFile = File(context.cacheDir, name)
@@ -181,5 +174,5 @@ private fun copyUriToCache(context: Context, uri: Uri): String? = try {
 @Preview(widthDp = 392, heightDp = 917, showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun CameraScreenPreview() {
-    CameraScreen() // 기본값들로 미리보기 가능
+    CameraScreen()
 }

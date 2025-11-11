@@ -24,7 +24,7 @@ import com.data.db.entity.UserEntity
     version = 2,                // ← 기존 1에서 올림
     exportSchema = false
 )
-abstract class AppDatabase : RoomDatabase() {
+abstract class RoomDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun favoriteDao(): FavoriteDao
     abstract fun planDao(): PlanDao

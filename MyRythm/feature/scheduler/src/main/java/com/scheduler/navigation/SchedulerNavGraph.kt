@@ -8,22 +8,21 @@ import com.scheduler.ui.CameraScreen
 import com.scheduler.ui.OcrScreen
 import com.scheduler.ui.RegiScreen
 import com.scheduler.ui.SchedulerScreen
-
 fun NavGraphBuilder.schedulerNavGraph(
     nav: NavHostController,
     userId: String
 ) {
     composable<SchedulerRoute> {
-        SchedulerScreen()
+        SchedulerScreen(userId = userId)
     }
 
     composable<RegiRoute> { backStackEntry ->
-        val r = backStackEntry.toRoute<RegiRoute>()
+        val route = backStackEntry.toRoute<RegiRoute>()
         RegiScreen(
-            userId    = r.userId,
-            drugNames = unpackNames(r.drugNamesCsv),
-            times     = r.times,
-            days      = r.days,
+            userId    = route.userId,
+            drugNames = unpackNames(route.drugNamesCsv),
+            times     = route.times,
+            days      = route.days,
             onCompleted = { nav.popBackStack() }
         )
     }
