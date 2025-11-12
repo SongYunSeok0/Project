@@ -1,0 +1,79 @@
+package com.core.auth
+
+import android.content.Context
+import androidx.core.content.edit
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class EncryptedPrefsTokenStore(
+    context: Context
+) : TokenStore {
+
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
+
+    private val prefs = EncryptedSharedPreferences.create(
+        context,
+        FILE,
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+
+    @Volatile
+    private var cached = AuthTokens(
+        prefs.getString(KEY_ACCESS, null),
+        prefs.getString(KEY_REFRESH, null)
+    )
+
+    private val _tokens = MutableStateFlow(cached)
+    override val tokens: StateFlow<AuthTokens> = _tokens.asStateFlow()
+
+    override suspend fun set(access: String?, refresh: String?) {
+        prefs.edit {
+            if (access != null) putString(KEY_ACCESS, access) else remove(KEY_ACCESS)
+            if (refresh != null) putString(KEY_REFRESH, refresh) else remove(KEY_REFRESH)
+        }
+        update(access, refresh)
+    }
+
+    override suspend fun setAccess(access: String?) {
+        prefs.edit {
+            if (access != null) putString(KEY_ACCESS, access) else remove(KEY_ACCESS)
+        }
+        update(access, cached.refresh)
+    }
+
+    override suspend fun setRefresh(refresh: String?) {
+        prefs.edit {
+            if (refresh != null) putString(KEY_REFRESH, refresh) else remove(KEY_REFRESH)
+        }
+        update(cached.access, refresh)
+    }
+
+    override suspend fun clear() {
+        prefs.edit {
+            remove(KEY_ACCESS)
+            remove(KEY_REFRESH)
+        }
+        update(null, null)
+    }
+
+    override fun current(): AuthTokens = cached
+
+    private fun update(a: String?, r: String?) {
+        val now = AuthTokens(a, r)
+        cached = now
+        _tokens.value = now
+    }
+
+    private companion object {
+        const val FILE = "auth_tokens.secure_prefs"
+        const val KEY_ACCESS = "k_access"
+        const val KEY_REFRESH = "k_refresh"
+    }
+}
