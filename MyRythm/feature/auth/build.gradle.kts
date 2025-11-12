@@ -81,7 +81,6 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation("androidx.compose.material:material-icons-extended")
-    implementation(libs.androidx.compose.ui)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
@@ -97,5 +96,4 @@ dependencies {
     implementation(libs.play.services.auth)
     // 구글 로그인 하위버전 호환용 라이브러리 추가
     implementation("androidx.credentials:credentials:1.2.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 }

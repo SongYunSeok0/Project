@@ -105,9 +105,3 @@ fun OcrScreen(
         }
     }
 }
-
-@Preview(widthDp = 412, heightDp = 851, showBackground = true, backgroundColor = 0xFFFFFFFF)
-@Composable
-private fun OcrScreenPreview() {
-    OcrScreen()
-}

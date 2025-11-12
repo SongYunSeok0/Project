@@ -45,7 +45,6 @@ ui 형태는 피그마 타입으로 진행하되 1:1 문의 및 그간의 나의
 
 
 // 메인화면 영역(전체구조)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FAQScreen(modifier: Modifier = Modifier) {
 
@@ -85,6 +84,7 @@ fun FAQScreen(modifier: Modifier = Modifier) {
 
 
 // FAQTabRow 탭 레이아웃 영역. 나의 문의 내역 / 1:1 문의하기 탭 전환 컨테이너
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FAQTabRow(pagerState: PagerState) {
     val scope = rememberCoroutineScope()

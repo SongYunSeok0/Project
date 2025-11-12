@@ -1,4 +1,4 @@
-package com.auth
+package com.auth.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -32,8 +32,8 @@ import com.ui.theme.loginTheme
 fun PwdScreen(
     modifier: Modifier = Modifier,
     onSendCode: (phone: String) -> Unit = {},
-    onConfirm: (code: String) -> Unit = {},
-    onGoLogin: () -> Unit = {}
+    onConfirm: (phone: String, code: String) -> Unit = { _, _ -> },
+    onBackToLogin: () -> Unit = {}
 ) {
     var phone by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
@@ -47,7 +47,7 @@ fun PwdScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color(0xffb5e5e1))
+                .background(MaterialTheme.authTheme.authBackground)
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -103,7 +103,7 @@ fun PwdScreen(
             // 뷰 새로 만들어야하고 pwd뷰모델은 아직 없음, 유저정보에 폰번있으니 그걸로 회원받아서비번만수정하게
             AuthPrimaryButton(
                 text = "확인",
-                onClick = { onConfirm(code) },
+                onClick = { onConfirm(phone, code) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -115,7 +115,7 @@ fun PwdScreen(
 
             AuthSecondaryButton(
                 text = "로그인으로",
-                onClick = onGoLogin,
+                onClick = onBackToLogin,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

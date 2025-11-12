@@ -17,9 +17,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.auth.data.model.UserSignupRequest
-import com.auth.viewmodel.SignupViewModel
+import com.auth.viewmodel.AuthViewModel
 import com.common.design.R
+import com.data.network.dto.user.UserSignupRequest
 // 공통 입력 필드 및 버튼 컴포넌트를 임포트합니다.
 import com.ui.components.*
 import com.ui.theme.AppTypography
@@ -31,14 +31,30 @@ import com.ui.theme.defaultFontFamily
 @Composable
 fun SignupScreen(
     modifier: Modifier = Modifier,
-    viewModel: SignupViewModel = viewModel(),
+    viewModel: AuthViewModel = viewModel(),
     onSendCode: (phone: String) -> Unit = {},
     onVerify: (code: String) -> Unit = {},
     onSignupComplete: () -> Unit = {},
-    onBackToLogin: () -> Unit = {}
+    onBackToLogin: () -> Unit = {},
+    socialId: String? = null,      // sns연동로그인의 경우
+    provider: String? = null
 ) {
     val scrollState = rememberScrollState()
 
+    // ✅ ViewModel 상태 관찰
+    val ui = viewModel.state.collectAsState().value
+    val snackbar = remember { SnackbarHostState() }
+
+    // ✅ 이벤트 관찰 및 회원가입 성공 시 화면 이동
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { msg ->
+            snackbar.showSnackbar(msg)
+            if (msg.contains("회원가입 성공")) {
+                onSignupComplete()
+            }
+        }
+    }
+    val isSocialSignup = socialId != null
     // 입력 상태
     var name by remember { mutableStateOf("") }
     var id by remember { mutableStateOf("") }
@@ -55,7 +71,10 @@ fun SignupScreen(
     var sent by remember { mutableStateOf(false) }
     var verified by remember { mutableStateOf(false) }
 
-    Scaffold(modifier = modifier.fillMaxSize()) { inner ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { inner ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -178,24 +197,35 @@ fun SignupScreen(
 
             // 회원 가입 완료 버튼 (메인)
             AuthPrimaryButton(
-                text = "회원 가입 완료",
+                text = if (ui.loading) "가입 중..." else "회원 가입 완료",  // ✅ 로딩 표시
                 onClick = {
-                    val user = UserSignupRequest(
-                        id = id,
-                        password = password,
-                        name = name,
-                        birth_date = "$year-$month-$day",
-                        gender = "gender", // 성별 (예: "male", "female", "unknown")
-                        phone = phone
-                    )
-                    viewModel.signup(user) { success, message ->
-                        if (success) {
-                            onSignupComplete()
-                        } else {
-                            Log.e("SignupScreen", "회원가입 실패: $message")
+                    // 유효성 검사
+                    if (isSocialSignup) {
+                        // 소셜 회원가입: 이름만 필수
+                        if (name.isBlank()) {
+                            viewModel.emitInfo("이름을 입력해주세요")
+                            return@AuthPrimaryButton
+                        }
+                    } else {
+                        // 일반 회원가입: ID/PW 필수
+                        if (id.isBlank() || password.isBlank() || name.isBlank()) {
+                            viewModel.emitInfo("필수 항목을 모두 입력하세요")
+                            return@AuthPrimaryButton
                         }
                     }
+
+                    val user = UserSignupRequest(
+                        id = if (isSocialSignup) socialId!! else id,
+                        password = if (isSocialSignup) "" else password,
+                        name = name,
+                        birth_date = "$year-$month-$day",
+                        gender = "gender",
+                        phone = phone,
+                        provider = provider  //소셜 로그인 구분용
+                    )
+                    viewModel.signup(user)
                 },
+                enabled = !ui.loading,
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             )
 

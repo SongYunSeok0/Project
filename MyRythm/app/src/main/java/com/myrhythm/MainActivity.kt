@@ -5,7 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.myrythm.ui.theme.MyRythmTheme
+import com.myrhythm.ui.theme.MyRythmTheme
+import com.myrythm.AppRoot
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

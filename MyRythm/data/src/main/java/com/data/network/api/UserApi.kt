@@ -1,5 +1,7 @@
 package com.data.network.api
 
+import com.auth.data.model.SocialLoginRequest
+import com.auth.data.model.SocialLoginResponse
 import com.data.network.dto.user.UserDto
 import com.data.network.dto.user.UserLoginRequest
 import com.data.network.dto.user.LoginResponse
@@ -19,4 +21,7 @@ interface UserApi {
 
     @GET("users/{uuid}")
     suspend fun getUser(@Path("uuid") uuid: String): UserDto
+
+    @POST("auth/social-login")
+    suspend fun socialLogin(@Body request: SocialLoginRequest): Response<SocialLoginResponse>
 }

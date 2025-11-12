@@ -21,7 +21,11 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
                     }
                 },
                 onForgotPassword = { nav.navigate(PwdRoute) },
-                onSignUp = { nav.navigate(SignupRoute) }
+                onSignUp = { nav.navigate(SignupRoute) },
+                onSocialSignUp = { socialId, provider ->
+                    nav.navigate(SignupRoute(socialId = socialId, provider = provider))
+                }
+
             )
         }
 
@@ -38,7 +42,12 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
         }
 
         composable<SignupRoute> {
+            val socialId = it.arguments?.getString("socialId")
+            val provider = it.arguments?.getString("provider")
+
             SignupScreen(
+                socialId = socialId,
+                provider = provider,
                 onSignupComplete = {
                     nav.navigate(LoginRoute) {
                         popUpTo(SignupRoute) { inclusive = true }
