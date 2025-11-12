@@ -1,14 +1,10 @@
 package com.design
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -21,12 +17,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.common.design.R
+import com.ui.theme.Colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +38,7 @@ fun AppTopBar(
             Text(
                 text = title,
                 fontSize = 20.sp,
-                color = Color.Black,
+                color = Colors.Black,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
             )
@@ -53,7 +49,7 @@ fun AppTopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.back),
                         contentDescription = "뒤로가기",
-                        tint = Color.Black
+                        tint = Colors.Black
                     )
                 }
             }
@@ -64,14 +60,15 @@ fun AppTopBar(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "검색",
-                        tint = Color.Black
+                        tint = Colors.Black
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.secondary,
-            titleContentColor = Color.Black
+            containerColor = Colors.White,
+            scrolledContainerColor = Colors.White,
+            titleContentColor = Colors.Black
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -87,13 +84,15 @@ fun AppBottomBar(
     Box(
         Modifier
             .fillMaxWidth()
-            .height(70.dp)
-            .background(Color.White)
+            .height(80.dp)
+            .background(Colors.White)
+
     ) {
         Row(
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 40.dp)
+                .shadow(2.dp)
+                .padding(horizontal = 50.dp)
                 .zIndex(1f),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -102,14 +101,14 @@ fun AppBottomBar(
                 Icon(
                     imageVector = Icons.Default.Home,
                     contentDescription = "홈",
-                    tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else Color.Gray
+                    tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else Colors.Gray
                 )
             }
             IconButton(onClick = { onTabSelected("MyPage") }) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "마이",
-                    tint = if (currentScreen == "MyPage") Color(0xFF6AE0D9) else Color.Gray
+                    tint = if (currentScreen == "MyPage") Color(0xFF6AE0D9) else Colors.Gray
                 )
             }
         }

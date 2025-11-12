@@ -3,28 +3,34 @@ package com.ui.theme
 import androidx.compose.ui.graphics.Color
 
 //앱의 모든 색상 팔레트 정의. (PrimaryColor, LightColorScheme, DarkColorScheme 등).
-val PrimaryLight = Color(0xFF6AE0D9)
-val SecondaryLight = Color(0xFF6AC0E0)
-val PrimaryText = Color(0xFF000000)
-val PointText = Color(0xFF6AC0E0)
 
-// 스플래시+로그인
-val AuthLoginBackground = Color(0xFF6AE0D9)
-val AuthLoginButton = Color(0xFF6AC0E0)
-val AuthLoginAppName = Color(0xFFC9F8F6)    // 앱 제목 컬러
-val AuthLoginText = Color(0xFF77A3A1)    //비밀번호를 잊?메시지
-val AuthLoginSecondrayButton = Color(0xFFFFFFFF)     //서브버튼 바탕
+object Colors {
+    val PrimaryLight = Color(0xFF6AE0D9)
+    val SecondaryLight = Color(0xFF6AC0E0)
+    val PrimaryText = Color(0xFF000000)
+    val PointText = Color(0xFF6AC0E0)
 
-val AuthLoginOnSecondray = Color(0x66000000)     // 블랙+투명도40
+    val White = Color.White
+    val Black = Color.Black
+    val Gray = Color.Gray
 
+    // 스플래시 + 로그인
+    val AuthLoginBackground = Color(0xFF6AE0D9)
+    val AuthLoginButton = Color(0xFF6AC0E0)
+    val AuthLoginAppName = Color(0xFFC9F8F6)
+    val AuthLoginText = Color(0xFF77A3A1)
+    val AuthLoginSecondrayButton = Color(0xFFFFFFFF)
+    val AuthLoginOnSecondray = Color(0x66000000)
 
-// 로그인프로세스
-val AuthBackground = Color(0xFFB5E5E1)  //메인배경
-val AuthPrimaryButton = Color(0xFFFFFFFF)  //메인버튼바탕
-val AuthOnPrimary = Color(0x66000000)   // 메인버튼위에올라갈글씨 블랙+투명도40
-val AuthSecondrayButton = Color(0xFF6AC0E0)     //서브버튼 바탕
-val AuthOnSecondray = Color(0xFFFFFFFF)     // 하얀색글씨
-val AuthAppName = Color(0xFF5DB0A8)    //앱 제목 컬러
+    // 로그인 프로세스
+    val AuthBackground = Color(0xFFB5E5E1)
+    val AuthPrimaryButton = Color(0xFFFFFFFF)
+    val AuthOnPrimary = Color(0x66000000)
+    val AuthSecondrayButton = Color(0xFF6AC0E0)
+    val AuthOnSecondray = Color(0xFFFFFFFF)
+    val AuthAppName = Color(0xFF5DB0A8)
+}
+
 
 // 로그인프로세스 화면
 /*

@@ -10,7 +10,7 @@ android {
 
     compileSdk = 36
 
-    defaultConfig { minSdk = 26 }
+    defaultConfig { minSdk = 24 }
 
     buildFeatures { compose = true }
 

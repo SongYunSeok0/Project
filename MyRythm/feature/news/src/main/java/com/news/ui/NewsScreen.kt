@@ -45,7 +45,6 @@ fun NewsScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSearchMode by remember { mutableStateOf(false) }
 
-    // ✅ AppRoot에서 전달되는 "openSearch" 상태 받기
     val openSearch = nav.currentBackStackEntry
         ?.savedStateHandle
         ?.getLiveData<Boolean>("openSearch")
@@ -66,7 +65,6 @@ fun NewsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // ✅ 검색창 (탑바 아래 표시)
         AnimatedVisibility(visible = isSearchMode) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

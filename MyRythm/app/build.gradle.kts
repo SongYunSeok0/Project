@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.dagger.hilt.android")
-    kotlin("kapt")
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -21,23 +21,13 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // --- local.properties에서 안전하게 로드 ---
+        // 네이버 지도 SDK용 클라이언트 ID만 주입
         val props = Properties().apply {
-            val f = rootProject.file("local.properties")
+            val f = rootProject.file("secret.properties")
             if (f.exists()) load(f.inputStream())
         }
-        val mapId      = props.getProperty("NAVER_MAP_CLIENT_ID", "")
-        val mapSecret  = props.getProperty("NAVER_MAP_CLIENT_SECRET", "")
-        val openId     = props.getProperty("NAVER_CLIENT_ID", "")
-        val openSecret = props.getProperty("NAVER_CLIENT_SECRET", "")
-
-        // AndroidManifest placeholders (네이버 지도 SDK용)
-        manifestPlaceholders["NAVER_MAP_CLIENT_ID"] = mapId
-        manifestPlaceholders["NAVER_MAP_CLIENT_SECRET"] = mapSecret
-
-        // BuildConfig (오픈 API 호출용)
-        buildConfigField("String", "NAVER_CLIENT_ID", "\"$openId\"")
-        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"$openSecret\"")
+        manifestPlaceholders["NAVER_MAP_CLIENT_ID"] =
+            props.getProperty("NAVER_MAP_CLIENT_ID", "")
     }
 
     buildTypes {
@@ -64,6 +54,7 @@ android {
 kotlin { jvmToolchain(21) }
 
 dependencies {
+    // 모듈 연결
     implementation(project(":common"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
@@ -73,26 +64,19 @@ dependencies {
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:chatbot"))
-
-    // domain & data modules
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation(project(":core"))
 
+    // Compose / Core
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.bundles.test)
-
-    implementation(libs.naver.map.sdk)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
-    implementation(libs.kotlinx.metadata.jvm)
-
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
-
-
+    // 테스트
+    testImplementation(libs.bundles.test)
 }

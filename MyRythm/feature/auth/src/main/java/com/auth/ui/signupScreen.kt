@@ -9,7 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,56 +22,66 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.auth.viewmodel.AuthViewModel
 import com.common.design.R
-import com.auth.data.model.UserSignupRequest
-import com.auth.viewmodel.SignupViewModel
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ui.theme.AuthBackground
-import com.ui.theme.AuthOnPrimary
-import com.ui.theme.AuthOnSecondray
-import com.ui.theme.AuthSecondrayButton
+import com.domain.model.SignupRequest
+import com.ui.theme.Colors
 
-val ButtonDisabled = AuthSecondrayButton.copy(alpha = 0.5f)
-
+private val SecondaryBtnDisabled = Colors.AuthSecondrayButton.copy(alpha = 0.5f)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignupScreen(
-    viewModel: SignupViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = hiltViewModel(),
     onSignupComplete: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
-    // 입력 상태
-    var id by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    var birthYear by remember { mutableStateOf("") }
-    var birthMonth by remember { mutableStateOf("") }
-    var birthDay by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
 
-    var isPhoneVerificationSent by remember { mutableStateOf(false) }
-    var isVerificationCompleted by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
+    var birthYear by rememberSaveable { mutableStateOf("") }
+    var birthMonth by rememberSaveable { mutableStateOf("") }
+    var birthDay by rememberSaveable { mutableStateOf("") }
+
+    var height by rememberSaveable { mutableStateOf("") }
+    var weight by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf("") }
+
+    var gender by rememberSaveable { mutableStateOf("") }
+    var genderExpanded by remember { mutableStateOf(false) }
+
+    var isPhoneVerificationSent by rememberSaveable { mutableStateOf(false) }
+    var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
+    var code by rememberSaveable { mutableStateOf("") }
+
+    val ui = viewModel.state.collectAsState().value
+    val snackbar = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { msg ->
+            snackbar.showSnackbar(msg)
+            if (msg.contains("회원가입 성공")) onSignupComplete()
+        }
+    }
+
+    fun validNumber(s: String) = s.toDoubleOrNull() != null
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AuthBackground
-    ) { innerPadding ->
+        containerColor = Colors.AuthBackground,
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { inner ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(inner)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 로고
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "MyRhythm Logo Icon",
@@ -79,9 +91,8 @@ fun SignupScreen(
                     .clip(CircleShape)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // My Rhythm 텍스트
             Text(
                 text = "My Rhythm",
                 color = Color(0xff5db0a8),
@@ -90,13 +101,29 @@ fun SignupScreen(
                 fontFamily = BalooThambi
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // 아이디 입력
             OutlinedTextField(
-                value = id,
-                onValueChange = { id = it },
-                label = { Text("아이디") },
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("이메일") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("사용자 이름") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -107,9 +134,8 @@ fun SignupScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // 비밀번호 입력
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -126,29 +152,11 @@ fun SignupScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
 
-            // 이름 입력
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("이름") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 생년월일
             Text(
                 text = "생년월일",
-                color = AuthOnPrimary,
+                color = Colors.AuthOnPrimary,
                 fontSize = 13.sp,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,7 +169,7 @@ fun SignupScreen(
             ) {
                 OutlinedTextField(
                     value = birthYear,
-                    onValueChange = { birthYear = it },
+                    onValueChange = { birthYear = it.filter { c -> c.isDigit() }.take(4) },
                     label = { Text("YYYY") },
                     modifier = Modifier.weight(1.5f),
                     singleLine = true,
@@ -175,7 +183,7 @@ fun SignupScreen(
                 )
                 OutlinedTextField(
                     value = birthMonth,
-                    onValueChange = { birthMonth = it },
+                    onValueChange = { birthMonth = it.filter { c -> c.isDigit() }.take(2) },
                     label = { Text("MM") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
@@ -189,7 +197,7 @@ fun SignupScreen(
                 )
                 OutlinedTextField(
                     value = birthDay,
-                    onValueChange = { birthDay = it },
+                    onValueChange = { birthDay = it.filter { c -> c.isDigit() }.take(2) },
                     label = { Text("DD") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
@@ -203,18 +211,44 @@ fun SignupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
 
-            // 키 / 몸무게
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.fillMaxWidth()
+            ExposedDropdownMenuBox(
+                expanded = genderExpanded,
+                onExpandedChange = { genderExpanded = !genderExpanded },
             ) {
                 OutlinedTextField(
-                    value = height,
-                    onValueChange = { height = it },
-                    label = { Text("키 (cm)") },
-                    modifier = Modifier.weight(1f),
+                    value = when (gender) {
+                        "male" -> "남성"
+                        "female" -> "여성"
+                        else -> ""
+                    },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("성별") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    )
+                )
+                ExposedDropdownMenu(expanded = genderExpanded, onDismissRequest = { genderExpanded = false }) {
+                    DropdownMenuItem(text = { Text("남성") }, onClick = { gender = "M"; genderExpanded = false })
+                    DropdownMenuItem(text = { Text("여성") }, onClick = { gender = "F"; genderExpanded = false })
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = height, onValueChange = { height = it },
+                    label = { Text("키 (cm)") }, modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -225,10 +259,8 @@ fun SignupScreen(
                     )
                 )
                 OutlinedTextField(
-                    value = weight,
-                    onValueChange = { weight = it },
-                    label = { Text("몸무게 (kg)") },
-                    modifier = Modifier.weight(1f),
+                    value = weight, onValueChange = { weight = it },
+                    label = { Text("몸무게 (kg)") }, modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -240,22 +272,18 @@ fun SignupScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // 전화번호 인증
             Text(
                 text = "전화번호 인증 *",
-                color = AuthOnPrimary,
+                color = Colors.AuthOnPrimary,
                 fontSize = 13.sp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
@@ -263,6 +291,7 @@ fun SignupScreen(
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    enabled = !isVerificationCompleted,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
@@ -270,32 +299,37 @@ fun SignupScreen(
                         unfocusedContainerColor = Color.White
                     )
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Button(
-                    onClick = { isPhoneVerificationSent = true },
-                    enabled = !isPhoneVerificationSent,
+                    onClick = {
+                        if (phone.isBlank()) {
+                            viewModel.emitInfo("전화번호를 입력하세요")
+                        } else {
+                            isPhoneVerificationSent = true
+                            isVerificationCompleted = false
+                            code = ""
+                            viewModel.emitInfo("인증번호가 전송되었습니다. 테스트 코드는 0000 입니다")
+                        }
+                    },
+                    enabled = !isVerificationCompleted, // 인증 완료되면 전송 비활성화
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isPhoneVerificationSent) ButtonDisabled else AuthSecondrayButton,
-                        contentColor = AuthOnSecondray
+                        containerColor = if (isPhoneVerificationSent) SecondaryBtnDisabled else Colors.AuthSecondrayButton,
+                        contentColor = Colors.AuthOnSecondray
                     )
-                ) {
-                    Text(text = if (isPhoneVerificationSent) "전송됨" else "전송")
-                }
+                ) { Text(if (isPhoneVerificationSent) "전송됨" else "전송") }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it },
                     label = { Text("인증번호") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
+                    enabled = isPhoneVerificationSent && !isVerificationCompleted,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
@@ -303,60 +337,98 @@ fun SignupScreen(
                         unfocusedContainerColor = Color.White
                     )
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Button(
-                    onClick = { isVerificationCompleted = true },
+                    onClick = {
+                        if (!isPhoneVerificationSent) {
+                            viewModel.emitInfo("먼저 인증번호를 전송하세요")
+                            return@Button
+                        }
+                        if (code == "0000") {
+                            isVerificationCompleted = true
+                            viewModel.emitInfo("전화번호 인증이 완료되었습니다")
+                        } else {
+                            isVerificationCompleted = false
+                            viewModel.emitInfo("인증번호가 올바르지 않습니다. 테스트 코드는 0000 입니다")
+                        }
+                    },
                     shape = RoundedCornerShape(8.dp),
+                    enabled = isPhoneVerificationSent && !isVerificationCompleted,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AuthSecondrayButton,
-                        contentColor = AuthOnSecondray
+                        containerColor = Colors.AuthSecondrayButton,
+                        contentColor = Colors.AuthOnSecondray
                     )
-                ) {
-                    Text("인증")
-                }
+                ) { Text("인증") }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
-            // 회원가입 버튼
             Button(
                 onClick = {
                     val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
-                    val user = UserSignupRequest(
-                        id = id,
-                        password = password,
-                        name = name,
-                        birth_date = birthDate,
-                        gender = "unknown",
-                        phone = phone
-                    )
-                    viewModel.signup(user) { success, msg ->
-                        message = msg
-                        if (success) onSignupComplete()
+                    val heightOk = validNumber(height)
+                    val weightOk = validNumber(weight)
+
+                    if (
+                        email.isBlank() || username.isBlank() || password.isBlank() ||
+                        birthYear.length != 4 || birthMonth.isBlank() || birthDay.isBlank() ||
+                        !heightOk || !weightOk || phone.isBlank()
+                    ) {
+                        viewModel.emitInfo("필수 항목을 정확히 입력하세요")
+                        return@Button
                     }
+                    if (!isVerificationCompleted) {
+                        viewModel.emitInfo("전화번호 인증을 완료하세요")
+                        return@Button
+                    }
+
+                    val req = SignupRequest(
+                        email = email,
+                        username = username,
+                        password = password,
+                        phone = phone,
+                        birthDate = birthDate,
+                        gender = gender,
+                        height = height.toDouble(),
+                        weight = weight.toDouble()
+                    )
+                    viewModel.signup(req)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = AuthSecondrayButton),
+                enabled = !ui.loading,
+                colors = ButtonDefaults.buttonColors(containerColor = Colors.AuthSecondrayButton),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(62.dp)
             ) {
                 Text(
-                    text = "회원가입",
-                    color = AuthOnSecondray,
+                    text = if (ui.loading) "가입 중..." else "회원가입",
+                    color = Colors.AuthOnSecondray,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
 
-            if (message.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(text = message, color = Color.DarkGray, fontSize = 14.sp)
+            Spacer(Modifier.height(24.dp))
+
+            Button(
+                onClick = { onBackToLogin() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xffb3e5fc)),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text(
+                    text = "돌아가기",
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // 이미 계정이 있으신가요? → 로그인
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -364,14 +436,8 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
             ) {
-                Text(
-                    text = "이미 계정이 있으신가요?",
-                    color = Color.Black,
-                    fontSize = 14.sp
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
+                Text("이미 계정이 있으신가요?", color = Color.Black, fontSize = 14.sp)
+                Spacer(Modifier.width(8.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = Color.White,
@@ -384,12 +450,7 @@ fun SignupScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "로그인",
-                            color = Color(0xff6ac0e0),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("로그인", color = Color(0xff6ac0e0), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
