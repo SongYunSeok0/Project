@@ -12,6 +12,8 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
 
 
@@ -34,6 +36,16 @@
     <meta-data
         android:name="com.naver.maps.map.NCP_KEY_ID"
         android:value="${NAVER_MAP_CLIENT_ID}" />
+
+    <!-- ✅ FCM 서비스 등록 -->
+    <service
+        android:name="com.core.push.AppFcmService"
+        android:exported="false">
+        <intent-filter>
+            <action android:name="com.google.firebase.MESSAGING_EVENT" />
+        </intent-filter>
+    </service>
+
 
     <!-- ✅ 기본 Activity -->
     <activity

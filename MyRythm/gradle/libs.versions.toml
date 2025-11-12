@@ -50,6 +50,7 @@ ksp = "2.0.21-1.0.28"
 datastore = "1.1.1"
 securityCrypto = "1.1.0"
 
+firebaseBom = "34.5.0"
 
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -143,6 +144,12 @@ moshi-converter = { group = "com.squareup.retrofit2", name = "converter-moshi", 
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
+
+# BoM 하위 라이브러리들은 버전 없이
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -152,6 +159,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hiltAndroid = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-services = { id = "com.google.gms.google-services", version = "4.4.4" }
 
 [bundles]
 core = [

@@ -1,6 +1,10 @@
 rootProject.name = "MyRythm"
 
 pluginManagement {
+    plugins {
+        // ✅ Firebase Google Services 플러그인 추가
+        id("com.google.gms.google-services") version "4.4.4" apply false
+    }
     repositories {
         google()
         mavenCentral()

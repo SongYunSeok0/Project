@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "582733084943",
+    "project_id": "sesac-76be4",
+    "storage_bucket": "sesac-76be4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582733084943:android:a45c0c4487fd6f48e9267a",
+        "android_client_info": {
+          "package_name": "com.myrythm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL9fwCv4Sdp_DBnqx-8sELTmBDjsAFeTA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
