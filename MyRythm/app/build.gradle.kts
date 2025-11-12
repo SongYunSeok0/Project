@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.bundles.core)
 
     implementation(libs.hilt.android)
+    implementation(libs.androidx.monitor)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
