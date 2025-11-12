@@ -57,7 +57,8 @@ class AuthViewModel @Inject constructor(
     val events: SharedFlow<String> = _events
 
     companion object {
-        const val TAG = "KakaoOauth"
+        const val KAKAO_TAG = "KakaoOauth"
+        const val GOOGLE_TAG = "GoogleOauth"
     }
 
     fun emitInfo(msg: String) {
@@ -129,21 +130,21 @@ class AuthViewModel @Inject constructor(
         // 카카오톡으로 로그인 할 수 없어 카카오계정으로 로그인할 경우 사용됨
         val callback: (OAuthToken?, Throwable?) -> Unit = { token, error ->
             if (error != null) {
-                Log.e(AuthViewModel.Companion.TAG, "카카오계정으로 로그인 실패", error)
+                Log.e(AuthViewModel.Companion.KAKAO_TAG, "카카오계정으로 로그인 실패", error)
                 onResult(false, "카카오 로그인 실패")
             } else if (token != null) {
-                Log.i(AuthViewModel.Companion.TAG, "카카오계정으로 로그인 성공 ${token.accessToken}")
+                Log.i(AuthViewModel.Companion.KAKAO_TAG, "카카오계정으로 로그인 성공 ${token.accessToken}")
 
                 // ✅ 로그인 성공 후 최소 정보만 요청 (user.id만)
                 UserApiClient.instance.me { user, error ->
                     if (error != null) {
-                        Log.e(AuthViewModel.Companion.TAG, "사용자 ID 요청 실패", error)
+                        Log.e(AuthViewModel.Companion.KAKAO_TAG, "사용자 ID 요청 실패", error)
                         onResult(false, "사용자 정보 요청 실패")
                     } else if (user != null) {
                         val socialId = user.id.toString()   // ✅ 고유 PK 역할
                         val provider = "kakao"
 
-                        Log.i(AuthViewModel.Companion.TAG, "카카오 사용자 식별 완료: socialId=$socialId")
+                        Log.i(AuthViewModel.Companion.KAKAO_TAG, "카카오 사용자 식별 완료: socialId=$socialId")
 
                         // 💡 서버로 보낼 최소 정보만 넘김
                         handleKakaoLogin(
@@ -161,7 +162,7 @@ class AuthViewModel @Inject constructor(
         if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
             UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
                 if (error != null) {
-                    Log.e(AuthViewModel.Companion.TAG, "카카오톡으로 로그인 실패", error)
+                    Log.e(AuthViewModel.Companion.KAKAO_TAG, "카카오톡으로 로그인 실패", error)
 
                     // 사용자가 카카오톡 설치 후 디바이스 권한 요청 화면에서 로그인을 취소한 경우,
                     // 의도적인 로그인 취소로 보고 카카오계정으로 로그인 시도 없이 로그인 취소로 처리 (예: 뒤로 가기)
@@ -172,12 +173,12 @@ class AuthViewModel @Inject constructor(
                     // 카카오톡에 연결된 카카오계정이 없는 경우, 카카오계정으로 로그인 시도
                     UserApiClient.instance.loginWithKakaoAccount(context, callback = callback)
                 } else if (token != null) {
-                    Log.i(AuthViewModel.Companion.TAG, "카카오톡으로 로그인 성공 ${token.accessToken}")
+                    Log.i(AuthViewModel.Companion.KAKAO_TAG, "카카오톡으로 로그인 성공 ${token.accessToken}")
 
                     // 서버 연동 호출
                     UserApiClient.instance.me { user, error ->
                         if (error != null) {
-                            Log.e(AuthViewModel.Companion.TAG, "사용자 ID 요청 실패", error)
+                            Log.e(AuthViewModel.Companion.KAKAO_TAG, "사용자 ID 요청 실패", error)
                             onResult(false, "사용자 정보 요청 실패")
                         } else if (user != null) {
                             handleKakaoLogin(
@@ -207,7 +208,7 @@ class AuthViewModel @Inject constructor(
         // 이 부분에 실제 서버 API (소셜 로그인용) 호출 로직을 구현해야 합니다.
         //서버 연동 로직 (handleSocialLogin) Placeholder 실행
         Log.w(
-            AuthViewModel.Companion.TAG,
+            AuthViewModel.Companion.KAKAO_TAG,
             " [handleKakaoLogin 호출됨] accessToken: $accessToken, socialId: $socialId, provider: $provider"
         )
 
@@ -239,7 +240,7 @@ class AuthViewModel @Inject constructor(
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         val body = response.body()  // LoginResponse
-                        Log.d(AuthViewModel.Companion.TAG, " 카카오 로그인 서버 응답 성공: $body")
+                        Log.d(AuthViewModel.Companion.KAKAO_TAG, " 카카오 로그인 서버 응답 성공: $body")
 
                         if (body?.access != null) {
                             onResult(true, "카카오 로그인 성공")
@@ -249,13 +250,13 @@ class AuthViewModel @Inject constructor(
                             onResult(false, "서버 응답 데이터 오류")
                         }
                     } else {
-                        Log.e(AuthViewModel.Companion.TAG, " 서버 응답 오류: ${response.code()}")
+                        Log.e(AuthViewModel.Companion.KAKAO_TAG, " 서버 응답 오류: ${response.code()}")
                         onResult(false, "서버 오류: ${response.code()}")
                     }
                 }
 
             } catch (e: Exception) {
-                Log.e(AuthViewModel.Companion.TAG, " 네트워크 예외 발생: ${e.message}", e)
+                Log.e(AuthViewModel.Companion.KAKAO_TAG, " 네트워크 예외 발생: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     onResult(false, "네트워크 오류: ${e.localizedMessage}")
                 }
@@ -270,6 +271,16 @@ class AuthViewModel @Inject constructor(
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
         val googleClientId = BuildConfig.GOOGLE_CLIENT_ID
+
+        //테스트
+        Log.d(GOOGLE_TAG, "Loaded Google Client ID: $googleClientId") // 💡 이 값을 확인
+
+        if (googleClientId.isBlank()) {
+            // 💡 클라이언트 ID가 비어있으면 로그인 실패 메시지를 표시하고 조기 리턴
+            onResult(false, "Google Client ID가 설정되지 않았습니다.")
+            return
+        }
+
         viewModelScope.launch {
             try {
                 val credentialManager = CredentialManager.create(context)
@@ -283,9 +294,6 @@ class AuthViewModel @Inject constructor(
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleIdOption)
                     .build()
-
-                // 가이드 signIn() 내부 로직
-                delay(250)
 
                 try {
                     val result = credentialManager.getCredential(context, request)
@@ -307,10 +315,10 @@ class AuthViewModel @Inject constructor(
                 }
 
             } catch (e: GetCredentialCancellationException) {
-                Log.e(AuthViewModel.Companion.TAG, "구글 로그인 취소", e)
+                Log.e(AuthViewModel.Companion.GOOGLE_TAG, "구글 로그인 취소", e)
                 onResult(false, "구글 로그인 취소")
             } catch (e: Exception) {
-                Log.e(AuthViewModel.Companion.TAG, "구글 로그인 실패", e)
+                Log.e(AuthViewModel.Companion.GOOGLE_TAG, "구글 로그인 실패", e)
                 onResult(false, "구글 로그인 실패")
             }
         }
@@ -341,7 +349,7 @@ class AuthViewModel @Inject constructor(
                 )
 
             } catch (e: GoogleIdTokenParsingException) {
-                Log.e(AuthViewModel.Companion.TAG, "구글 토큰 파싱 실패", e)
+                Log.e(AuthViewModel.Companion.GOOGLE_TAG, "구글 토큰 파싱 실패", e)
                 onResult(false, "구글 토큰 파싱 실패")
             }
         }
