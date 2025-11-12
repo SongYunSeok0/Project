@@ -6,18 +6,18 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.ui.theme.Colors
+import com.ui.theme.Primary
 
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Colors.PrimaryLight,
+    primary = Primary,
     secondary = Color.White,
     tertiary = Pink80,
     background = Color.White,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Colors.PrimaryLight,
+    primary = Primary,
     secondary = Color.White,
     tertiary = Pink40,
     background = Color.White,
@@ -36,7 +36,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun MyRythmTheme(
+fun MyRhythmTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {

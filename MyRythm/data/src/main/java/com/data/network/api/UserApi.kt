@@ -1,7 +1,7 @@
 package com.data.network.api
 
-import com.auth.data.model.SocialLoginRequest
-import com.auth.data.model.SocialLoginResponse
+import com.data.network.dto.user.SocialLoginRequest
+import com.data.network.dto.user.SocialLoginResponse
 import com.data.network.dto.user.UserDto
 import com.data.network.dto.user.UserLoginRequest
 import com.data.network.dto.user.LoginResponse
@@ -10,10 +10,7 @@ import com.data.network.dto.user.RefreshResponse
 import com.data.network.dto.user.SignupResponse
 import com.data.network.dto.user.UserSignupRequest
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.*
 
 interface UserApi {
 //    @POST("users/signup/")

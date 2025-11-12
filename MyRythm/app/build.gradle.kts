@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.myrythm"
+    namespace = "com.myrhythm"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.myrythm"
+        applicationId = "com.myrhythm"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

@@ -1,7 +1,6 @@
 package com.auth.viewmodel
 
 import android.content.Context
-import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -10,6 +9,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
@@ -211,7 +211,7 @@ class AuthViewModel @Inject constructor(
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = runCatching {
+            val call = runCatching {
                 socialLoginUseCase(
                     provider = provider,
                     socialId = socialId,
@@ -219,18 +219,23 @@ class AuthViewModel @Inject constructor(
                     idToken = idToken
                 )
             }
+
             withContext(Dispatchers.Main) {
-                if (result.isSuccess) {
-                    val response = result.getOrNull()
-                    if (response?.access != null) {
-                        onResult(true, "${provider} 로그인 성공")
-                    } else if (response?.needAdditionalInfo == true) {
-                        onNeedAdditionalInfo(socialId, provider)
-                    } else {
-                        onResult(false, "서버 응답 오류")
+                if (call.isFailure) {
+                    onResult(false, parseError(call.exceptionOrNull()) ?: "네트워크 오류")
+                    return@withContext
+                }
+
+                when (val r = call.getOrNull()) {
+                    is SocialLoginResult.Success -> {
+                        onResult(true, "$provider 로그인 성공")
                     }
-                } else {
-                    onResult(false, parseError(result.exceptionOrNull()) ?: "네트워크 오류")
+                    SocialLoginResult.NeedAdditionalInfo -> {
+                        onNeedAdditionalInfo(socialId, provider)
+                    }
+                    is SocialLoginResult.Error, null -> {
+                        onResult(false, r?.message ?: "서버 오류")
+                    }
                 }
             }
         }

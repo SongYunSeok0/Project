@@ -1,21 +1,19 @@
 package com.domain.usecase.auth
 
-import com.domain.model.SocialLoginRequest
-import com.data.network.dto.user.LoginResponse
-
-import com.domain.repository.UserRepository
+import com.domain.model.SocialLoginParam
+import com.domain.model.SocialLoginResult
+import com.domain.repository.AuthRepository
 import javax.inject.Inject
 
 class SocialLoginUseCase @Inject constructor(
-    private val repository: UserRepository
+    private val repository: AuthRepository
 ) {
     suspend operator fun invoke(
         provider: String,
         socialId: String,
         accessToken: String? = null,
         idToken: String? = null
-    ): LoginResponse? {
-        val request = SocialLoginRequest(provider, socialId, accessToken, idToken)
-        return repository.socialLogin(request)
+    ): SocialLoginResult {
+        return repository.socialLogin(SocialLoginParam(provider, socialId, accessToken, idToken))
     }
 }
