@@ -23,10 +23,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
@@ -274,5 +276,18 @@ fun NewsCard(
             )
             Text(text = info, fontSize = 12.sp, color = Color(0xFF6F8BA4))
         }
+    }
+}
+
+/* ------------------------------ Preview ------------------------------ */
+
+@Preview(showBackground = true)
+@Composable
+fun NewsScreenPreview() {
+    MaterialTheme {
+        NewsMainScreen(
+            nav = rememberNavController(),
+            onOpenDetail = {}
+        )
     }
 }

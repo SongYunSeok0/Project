@@ -1,3 +1,6 @@
+import java.util.Properties
+import kotlin.apply
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -15,6 +18,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+
+        val props = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) load(f.inputStream())
+        }
+        val googleClientId = props.getProperty("GOOGLE_CLIENT_ID", "")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -64,10 +79,23 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    implementation("androidx.compose.material:material-icons-extended")
+
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    //카카오
+    implementation("com.kakao.sdk:v2-user:2.11.0")
+    // 스트럭처로 구글 로그인 연동용 라이브러리 의존성 추가(최신버전이용)
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+    // 구글 로그인 하위버전 호환용 라이브러리 추가
+    implementation("androidx.credentials:credentials:1.2.0")
 }

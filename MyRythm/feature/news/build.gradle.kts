@@ -81,4 +81,7 @@ dependencies {
     implementation(libs.paging.compose)
     implementation(libs.compose.runtime.livedata)
 
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
+
 }

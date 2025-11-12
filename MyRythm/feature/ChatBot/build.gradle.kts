@@ -50,4 +50,7 @@ dependencies {
     implementation(libs.bundles.test)
 
     implementation(libs.lifecycle.viewmodel.compose)
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }
