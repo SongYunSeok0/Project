@@ -28,6 +28,10 @@ android {
         }
         manifestPlaceholders["NAVER_MAP_CLIENT_ID"] =
             props.getProperty("NAVER_MAP_CLIENT_ID", "")
+
+        val kakaoAppKey = props.getProperty("KAKAO_NATIVE_APP_KEY", "")
+        manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoAppKey
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoAppKey\"")
     }
 
     buildTypes {

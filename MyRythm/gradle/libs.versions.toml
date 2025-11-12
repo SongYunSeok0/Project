@@ -50,8 +50,6 @@ jsoup = "1.16.1"
 paging = "3.3.2"
 moshi = "1.15.0"
 ksp = "2.0.21-1.0.28"
-moshi = "1.15.0"
-ksp = "2.0.21-1.0.28"
 
 datastore = "1.1.1"
 securityCrypto = "1.1.0"

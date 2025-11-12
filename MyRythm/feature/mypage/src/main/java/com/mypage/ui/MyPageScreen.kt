@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
-import com.ui.theme.Colors
+
 
 @Composable
 fun MyPageScreen(
@@ -85,7 +85,7 @@ fun InfoCard(
             .width(110.dp)
             .height(130.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(Colors.White), // 은은한 배경색
+            .background(Color.White), // 은은한 배경색
 
         contentAlignment = Alignment.Center
     ) {

@@ -1,6 +1,10 @@
 package com.domain.usecase
 import com.domain.repository.UserRepository
+import com.domain.model.User
+import javax.inject.Inject
 
-class GetUserUseCase(private val repo: UserRepository) {
-    operator fun invoke() = repo.observeUser()
+class GetUserUseCase @Inject constructor(
+    private val repo: UserRepository
+) {
+    suspend operator fun invoke(userId: String): User = repo.getUser(userId)
 }

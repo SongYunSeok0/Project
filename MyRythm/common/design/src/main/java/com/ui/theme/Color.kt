@@ -33,16 +33,13 @@ val AuthOnSecondray = Color(0xFFFFFFFF)     // 하얀색글씨
 val AuthAppName = Color(0xFF5DB0A8)    //앱 제목 컬러
 
 // 회원가입프로세스 +)커스텀토큰으로 별도 활용
-val AuthBackground = Color(0xFFB5E5E1)      // 배경
+
 val AuthSurface = BasicWhite                // 입력필드
 val AuthOnFieldHint = Black40               // 입력필드 위 가이드 글씨
 val AuthOnSurface = BasicBlack              // 입력필드 위 사용자 글씨
-val AuthPrimaryButton = AuthBlue                     // 메인 버튼
+
 val AuthPrimaryButtonClick = Color(0x806AC0E0)       // 메인 버튼 클릭 시 투명도 50 컬러 변동
-val AuthOnPrimary = BasicWhite                       // 메인 버튼 위 글씨
-val AuthSecondrayButton = BasicWhite                 // 서브 버튼
-val AuthOnSecondray = AuthBlue                       // 서브 버튼 위 글씨
-val AuthAppName = Color(0xFF5DB0A8)                  // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
+       // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
 
 // 스플래시+로그인 +)커스텀토큰으로 별도 활용
 val LoginBackground = Primary               // 로그인화면의 메인배경

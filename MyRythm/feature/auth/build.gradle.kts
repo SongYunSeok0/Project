@@ -21,7 +21,7 @@ android {
 
 
         val props = Properties().apply {
-            val f = rootProject.file("local.properties")
+            val f = rootProject.file("secret.properties")
             if (f.exists()) load(f.inputStream())
         }
         val googleClientId = props.getProperty("GOOGLE_CLIENT_ID", "")

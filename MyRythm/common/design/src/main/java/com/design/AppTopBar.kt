@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.common.design.R
-import com.ui.theme.Colors
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +38,7 @@ fun AppTopBar(
             Text(
                 text = title,
                 fontSize = 20.sp,
-                color = Colors.Black,
+                color = Color.Black,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
             )
@@ -49,7 +49,7 @@ fun AppTopBar(
                     Icon(
                         painter = painterResource(id = R.drawable.back),
                         contentDescription = "뒤로가기",
-                        tint = Colors.Black
+                        tint = Color.Black
                     )
                 }
             }
@@ -60,15 +60,15 @@ fun AppTopBar(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "검색",
-                        tint = Colors.Black
+                        tint = Color.Black
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Colors.White,
-            scrolledContainerColor = Colors.White,
-            titleContentColor = Colors.Black
+            containerColor = Color.White,
+            scrolledContainerColor = Color.White,
+            titleContentColor = Color.Black
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -85,7 +85,7 @@ fun AppBottomBar(
         Modifier
             .fillMaxWidth()
             .height(80.dp)
-            .background(Colors.White)
+            .background(Color.White)
 
     ) {
         Row(
@@ -101,14 +101,14 @@ fun AppBottomBar(
                 Icon(
                     imageVector = Icons.Default.Home,
                     contentDescription = "홈",
-                    tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else Colors.Gray
+                    tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else Color.Gray
                 )
             }
             IconButton(onClick = { onTabSelected("MyPage") }) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "마이",
-                    tint = if (currentScreen == "MyPage") Color(0xFF6AE0D9) else Colors.Gray
+                    tint = if (currentScreen == "MyPage") Color(0xFF6AE0D9) else Color.Gray
                 )
             }
         }
