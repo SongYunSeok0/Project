@@ -61,10 +61,23 @@ class AuthViewModel @Inject constructor(
     /** 기본 로그인 */
     fun login(email: String, password: String) = viewModelScope.launch(Dispatchers.IO) {
         _state.update { it.copy(loading = true) }
-        val result = runCatching { loginUseCase(email, password) }
-        val ok = result.isSuccess
-        _state.update { it.copy(loading = false, isLoggedIn = ok) }
-        _events.tryEmit(if (ok) "로그인 성공" else parseError(result.exceptionOrNull()) ?: "로그인 실패")
+
+        try {
+            val tokens = loginUseCase(email, password)
+            val ok = tokens != null
+            _state.update { it.copy(loading = false, isLoggedIn = ok) }
+            _events.tryEmit(
+                if (ok) {
+                    "로그인 성공"
+                } else {
+                    "이메일 또는 비밀번호가 올바르지 않습니다."
+                }
+            )
+        } catch (e: Throwable) {
+            // 네트워크 예외 등 실제 예외가 난 경우
+            _state.update { it.copy(loading = false, isLoggedIn = false) }
+            _events.tryEmit(parseError(e) ?: "로그인 실패")
+        }
     }
 
     /** 회원가입 */

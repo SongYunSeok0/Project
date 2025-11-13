@@ -18,9 +18,11 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
 
     override suspend fun login(id: String, pw: String): AuthTokens? {
-        val res = api.login(UserLoginRequest(id, pw))
+        val res = api.login(UserLoginRequest(email = id, password = pw))
+
         if (!res.isSuccessful) return null
         val body = res.body() ?: return null
+
         val tokens = body.asAuthTokens()
         tokenStore.set(tokens.access, tokens.refresh)
         return tokens
