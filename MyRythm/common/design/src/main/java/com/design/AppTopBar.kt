@@ -1,14 +1,10 @@
 package com.design
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -21,12 +17,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.common.design.R
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +66,8 @@ fun AppTopBar(
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.secondary,
+            containerColor = Color.White,
+            scrolledContainerColor = Color.White,
             titleContentColor = Color.Black
         ),
         modifier = Modifier
@@ -87,13 +84,15 @@ fun AppBottomBar(
     Box(
         Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(80.dp)
             .background(Color.White)
+
     ) {
         Row(
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 40.dp)
+                .shadow(2.dp)
+                .padding(horizontal = 50.dp)
                 .zIndex(1f),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

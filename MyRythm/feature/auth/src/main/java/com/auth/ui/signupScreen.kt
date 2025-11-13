@@ -10,6 +10,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -39,7 +42,9 @@ fun SignupScreen(
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = hiltViewModel(),
     onSignupComplete: () -> Unit = {},
-    onBackToLogin: () -> Unit = {}
+    onBackToLogin: () -> Unit = {},
+    socialId: String? = null,
+    provider: String? = null
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
@@ -75,7 +80,9 @@ fun SignupScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AuthBackground,
-        snackbarHost = { SnackbarHost(snackbar) }
+        snackbarHost = { SnackbarHost(snackbar) },
+        // ✅ 내부 스캐폴드 인셋 제거로 상·하 여백 제거
+        contentWindowInsets = WindowInsets(0)
     ) { inner ->
         Column(
             modifier = Modifier
@@ -96,12 +103,12 @@ fun SignupScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            // ✅ BalooThambi 제거
             Text(
                 text = "My Rhythm",
                 color = Color(0xff5db0a8),
                 fontSize = 65.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = BalooThambi
+                fontWeight = FontWeight.Bold
             )
 
             Spacer(Modifier.height(24.dp))
@@ -216,14 +223,15 @@ fun SignupScreen(
 
             Spacer(Modifier.height(20.dp))
 
+            // 성별 드롭다운
             ExposedDropdownMenuBox(
                 expanded = genderExpanded,
                 onExpandedChange = { genderExpanded = !genderExpanded },
             ) {
                 OutlinedTextField(
                     value = when (gender) {
-                        "male" -> "남성"
-                        "female" -> "여성"
+                        "M" -> "남성"
+                        "F" -> "여성"
                         else -> ""
                     },
                     onValueChange = {},
@@ -240,7 +248,10 @@ fun SignupScreen(
                         unfocusedContainerColor = Color.White
                     )
                 )
-                ExposedDropdownMenu(expanded = genderExpanded, onDismissRequest = { genderExpanded = false }) {
+                ExposedDropdownMenu(
+                    expanded = genderExpanded,
+                    onDismissRequest = { genderExpanded = false }
+                ) {
                     DropdownMenuItem(text = { Text("남성") }, onClick = { gender = "M"; genderExpanded = false })
                     DropdownMenuItem(text = { Text("여성") }, onClick = { gender = "F"; genderExpanded = false })
                 }
@@ -314,7 +325,7 @@ fun SignupScreen(
                             viewModel.emitInfo("인증번호가 전송되었습니다. 테스트 코드는 0000 입니다")
                         }
                     },
-                    enabled = !isVerificationCompleted, // 인증 완료되면 전송 비활성화
+                    enabled = !isVerificationCompleted,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isPhoneVerificationSent) SecondaryBtnDisabled else AuthSecondrayButton,

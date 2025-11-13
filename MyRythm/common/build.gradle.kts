@@ -28,4 +28,6 @@ dependencies {
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+
 }

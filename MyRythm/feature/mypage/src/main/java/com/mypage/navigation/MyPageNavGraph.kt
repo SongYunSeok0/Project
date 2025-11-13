@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.mypage.ui.EditScreen
+import com.mypage.ui.FAQScreenWrapper
 import com.mypage.ui.HeartReportScreen
 import com.mypage.ui.MyPageScreen
 
@@ -16,6 +17,7 @@ fun NavGraphBuilder.mypageNavGraph(
         MyPageScreen(
             onEditClick = { nav.navigate(EditProfileRoute()) },
             onHeartClick = { nav.navigate(HeartReportRoute) },
+            onFaqClick = { nav.navigate(FAQRoute) },
             onLogoutClick = onLogoutClick        // ← 그대로 전달
         )
     }
@@ -27,5 +29,9 @@ fun NavGraphBuilder.mypageNavGraph(
 
     composable<HeartReportRoute> {
         HeartReportScreen()
+    }
+
+    composable<FAQRoute> {
+        FAQScreenWrapper()
     }
 }

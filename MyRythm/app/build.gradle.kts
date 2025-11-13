@@ -10,24 +10,28 @@ plugins {
 }
 
 android {
-    namespace = "com.myrythm"
+    namespace = "com.myrhythm"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.myrythm"
+        applicationId = "com.myrhythm"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // 네이버 지도 SDK용 클라이언트 ID만 주입
+        // --- local.properties에서 안전하게 로드 ---
         val props = Properties().apply {
             val f = rootProject.file("secret.properties")
             if (f.exists()) load(f.inputStream())
         }
         manifestPlaceholders["NAVER_MAP_CLIENT_ID"] =
             props.getProperty("NAVER_MAP_CLIENT_ID", "")
+
+        val kakaoAppKey = props.getProperty("KAKAO_NATIVE_APP_KEY", "")
+        manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoAppKey
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoAppKey\"")
     }
 
     buildTypes {
@@ -54,7 +58,6 @@ android {
 kotlin { jvmToolchain(21) }
 
 dependencies {
-    // 모듈 연결
     implementation(project(":common"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
@@ -64,19 +67,31 @@ dependencies {
     implementation(project(":feature:news"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:chatbot"))
+
+    // domain & data modules
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":core"))
 
-    // Compose / Core
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.test)
+
+    implementation(libs.naver.map.sdk)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // 테스트
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+
     testImplementation(libs.bundles.test)
+
+    //카카오
+    implementation("com.kakao.sdk:v2-user:2.11.0")
+
+
 }

@@ -10,5 +10,9 @@ data class UserSignupRequest(
     @Json(name = "gender") val gender: String,        // "M" / "F"
     @Json(name = "height") val height: Double,
     @Json(name = "weight") val weight: Double,
-    @Json(name = "password") val password: String
+    @Json(name = "password") val password: String,
+
+    // sns연동로그인 부분
+    val provider: String? = null,   // ✅ kakao / google 등
+    val socialId: String? = null    // ✅ SNS 유저 고유 PK
 )

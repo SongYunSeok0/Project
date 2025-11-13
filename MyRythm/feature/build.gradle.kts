@@ -52,5 +52,8 @@ dependencies {
 
     implementation(libs.compose.animation)
 
+    implementation("androidx.compose.material:material-icons-core:1.7.3")
+    implementation("androidx.compose.material:material-icons-extended:1.7.3")
 
+    implementation("com.kakao.sdk:v2-user:2.11.0")
 }

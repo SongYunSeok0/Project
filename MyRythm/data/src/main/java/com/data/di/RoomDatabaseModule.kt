@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.data.db.AppRoomDatabase
 import com.data.db.dao.FavoriteDao
+import com.data.db.dao.InquiryDao
 import com.data.db.dao.PlanDao
 import com.data.db.dao.UserDao
 import dagger.Module
@@ -27,4 +28,5 @@ object RoomDatabaseModule {
     @Provides fun provideUserDao(db: AppRoomDatabase): UserDao = db.userDao()
     @Provides fun provideFavoriteDao(db: AppRoomDatabase): FavoriteDao = db.favoriteDao()
     @Provides fun providePlanDao(db: AppRoomDatabase): PlanDao = db.planDao()
+    @Provides fun provideInquiryDao(db: AppRoomDatabase): InquiryDao = db.inquiryDao()
 }
