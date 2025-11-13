@@ -27,7 +27,8 @@ fun MyPageScreen(
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    onFaqClick: () -> Unit = {}
+    onFaqClick: () -> Unit = {},
+    onMediClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -67,7 +68,7 @@ fun MyPageScreen(
         Column(Modifier.fillMaxWidth()) {
             MenuItem("내 정보 수정", onEditClick)
             MenuItem("심박수", onHeartClick)
-            MenuItem("복약 그래프") { }
+            MenuItem("복약 통계", onMediClick)
             MenuItem("FAQ 문의사항", onFaqClick)
             MenuItem("로그아웃", onLogoutClick)
         }

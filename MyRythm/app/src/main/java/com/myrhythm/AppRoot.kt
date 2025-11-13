@@ -148,6 +148,8 @@ private fun titleFor(routeName: String) = when (routeName) {
     ChatBotRoute::class.qualifiedName     -> "챗봇"
     MapRoute::class.qualifiedName         -> "지도"
     NewsRoute::class.qualifiedName        -> "뉴스"
+    AlarmRoute::class.qualifiedName        -> "복약 관리"
+    MediReportRoute::class.qualifiedName        -> "복약 통계"
     else -> "마이 리듬"
 }
 

@@ -8,3 +8,5 @@ import kotlinx.serialization.Serializable
 @Serializable data class EditProfileRoute(val userId: String? = null)
 
 @Serializable data object FAQRoute
+
+@Serializable data object MediReportRoute
