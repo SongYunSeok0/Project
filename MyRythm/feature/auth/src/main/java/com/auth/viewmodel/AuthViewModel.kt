@@ -235,24 +235,35 @@ class AuthViewModel @Inject constructor(
 
             withContext(Dispatchers.Main) {
                 if (call.isFailure) {
-                    onResult(false, parseError(call.exceptionOrNull()) ?: "네트워크 오류")
+                    val e = call.exceptionOrNull()
+                    android.util.Log.e("SocialLogin", "call failure", e)
+                    _state.update { it.copy(loading = false, isLoggedIn = false) }
+                    onResult(false, parseError(e) ?: "네트워크 오류")
                     return@withContext
                 }
 
-                when (val r = call.getOrNull()) {
+                val r = call.getOrNull()
+                android.util.Log.d("SocialLogin", "result = $r")
+
+                when (r) {
                     is SocialLoginResult.Success -> {
+                        _state.update { it.copy(loading = false, isLoggedIn = true) }
+                        _events.tryEmit("$provider 로그인 성공")
                         onResult(true, "$provider 로그인 성공")
                     }
                     SocialLoginResult.NeedAdditionalInfo -> {
+                        _state.update { it.copy(loading = false, isLoggedIn = false) }
                         onNeedAdditionalInfo(socialId, provider)
                     }
                     is SocialLoginResult.Error, null -> {
+                        _state.update { it.copy(loading = false, isLoggedIn = false) }
                         onResult(false, r?.message ?: "서버 오류")
                     }
                 }
             }
         }
     }
+
 
     // ----------------------------
     // 예외 메시지 파싱

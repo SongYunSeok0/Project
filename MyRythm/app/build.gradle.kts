@@ -92,6 +92,4 @@ dependencies {
 
     //카카오
     implementation("com.kakao.sdk:v2-user:2.11.0")
-
-
 }
