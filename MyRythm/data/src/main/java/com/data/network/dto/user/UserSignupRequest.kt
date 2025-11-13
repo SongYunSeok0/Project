@@ -1,12 +1,16 @@
 package com.data.network.dto.user
 
+import com.squareup.moshi.Json
+
 data class UserSignupRequest(
-    val id: String,              // 사용자 아이디(SNS 유저는 socialId 사용 - pk됨)
-    val password: String,        // 비밀번호
-    val name: String,            // 이름
-    val birth_date: String,      // 생년월일 (예: "2000-05-12")
-    val gender: String,          // 성별 (예: "male", "female", "unknown")
-    val phone: String,            // 전화번호
+    @Json(name = "email") val email: String,
+    @Json(name = "username") val username: String,
+    @Json(name = "phone") val phone: String,
+    @Json(name = "birth_date") val birthDate: String, // 서버와 동일하게
+    @Json(name = "gender") val gender: String,        // "M" / "F"
+    @Json(name = "height") val height: Double,
+    @Json(name = "weight") val weight: Double,
+    @Json(name = "password") val password: String,
 
     // sns연동로그인 부분
     val provider: String? = null,   // ✅ kakao / google 등

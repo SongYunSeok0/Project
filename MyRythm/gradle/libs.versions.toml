@@ -44,6 +44,7 @@ room = "2.6.1"
 naver-map-compose = "1.5.0"
 play-services-location = "20.0.0"
 accompanist = "0.34.0"
+compose-animation = "1.7.0"
 coil = "2.7.0"
 jsoup = "1.16.1"
 paging = "3.3.2"
@@ -53,6 +54,7 @@ ksp = "2.0.21-1.0.28"
 datastore = "1.1.1"
 securityCrypto = "1.1.0"
 monitor = "1.8.0"
+
 
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }

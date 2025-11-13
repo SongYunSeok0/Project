@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -266,10 +265,4 @@ private fun PillRow(dot: Color, title: String, time: String, trailing: @Composab
 @Composable
 private fun DoneText() {
     Text("복용 완료", color = Mint, fontSize = 12.sp)
-}
-
-@Preview(showBackground = true, widthDp = 412, heightDp = 917)
-@Composable
-private fun SchedulerScreenPreview() {
-    SchedulerScreen()
 }

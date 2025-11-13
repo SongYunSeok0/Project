@@ -17,7 +17,7 @@ android {
         consumerProguardFiles("consumer-rules.pro")
 
         // ✅ local.properties 에서 API 키 안전하게 읽기
-        val localProps = rootProject.file("local.properties")
+        val localProps = rootProject.file("secret.properties")
         val props = Properties()
 
         if (localProps.exists()) {

@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.scheduler.ocr.OcrCropView
-import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun OcrScreen(

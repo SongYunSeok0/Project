@@ -1,4 +1,4 @@
-package com.auth.data.model
+package com.data.network.dto.user
 
 data class SocialLoginResponse(
     val access: String?,

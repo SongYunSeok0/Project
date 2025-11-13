@@ -20,12 +20,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
 
+
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    onFaqClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -66,39 +68,64 @@ fun MyPageScreen(
             MenuItem("내 정보 수정", onEditClick)
             MenuItem("심박수", onHeartClick)
             MenuItem("복약 그래프") { }
-            MenuItem("FAQ 문의사항") { }
+            MenuItem("FAQ 문의사항", onFaqClick)
             MenuItem("로그아웃", onLogoutClick)
         }
     }
 }
 
 @Composable
-fun InfoCard(title: String, value: String, iconRes: Int) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+fun InfoCard(
+    title: String,
+    value: String,
+    iconRes: Int
+) {
+    Box(
         modifier = Modifier
             .width(110.dp)
-            .height(140.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .shadow(1.dp, RoundedCornerShape(6.dp))
-            .padding(vertical = 16.dp)
+            .height(130.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White), // 은은한 배경색
+
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color(0xff6ae0d9).copy(alpha = 0.2f))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Image(painter = painterResource(id = iconRes), contentDescription = null, modifier = Modifier.size(24.dp))
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF6AE0D9).copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = value,
+                color = Color(0xFF4CCDC5),
+                fontSize = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = title,
+                color = Color(0xFF5DB0A8),
+                fontSize = 12.sp
+            )
         }
-        Spacer(Modifier.height(12.dp))
-        Text(text = value, color = Color(0xff6ae0d9), fontSize = 18.sp)
-        Spacer(Modifier.height(4.dp))
-        Text(text = title, color = Color(0xff5db0a8).copy(alpha = 0.74f), fontSize = 12.sp)
     }
 }
+
 
 @Composable
 fun MenuItem(title: String, onClick: () -> Unit) {

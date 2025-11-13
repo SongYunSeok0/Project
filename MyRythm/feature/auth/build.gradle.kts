@@ -21,7 +21,7 @@ android {
 
 
         val props = Properties().apply {
-            val f = rootProject.file("local.properties")
+            val f = rootProject.file("secret.properties")
             if (f.exists()) load(f.inputStream())
         }
         val googleClientId = props.getProperty("GOOGLE_CLIENT_ID", "")
@@ -56,7 +56,6 @@ android {
 }
 
 dependencies {
-
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
     implementation(project(":domain"))
@@ -85,6 +84,9 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

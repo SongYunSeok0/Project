@@ -24,18 +24,22 @@ val OnSecondary =// Secondary 위에 올라가는 글씨
 val OnSurface = // Surface 위에 올라가는 일반적인 본문 텍스트
  */
 
+// 로그인프로세스
+val AuthBackground = Color(0xFFB5E5E1)  //메인배경
+val AuthPrimaryButton = Color(0xFFFFFFFF)  //메인버튼바탕
+val AuthOnPrimary = Color(0x66000000)   // 메인버튼위에올라갈글씨 블랙+투명도40
+val AuthSecondrayButton = Color(0xFF6AC0E0)     //서브버튼 바탕
+val AuthOnSecondray = Color(0xFFFFFFFF)     // 하얀색글씨
+val AuthAppName = Color(0xFF5DB0A8)    //앱 제목 컬러
 
 // 회원가입프로세스 +)커스텀토큰으로 별도 활용
-val AuthBackground = Color(0xFFB5E5E1)      // 배경
+
 val AuthSurface = BasicWhite                // 입력필드
 val AuthOnFieldHint = Black40               // 입력필드 위 가이드 글씨
 val AuthOnSurface = BasicBlack              // 입력필드 위 사용자 글씨
-val AuthPrimaryButton = AuthBlue                     // 메인 버튼
+
 val AuthPrimaryButtonClick = Color(0x806AC0E0)       // 메인 버튼 클릭 시 투명도 50 컬러 변동
-val AuthOnPrimary = BasicWhite                       // 메인 버튼 위 글씨
-val AuthSecondrayButton = BasicWhite                 // 서브 버튼
-val AuthOnSecondray = AuthBlue                       // 서브 버튼 위 글씨
-val AuthAppName = Color(0xFF5DB0A8)                  // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
+       // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
 
 // 스플래시+로그인 +)커스텀토큰으로 별도 활용
 val LoginBackground = Primary               // 로그인화면의 메인배경
@@ -66,5 +70,57 @@ background	스크롤 가능한 콘텐츠가 없는 가장 큰 영역의 배경�
 40%	66
 20%	33
 0% (완전 투명)	00
+
+
+*LightColorScheme**에 할당해야 합니다.
+
+Kotlin
+
+// design/ui/theme/Color.kt의 일부
+
+val PrimaryLightColor = Color(0xFF6AE0D9) // val 이름 변경
+
+val LightColorScheme = lightColorScheme(
+    primary = PrimaryLightColor, // ⬅️ 여기에 할당
+    onPrimary = Color.Black,
+    secondary = SecondaryLight,
+    // ...
+    background = Color(0xFFFFFFFF) // ⬅️ MainBackground 역할도 여기에 할당하는 것이 좋음
+)
+B. MainScreen.kt에서 역할로 호출
+MainScreen.kt에서는 **MaterialTheme.colorScheme**를 통해 primary 역할을 호출합니다. 이 경우 별도의 import 없이 테마가 적용됩니다.
+
+Kotlin
+
+package com.sesac.app
+
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme // ⬅️ MaterialTheme을 가져옵니다.
+// ... (MainBackground import는 제거)
+
+@Composable
+fun MainScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // 1. 테마의 background 역할 색상을 사용합니다.
+            .background(color = MaterialTheme.colorScheme.background)
+    ) {
+        // ...
+    }
+
+    // 2. 버튼에 테마의 primary 역할 색상을 사용합니다.
+    CustomButton(
+        onClick = { /* ... */ },
+        modifier = Modifier.background(MaterialTheme.colorScheme.primary)
+    ) {
+        // ...
+    }
+}
+결론:
+
+**MainBackground**처럼 M3 역할에 정확히 매핑되지 않는 커스텀 색상은 val을 직접 import하여 사용하는 것이 편리합니다.
+
+**PrimaryLight**처럼 Material Design의 핵심 색상 역할을 하는 값은 ColorScheme에 할당한 뒤, **MaterialTheme.colorScheme.primary**로 호출하는 것이 다크 모드 등 테마 관리에 유리합니다.
 
  */

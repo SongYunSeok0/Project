@@ -65,7 +65,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     // FAQ 탭 부분 PrimaryTabRow 사용 의존성 추가 (3부터가능)
     implementation(libs.androidx.material3)

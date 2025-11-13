@@ -141,8 +141,7 @@ import androidx.compose.ui.unit.sp
 import com.ui.theme.AuthFieldHeight
 import com.ui.theme.AuthFieldShape
 import com.ui.theme.AuthFieldWidth
-import com.ui.theme.AuthOnPrimary
-import com.ui.theme.AuthPrimaryButton
+import com.ui.theme.Colors
 import com.ui.theme.ShadowElevationDefault
 import com.ui.theme.authTheme
 
@@ -161,7 +160,7 @@ fun AuthInputField(
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Surface(
             shape = AuthFieldShape,
-            color = AuthPrimaryButton,
+            color = Colors.AuthPrimaryButton,
             modifier = Modifier
                 .requiredWidth(AuthFieldWidth)
                 .requiredHeight(AuthFieldHeight)
@@ -176,7 +175,7 @@ fun AuthInputField(
                 // 실제 TextField 대신 Placeholder 텍스트만 표시
                 Text(
                     text = hint,
-                    color = AuthOnPrimary,
+                    color = Colors.AuthOnPrimary,
                     fontSize = 15.sp,
                     letterSpacing = 0.9.sp
                 )

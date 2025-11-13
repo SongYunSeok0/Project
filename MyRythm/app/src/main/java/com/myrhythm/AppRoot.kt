@@ -4,14 +4,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.auth.navigation.*
+import com.auth.viewmodel.AuthViewModel
 import com.chatbot.navigation.*
 import com.design.AppBottomBar
 import com.design.AppTopBar
@@ -23,6 +26,7 @@ import com.scheduler.navigation.*
 import com.core.auth.JwtUtils
 import com.core.di.CoreEntryPoint
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AppRoot() {
@@ -39,6 +43,21 @@ fun AppRoot() {
         JwtUtils.extractUserId(tokenStore.current().access) ?: ""
     }
 
+    // AuthViewModel은 상위(AppRoot)에서 소유
+    val authVm: AuthViewModel = hiltViewModel()
+
+    // 로그아웃 완료 이벤트 수신 → 로그인 화면으로 이동
+    LaunchedEffect(Unit) {
+        authVm.events.collectLatest { ev ->
+            if (ev == "로그아웃 완료") {
+                nav.navigate(LoginRoute) {
+                    popUpTo(0)
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
     fun isRoute(obj: Any) = routeName == obj::class.qualifiedName
     fun isOf(vararg objs: Any) = objs.any { isRoute(it) }
 
@@ -49,6 +68,7 @@ fun AppRoot() {
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 
+    // 탭 이동 함수
     fun goHome() = nav.navigate(MainRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
@@ -102,8 +122,9 @@ fun AppRoot() {
                 mainNavGraph(nav)
                 mapNavGraph()
                 newsNavGraph(nav)
-                schedulerNavGraph(nav, userId) // ← userId 전달
-                mypageNavGraph(nav)
+                schedulerNavGraph(nav, userId) // userId 전달
+                // 뷰모델을 NavGraph 내부에서 쓰지 않음. 람다만 전달.
+                mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
                 chatbotNavGraph()
             }
         }

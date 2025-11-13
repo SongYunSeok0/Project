@@ -1,5 +1,6 @@
 package com.auth.ui
 
+import com.auth.BuildConfig
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -298,6 +299,7 @@ fun LoginScreen(
                                 .clickable {
                                     viewModel.googleOAuth(
                                         context,
+                                        googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
                                         onResult = { success, message ->
                                             if (success) {
                                                 // 소셜 로그인 성공 시 onLogin 호출

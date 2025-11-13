@@ -7,7 +7,6 @@ plugins {
 
 android {
     namespace = "com.map"
-
     compileSdk = rootProject.extra.get("compileSdk") as Int
 
     defaultConfig {
