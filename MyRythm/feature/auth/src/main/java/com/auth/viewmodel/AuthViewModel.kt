@@ -1,4 +1,3 @@
-// feature/auth/src/main/java/com/auth/viewmodel/AuthViewModel.kt
 package com.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
