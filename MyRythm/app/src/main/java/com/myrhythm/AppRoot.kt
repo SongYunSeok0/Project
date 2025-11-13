@@ -27,6 +27,7 @@ import com.core.auth.JwtUtils
 import com.core.di.CoreEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.reflect.KClass
 
 @Composable
 fun AppRoot() {
@@ -58,12 +59,17 @@ fun AppRoot() {
         }
     }
 
-    fun isRoute(obj: Any) = routeName == obj::class.qualifiedName
-    fun isOf(vararg objs: Any) = objs.any { isRoute(it) }
+    fun isRoute(k: KClass<*>) =
+        routeName.startsWith(k.qualifiedName.orEmpty())
 
-    val isAuth = isOf(LoginRoute, PwdRoute, SignupRoute)
-    val isMain = isRoute(MainRoute)
-    val isNews = isRoute(NewsRoute)
+
+    fun isOf(vararg ks: KClass<*>) = ks.any { isRoute(it) }
+
+
+    val isAuth = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class)
+    val isMain = isRoute(MainRoute::class)
+    val isNews = isRoute(NewsRoute::class)
+
 
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
