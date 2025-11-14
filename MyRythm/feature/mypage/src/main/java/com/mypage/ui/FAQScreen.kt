@@ -1,11 +1,17 @@
 package com.mypage.ui
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -16,14 +22,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.common.design.R
 import com.design.AppTopBar
 import com.domain.model.Inquiry
 import com.mypage.viewmodel.MyPageViewModel
@@ -34,7 +48,6 @@ import kotlinx.coroutines.launch
 // 0 -> InquiryHistory(inquiries)
 @Composable
 fun FAQScreen(
-    //inquiries: List<Inquiry>,
     onSubmit: (type: String, title: String, content: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -61,10 +74,43 @@ fun FAQScreen(
 
                 FAQTabContent(
                     pagerState = pagerState,
-                    //inquiries = inquiries,
                     onSubmit = onSubmit
                 )
             }
+        }
+    }
+}
+
+// 뷰모델진입점
+@Composable
+fun FAQScreenWrapper(
+    viewModel: MyPageViewModel = hiltViewModel()
+) {
+    FAQScreen(
+        onSubmit = { type, title, content ->
+            viewModel.addInquiry(type, title, content)
+        }
+    )
+}
+
+// 0번 탭 - 나의 문의 내역 화면 (InquiryHistory)+컴포넌트 FAQInquiryCard.kt 호출
+@Composable
+private fun InquiryHistory(
+    inquiries: List<Inquiry>
+) {
+    //실제 코드에선 뷰모델로 연결하기
+    //val inquiries by viewModel.inquiries.collectAsState()
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(inquiries) { inquiry ->
+            InquiryCard(
+                inquiry = inquiry
+            )
         }
     }
 }
@@ -111,92 +157,182 @@ private fun FAQTabRow(pagerState: PagerState) {
 @Composable
 private fun FAQTabContent(
     pagerState: PagerState,
-    //inquiries: List<Inquiry>,
-    onSubmit: (type: String, title: String, content: String) -> Unit
+    onSubmit: (type: String, title: String, content: String) -> Unit,
+    viewModel: MyPageViewModel = hiltViewModel()
 ) {
+
+    val inquiries by viewModel.inquiries.collectAsState()
 
     // HorizontalPager: 좌우 스와이프 전환이 가능한 화면 구성
     HorizontalPager(state = pagerState) { index ->
         when (index) {
-            0 -> InquiryHistory()
+            0 -> InquiryHistory(inquiries = inquiries)
             1 -> NewInquiryForm(onSubmit)
         }
     }
 }
 
-
+/* 1114 주석처리- 이미 faq인퀴어리카드 컴포넌트화에 적용되어있음
 @Composable
-fun FAQScreenWrapper(
-    viewModel: MyPageViewModel = hiltViewModel()
-) {
-    val inquiries by viewModel.inquiries.collectAsState()
+fun FAQItem(inquiry: com.domain.model.Inquiry) {
+    var expanded by remember { mutableStateOf(false) }
 
-    FAQScreen(
-        /*inquiries = inquiries.map {
-            com.domain.model.Inquiry(
-                type = it.type,
-                title = it.title,
-                content = it.content,
-                answer = it.answer
-            )
-        },*/
-        onSubmit = { type, title, content ->
-            viewModel.addInquiry(type, title, content)
+    Column(modifier = Modifier.fillMaxWidth()) {
+
+        Card(
+            colors = CardDefaults.cardColors(Color.White),
+            shape = RoundedCornerShape(14.dp),
+            elevation = CardDefaults.cardElevation(1.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable { expanded = !expanded }
+                .animateContentSize()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = com.common.design.R.drawable.chat),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        text = "[${inquiry.type}] ${inquiry.title}",
+                        fontSize = 16.sp,
+                        color = Color(0xFF101828),
+                        lineHeight = 1.5.em
+                    )
+                }
+
+                Image(
+                    painter = painterResource(
+                        id = if (expanded) com.common.design.R.drawable.arrow_up else R.drawable.arrow_down
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
-    )
-}
 
-// 0번 탭 - 나의 문의 내역 화면 (InquiryHistory)+컴포넌트 FAQInquiryCard.kt 호출
+        if (expanded) {
+            Card(
+                colors = CardDefaults.cardColors(Color.White),
+                shape = RoundedCornerShape(14.dp),
+                elevation = CardDefaults.cardElevation(1.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+
+                    Text(
+                        text = "문의 내용",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF101828)
+                    )
+                    Spacer(Modifier.height(4.dp))
+
+                    Text(
+                        text = inquiry.content,
+                        fontSize = 14.sp,
+                        color = Color(0xFF6A7282),
+                        lineHeight = 1.5.em
+                    )
+
+                    if (!inquiry.answer.isNullOrBlank()) {
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(
+                            text = "관리자 답변",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6AE0D9)
+                        )
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = inquiry.answer!!,
+                            fontSize = 14.sp,
+                            color = Color(0xFF6A7282),
+                            lineHeight = 1.5.em
+                        )
+                    } else {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = "아직 답변이 등록되지 않았습니다.",
+                            fontSize = 14.sp,
+                            color = Color(0xFF9CA3AF),
+                            lineHeight = 1.5.em
+                        )
+                    }
+                }
+            }
+        }
+    }
+}*/
+
+
+@Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
-private fun InquiryHistory(
-    viewModel: MyPageViewModel = hiltViewModel()
-) {
-    val inquiries by viewModel.inquiries.collectAsState()
+fun FAQScreenWithSampleDataPreview() {
+    // 샘플 데이터
+    val sampleInquiries = listOf(
+        Inquiry(1, "결제 문의", "환불은 어떻게 하나요?", "구매한 상품의 환불 절차가 궁금합니다.", "환불은 구매일로부터 7일 이내 가능합니다."),
+        Inquiry(2, "서비스 이용", "회원 탈퇴 방법 제목글자수테스트", "회원 탈퇴를 하고 싶은데 어떻게 하나요?", null),
+        Inquiry(3, "기술 지원", "로그인이 안됩니다", "비밀번호를 입력해도 로그인이 되지 않아요.", "비밀번호 재설정을 시도해보시기 바랍니다."),
+        Inquiry(4, "기술 지원", "스크롤테스트12345678910", "비밀번호를 입력해도 로그인이 되지 않아요.", "비밀번호 재설정을 시도해보시기 바랍니다."),
+// 날짜 임시로 넣어놨는데 제목이 길면 날짜영역 깨지는 문제있음
+    )
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(inquiries) { inquiry ->
-            InquiryCard(
-                inquiry = inquiry
-            )
+    val inquiriesState = remember { mutableStateListOf<Inquiry>().apply { addAll(sampleInquiries) } }
+    val pagerState = rememberPagerState(initialPage = 0) { 2 }
+
+    OnlyColorTheme {
+        Scaffold(
+            topBar = {
+                AppTopBar(
+                    title = "문의사항",
+                    showBack = true,
+                    onBackClick = {}
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                FAQTabRow(pagerState = pagerState)
+                HorizontalPager(state = pagerState) { index ->
+                    when (index) {
+                        0 -> InquiryHistory(inquiries = inquiriesState)
+                        1 -> NewInquiryForm { type, title, content ->
+                            inquiriesState.add(Inquiry(type = type, title = title, content = content))
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun FAQScreenPreview() {
-    val sampleInquiries = listOf(
-        Inquiry(
-            type = "결제 문의",
-            title = "환불은 어떻게 하나요?",
-            content = "구매한 상품의 환불 절차가 궁금합니다.",
-            answer = "환불은 구매일로부터 7일 이내 가능합니다."
-        ),
-        Inquiry(
-            type = "서비스 이용",
-            title = "회원 탈퇴 방법",
-            content = "회원 탈퇴를 하고 싶은데 어떻게 하나요?",
-            answer = null
-        ),
-        Inquiry(
-            type = "기술 지원",
-            title = "로그인이 안됩니다",
-            content = "비밀번호를 입력해도 로그인이 되지 않아요.",
-            answer = "비밀번호 재설정을 시도해보시기 바랍니다."
-        )
-    )
 
-    FAQScreen(
-        //inquiries = sampleInquiries,
-        onSubmit = { _, _, _ -> }
-    )
-}
 
 
 /*

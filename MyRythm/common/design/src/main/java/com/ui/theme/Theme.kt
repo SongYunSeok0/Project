@@ -22,7 +22,7 @@ private val LightColorScheme = lightColorScheme(
     background = BackGround,
     onBackground = BasicBlack,
     secondary = Color(0x4DB5E5E1),
-
+    onSurfaceVariant = AuthBlue,
     // 오류 팝업
     error = Color.Red,
     onError = BasicWhite

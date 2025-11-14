@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.common.design.R
+import com.domain.model.Inquiry
 
 // FAQScreen.kt 에서 사용되는 문의 내역+답변 카드 컴포넌트
 // 해당 컴포넌트는 디자인 용도, Inquiry 모델은 도메인레이어로 분리
@@ -64,6 +65,17 @@ fun InquiryCard(
     val upIcon = R.drawable.up_chevron
     val downIcon = R.drawable.down_chevron
     val chatIcon = R.drawable.faqchat
+
+    // answer 필드로 상태 판단
+    val status = if (inquiry.answer.isNullOrBlank()) {
+        InquiryStatus.UNANSWERED
+    } else {
+        InquiryStatus.ANSWERED
+    }
+
+    // ✅ 날짜는 기본값 (추후 domain에 필드 추가 가능)
+    val questionDate = "2025/11/03"
+    val answerDate = "2025/11/04"
 
     Column(
         modifier = modifier
@@ -115,8 +127,8 @@ fun InquiryCard(
                 ) {
                     // 답변/미답변
                     Text(
-                        text = inquiry.status.text,
-                        color = inquiry.status.color,
+                        text = status.text,
+                        color = status.color,
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -147,14 +159,14 @@ fun InquiryCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = inquiry.title,
+                        text = "[${inquiry.type}] ${inquiry.title}",  // type 추가
                         color = Color(0xFF5DB0A8),
                         fontSize = 14.sp,
                         lineHeight = 1.63.em
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = inquiry.questionDate,
+                        text = questionDate,
                         color = Color(0xFF5DB0A8),
                         fontSize = 14.sp,
                         lineHeight = 1.63.em
@@ -162,15 +174,15 @@ fun InquiryCard(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "문의 내용: ${inquiry.content}",
+                    text = inquiry.content,
                     color = Color(0xFF5DB0A8),
                     fontSize = 14.sp,
                     lineHeight = 1.63.em
                 )
             }
 
-            // ✅ 답변 블록 표시 여부는 enum 속성에서 결정
-            if (inquiry.status.showAnswerBlock) {
+            // 답변 블록 표시 여부는 enum 속성에서 결정
+            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Column(
@@ -192,7 +204,7 @@ fun InquiryCard(
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
-                            text = inquiry.answerDate,
+                            text = answerDate,
                             color = Color(0xFF5DB0A8),
                             fontSize = 14.sp,
                             lineHeight = 1.63.em
@@ -200,7 +212,7 @@ fun InquiryCard(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = inquiry.answer,
+                        text = inquiry.answer!!,
                         color = Color(0xFF5DB0A8),
                         fontSize = 14.sp,
                         lineHeight = 1.63.em
@@ -222,20 +234,20 @@ private fun InquiryCardPreview() {
             InquiryCard(
                 inquiry = Inquiry(
                     id = 1,
+                    type = "일반 문의",
                     title = "테스트 문의",
-                    status = InquiryStatus.UNANSWERED,
-                    content = "문의 내용입니다"
+                    content = "문의 내용입니다",
+                    answer = null
                 )
             )
 
             InquiryCard(
                 inquiry = Inquiry(
                     id = 2,
+                    type = "버그 신고",
                     title = "답변 완료된 문의",
-                    status = InquiryStatus.ANSWERED,
                     content = "문의 내용입니다",
-                    answer = "답변 내용입니다",
-                    answerDate = "2025/11/05"
+                    answer = "답변 내용입니다"
                 )
             )
         }
