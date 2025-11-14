@@ -12,9 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -24,8 +22,18 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.common.design.R
 import com.domain.model.Inquiry
+import com.ui.components.InquiryTextField
 
 // 문의 데이터 클래스
+
+// 임시 프리뷰용
+data class Inquiry(
+    val type: String, // 문의 유형 (예: "일반 문의", "버그 신고")
+    val title: String,
+    val content: String,
+    val answer: String? = null // 관리자 답변 (선택 사항)
+    // 필요한 다른 필드(예: createdAt, status)를 추가할 수 있습니다.
+)
 
 
 @Composable
@@ -68,45 +76,53 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
 
         Spacer(Modifier.height(12.dp))
 
-        // 제목 입력
-        Column {
-            // 제목
-            Text(
-                text = "제목",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF101828),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                placeholder = { Text("문의 제목을 입력해주세요") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // 내용
-            Text(
-                text = "내용",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF101828),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            OutlinedTextField(
-                value = content,
-                onValueChange = { content = it },
-                placeholder = { Text("문의 내용을 작성해주세요") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-            )
-        }
-
+        Text(
+            text = "제목",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF101828),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        InquiryTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = "문의 제목을 입력해주세요",
+            singleLine = true,
+            maxLines = 1
+        )
 
         Spacer(Modifier.height(12.dp))
+
+        // 내용 입력 (3번 InquiryTextField 컴포넌트)
+        Text(
+            text = "내용",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF101828),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        InquiryTextField(
+            value = content,
+            onValueChange = { content = it },
+            label = "문의 내용을 작성해주세요",
+            height = 150.dp
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)
+        ImageAttachmentSection(
+            images = images,
+            onImagesSelected = { newImages ->
+                images = newImages
+            },
+            onImageRemove = { index ->
+                images = images.filterIndexed { i, _ -> i != index }
+            }
+        )
+*/
+        Spacer(Modifier.height(12.dp))
+
 
         Box(
             modifier = Modifier
