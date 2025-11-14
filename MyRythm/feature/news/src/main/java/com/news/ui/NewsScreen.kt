@@ -7,11 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,10 +21,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
@@ -41,9 +41,9 @@ fun NewsScreen(
     onOpenDetail: (String) -> Unit,
     viewModel: NewsViewModel = viewModel()
 ) {
-    var selectedCategory by remember { mutableStateOf("건강") }
-    var searchQuery by remember { mutableStateOf("") }
-    var isSearchMode by remember { mutableStateOf(false) }
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val isSearchMode by viewModel.isSearchMode.collectAsState()
 
     val openSearch = nav.currentBackStackEntry
         ?.savedStateHandle
@@ -52,13 +52,12 @@ fun NewsScreen(
 
     LaunchedEffect(openSearch?.value) {
         if (openSearch?.value == true) {
-            isSearchMode = true
+            viewModel.openSearch()
             nav.currentBackStackEntry?.savedStateHandle?.set("openSearch", false)
         }
     }
 
-    val pagerFlow = remember(selectedCategory) { viewModel.getNewsPager(selectedCategory) }
-    val pager = pagerFlow.collectAsLazyPagingItems()
+    val pagingItems = viewModel.newsPager.collectAsLazyPagingItems()
 
     Column(
         modifier = Modifier
@@ -74,15 +73,12 @@ fun NewsScreen(
             ) {
                 TextField(
                     value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    onValueChange = { viewModel.updateSearchQuery(it) },
                     placeholder = { Text("검색어를 입력하세요") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = {
-                        if (searchQuery.isNotBlank()) {
-                            selectedCategory = searchQuery
-                            pager.refresh()
-                        }
+                        viewModel.executeSearch()
                     }),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFFF2F2F5),
@@ -99,8 +95,7 @@ fun NewsScreen(
                 Button(
                     onClick = {
                         if (searchQuery.isNotBlank()) {
-                            selectedCategory = searchQuery
-                            pager.refresh()
+                            viewModel.selectedCategory(searchQuery)
                         }
                     },
                     shape = RoundedCornerShape(10.dp),
@@ -128,13 +123,13 @@ fun NewsScreen(
                 .fillMaxWidth()
         ) {
             BannerCard("건강 뉴스", "최신 건강 정보", Modifier.weight(1f)) {
-                selectedCategory = "건강"; pager.refresh()
+                viewModel.selectedCategory("건강")
             }
             BannerCard("의학 뉴스", "최신 의학 연구", Modifier.weight(1f)) {
-                selectedCategory = "의학"; pager.refresh()
+                viewModel.selectedCategory("의학")
             }
             BannerCard("복약 안전", "올바른 복용법", Modifier.weight(1f)) {
-                selectedCategory = "복약"; pager.refresh()
+                viewModel.selectedCategory("복약")
             }
         }
 
@@ -153,7 +148,8 @@ fun NewsScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
-            items(pager.itemSnapshotList.items) { item ->
+            items(pagingItems.itemCount) { index ->
+                val item = pagingItems[index]
                 item?.let {
                     val url = (it.originallink?.takeIf { s -> s.isNotBlank() } ?: it.link).trim()
                     val cleanTitle = it.title
@@ -177,8 +173,8 @@ fun NewsScreen(
                 }
             }
 
-            if (pager.loadState.refresh is LoadState.Loading ||
-                pager.loadState.append is LoadState.Loading
+            if (pagingItems.loadState.refresh is LoadState.Loading ||
+                pagingItems.loadState.append is LoadState.Loading
             ) {
                 item {
                     Box(
@@ -274,5 +270,18 @@ fun NewsCard(
             )
             Text(text = info, fontSize = 12.sp, color = Color(0xFF6F8BA4))
         }
+    }
+}
+
+/* ------------------------------ Preview ------------------------------ */
+
+@Preview(showBackground = true)
+@Composable
+fun NewsScreenPreview() {
+    MaterialTheme {
+        NewsMainScreen(
+            nav = rememberNavController(),
+            onOpenDetail = {}
+        )
     }
 }

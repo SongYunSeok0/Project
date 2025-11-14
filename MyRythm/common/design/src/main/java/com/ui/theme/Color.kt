@@ -2,21 +2,27 @@ package com.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-//앱의 모든 색상 팔레트 정의. (PrimaryColor, LightColorScheme, DarkColorScheme 등).
-val PrimaryLight = Color(0xFF6AE0D9)
-val SecondaryLight = Color(0xFF6AC0E0)
-val PrimaryText = Color(0xFF000000)
-val PointText = Color(0xFF6AC0E0)
+// 기본 컬러
+val BasicWhite = Color(0xFFFFFFFF)
+val BasicBlack = Color(0xFF000000)
+val Black40 = Color(0x66000000)     // 블랙+투명도40, 가이드글씨
+val AuthBlue = Color(0xFF6AC0E0)
 
-// 스플래시+로그인
-val AuthLoginBackground = Color(0xFF6AE0D9)
-val AuthLoginButton = Color(0xFF6AC0E0)
-val AuthLoginAppName = Color(0xFFC9F8F6)    // 앱 제목 컬러
-val AuthLoginText = Color(0xFF77A3A1)    //비밀번호를 잊?메시지
-val AuthLoginSecondrayButton = Color(0xFFFFFFFF)     //서브버튼 바탕
-
-val AuthLoginOnSecondray = Color(0x66000000)     // 블랙+투명도40
-
+// 메인 화면 컬러 m3테마용
+val BackGround = BasicWhite
+val Primary = Color(0xFF6AE0D9)
+val OnPrimary = BasicWhite
+val Surface = Color(0xFFF9FAFB)
+val OnSurface = BasicBlack
+/*
+val Primary = Color(0xFF6AE0D9)
+val BackGround = BasicWhite
+val Surface =  // 입력 필드가 아닌, 카드나 시트 등의 표면색
+val Secondary = // 보조 강조색
+val OnPrimary = // Primary 위에 올라가는 글씨
+val OnSecondary =// Secondary 위에 올라가는 글씨
+val OnSurface = // Surface 위에 올라가는 일반적인 본문 텍스트
+ */
 
 // 로그인프로세스
 val AuthBackground = Color(0xFFB5E5E1)  //메인배경
@@ -26,19 +32,26 @@ val AuthSecondrayButton = Color(0xFF6AC0E0)     //서브버튼 바탕
 val AuthOnSecondray = Color(0xFFFFFFFF)     // 하얀색글씨
 val AuthAppName = Color(0xFF5DB0A8)    //앱 제목 컬러
 
-// 로그인프로세스 화면
-/*
-val AuthColorScheme = authColorScheme(
-    authbackground = AuthBackground,
-    authbutton = AuthPrimaryButton,
-    authOnPrimary = AuthOnPrimary,
-    authText = AuthLoginText,
-    authSecondaryButton = AuthSecondrayButton,
-    authOnSecondary = AuthOnSecondray,
-    authAppName = AuthAppName,
-)
+// 회원가입프로세스 +)커스텀토큰으로 별도 활용
 
- */
+val AuthSurface = BasicWhite                // 입력필드
+val AuthOnFieldHint = Black40               // 입력필드 위 가이드 글씨
+val AuthOnSurface = BasicBlack              // 입력필드 위 사용자 글씨
+
+val AuthPrimaryButtonClick = Color(0x806AC0E0)       // 메인 버튼 클릭 시 투명도 50 컬러 변동
+       // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
+
+// 스플래시+로그인 +)커스텀토큰으로 별도 활용
+val LoginBackground = Primary               // 로그인화면의 메인배경
+val LoginSurface = BasicWhite               // 입력 필드
+val LoginOnFieldHint = Black40              // 입력필드 위 가이드 글씨
+val LoginOnSurface = BasicBlack             // 입력필드 위 사용자 글씨
+val LoginPrimaryButton = AuthBlue                  // 로그인화면의 메인버튼
+val LoginOnPrimary = BasicWhite                    // 로그인화면의 메인버튼 위 글씨
+val LoginSecondrayButton = BasicWhite              // 로그인화면의 서브버튼
+val LoginOnSecondray = AuthBlue                    // 로그인화면의 서브버튼 위 글씨
+val LoginAppName = Color(0xFFC9F8F6)    // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
+val LoginTertiary = Color(0xFF77A3A1)              // 그 외_안내메시지 폰트 컬러
 
 
 /*

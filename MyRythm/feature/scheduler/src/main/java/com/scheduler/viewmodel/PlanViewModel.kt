@@ -64,7 +64,7 @@ class PlanViewModel @Inject constructor(
         takenAt: Long,
         mealTime: String,
         note: String?,
-        taken: Long?
+        taken: Long?,
     ) {
         if (userId <= 0L) return
 
@@ -72,21 +72,40 @@ class PlanViewModel @Inject constructor(
             try {
                 _uiState.update { it.copy(loading = true, error = null) }
 
+                val currentMs = System.currentTimeMillis()
+
+                Log.e(
+                    "PlanViewModel",
+                    """
+                🔥 보내는 값 ======================
+                userId = $userId
+                prescriptionId = $prescriptionId
+                medName = $medName
+                takenAt = $takenAt
+                mealTime = $mealTime
+                note = $note
+                taken = $taken
+                createdAt = $currentMs
+                updatedAt = $currentMs
+                =================================
+                """.trimIndent()
+                )
+
                 val plan = Plan(
-                    id = 0L,
-                    userId = userId,
+                    id = 0L,              // 초기값 유지 OK
                     prescriptionId = prescriptionId,
                     medName = medName,
                     takenAt = takenAt,
                     mealTime = mealTime,
                     note = note,
                     taken = taken,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis()
+                    createdAt = currentMs,
+                    updatedAt = currentMs
                 )
 
-                repository.create(userId, plan)
-                Log.d("PlanViewModel", "💾 Plan 생성 완료: $medName")
+                repository.create(userId, plan)   // 여기가 서버 전송 위치
+
+                Log.d("PlanViewModel", "💾 Plan 생성 요청 완료: $medName")
 
             } catch (e: Exception) {
                 Log.e("PlanViewModel", "❌ createPlan 실패", e)
@@ -96,6 +115,7 @@ class PlanViewModel @Inject constructor(
             }
         }
     }
+
 
     fun updatePlan(userId: Long, plan: Plan) {
         if (userId <= 0L) return

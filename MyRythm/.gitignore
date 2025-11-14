@@ -13,6 +13,7 @@ out/
 
 # === Local Config & Logs ===
 local.properties
+secret.properties
 *.log
 
 # === OS-generated files ===

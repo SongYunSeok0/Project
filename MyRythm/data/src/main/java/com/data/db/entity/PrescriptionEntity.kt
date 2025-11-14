@@ -10,6 +10,6 @@ data class PrescriptionEntity(
 
     val userId: Long,                 // Django: user (ForeignKey)
     val prescriptionType: String,     // Django: prescription_type
-    val diseaseName: String?,         // Django: disease_name
+    val diseaseName: String?,           // Django: disease_name
     val issuedDate: String?           // Django: issued_date
 )

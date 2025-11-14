@@ -13,6 +13,9 @@ concurrentFuturesKtx = "1.1.0"
 mlkitText = "16.0.0"
 exifinterface = "1.3.7"
 
+playServicesAuth = "21.4.0"
+googleid = "1.1.1"
+
 # compose
 activityCompose = "1.9.3"
 composeBom = "2024.09.00"
@@ -41,6 +44,7 @@ room = "2.6.1"
 naver-map-compose = "1.5.0"
 play-services-location = "20.0.0"
 accompanist = "0.34.0"
+compose-animation = "1.7.0"
 coil = "2.7.0"
 jsoup = "1.16.1"
 paging = "3.3.2"
@@ -142,6 +146,10 @@ moshi-converter = { group = "com.squareup.retrofit2", name = "converter-moshi", 
 
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+
+# --- 구글 로그인 연동용 라이브러리 의존성 추가(최신버전이용) ---
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature"))
     implementation(project(":common:design"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:scheduler"))
@@ -52,4 +53,9 @@ dependencies {
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
+
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }

@@ -11,6 +11,7 @@ import com.data.db.entity.*
         PrescriptionEntity::class,
         PlanEntity::class,
         FavoriteEntity::class,
+        InquiryEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -20,4 +21,5 @@ abstract class AppRoomDatabase : RoomDatabase() {
     abstract fun favoriteDao(): FavoriteDao
     abstract fun planDao(): PlanDao
     abstract fun prescriptionDao(): PrescriptionDao
+    abstract fun inquiryDao(): InquiryDao
 }

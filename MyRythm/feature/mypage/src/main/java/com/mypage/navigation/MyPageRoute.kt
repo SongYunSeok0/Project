@@ -6,3 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object MyPageRoute
 @Serializable data object HeartReportRoute
 @Serializable data class EditProfileRoute(val userId: String? = null)
+
+@Serializable data object FAQRoute
+
+@Serializable data object MediReportRoute

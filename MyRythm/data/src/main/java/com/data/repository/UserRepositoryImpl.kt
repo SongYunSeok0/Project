@@ -1,4 +1,3 @@
-// data/repository/UserRepositoryImpl.kt
 package com.data.repository
 
 import com.data.db.dao.UserDao
@@ -55,8 +54,4 @@ class UserRepositoryImpl @Inject constructor(
             false
         }
     }
-
-    // 기존 시그니처 유지가 필요하면 아래처럼 위임해도 됨
-    // suspend fun getUser(userId: String): User = refreshMe()
-    // suspend fun refreshUser(userId: String): User = refreshMe()
 }

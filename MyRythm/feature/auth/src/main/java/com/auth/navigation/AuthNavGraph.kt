@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.auth.ui.LoginScreen
 import com.auth.ui.PwdScreen
 import com.auth.ui.SignupScreen
@@ -21,7 +22,10 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
                     }
                 },
                 onForgotPassword = { nav.navigate(PwdRoute) },
-                onSignUp = { nav.navigate(SignupRoute) }
+                onSignUp = { nav.navigate(SignupRoute()) },
+                onSocialSignUp = { socialId, provider ->
+                    nav.navigate(SignupRoute(socialId = socialId, provider = provider))
+                }
             )
         }
 
@@ -29,7 +33,7 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
             PwdScreen(
                 onConfirm = { _, _ ->
                     nav.navigate(LoginRoute) {
-                        popUpTo(PwdRoute) { inclusive = true }
+                        popUpTo<PwdRoute> { inclusive = true }
                         launchSingleTop = true
                     }
                 },
@@ -38,10 +42,13 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
         }
 
         composable<SignupRoute> {
+            val args = it.toRoute<SignupRoute>()
             SignupScreen(
+                socialId = args.socialId,
+                provider = args.provider,
                 onSignupComplete = {
                     nav.navigate(LoginRoute) {
-                        popUpTo(SignupRoute) { inclusive = true }
+                        popUpTo<AuthGraph> { inclusive = true }
                         launchSingleTop = true
                     }
                 },

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 
@@ -67,4 +69,28 @@ class NewsViewModel : ViewModel() {
             null
         }
     }
+
+    private val _selectedCategory = MutableStateFlow("건강")
+    val selectedCategory = _selectedCategory.asStateFlow()
+
+    fun selectedCategory(cat: String){
+        _selectedCategory.value = cat
+    }
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    fun updateSearchQuery(q: String){
+        _searchQuery.value = q
+    }
+    fun executeSearch(){
+        _selectedCategory.value = _searchQuery.value
+    }
+
+    private val _isSearchMode = MutableStateFlow(false)
+    val isSearchMode = _isSearchMode.asStateFlow()
+
+    fun openSearch() { _isSearchMode.value = true }
+    fun closeSearch() { _isSearchMode.value = false }
+    val newsPager = selectedCategory.flatMapLatest { category ->  getNewsPager(category)}
 }
