@@ -2,6 +2,7 @@
 
 package com.scheduler.ui
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,26 +42,35 @@ data class MedItem(val name: String, val time: String, val status: IntakeStatus)
 
 @Composable
 fun SchedulerScreen(
-    userId: String,
+    userId: String?,                // NavGraph에서 문자열로 전달
     vm: PlanViewModel = hiltViewModel(),
+    onOpenRegi: () -> Unit = {}     // ✅ NavGraph에서 주입받아 아래로 내려줌
 ) {
     val ui by vm.uiState.collectAsState()
-    val items by vm.itemsByDate.collectAsState()
+    val items by vm.itemsByDate.collectAsState(initial = emptyMap())
 
-    LaunchedEffect(userId) { vm.load(userId) }
+    LaunchedEffect(userId) {
+        if (!userId.isNullOrBlank()) {
+            vm.load(userId)         // ✅ PlanViewModel.load(String) 버전 사용
+        } else {
+            Log.e("SchedulerScreen", "❌ userId 누락: '$userId'")
+        }
+    }
 
-    SchedulerScreen(
+    SchedulerContent(
         itemsByDate = items,
-        resetKey = ui.plans.hashCode()
+        resetKey = ui.plans.hashCode(),
+        onOpenRegi = onOpenRegi     // ✅ 아래로 전달
     )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SchedulerScreen(
+fun SchedulerContent(
     itemsByDate: Map<LocalDate, List<MedItem>> = emptyMap(),
     clock: Clock = Clock.systemDefaultZone(),
     resetKey: Any? = null,
+    onOpenRegi: () -> Unit = {}
 ) {
     val today = remember(clock) { LocalDate.now(clock) }
     var weekAnchor by remember { mutableStateOf(today) }

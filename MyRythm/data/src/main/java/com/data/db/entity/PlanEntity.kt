@@ -1,37 +1,30 @@
-// PlanEntity.kt
 package com.data.db.entity
 
 import androidx.room.*
 
-enum class EPlanType { DISEASE, SUPPLEMENT }
-enum class EMealRelation { BEFORE, AFTER, NONE }
-
 @Entity(
-    tableName = "plans",
-    indices = [
-        Index("userId"),
-        Index("createdAt")
-    ]
+    tableName = "plan",
+    foreignKeys = [
+        ForeignKey(
+            entity = PrescriptionEntity::class,
+            parentColumns = ["prescriptionId"],
+            childColumns = ["prescriptionId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["prescriptionId"])]
 )
 data class PlanEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val userId: String,
-    val type: EPlanType,
-    val diseaseName: String?,
-    val supplementName: String?,
-    val dosePerDay: Int,
-    val mealRelation: EMealRelation?,
-    val memo: String?,
-    val startDay: Long,
-    val endDay: Long?,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val prescriptionId: Long,
+    val medName: String,
+    val takenAt: Long?,
+    val mealTime: String?,
+    val note: String?,
+    val taken: Long?,
+    val createdAt: Long,
+    val updatedAt: Long
 )
 
-data class PlanWithDetails(
-    @Embedded val plan: PlanEntity,
-    @Relation(parentColumn = "id", entityColumn = "planId")
-    val meds: List<PlanMedEntity>,
-    @Relation(parentColumn = "id", entityColumn = "planId")
-    val times: List<PlanTimeEntity>
-)

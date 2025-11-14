@@ -7,7 +7,7 @@ import javax.inject.Inject
 class UpdatePlanUseCase @Inject constructor(
     private val repository: PlanRepository
 ) {
-    suspend operator fun invoke(userId: String, plan: Plan) {
+    suspend operator fun invoke(userId: Long, plan: Plan) {
         repository.update(userId, plan)
     }
 }

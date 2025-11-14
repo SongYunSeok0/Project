@@ -4,16 +4,11 @@ package com.myrythm
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import com.auth.navigation.*
 import com.auth.viewmodel.AuthViewModel
 import com.chatbot.navigation.*
@@ -31,23 +26,25 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AppRoot() {
+
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // TokenStore 주입 → JWT에서 userId 추출
+    // JWT 에서 userId 추출
     val ctx = LocalContext.current
     val tokenStore = remember {
         EntryPointAccessors.fromApplication(ctx, CoreEntryPoint::class.java).tokenStore()
     }
-    val userId = remember {
+    val rawUserId = remember {
         JwtUtils.extractUserId(tokenStore.current().access) ?: ""
     }
 
-    // AuthViewModel은 상위(AppRoot)에서 소유
+    val userId = rawUserId.toLongOrNull()?.toString() ?: "1"
+
     val authVm: AuthViewModel = hiltViewModel()
 
-    // 로그아웃 완료 이벤트 수신 → 로그인 화면으로 이동
+    // 로그아웃 Event 감지
     LaunchedEffect(Unit) {
         authVm.events.collectLatest { ev ->
             if (ev == "로그아웃 완료") {
@@ -64,26 +61,32 @@ fun AppRoot() {
 
     val isAuth = isOf(LoginRoute, PwdRoute, SignupRoute)
     val isMain = isRoute(MainRoute)
+
     val isNews = isRoute(NewsRoute)
 
+    // 숨기기 조건
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 
-    fun goHome() = nav.navigate(MainRoute) {
+    fun goHome() = nav.navigate(MainRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
+
     fun goMyPage() = nav.navigate(MyPageRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
-    fun goScheduleFlow() = nav.navigate(CameraRoute) {
+
+    // ⭐ Schedule Flow (무조건 userId 전달)
+    fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
+
 
     Scaffold(
         topBar = {
@@ -92,7 +95,8 @@ fun AppRoot() {
                     title = titleFor(routeName),
                     showBack = true,
                     onBackClick = {
-                        if (nav.previousBackStackEntry != null) nav.popBackStack() else goHome()
+                        if (nav.previousBackStackEntry != null) nav.popBackStack()
+                        else goHome()
                     },
                     showSearch = isNews,
                     onSearchClick = {
@@ -105,11 +109,12 @@ fun AppRoot() {
             if (!hideBottomBar) {
                 AppBottomBar(
                     currentScreen = tabFor(routeName),
+                    currentUserId = userId,                   // ⭐ 전달 필수
+                    onScheduleClick = { goScheduleFlow() },    // ⭐ 알약 눌렀을 때
                     onTabSelected = { tab ->
                         when (tab) {
-                            "Home"     -> goHome()
-                            "MyPage"   -> goMyPage()
-                            "Schedule" -> goScheduleFlow()
+                            "Home"   -> goHome()
+                            "MyPage" -> goMyPage()
                         }
                     }
                 )
@@ -117,15 +122,16 @@ fun AppRoot() {
         }
     ) { inner ->
         Box(Modifier.padding(inner)) {
+
             NavHost(navController = nav, startDestination = AuthGraph) {
+
                 authNavGraph(nav)
                 mainNavGraph(nav)
                 mapNavGraph()
                 newsNavGraph(nav)
-                schedulerNavGraph(nav, userId) // userId 전달
-                // 뷰모델을 NavGraph 내부에서 쓰지 않음. 람다만 전달.
-                mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
                 chatbotNavGraph()
+                schedulerNavGraph(nav, userId)
+                mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
             }
         }
     }
@@ -150,7 +156,7 @@ private fun tabFor(routeName: String) = when (routeName) {
     SchedulerRoute::class.qualifiedName,
     CameraRoute::class.qualifiedName,
     OcrRoute::class.qualifiedName,
-    RegiRoute::class.qualifiedName   -> "Schedule"
-    MainRoute::class.qualifiedName   -> "Home"
+    RegiRoute::class.qualifiedName -> "Schedule"
+    MainRoute::class.qualifiedName -> "Home"
     else -> "Other"
 }

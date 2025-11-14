@@ -82,6 +82,8 @@ fun AppTopBar(
 @Composable
 fun AppBottomBar(
     currentScreen: String,
+    currentUserId: String,
+    onScheduleClick: (String) -> Unit,
     onTabSelected: (String) -> Unit
 ) {
     Box(
@@ -114,16 +116,18 @@ fun AppBottomBar(
             }
         }
 
+        // 중앙 Schedule 버튼
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset(y = (-25).dp)
-                .shadow(8.dp, CircleShape, clip = false)
+                .shadow(8.dp, CircleShape)
                 .size(75.dp)
                 .clip(CircleShape)
                 .background(Color(0xFF6AE0D9))
-                .zIndex(2f)
-                .clickable { onTabSelected("Schedule") },
+                .clickable {
+                    onScheduleClick(currentUserId)
+                },
             contentAlignment = Alignment.Center
         ) {
             Image(

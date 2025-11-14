@@ -3,6 +3,7 @@ package com.main.navigation
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.main.ui.MainScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 
@@ -16,15 +17,18 @@ import com.news.navigation.NewsRoute
 
 @OptIn(ExperimentalSerializationApi::class)
 fun NavGraphBuilder.mainNavGraph(nav: NavController) {
-    composable<MainRoute> {
+    composable<MainRoute> { backStackEntry ->
+        val route = backStackEntry.toRoute<MainRoute>()
+        val userId = route.userId
+
         MainScreen(
-            onOpenChatBot   = { nav.navigate(ChatBotRoute) },
-            onOpenScheduler = { nav.navigate(SchedulerRoute) },
-            onOpenSteps     = { nav.navigate(MyPageRoute) },          // 임시: 걸음수 → 마이페이지
-            onOpenHeart     = { nav.navigate(HeartReportRoute) },   // 마이페이지 상세
-            onOpenMap       = { nav.navigate(MapRoute) },
-            onOpenNews      = { nav.navigate(NewsRoute) },
-            onFabCamera     = { nav.navigate(CameraRoute) }         // 처방전 촬영 플로우 시작
+            onOpenScheduler = { nav.navigate(SchedulerRoute(userId)) },
+            onFabCamera = { nav.navigate(CameraRoute(userId)) },
+            onOpenChatBot = { nav.navigate(ChatBotRoute) },
+            onOpenSteps = { nav.navigate(MyPageRoute) },
+            onOpenHeart = { nav.navigate(HeartReportRoute) },
+            onOpenMap = { nav.navigate(MapRoute) },
+            onOpenNews = { nav.navigate(NewsRoute) }
         )
     }
 }

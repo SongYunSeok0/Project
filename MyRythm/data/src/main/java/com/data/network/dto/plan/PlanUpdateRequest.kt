@@ -5,14 +5,11 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class PlanUpdateRequest(
-    @field:Json(name = "type") val type: String,
-    @field:Json(name = "diseaseName") val diseaseName: String?,
-    @field:Json(name = "supplementName") val supplementName: String?,
-    @field:Json(name = "dosePerDay") val dosePerDay: Int,
-    @field:Json(name = "mealRelation") val mealRelation: String?,
-    @field:Json(name = "memo") val memo: String?,
-    @field:Json(name = "startDay") val startDay: Long,
-    @field:Json(name = "endDay") val endDay: Long?,
-    @field:Json(name = "meds") val meds: List<String>,
-    @field:Json(name = "times") val times: List<String>
+    @Json(name = "prescriptionId") val prescriptionId: Long,
+    @Json(name = "medName") val medName: String,
+    @Json(name = "takenAt") val takenAt: Long?,
+    @Json(name = "mealTime") val mealTime: String?,
+    @Json(name = "note") val note: String?,
+    @Json(name = "taken") val taken: Long?
 )
+

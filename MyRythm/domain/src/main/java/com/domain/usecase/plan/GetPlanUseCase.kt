@@ -8,6 +8,6 @@ import javax.inject.Inject
 class GetPlansUseCase @Inject constructor(
     private val repository: PlanRepository
 ) {
-    operator fun invoke(userId: String): Flow<List<Plan>> =
+    operator fun invoke(userId: Long): Flow<List<Plan>> =
         repository.observePlans(userId)
 }
