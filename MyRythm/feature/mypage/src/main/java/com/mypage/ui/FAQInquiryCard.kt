@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -113,7 +114,7 @@ fun InquiryCard(
                     text = inquiry.title,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     softWrap = false,
                     modifier = Modifier
@@ -142,7 +143,7 @@ fun InquiryCard(
             }
         }
 
-        // 확장된 내용 (마크다운 형태로 표시 예정)
+        /*1114 21:57 임시주석   // 확장된 내용 (마크다운 형태로 표시 예정)
         if (expanded) {
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -159,6 +160,7 @@ fun InquiryCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
+                        overflow = TextOverflow.Ellipsis,
                         text = "[${inquiry.type}] ${inquiry.title}",  // type 추가
                         color = Color(0xFF5DB0A8),
                         fontSize = 14.sp,
@@ -166,6 +168,7 @@ fun InquiryCard(
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
+                        overflow = TextOverflow.Ellipsis,
                         text = questionDate,
                         color = Color(0xFF5DB0A8),
                         fontSize = 14.sp,
@@ -204,6 +207,7 @@ fun InquiryCard(
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
+                            overflow = TextOverflow.Ellipsis,
                             text = answerDate,
                             color = Color(0xFF5DB0A8),
                             fontSize = 14.sp,
@@ -221,8 +225,84 @@ fun InquiryCard(
             }
         }
     }
+}*/
+        // 확장된 내용 (마크다운 형태로 표시 예정)
+        if (expanded) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 질문 블록 (항상 표시)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFE4F5F4))
+                    .padding(12.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "[${inquiry.type}] ${inquiry.title}",
+                        color = Color(0xFF5DB0A8),
+                        fontSize = 14.sp,
+                        lineHeight = 1.63.em
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = inquiry.content,
+                        color = Color(0xFF5DB0A8),
+                        fontSize = 14.sp,
+                        lineHeight = 1.63.em
+                    )
+                }
+
+                // 질문 블록 날짜 우측 상단 고정
+                Text(
+                    text = questionDate,
+                    color = Color(0xFF5DB0A8),
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                )
+            }
+
+            // 답변 블록 표시 여부는 enum 속성에서 결정
+            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFFDFFDFB))
+                        .padding(12.dp)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "답변:",
+                            color = Color(0xFF5DB0A8),
+                            fontSize = 14.sp,
+                            lineHeight = 1.63.em
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = inquiry.answer!!,
+                            color = Color(0xFF5DB0A8),
+                            fontSize = 14.sp,
+                            lineHeight = 1.63.em
+                        )
+                    }
+
+                    // 답변 블록 날짜 우측 상단 고정
+                    Text(
+                        text = answerDate,
+                        color = Color(0xFF5DB0A8),
+                        fontSize = 12.sp,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                }
+            }
+        }
+    }
 }
-// 파일 끝에 추가
+        // 파일 끝에 추가
 @Preview(showBackground = true)
 @Composable
 private fun InquiryCardPreview() {
@@ -253,3 +333,231 @@ private fun InquiryCardPreview() {
         }
     }
 }
+
+
+/* 1114 오후 21:59 진행중
+package com.mypage.ui
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
+import com.common.design.R
+import com.domain.model.Inquiry
+
+enum class InquiryStatus(val text: String, val color: Color, val showAnswerBlock: Boolean) {
+    UNANSWERED("미답변", Color(0xFFABABAB), false),
+    ANSWERED("답변완료", Color(0xFF5DB0A8), true)
+}
+
+@Composable
+fun InquiryCard(
+    inquiry: Inquiry,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val upIcon = R.drawable.up_chevron
+    val downIcon = R.drawable.down_chevron
+    val chatIcon = R.drawable.faqchat
+
+    val status = if (inquiry.answer.isNullOrBlank()) {
+        InquiryStatus.UNANSWERED
+    } else {
+        InquiryStatus.ANSWERED
+    }
+
+    val questionDate = "2025/11/03"
+    val answerDate = "2025/11/04"
+
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val subTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    // 질문/답변 블록용 색
+    val questionBg = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+    val answerBg = MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(surfaceColor)
+            .border(
+                border = BorderStroke(0.7.dp, borderColor),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .clickable { expanded = !expanded }
+            .padding(16.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Image(
+                painterResource(chatIcon),
+                contentDescription = "FAQ 아이콘",
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = inquiry.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = textColor,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    softWrap = false,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .padding(end = 30.dp)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = status.text,
+                        color = status.color,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    Image(
+                        painter = painterResource(if (expanded) upIcon else downIcon),
+                        contentDescription = if (expanded) "닫기" else "열기",
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+
+        if (expanded) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 질문 블록
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(questionBg)
+                    .padding(12.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "[${inquiry.type}] ${inquiry.title}",
+                        color = subTextColor,
+                        fontSize = 14.sp,
+                        lineHeight = 1.63.em
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = inquiry.content,
+                        color = subTextColor,
+                        fontSize = 14.sp,
+                        lineHeight = 1.63.em
+                    )
+                }
+
+                Text(
+                    text = questionDate,
+                    color = subTextColor,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                )
+            }
+
+            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(answerBg)
+                        .padding(12.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "답변:",
+                            color = subTextColor,
+                            fontSize = 14.sp,
+                            lineHeight = 1.63.em
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = inquiry.answer!!,
+                            color = subTextColor,
+                            fontSize = 14.sp,
+                            lineHeight = 1.63.em
+                        )
+                    }
+
+                    Text(
+                        text = answerDate,
+                        color = subTextColor,
+                        fontSize = 12.sp,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun InquiryCardPreview() {
+    MaterialTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            InquiryCard(
+                inquiry = Inquiry(
+                    id = 1,
+                    type = "일반 문의",
+                    title = "테스트 문의",
+                    content = "문의 내용입니다",
+                    answer = null
+                )
+            )
+
+            InquiryCard(
+                inquiry = Inquiry(
+                    id = 2,
+                    type = "버그 신고",
+                    title = "답변 완료된 문의",
+                    content = "문의 내용입니다",
+                    answer = "답변 내용입니다"
+                )
+            )
+        }
+    }
+}
+
+
+ */

@@ -34,7 +34,12 @@ fun InquiryScreen() {
     val inquiryList = remember { mutableStateListOf<Inquiry>() }
 
     AppTheme {
-        Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+        Column(
+            modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .background(MaterialTheme.colorScheme.background)
+        ) {
             // NewInquiryForm
             NewInquiryForm { type, title, content ->
                 // 제출 시 리스트에 추가
@@ -116,42 +121,42 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
             selectedType = selectedType,
             onTypeSelected = { selectedType = it }
         )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+        ) {
 
-        Spacer(Modifier.height(12.dp))
+            Text(
+                text = "제목",
+                style = MaterialTheme.typography.titleMedium, // AppTheme 기반 폰트 적용
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            InquiryTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = "문의 제목을 입력해주세요",
+                singleLine = true,
+                maxLines = 1
+            )
 
-        Text(
-            text = "제목",
-            style = MaterialTheme.typography.titleMedium, // AppTheme 기반 폰트 적용
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        InquiryTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = "문의 제목을 입력해주세요",
-            singleLine = true,
-            maxLines = 1
-        )
+            // 내용 입력 (3번 InquiryTextField 컴포넌트)
+            Text(
+                text = "내용",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            InquiryTextField(
+                value = content,
+                onValueChange = { content = it },
+                label = "문의 내용을 작성해주세요",
+                height = 150.dp
+            )
 
-        Spacer(Modifier.height(12.dp))
-
-        // 내용 입력 (3번 InquiryTextField 컴포넌트)
-        Text(
-            text = "내용",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        InquiryTextField(
-            value = content,
-            onValueChange = { content = it },
-            label = "문의 내용을 작성해주세요",
-            height = 150.dp
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)
+            /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)
         ImageAttachmentSection(
             images = images,
             onImagesSelected = { newImages ->
@@ -162,47 +167,41 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
             }
         )
 */
-        Spacer(Modifier.height(12.dp))
 
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .requiredHeight(height = 91.dp)
-        ) {
-            Column {
-                Text(
-                    text = "• 영업일 기준 1-2일 이내에 답변드립니다.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 1.63.em,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(10.dp)
-                )
-                Text(
-                    text = "• 개인정보가 포함된 문의는 1:1 문의를 이용해주세요.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 1.63.em,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .requiredWidth(width = 310.dp)
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .requiredHeight(height = 91.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "• 영업일 기준 1-2일 이내에 답변드립니다.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 1.63.em,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                    Text(
+                        text = "• 개인정보가 포함된 문의는 1:1 문의를 이용해주세요.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 1.63.em,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .requiredWidth(width = 310.dp)
+                    )
+                }
+            }
+            SubmitButton {
+                if (title.isNotBlank() && content.isNotBlank()) {
+                    onSubmit(selectedType, title, content)
+                    title = ""
+                    content = ""
+                }
             }
         }
-        SubmitButton {
-            if (title.isNotBlank() && content.isNotBlank()) {
-                onSubmit(selectedType, title, content)
-                title = ""
-                content = ""
-            }
-        }
-
     }
-
 }
-
-
-
 
 @Composable
 fun SubmitButton(
@@ -227,8 +226,6 @@ fun SubmitButton(
         )
     }
 }
-
-
 
 
 @Preview(widthDp = 412, heightDp = 917)

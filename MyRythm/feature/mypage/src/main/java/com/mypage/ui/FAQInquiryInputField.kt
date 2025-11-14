@@ -53,7 +53,7 @@ fun InquiryTextField(
         maxLines = maxLines,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.onPrimary,
+            unfocusedBorderColor = Color.Gray,
             focusedLabelColor = MaterialTheme.colorScheme.primary,
             unfocusedLabelColor = Color.Gray
         ),
