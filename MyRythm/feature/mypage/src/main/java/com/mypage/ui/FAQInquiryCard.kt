@@ -1,4 +1,4 @@
-package com.ui.components
+package com.mypage.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -34,43 +35,19 @@ import androidx.compose.ui.unit.sp
 import com.common.design.R
 
 // FAQScreen.kt 에서 사용되는 문의 내역+답변 카드 컴포넌트
-// 해당 컴포넌트는 디자인 용도, Inquiry 모델은 필요 시 도메인레이어로 분리
+// 해당 컴포넌트는 디자인 용도, Inquiry 모델은 도메인레이어로 분리
 
 /*
-예시
-@Composable
-fun InquiryCard(
-    title: String,
-    status: InquiryStatus,
-    questionDate: String,
-    answerDate: String?,
-    questionContent: String,
-    answerContent: String?,
-    modifier: Modifier = Modifier
-)
+:domain 모듈의 데이터클래스
 
-FAQ스크린에서는
-InquiryCard(
-    title = inquiry.title,
-    status = inquiry.status,
-    questionDate = inquiry.questionDate,
-    answerDate = inquiry.answerDate,
-    questionContent = inquiry.content,
-    answerContent = inquiry.answer
-)
-로 인퀴어리 객체 넘겨주는 타입
-*/
-
-// 샘플 데이터 - Inquiry 문의내역들 데이터클래스
 data class Inquiry(
-    val id: Int,
+    val id: Int = 0,
+    val type: String,
     val title: String,
-    val status: InquiryStatus,
-    val content: String = "",
-    val answer: String = "",
-    val questionDate: String = "2025/11/03",
-    val answerDate: String = "2025/11/04"
+    val content: String,
+    val answer: String? = null
 )
+ */
 
 // enum 클래스에 답변 블록 표시 여부 속성 추가
 enum class InquiryStatus(val text: String, val color: Color, val showAnswerBlock: Boolean) {
@@ -125,7 +102,7 @@ fun InquiryCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    overflow = TextOverflow.Ellipsis,
                     softWrap = false,
                     modifier = Modifier
                         .weight(1f, fill = false)

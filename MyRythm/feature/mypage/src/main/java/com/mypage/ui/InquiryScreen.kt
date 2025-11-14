@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.common.design.R
 import com.domain.model.Inquiry
-import com.ui.components.InquiryTextField
 
 // 문의 데이터 클래스
 

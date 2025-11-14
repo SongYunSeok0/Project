@@ -1,9 +1,8 @@
-/*
 package com.mypage.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -12,21 +11,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -39,22 +31,19 @@ import com.ui.theme.OnlyColorTheme
 import kotlinx.coroutines.launch
 
 // 컴포넌트 적용했던 기존faq스크린을 2개로 분리, 이쪽은 기존 0번탭 그 외는 1번탭
+// 0 -> InquiryHistory(inquiries)
 @Composable
 fun FAQScreen(
-    inquiries: List<Inquiry>,
+    //inquiries: List<Inquiry>,
     onSubmit: (type: String, title: String, content: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // rememberPagerState : 탭 간의 전환 상태 관리 용도
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
-
     OnlyColorTheme {
-        // Scaffold 용도: 상단 탑바 - 탭 내용 구성
         Scaffold(
             modifier = modifier.fillMaxSize(),
-
-            // 탑바 구역 - 나중에 컴포넌트 호출해서 쓰기+컬러테마씌워둠
             topBar = {
                 AppTopBar(
                     title = "문의사항",
@@ -62,46 +51,20 @@ fun FAQScreen(
                     onBackClick = {}
                 )
             },
-
-            // 전체 레이아웃 컬러
             containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
             Column(modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 10.dp)
-                ) {
-                    FAQTabRow(pagerState = pagerState)
-                    //TabHeader("문의 작성", selectedTab == "new") { selectedTab = "new" }
+                FAQTabRow(pagerState = pagerState)
 
-                    // 탭 컨텐츠
-                    FAQTabContent(
-                        pagerState = pagerState,
-                        inquiries = inquiries,
-                        onSubmit = onSubmit
-                    )
-                }
+                FAQTabContent(
+                    pagerState = pagerState,
+                    //inquiries = inquiries,
+                    onSubmit = onSubmit
+                )
             }
-        }
-    }
-}
-// FAQTabContent 탭 안의 내용
-@Composable
-private fun FAQTabContent(
-    pagerState: PagerState,
-    inquiries: List<Inquiry>,
-    onSubmit: (type: String, title: String, content: String) -> Unit
-) {
-
-    // HorizontalPager: 좌우 스와이프 전환이 가능한 화면 구성
-    HorizontalPager(state = pagerState) { index ->
-        when (index) {
-            0 -> InquiryHistory(inquiries)
-            1 -> NewInquiryForm(onSubmit)
         }
     }
 }
@@ -118,7 +81,8 @@ private fun FAQTabRow(pagerState: PagerState) {
         containerColor = Color.Transparent,
         indicator = {   // TabIndicatorScope 안에서 tabPositions 사용 가능
             TabRowDefaults.SecondaryIndicator(
-                modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                modifier = Modifier
+                    .tabIndicatorOffset(pagerState.currentPage),
                 color = MaterialTheme.colorScheme.primary,
                 height = 2.dp
             )
@@ -143,29 +107,66 @@ private fun FAQTabRow(pagerState: PagerState) {
     }
 }
 
+// FAQTabContent 탭 안의 내용
+@Composable
+private fun FAQTabContent(
+    pagerState: PagerState,
+    //inquiries: List<Inquiry>,
+    onSubmit: (type: String, title: String, content: String) -> Unit
+) {
+
+    // HorizontalPager: 좌우 스와이프 전환이 가능한 화면 구성
+    HorizontalPager(state = pagerState) { index ->
+        when (index) {
+            0 -> InquiryHistory()
+            1 -> NewInquiryForm(onSubmit)
+        }
+    }
+}
 
 
-
-    @Composable
+@Composable
 fun FAQScreenWrapper(
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
     val inquiries by viewModel.inquiries.collectAsState()
 
     FAQScreen(
-        inquiries = inquiries.map {
+        /*inquiries = inquiries.map {
             com.domain.model.Inquiry(
                 type = it.type,
                 title = it.title,
                 content = it.content,
                 answer = it.answer
             )
-        },
+        },*/
         onSubmit = { type, title, content ->
             viewModel.addInquiry(type, title, content)
         }
     )
 }
+
+// 0번 탭 - 나의 문의 내역 화면 (InquiryHistory)+컴포넌트 FAQInquiryCard.kt 호출
+@Composable
+private fun InquiryHistory(
+    viewModel: MyPageViewModel = hiltViewModel()
+) {
+    val inquiries by viewModel.inquiries.collectAsState()
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(inquiries) { inquiry ->
+            InquiryCard(
+                inquiry = inquiry
+            )
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -192,14 +193,13 @@ fun FAQScreenPreview() {
     )
 
     FAQScreen(
-        inquiries = sampleInquiries,
+        //inquiries = sampleInquiries,
         onSubmit = { _, _, _ -> }
     )
 }
-*/
 
 
-
+/*
  //1113 수정전코드_컴포넌트코드적용이전
 package com.mypage.ui
 
@@ -332,6 +332,7 @@ fun FAQScreenPreview() {
     )
 }
 
+*/
 /*
 @Preview(showBackground = true)
 @Composable
