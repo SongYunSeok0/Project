@@ -6,6 +6,7 @@ import com.data.network.api.MapApi
 import com.data.network.api.NewsApi
 import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
+import com.data.network.api.PushApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -148,4 +149,12 @@ object NetworkModule {
     @Provides @Singleton
     fun providePlanApi(@UserRetrofit retrofit: Retrofit): PlanApi =
         retrofit.create(PlanApi::class.java)
+
+    @Provides
+    @Singleton
+    fun providePushApi(
+        @UserRetrofit retrofit: Retrofit
+    ): PushApi = retrofit.create(PushApi::class.java)
+
+
 }
