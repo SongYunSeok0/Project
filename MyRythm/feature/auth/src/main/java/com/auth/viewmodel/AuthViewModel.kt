@@ -1,10 +1,7 @@
 package com.auth.viewmodel
 
 import android.content.Context
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
+import androidx.credentials.*
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
@@ -28,11 +25,7 @@ import com.kakao.sdk.user.UserApiClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
@@ -58,65 +51,63 @@ class AuthViewModel @Inject constructor(
     private val _events = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val events: SharedFlow<String> = _events
 
-    fun info(msg: String) = _events.tryEmit(msg)
-    fun emitInfo(msg: String) = info(msg)
+    private fun emit(msg: String) = _events.tryEmit(msg)
+    fun emitInfo(msg: String) = emit(msg)
 
-    /** 기본 로그인 */
+    // -------------------------------------------------------------------------
+    // 이메일 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
     fun login(email: String, password: String) = viewModelScope.launch(Dispatchers.IO) {
         _state.update { it.copy(loading = true) }
 
-        try {
-            val tokens = loginUseCase(email, password)
-            val ok = tokens != null
+        val result = runCatching { loginUseCase(email, password) }
+        val ok = result.getOrNull() != null
 
-            if (ok) {
-                // ✅ 로그인 성공 시 서버에 FCM 토큰 등록 (화면 이동 전에 처리)
-                val token = PushManager.fcmToken
-                if (token != null) {
-                    runCatching { registerFcmTokenUseCase(token) }
-                        .onFailure { _events.tryEmit("푸시 토큰 등록 실패") }
-                }
+        if (ok) {
+            // ⭐ FCM 토큰 서버 등록
+            PushManager.fcmToken?.let { token ->
+                runCatching { registerFcmTokenUseCase(token) }
+                    .onFailure { emit("푸시 토큰 등록 실패") }
             }
-
-            _state.update { it.copy(loading = false, isLoggedIn = ok) }
-
-            _events.tryEmit(
-                if (ok) "로그인 성공"
-                else "이메일 또는 비밀번호가 올바르지 않습니다."
-            )
-        } catch (e: Throwable) {
-            _state.update { it.copy(loading = false, isLoggedIn = false) }
-            _events.tryEmit(parseError(e) ?: "로그인 실패")
         }
+
+        _state.update { it.copy(loading = false, isLoggedIn = ok) }
+
+        emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
     }
 
-    /** 회원가입 */
+    // -------------------------------------------------------------------------
+    // 회원가입
+    // -------------------------------------------------------------------------
     fun signup(req: SignupRequest) = viewModelScope.launch(Dispatchers.IO) {
         _state.update { it.copy(loading = true) }
-        val result = runCatching { signupUseCase(req) }
+
+        val ok = runCatching { signupUseCase(req) }.getOrDefault(false)
+
         _state.update { it.copy(loading = false) }
-        _events.tryEmit(
-            if (result.getOrDefault(false)) "회원가입 성공"
-            else parseError(result.exceptionOrNull()) ?: "회원가입 실패"
-        )
+        emit(if (ok) "회원가입 성공" else "회원가입 실패")
     }
 
-    /** 토큰 갱신 */
+    // -------------------------------------------------------------------------
+    // 토큰 갱신
+    // -------------------------------------------------------------------------
     fun tryRefresh() = viewModelScope.launch(Dispatchers.IO) {
         val ok = runCatching { refreshUseCase() }.getOrDefault(false)
-        if (ok) _events.tryEmit("토큰 갱신")
+        if (ok) emit("토큰 갱신")
     }
 
-    /** 로그아웃 */
+    // -------------------------------------------------------------------------
+    // 로그아웃
+    // -------------------------------------------------------------------------
     fun logout() = viewModelScope.launch(Dispatchers.IO) {
         runCatching { logoutUseCase() }
         _state.update { it.copy(isLoggedIn = false) }
-        _events.tryEmit("로그아웃 완료")
+        emit("로그아웃 완료")
     }
 
-    // ----------------------------
-    // 카카오 로그인
-    // ----------------------------
+    // -------------------------------------------------------------------------
+    // 카카오 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
     fun kakaoOAuth(
         context: Context,
         onResult: (Boolean, String) -> Unit,
@@ -128,12 +119,11 @@ class AuthViewModel @Inject constructor(
             } else if (token != null) {
                 UserApiClient.instance.me { user, _ ->
                     if (user != null) {
-                        val socialId = user.id.toString()
                         handleSocialLogin(
                             provider = "kakao",
                             accessToken = token.accessToken,
                             idToken = null,
-                            socialId = socialId,
+                            socialId = user.id.toString(),
                             onResult = onResult,
                             onNeedAdditionalInfo = onNeedAdditionalInfo
                         )
@@ -151,7 +141,7 @@ class AuthViewModel @Inject constructor(
                     UserApiClient.instance.loginWithKakaoAccount(context, callback = callback)
                 } else if (token != null) {
                     UserApiClient.instance.me { user, _ ->
-                        if (user != null) {
+                        if (user != null)
                             handleSocialLogin(
                                 "kakao",
                                 token.accessToken,
@@ -160,7 +150,6 @@ class AuthViewModel @Inject constructor(
                                 onResult,
                                 onNeedAdditionalInfo
                             )
-                        }
                     }
                 }
             }
@@ -169,9 +158,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------
-    // 구글 로그인
-    // ----------------------------
+    // -------------------------------------------------------------------------
+    // 구글 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
     fun googleOAuth(
         context: Context,
         googleClientId: String,
@@ -207,7 +196,7 @@ class AuthViewModel @Inject constructor(
             } catch (e: GetCredentialCancellationException) {
                 onResult(false, "구글 로그인 취소")
             } catch (e: Exception) {
-                onResult(false, "구글 로그인 실패: ${e.localizedMessage.orEmpty()}")
+                onResult(false, "구글 로그인 실패: ${e.localizedMessage}")
             }
         }
     }
@@ -238,9 +227,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------
-    // 공통 소셜 로그인 처리
-    // ----------------------------
+    // -------------------------------------------------------------------------
+    // 공통 소셜 로그인 처리 + FCM 등록
+    // -------------------------------------------------------------------------
     private fun handleSocialLogin(
         provider: String,
         accessToken: String?,
@@ -267,42 +256,31 @@ class AuthViewModel @Inject constructor(
 
                 when (val r = call.getOrNull()) {
                     is SocialLoginResult.Success -> {
-                        // 소셜 로그인 성공 시 FCM 토큰 등록
-                        val token = PushManager.fcmToken
-                        if (token != null) {
+                        // ⭐ 소셜 로그인 성공 → FCM 등록
+                        PushManager.fcmToken?.let { token ->
                             runCatching { registerFcmTokenUseCase(token) }
-                                .onFailure { _events.tryEmit("푸시 토큰 등록 실패") }
+                                .onFailure { emit("푸시 토큰 등록 실패") }
                         }
                         onResult(true, "$provider 로그인 성공")
                     }
 
-                    SocialLoginResult.NeedAdditionalInfo -> {
+                    is SocialLoginResult.NeedAdditionalInfo ->
                         onNeedAdditionalInfo(socialId, provider)
-                    }
 
-                    is SocialLoginResult.Error, null -> {
+                    is SocialLoginResult.Error, null ->
                         onResult(false, r?.message ?: "서버 오류")
-                    }
                 }
             }
         }
     }
 
-    // ----------------------------
+    // -------------------------------------------------------------------------
     // 예외 메시지 파싱
-    // ----------------------------
+    // -------------------------------------------------------------------------
     private fun parseError(t: Throwable?): String? {
         if (t == null) return null
         return when (t) {
-            is HttpException -> {
-                val code = t.code()
-                val body = try {
-                    t.response()?.errorBody()?.string()
-                } catch (_: Throwable) {
-                    null
-                }
-                body?.takeIf { it.isNotBlank() } ?: "HTTP $code"
-            }
+            is HttpException -> "HTTP ${t.code()}"
             else -> t.message
         }
     }

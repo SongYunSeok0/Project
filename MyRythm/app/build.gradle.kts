@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.naver.map.sdk)
 
     implementation(libs.hilt.android)
+    implementation(libs.androidx.monitor)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 

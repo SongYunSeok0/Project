@@ -7,7 +7,6 @@ import androidx.navigation.toRoute
 import com.mypage.ui.EditScreen
 import com.mypage.ui.FAQScreenWrapper
 import com.mypage.ui.HeartReportScreen
-import com.mypage.ui.MediReportScreen
 import com.mypage.ui.MyPageScreen
 
 fun NavGraphBuilder.mypageNavGraph(
@@ -19,8 +18,7 @@ fun NavGraphBuilder.mypageNavGraph(
             onEditClick = { nav.navigate(EditProfileRoute()) },
             onHeartClick = { nav.navigate(HeartReportRoute) },
             onFaqClick = { nav.navigate(FAQRoute) },
-            onMediClick = { nav.navigate(MediReportRoute) },
-            onLogoutClick = onLogoutClick       // ← 그대로 전달
+            onLogoutClick = onLogoutClick        // ← 그대로 전달
         )
     }
 
@@ -35,9 +33,5 @@ fun NavGraphBuilder.mypageNavGraph(
 
     composable<FAQRoute> {
         FAQScreenWrapper()
-    }
-
-    composable<MediReportRoute> {
-        MediReportScreen()
     }
 }

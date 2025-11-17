@@ -67,7 +67,7 @@ fun MyPageScreen(
         Column(Modifier.fillMaxWidth()) {
             MenuItem("내 정보 수정", onEditClick)
             MenuItem("심박수", onHeartClick)
-            MenuItem("복약 통계", onMediClick)
+            MenuItem("복약 그래프") { }
             MenuItem("FAQ 문의사항", onFaqClick)
             MenuItem("로그아웃", onLogoutClick)
         }

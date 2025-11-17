@@ -1,4 +1,4 @@
-package com.ui.components
+package com.mypage.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.*
@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.sp
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 //import coil.compose.rememberAsyncImagePainter
@@ -55,7 +53,7 @@ fun InquiryTextField(
         maxLines = maxLines,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.onPrimary,
+            unfocusedBorderColor = Color.Gray,
             focusedLabelColor = MaterialTheme.colorScheme.primary,
             unfocusedLabelColor = Color.Gray
         ),

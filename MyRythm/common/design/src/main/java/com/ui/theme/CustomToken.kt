@@ -30,6 +30,11 @@ data class AuthThemeColor(
     val authAppName : Color
 )
 
+data class ComponentThemeColor(
+    val inquiryCardAnswer : Color,
+    val inquiryCardQuestion : Color
+)
+
 val LoginThemeColors = LoginThemeColor(
     loginBackground = LoginBackground,
     loginSurface = LoginSurface,
@@ -54,6 +59,13 @@ val AuthThemeColors = AuthThemeColor(
     authOnSecondray = AuthOnSecondray,
     authAppName = AuthAppName
 )
+
+//컴포넌트용
+val ComponentThemeColors = ComponentThemeColor(
+    inquiryCardAnswer = InquiryCardAnswer,
+    inquiryCardQuestion = InquiryCardQuestion
+)
+
 // Login Local
 val LocalLoginThemeColors = staticCompositionLocalOf { LoginThemeColors }
 val androidx.compose.material3.MaterialTheme.loginTheme: LoginThemeColor
@@ -65,3 +77,8 @@ val LocalAuthThemeColors = staticCompositionLocalOf { AuthThemeColors }
 val androidx.compose.material3.MaterialTheme.authTheme: AuthThemeColor
     @Composable
     get() = LocalAuthThemeColors.current
+
+val LocalComponentThemeColors = staticCompositionLocalOf { ComponentThemeColors }
+val androidx.compose.material3.MaterialTheme.componentTheme: ComponentThemeColor
+    @Composable
+    get() = LocalComponentThemeColors.current

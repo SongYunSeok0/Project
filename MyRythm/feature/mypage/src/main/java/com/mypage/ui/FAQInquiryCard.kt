@@ -1,11 +1,13 @@
-package com.ui.components
+package com.mypage.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,55 +29,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
 import com.common.design.R
+import com.domain.model.Inquiry
+import com.ui.theme.AppTheme
+import com.ui.theme.authTheme
+import com.ui.theme.componentTheme
 
 // FAQScreen.kt 에서 사용되는 문의 내역+답변 카드 컴포넌트
-// 해당 컴포넌트는 디자인 용도, Inquiry 모델은 필요 시 도메인레이어로 분리
+// 해당 컴포넌트는 디자인 용도, Inquiry 모델은 도메인레이어로 분리
 
 /*
-예시
-@Composable
-fun InquiryCard(
-    title: String,
-    status: InquiryStatus,
-    questionDate: String,
-    answerDate: String?,
-    questionContent: String,
-    answerContent: String?,
-    modifier: Modifier = Modifier
-)
+:domain 모듈의 데이터클래스
 
-FAQ스크린에서는
-InquiryCard(
-    title = inquiry.title,
-    status = inquiry.status,
-    questionDate = inquiry.questionDate,
-    answerDate = inquiry.answerDate,
-    questionContent = inquiry.content,
-    answerContent = inquiry.answer
-)
-로 인퀴어리 객체 넘겨주는 타입
-*/
-
-// 샘플 데이터 - Inquiry 문의내역들 데이터클래스
 data class Inquiry(
-    val id: Int,
+    val id: Int = 0,
+    val type: String,
     val title: String,
-    val status: InquiryStatus,
-    val content: String = "",
-    val answer: String = "",
-    val questionDate: String = "2025/11/03",
-    val answerDate: String = "2025/11/04"
+    val content: String,
+    val answer: String? = null
 )
+ */
 
 // enum 클래스에 답변 블록 표시 여부 속성 추가
-enum class InquiryStatus(val text: String, val color: Color, val showAnswerBlock: Boolean) {
-    UNANSWERED("미답변", Color(0xFFABABAB), false),
-    ANSWERED("답변완료", Color(0xFF5DB0A8), true)
+enum class InquiryStatus(val text: String, val showAnswerBlock: Boolean) {
+    UNANSWERED("미답변", false),
+    ANSWERED("답변완료", true)
 }
 
 @Composable
@@ -88,6 +69,22 @@ fun InquiryCard(
     val downIcon = R.drawable.down_chevron
     val chatIcon = R.drawable.faqchat
 
+    // answer 필드로 상태 판단
+    val status = if (inquiry.answer.isNullOrBlank()) {
+        InquiryStatus.UNANSWERED
+    } else {
+        InquiryStatus.ANSWERED
+    }
+
+    val statusColor = when (status) {
+        InquiryStatus.UNANSWERED -> Color.Gray
+        InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    // 날짜는 기본값 (추후 domain에 필드 추가 가능, 현재는 임의 설정)
+    val questionDate = "2025/11/03"
+    val answerDate = "2025/11/04"
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -97,7 +94,10 @@ fun InquiryCard(
                 border = BorderStroke(0.7.dp, Color.Gray),
                 shape = RoundedCornerShape(14.dp)
             )
-            .clickable { expanded = !expanded }
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { expanded = !expanded }
             .padding(16.dp)
     ) {
         // 카드 상단 Row: 아이콘 + 제목 / 상태
@@ -124,8 +124,8 @@ fun InquiryCard(
                     text = inquiry.title,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     softWrap = false,
                     modifier = Modifier
                         .weight(1f, fill = false)
@@ -138,8 +138,11 @@ fun InquiryCard(
                 ) {
                     // 답변/미답변
                     Text(
-                        text = inquiry.status.text,
-                        color = inquiry.status.color,
+                        text = status.text,
+                        color = when (status) {
+                            InquiryStatus.UNANSWERED -> Color.Gray
+                            InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -152,92 +155,83 @@ fun InquiryCard(
                 }
             }
         }
-
         // 확장된 내용 (마크다운 형태로 표시 예정)
         if (expanded) {
             Spacer(modifier = Modifier.height(12.dp))
 
             // 질문 블록 (항상 표시)
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFE4F5F4))
+                    .background(MaterialTheme.componentTheme.inquiryCardQuestion)
                     .padding(12.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = inquiry.title,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
+                        text = "[${inquiry.type}]\n${inquiry.title}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
                     )
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = inquiry.questionDate,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
+                        text = inquiry.content,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+
+                // 질문 블록 날짜 우측 상단 고정
                 Text(
-                    text = "문의 내용: ${inquiry.content}",
-                    color = Color(0xFF5DB0A8),
-                    fontSize = 14.sp,
-                    lineHeight = 1.63.em
+                    text = questionDate,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.TopEnd)
                 )
             }
 
-            // ✅ 답변 블록 표시 여부는 enum 속성에서 결정
-            if (inquiry.status.showAnswerBlock) {
+            // 답변 블록 표시 여부는 enum 속성에서 결정
+            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFFDFFDFB))
+                        .background(MaterialTheme.componentTheme.inquiryCardAnswer)
                         .padding(12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = "답변:",
-                            color = Color(0xFF5DB0A8),
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyLarge
                         )
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = inquiry.answerDate,
-                            color = Color(0xFF5DB0A8),
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
+                            text = inquiry.answer!!,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 답변 블록 날짜 우측 상단 고정
                     Text(
-                        text = inquiry.answer,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
+                        text = answerDate,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.TopEnd)
                     )
                 }
             }
         }
     }
 }
-// 파일 끝에 추가
+
 @Preview(showBackground = true)
 @Composable
 private fun InquiryCardPreview() {
-    MaterialTheme {
+    AppTheme {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -245,20 +239,20 @@ private fun InquiryCardPreview() {
             InquiryCard(
                 inquiry = Inquiry(
                     id = 1,
+                    type = "일반 문의",
                     title = "테스트 문의",
-                    status = InquiryStatus.UNANSWERED,
-                    content = "문의 내용입니다"
+                    content = "문의 내용입니다",
+                    answer = null
                 )
             )
 
             InquiryCard(
                 inquiry = Inquiry(
                     id = 2,
+                    type = "버그 신고",
                     title = "답변 완료된 문의",
-                    status = InquiryStatus.ANSWERED,
                     content = "문의 내용입니다",
-                    answer = "답변 내용입니다",
-                    answerDate = "2025/11/05"
+                    answer = "답변 내용입니다"
                 )
             )
         }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.ui.theme.AuthFieldHeight // Dimension.kt에서 가져옴
@@ -38,7 +39,9 @@ fun AuthInputField(
     modifier: Modifier = Modifier,
     isPassword: Boolean = false,
     imeAction: ImeAction = ImeAction.Next,
-    keyboardActions: KeyboardActions = KeyboardActions.Default
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    enabled: Boolean = true
 ) {
     // 비밀번호 표시/숨김 상태
     var passwordVisible by remember { mutableStateOf(false) }
@@ -90,8 +93,9 @@ fun AuthInputField(
                 }
             }
         } else null,
-        keyboardOptions = KeyboardOptions(imeAction = imeAction),
+        keyboardOptions = KeyboardOptions(imeAction = imeAction,keyboardType = keyboardType),
         keyboardActions = keyboardActions,
+        enabled = enabled,
         textStyle = textStyle,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = surfaceColor,
@@ -104,83 +108,97 @@ fun AuthInputField(
         )
     )
 }
-/* 사용 예시 (화면 테마와 상관없이 입력 필드는 동일):
-@Composable
-fun LoginScreen() { // 이 화면은 MaterialTheme.loginTheme을 사용하여 배경색 등이 다를 수 있음
-    var id by remember { mutableStateOf("") }
-    AuthInputField(
-        value = id,
-        onValueChange = { id = it },
-        hint = "아이디"
-        // useLoginTheme을 전달할 필요 없음
-    )
-}
-*/
-
-
-
-/* 1030 19:17 주석처리
-
-
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.ui.theme.AuthFieldHeight
-import com.ui.theme.AuthFieldShape
-import com.ui.theme.AuthFieldWidth
-import com.ui.theme.Colors
-import com.ui.theme.ShadowElevationDefault
-import com.ui.theme.authTheme
 
 /**
- * 이름, 이메일, 비밀번호 등 인증 화면의 공통 입력 필드 스타일을 정의합니다.
- * (실제 입력 기능은 포함하지 않고 Placeholder 스타일만 재현합니다.)
+ * 성별 선택 드롭다운 컴포넌트 (입력 필드 스타일)
  *
+ * @param value 현재 선택된 값 ("M", "F", "")
+ * @param onValueChange 값 변경 콜백 (M 또는 F 반환)
  * @param hint Placeholder 텍스트
+ * @param modifier Modifier
  */
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AuthInputField(
-    hint: String,
+fun AuthGenderDropdown(
+    value: String,
+    onValueChange: (String) -> Unit,
+    hint: String = "성별",
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Surface(
-            shape = AuthFieldShape,
-            color = Colors.AuthPrimaryButton,
-            modifier = Modifier
-                .requiredWidth(AuthFieldWidth)
-                .requiredHeight(AuthFieldHeight)
-                .shadow(elevation = ShadowElevationDefault, shape = AuthFieldShape)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 28.dp)
-            ) {
-                // 실제 TextField 대신 Placeholder 텍스트만 표시
+    var expanded by remember { mutableStateOf(false) }
+
+    // AuthTheme 색상 사용 (AuthInputField와 동일)
+    val authColors = MaterialTheme.authTheme
+    val surfaceColor = authColors.authSurface
+    val hintColor = authColors.authOnFieldHint
+    val textColor = authColors.authOnSurface
+    val accentColor = authColors.authPrimaryButton
+
+    val fieldShape = MaterialTheme.shapes.extraSmall
+    val textStyle = MaterialTheme.typography.bodyLarge
+
+    // 표시할 텍스트
+    val displayText = when (value) {
+        "M" -> "남성"
+        "F" -> "여성"
+        else -> ""
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayText,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = {
                 Text(
                     text = hint,
-                    color = Colors.AuthOnPrimary,
-                    fontSize = 15.sp,
-                    letterSpacing = 0.9.sp
+                    color = hintColor,
+                    style = textStyle
                 )
-            }
+            },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded
+                )
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .height(AuthFieldHeight)
+                .shadow(elevation = ShadowElevationDefault, shape = fieldShape),
+            shape = fieldShape,
+            textStyle = textStyle,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = surfaceColor,
+                unfocusedContainerColor = surfaceColor,
+                focusedBorderColor = accentColor,
+                unfocusedBorderColor = hintColor.copy(alpha = 0.5f),
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor
+            )
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("남성", style = textStyle) },
+                onClick = {
+                    onValueChange("M")
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("여성", style = textStyle) },
+                onClick = {
+                    onValueChange("F")
+                    expanded = false
+                }
+            )
         }
     }
 }
- */
