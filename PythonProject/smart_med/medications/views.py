@@ -3,83 +3,76 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from .models import Medication, MedicationSchedule
+from .models import Prescription, Plan
 from .serializers import PlanCreateIn
 import datetime
 
 def to_ms(dt):
-    if dt is None: return None
+    """datetime → millisecond 변환"""
+    if dt is None:
+        return None
     if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
         dt = datetime.datetime.combine(dt, datetime.time.min, tzinfo=timezone.get_current_timezone())
     if timezone.is_naive(dt):
         dt = timezone.make_aware(dt, timezone.get_current_timezone())
     return int(dt.timestamp() * 1000)
 
+
 class PlanListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        meds = (Medication.objects
-                .filter(user=request.user)
-                .prefetch_related("medicationschedule_set")
-                .order_by("-created_at"))
-        data = []
-        for m in meds:
-            scheds = list(m.medicationschedule_set.filter(is_active=True).order_by("time"))
-            data.append({
-                "id": m.id,
-                "userId": str(m.user_id),
-                "type": "SUPPLEMENT",
-                "diseaseName": None,
-                "supplementName": m.name,
-                "dosePerDay": len(scheds),
-                "mealRelation": "NONE",
-                "memo": m.note or None,
-                "startDay": to_ms(m.start_date),
-                "endDay": to_ms(m.end_date),
-                "createdAt": to_ms(m.created_at),
-                "updatedAt": to_ms(m.updated_at),
-                "times": [
-                    {"time": (s.time.strftime("%H:%M:%S") if s.time else None),
-                     "days_of_week": (s.days_of_week or [])}
-                    for s in scheds
-                ],
-            })
-        return Response(data, status=200)
+        plans = Plan.objects.filter(user=request.user).order_by("-created_at")
 
+        data = []
+        for p in plans:
+            data.append({
+                "id": p.id,
+                "userId": p.user.id,
+                "prescriptionId": p.prescription.id if p.prescription else None,
+                "medName": p.med_name,
+                "takenAt": to_ms(p.taken_at),
+                "mealTime": p.meal_time,
+                "note": p.note,
+                "taken": to_ms(p.taken),       # time → ms (00:00 기반)
+                "createdAt": to_ms(p.created_at),
+                "updatedAt": to_ms(p.updated_at),
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+    # ==========================
+    #        POST (등록)
+    # ==========================
     def post(self, request):
         ser = PlanCreateIn(data=request.data)
         ser.is_valid(raise_exception=True)
         v = ser.validated_data
 
-        name = v["supplementName"]
-        memo = v.get("memo") or ""
-        start_date = ser.to_date(v.get("startDay")) or datetime.date.today()
-        end_date = ser.to_date(v.get("endDay"))
+        to_dt = lambda ms: datetime.datetime.fromtimestamp(ms / 1000,
+                                                           tz=timezone.get_current_timezone()) if ms else None
 
-        # Medication 생성
-        m = Medication.objects.create(
-            user=request.user,
-            name=name,
-            dose="",                    # 필요시 v에서 받도록 확장
-            start_date=start_date,
-            end_date=end_date,
-            note=memo,
-            source="manual",
+        user_id = request.user.id  # 서버에서 결정
+        prescription_id = v.get("prescriptionId", None)
+        med_name = v.get("medName")
+        taken_at = to_dt(v.get("takenAt"))
+        meal_time = v.get("mealTime") or "none"
+        note = v.get("note")
+        taken = to_dt(v.get("taken"))
+
+        # ❗ created_at / updated_at 넣지 않는다
+        plan = Plan.objects.create(
+            user_id=user_id,
+            prescription_id=prescription_id,
+            med_name=med_name,
+            taken_at=taken_at,
+            meal_time=meal_time,
+            note=note,
+            taken=taken,
         )
 
-        # 스케줄 생성
-        for t in v.get("times", []):
-            time_obj = PlanCreateIn.fields["times"].child.to_python_time(
-                PlanCreateIn.fields["times"].child.fields["time"].to_representation(t["time"])
-                if isinstance(t["time"], datetime.time) else t["time"]
-            )
-            MedicationSchedule.objects.create(
-                medication=m,
-                user=request.user,
-                time=time_obj,
-                days_of_week=t.get("days_of_week") or [],
-                is_active=True,
-            )
+        return Response({"id": plan.id}, status=status.HTTP_201_CREATED)
 
-        return Response({"id": m.id}, status=status.HTTP_201_CREATED)
+
+

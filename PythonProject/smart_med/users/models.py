@@ -90,6 +90,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "phone"]  # createsuperuser 시 추가 입력
 
+
     objects = UserManager()
 
     class Meta:

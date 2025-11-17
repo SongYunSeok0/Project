@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import environ
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,6 +20,24 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),      # access token 7일 유지
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),    # refresh token 30일 유지
+    "ROTATE_REFRESH_TOKENS": True,                  # refresh 시 새 refresh로 갱신
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+
+    # Serializer Override 가능 (기본값 사용)
+}
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
