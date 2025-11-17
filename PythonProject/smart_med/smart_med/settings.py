@@ -13,6 +13,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+FIREBASE_CREDENTIAL_PATH = env(
+    "FIREBASE_CREDENTIAL_PATH",
+    default=str(BASE_DIR / "smart_med_firebase_admin.json"),
+)
+
 # 와일드카드(*)는 CSRF_TRUSTED_ORIGINS에 허용되지 않아요.
 # 실제 접근 도메인/포트로 명시해 주세요 (개발 기본 예시)
 CSRF_TRUSTED_ORIGINS = [

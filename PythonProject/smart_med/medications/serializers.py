@@ -1,8 +1,11 @@
 # medications/serializers.py
 from rest_framework import serializers
-from .models import Medication
+
 from django.utils import timezone
 import datetime
+
+from medications.models import Prescription
+
 
 class PlanTimeSerializer(serializers.Serializer):
     time = serializers.TimeField()
@@ -34,7 +37,7 @@ class PlanSerializer(serializers.Serializer):
         return int(dt.timestamp() * 1000)
 
     @classmethod
-    def from_medication(cls, m: Medication) -> dict:
+    def from_medication(cls, m: Prescription) -> dict:
         scheds = list(m.medicationschedule_set.filter(is_active=True).order_by("time"))
         return {
             "id": m.id,
