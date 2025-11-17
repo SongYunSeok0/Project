@@ -1,8 +1,5 @@
 package com.mypage.ui
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,21 +10,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.common.design.R
-import com.domain.model.Inquiry
 import com.ui.components.AppSelectableButton
-import com.ui.theme.AppTheme
 
 // 1번탭 - 1:1 문의하기 - 1:1 문의 작성 화면
-// 1 -> NewInquiryForm(onSubmit) +컴포넌트 FAQInquiryInputField.kt 호출
 
+/*
+1117 프리뷰용+중복로직이라고 해서 일단 주석처리
 @Composable
 fun InquiryScreen() {
     // 상위에서 상태 관리
@@ -69,7 +60,7 @@ fun InquiryHistoryList(inquiries: List<com.domain.model.Inquiry>) {
         }
     }
 }
-
+*/
 @Composable
 fun InquiryTypeSelector(
     selectedType: String,
@@ -225,11 +216,4 @@ fun SubmitButton(
             lineHeight = 1.5.em
         )
     }
-}
-
-
-@Preview(widthDp = 412, heightDp = 917)
-@Composable
-private fun InquiryPreview() {
-    InquiryScreen()
 }

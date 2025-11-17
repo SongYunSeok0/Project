@@ -22,7 +22,7 @@ private val LightColorScheme = lightColorScheme(
     background = BackGround,
     onBackground = BasicBlack,
     secondary = Color(0x4DB5E5E1),
-    onSurfaceVariant = AuthBlue,
+    onSurfaceVariant = Color(0xFF5DB0A8),
     // 오류 팝업
     error = Color.Red,
     onError = BasicWhite
@@ -52,7 +52,8 @@ fun AppTheme(
     // MaterialTheme.loginTheme, MaterialTheme.authTheme로 접근 가능
     CompositionLocalProvider(
         LocalLoginThemeColors provides LoginThemeColors,
-        LocalAuthThemeColors provides AuthThemeColors
+        LocalAuthThemeColors provides AuthThemeColors,
+        LocalComponentThemeColors provides ComponentThemeColors
     ) {
         // 모든 디자인 토큰을 MaterialTheme에 전달하여 최종 테마 적용
         MaterialTheme(

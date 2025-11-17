@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 
 // 컴포넌트 적용했던 기존faq스크린을 2개로 분리, 이쪽은 기존 0번탭 그 외는 1번탭
 // 0 -> InquiryHistory(inquiries)
+// 프리뷰는 FAQ스크린으로 확인하기
 @Composable
 fun FAQScreen(
     onSubmit: (type: String, title: String, content: String) -> Unit,
@@ -169,7 +170,7 @@ fun FAQScreenWithSampleDataPreview() {
         Inquiry(2, "서비스 이용", "회원 탈퇴 방법 제목글자수테스트", "회원 탈퇴를 하고 싶은데 어떻게 하나요?", null),
         Inquiry(3, "기술 지원", "로그인이 안됩니다", "비밀번호를 입력해도 로그인이 되지 않아요.", "비밀번호 재설정을 시도해보시기 바랍니다."),
         Inquiry(4, "기술 지원", "스크롤테스트12345678910", "비밀번호를 입력해도 로그인이 되지 않아요.", "비밀번호 재설정을 시도해보시기 바랍니다."),
-// 날짜 임시로 넣어놨는데 제목이 길면 날짜영역 깨지는 문제있음
+// 날짜 임시로 넣어둠, 도메인에 등록X상태. 이후 필요 시 추가 -> 인퀴어리.등록날짜 형태로 변경필요함
     )
 
     val inquiriesState = remember { mutableStateListOf<Inquiry>().apply { addAll(sampleInquiries) } }

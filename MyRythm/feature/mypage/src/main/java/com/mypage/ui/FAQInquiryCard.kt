@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,10 +32,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
 import com.common.design.R
 import com.domain.model.Inquiry
+import com.ui.theme.AppTheme
+import com.ui.theme.authTheme
+import com.ui.theme.componentTheme
 
 // FAQScreen.kt 에서 사용되는 문의 내역+답변 카드 컴포넌트
 // 해당 컴포넌트는 디자인 용도, Inquiry 모델은 도메인레이어로 분리
@@ -52,9 +54,9 @@ data class Inquiry(
  */
 
 // enum 클래스에 답변 블록 표시 여부 속성 추가
-enum class InquiryStatus(val text: String, val color: Color, val showAnswerBlock: Boolean) {
-    UNANSWERED("미답변", Color(0xFFABABAB), false),
-    ANSWERED("답변완료", Color(0xFF5DB0A8), true)
+enum class InquiryStatus(val text: String, val showAnswerBlock: Boolean) {
+    UNANSWERED("미답변", false),
+    ANSWERED("답변완료", true)
 }
 
 @Composable
@@ -74,7 +76,12 @@ fun InquiryCard(
         InquiryStatus.ANSWERED
     }
 
-    // ✅ 날짜는 기본값 (추후 domain에 필드 추가 가능)
+    val statusColor = when (status) {
+        InquiryStatus.UNANSWERED -> Color.Gray
+        InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    // 날짜는 기본값 (추후 domain에 필드 추가 가능, 현재는 임의 설정)
     val questionDate = "2025/11/03"
     val answerDate = "2025/11/04"
 
@@ -87,7 +94,10 @@ fun InquiryCard(
                 border = BorderStroke(0.7.dp, Color.Gray),
                 shape = RoundedCornerShape(14.dp)
             )
-            .clickable { expanded = !expanded }
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { expanded = !expanded }
             .padding(16.dp)
     ) {
         // 카드 상단 Row: 아이콘 + 제목 / 상태
@@ -129,7 +139,10 @@ fun InquiryCard(
                     // 답변/미답변
                     Text(
                         text = status.text,
-                        color = status.color,
+                        color = when (status) {
+                            InquiryStatus.UNANSWERED -> Color.Gray
+                            InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         style = MaterialTheme.typography.bodyLarge
                     )
 
@@ -142,90 +155,6 @@ fun InquiryCard(
                 }
             }
         }
-
-        /*1114 21:57 임시주석   // 확장된 내용 (마크다운 형태로 표시 예정)
-        if (expanded) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 질문 블록 (항상 표시)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFE4F5F4))
-                    .padding(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        overflow = TextOverflow.Ellipsis,
-                        text = "[${inquiry.type}] ${inquiry.title}",  // type 추가
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        overflow = TextOverflow.Ellipsis,
-                        text = questionDate,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = inquiry.content,
-                    color = Color(0xFF5DB0A8),
-                    fontSize = 14.sp,
-                    lineHeight = 1.63.em
-                )
-            }
-
-            // 답변 블록 표시 여부는 enum 속성에서 결정
-            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFFDFFDFB))
-                        .padding(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "답변:",
-                            color = Color(0xFF5DB0A8),
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            overflow = TextOverflow.Ellipsis,
-                            text = answerDate,
-                            color = Color(0xFF5DB0A8),
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = inquiry.answer!!,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
-                    )
-                }
-            }
-        }
-    }
-}*/
         // 확장된 내용 (마크다운 형태로 표시 예정)
         if (expanded) {
             Spacer(modifier = Modifier.height(12.dp))
@@ -235,30 +164,28 @@ fun InquiryCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFE4F5F4))
+                    .background(MaterialTheme.componentTheme.inquiryCardQuestion)
                     .padding(12.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "[${inquiry.type}] ${inquiry.title}",
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
+                        text = "[${inquiry.type}]\n${inquiry.title}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = inquiry.content,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
 
                 // 질문 블록 날짜 우측 상단 고정
                 Text(
                     text = questionDate,
-                    color = Color(0xFF5DB0A8),
-                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.align(Alignment.TopEnd)
                 )
             }
@@ -271,30 +198,28 @@ fun InquiryCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFFDFFDFB))
+                        .background(MaterialTheme.componentTheme.inquiryCardAnswer)
                         .padding(12.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = "답변:",
-                            color = Color(0xFF5DB0A8),
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = inquiry.answer!!,
-                            color = Color(0xFF5DB0A8),
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
 
                     // 답변 블록 날짜 우측 상단 고정
                     Text(
                         text = answerDate,
-                        color = Color(0xFF5DB0A8),
-                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.align(Alignment.TopEnd)
                     )
                 }
@@ -302,11 +227,11 @@ fun InquiryCard(
         }
     }
 }
-        // 파일 끝에 추가
+
 @Preview(showBackground = true)
 @Composable
 private fun InquiryCardPreview() {
-    MaterialTheme {
+    AppTheme {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -333,231 +258,3 @@ private fun InquiryCardPreview() {
         }
     }
 }
-
-
-/* 1114 오후 21:59 진행중
-package com.mypage.ui
-
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
-import com.common.design.R
-import com.domain.model.Inquiry
-
-enum class InquiryStatus(val text: String, val color: Color, val showAnswerBlock: Boolean) {
-    UNANSWERED("미답변", Color(0xFFABABAB), false),
-    ANSWERED("답변완료", Color(0xFF5DB0A8), true)
-}
-
-@Composable
-fun InquiryCard(
-    inquiry: Inquiry,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val upIcon = R.drawable.up_chevron
-    val downIcon = R.drawable.down_chevron
-    val chatIcon = R.drawable.faqchat
-
-    val status = if (inquiry.answer.isNullOrBlank()) {
-        InquiryStatus.UNANSWERED
-    } else {
-        InquiryStatus.ANSWERED
-    }
-
-    val questionDate = "2025/11/03"
-    val answerDate = "2025/11/04"
-
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    val borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-    val textColor = MaterialTheme.colorScheme.onSurface
-    val subTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-
-    // 질문/답변 블록용 색
-    val questionBg = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
-    val answerBg = MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f)
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(surfaceColor)
-            .border(
-                border = BorderStroke(0.7.dp, borderColor),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .clickable { expanded = !expanded }
-            .padding(16.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Image(
-                painterResource(chatIcon),
-                contentDescription = "FAQ 아이콘",
-                modifier = Modifier.size(24.dp)
-            )
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = inquiry.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    softWrap = false,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .padding(end = 30.dp)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = status.text,
-                        color = status.color,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Image(
-                        painter = painterResource(if (expanded) upIcon else downIcon),
-                        contentDescription = if (expanded) "닫기" else "열기",
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
-
-        if (expanded) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 질문 블록
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(questionBg)
-                    .padding(12.dp)
-            ) {
-                Column {
-                    Text(
-                        text = "[${inquiry.type}] ${inquiry.title}",
-                        color = subTextColor,
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = inquiry.content,
-                        color = subTextColor,
-                        fontSize = 14.sp,
-                        lineHeight = 1.63.em
-                    )
-                }
-
-                Text(
-                    text = questionDate,
-                    color = subTextColor,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.TopEnd)
-                )
-            }
-
-            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(answerBg)
-                        .padding(12.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = "답변:",
-                            color = subTextColor,
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = inquiry.answer!!,
-                            color = subTextColor,
-                            fontSize = 14.sp,
-                            lineHeight = 1.63.em
-                        )
-                    }
-
-                    Text(
-                        text = answerDate,
-                        color = subTextColor,
-                        fontSize = 12.sp,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun InquiryCardPreview() {
-    MaterialTheme {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            InquiryCard(
-                inquiry = Inquiry(
-                    id = 1,
-                    type = "일반 문의",
-                    title = "테스트 문의",
-                    content = "문의 내용입니다",
-                    answer = null
-                )
-            )
-
-            InquiryCard(
-                inquiry = Inquiry(
-                    id = 2,
-                    type = "버그 신고",
-                    title = "답변 완료된 문의",
-                    content = "문의 내용입니다",
-                    answer = "답변 내용입니다"
-                )
-            )
-        }
-    }
-}
-
-
- */
