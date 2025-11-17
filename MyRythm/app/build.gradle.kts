@@ -94,6 +94,15 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 
+    implementation(libs.retrofit)
+
+    // Moshi
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.converter)
+
+    // OkHttp
+    implementation(libs.okhttp.logging.interceptor)
 
     // 테스트
     testImplementation(libs.bundles.test)

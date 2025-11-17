@@ -2,10 +2,12 @@
 package com.data.di
 
 import com.data.repository.AuthRepositoryImpl
+import com.data.repository.ChatbotRepositoryImpl
 import com.data.repository.FavoriteRepositoryImpl
 import com.data.repository.PlanRepositoryImpl
 import com.data.repository.UserRepositoryImpl
 import com.domain.repository.AuthRepository
+import com.domain.repository.ChatbotRepository
 import com.domain.repository.FavoriteRepository
 import com.domain.repository.PlanRepository
 import com.domain.repository.UserRepository
@@ -30,4 +32,8 @@ abstract class DataRepositoryBindsModule {
 
     @Binds @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChatbotRepository(impl: ChatbotRepositoryImpl): ChatbotRepository
 }
