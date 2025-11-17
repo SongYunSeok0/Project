@@ -36,14 +36,13 @@ private fun BaseCardBox(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    // 외곽 규격 통일: fillMaxWidth, clip, background, clickable
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(bg)
             .clickable(onClick = onClick),
-        content = content // 내부 콘텐츠는 호출하는 컴포넌트가 정의합니다.
+        content = content
     )
 }
 

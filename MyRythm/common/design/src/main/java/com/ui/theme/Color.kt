@@ -12,8 +12,13 @@ val AuthBlue = Color(0xFF6AC0E0)
 val BackGround = BasicWhite
 val Primary = Color(0xFF6AE0D9)
 val OnPrimary = BasicWhite
-val Surface = Color(0xFFF9FAFB)
+val Surface = BasicWhite
 val OnSurface = BasicBlack
+
+// 컴포넌트
+val InquiryCardAnswer = Color(0xFFDFFDFB)
+val InquiryCardQuestion = Color(0xFFE4F5F4)
+
 /*
 val Primary = Color(0xFF6AE0D9)
 val BackGround = BasicWhite

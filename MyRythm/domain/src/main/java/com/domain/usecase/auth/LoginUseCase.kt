@@ -1,18 +1,27 @@
 package com.domain.usecase.auth
 
-import com.domain.model.AuthTokens
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
 import javax.inject.Inject
 
 class LoginUseCase @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val userRepository: UserRepository
+    private val authRepo: AuthRepository,
+    private val userRepo: UserRepository
 ) {
-    suspend operator fun invoke(id: String, pw: String): AuthTokens? {
-        val tokens = authRepository.login(id, pw) ?: return null
-        userRepository.refreshMe()
-        return tokens
+    suspend operator fun invoke(id: String, pw: String): Result<Unit> {
+        // 1) 로그인 시도 (Result<AuthTokens>)
+        val loginResult = authRepo.login(id, pw)
+
+        if (loginResult.isFailure) {
+            // 로그인 실패 → 그대로 실패 반환
+            return Result.failure(loginResult.exceptionOrNull()!!)
+        }
+
+        // 2) 유저 정보 최신화 필요 → refreshMe()
+        return runCatching {
+            userRepo.refreshMe()  // suspend
+        }
     }
 }
+
 

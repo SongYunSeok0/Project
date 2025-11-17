@@ -31,7 +31,6 @@ fun MainScreen(
     onOpenHeart:     () -> Unit = {},
     onOpenMap:       () -> Unit = {},
     onOpenNews:      () -> Unit = {},
-    onOpenAlarm:      () -> Unit = {},
     onFabCamera:     () -> Unit = {} // 현재 화면에서는 미사용
 ) {
 
@@ -95,7 +94,7 @@ fun MainScreen(
         // 외곽 규격은 FullWidthFeatureCard가 처리하고, 내부 레이아웃은 content 슬롯에서 정의합니다.
         FullWidthFeatureCard(
             bg = Color(0x3320FFE5),
-            onClick = onOpenAlarm
+            onClick = onOpenScheduler
         ) {
             // 내부 콘텐츠: TimeRemainingCard의 레이아웃 (좌측 정렬, 상하 패딩)
             Column(
