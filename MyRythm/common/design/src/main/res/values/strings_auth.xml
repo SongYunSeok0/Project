@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auth_id">아이디</string>
+    <string name="auth_password">비밀번호</string>
+    <string name="auth_password_missing">비밀번호를 잊으셨나요?</string>
+    <string name="auth_login">로그인</string>
+    <string name="auth_login_loading">로그인 중...</string>
+    <string name="auth_signup">회원가입</string>
+    <string name="auth_id_pw_blank">ID와 비밀번호를 입력해주세요.</string>
+    <string name="auth_testlogin_message">테스트 로그인으로 즉시 이동합니다.</string>
+    <string name="auth_testlogin">임시 테스트 로그인 (SKIP)</string>
+    <string name="auth_oauth">SNS 연동 로그인 하기</string>
+    <string name="auth_kakaologin_description">카카오톡 로그인</string>
+    <string name="auth_googlelogin_description">구글 로그인</string>
+    <!--<string name="auth_login">로그인</string>
+    뷰모델 내부엔 문자열이 있으면 안된다고 함, enum으로 처리해서 넘겨야한다는데 아직 편집안함
+    -->
+
+</resources>

@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -34,8 +35,6 @@ import com.ui.theme.Primary
 import com.ui.theme.defaultFontFamily
 import com.ui.theme.loginTheme
 
-//val BalooThambi = FontFamily(Font(R.font.baloo_thambi, FontWeight.Bold))
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -46,12 +45,26 @@ fun LoginScreen(
     onSignUp: () -> Unit = {},
     onSocialSignUp: (String, String) -> Unit = { _, _ -> }
 ) {
+    // 문자열 리소스화 선언
+    val idText = stringResource(R.string.auth_id)
+    val passwordText = stringResource(R.string.auth_password)
+    val pwMissingText = stringResource(R.string.auth_password_missing)
+    val loginText = stringResource(R.string.auth_login)
+    val loginLoading = stringResource(R.string.auth_login_loading)
+    val signupText = stringResource(R.string.auth_signup)
+    val idpwBlank = stringResource(R.string.auth_id_pw_blank)
+    val testLoginMessage = stringResource(R.string.auth_testlogin_message)
+    val testLogin = stringResource(R.string.auth_testlogin)
+    val OAuthText = stringResource(R.string.auth_oauth)
+    val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
+    val googleLoginText = stringResource(R.string.auth_googlelogin_description)
+
+
+
     var id by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-
     val ui = viewModel.state.collectAsState().value
     val snackbar = remember { SnackbarHostState() }
-
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -84,7 +97,7 @@ fun LoginScreen(
                     AuthInputField(
                         value = id,
                         onValueChange = { id = it },
-                        hint = "아이디",
+                        hint = idText,
                         modifier = Modifier.fillMaxWidth(),
                         imeAction = ImeAction.Next
                     )
@@ -95,7 +108,7 @@ fun LoginScreen(
                     AuthInputField(
                         value = password,
                         onValueChange = { password = it },
-                        hint = "비밀번호",
+                        hint = stringResource(R.string.auth_password),
                         isPassword = true,
                         modifier = Modifier.fillMaxWidth(),
                         imeAction = ImeAction.Done
