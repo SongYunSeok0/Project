@@ -13,7 +13,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-# CSRF 허용 출처 (개발용)
+FIREBASE_CREDENTIAL_PATH = env(
+    "FIREBASE_CREDENTIAL_PATH",
+    default=str(BASE_DIR / "smart_med_firebase_admin.json"),
+)
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
@@ -28,7 +32,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://10.0.2.2:8000",
 ]
-CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -54,7 +57,6 @@ MIDDLEWARE = [
 
     "corsheaders.middleware.CorsMiddleware",  # ★ CommonMiddleware보다 위
     "django.middleware.common.CommonMiddleware",
-
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -111,9 +113,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Celery (옵션)
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 

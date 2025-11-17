@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.ksp)
+
+    // ✅ Firebase 플러그인 추가
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -58,6 +61,7 @@ android {
 kotlin { jvmToolchain(21) }
 
 dependencies {
+    // 모듈 연결
     implementation(project(":common"))
     implementation(project(":common:design"))
     implementation(project(":feature:main"))
@@ -73,6 +77,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":core"))
 
+    // Compose / Core
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
@@ -85,9 +90,12 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
+    // ✅ Firebase Messaging 의존성 추가
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
+
+    // 테스트
     testImplementation(libs.bundles.test)
 
     //카카오
