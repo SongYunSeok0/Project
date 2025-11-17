@@ -1,0 +1,24 @@
+# === Django & REST ===
+django>=4.2
+djangorestframework
+djangorestframework-simplejwt
+drf-yasg
+
+# === Database ===
+psycopg2-binary
+python-dotenv
+django-environ
+
+# === Async Tasks ===
+celery
+redis
+
+# === Notifications ===
+firebase-admin
+
+# === Image & OCR ===
+pillow
+pytesseract
+
+# === Utilities ===
+requests
