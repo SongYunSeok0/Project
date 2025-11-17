@@ -4,17 +4,20 @@ import com.data.network.dto.plan.IdResponse
 import com.data.network.dto.plan.PlanCreateRequest
 import com.data.network.dto.plan.PlanResponse
 import com.data.network.dto.plan.PlanUpdateRequest
+import retrofit2.Response
 import retrofit2.http.*
 interface PlanApi {
-    @GET("plan/{userId}")
-    suspend fun getPlans(@Path("userId") userId: Long): List<PlanResponse>
+
+    @GET("plan/")
+    suspend fun getPlans(): List<PlanResponse>
 
     @POST("plan/")
-    suspend fun createPlan(@Body request: PlanCreateRequest): IdResponse
+    suspend fun createPlan(@Body body: PlanCreateRequest)
 
-    @PUT("plan/{id}/")
-    suspend fun updatePlan(@Path("id") id: Long, @Body request: PlanUpdateRequest)
+    @PATCH("plan/{id}/")
+    suspend fun updatePlan(@Path("id") planId: Long, @Body body: PlanUpdateRequest)
 
     @DELETE("plan/{id}/")
-    suspend fun deletePlan(@Path("id") id: Long)
+    suspend fun deletePlan(@Path("id") planId: Long)
 }
+

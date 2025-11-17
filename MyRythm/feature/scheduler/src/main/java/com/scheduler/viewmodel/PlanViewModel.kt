@@ -9,7 +9,11 @@ import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -43,7 +47,7 @@ class PlanViewModel @Inject constructor(
         val uid = userId.toLongOrNull()
         if (uid == null) {
             Log.e("PlanViewModel", "❌ userId 숫자 변환 실패: $userId")
-            return   // 앱 죽지 않도록 여기서 종료
+            return
         }
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -56,57 +60,53 @@ class PlanViewModel @Inject constructor(
         }
     }
 
-    // ✅ Plan 생성
+    // ✅ Plan 생성 (서버에는 userId 안 보내고, 필요하면 끝에서 refresh에만 사용)
     fun createPlan(
-        userId: Long,
-        prescriptionId: Long,
+        userId: Long,          // 로컬 refresh 용 (서버에는 안 감)
+        prescriptionId: Long?,
         medName: String,
         takenAt: Long,
-        mealTime: String,
+        mealTime: String?,
         note: String?,
-        taken: Long?,
+        taken: Long?
     ) {
-        if (userId <= 0L) return
+        if (userId <= 0L) {
+            Log.e("PlanViewModel", "❌ createPlan: userId <= 0")
+            return
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _uiState.update { it.copy(loading = true, error = null) }
 
-                val currentMs = System.currentTimeMillis()
-
                 Log.e(
                     "PlanViewModel",
                     """
-                🔥 보내는 값 ======================
-                userId = $userId
-                prescriptionId = $prescriptionId
-                medName = $medName
-                takenAt = $takenAt
-                mealTime = $mealTime
-                note = $note
-                taken = $taken
-                createdAt = $currentMs
-                updatedAt = $currentMs
-                =================================
-                """.trimIndent()
+                    🔥 서버로 보낼 값 =================
+                    prescriptionId = $prescriptionId
+                    medName        = $medName
+                    takenAt        = $takenAt
+                    mealTime       = $mealTime
+                    note           = $note
+                    taken          = $taken
+                    =================================
+                    """.trimIndent()
                 )
 
-                val plan = Plan(
-                    id = 0L,              // 초기값 유지 OK
+                // 👉 여기서는 domain 레이어 함수만 호출
+                repository.create(
                     prescriptionId = prescriptionId,
                     medName = medName,
                     takenAt = takenAt,
                     mealTime = mealTime,
                     note = note,
-                    taken = taken,
-                    createdAt = currentMs,
-                    updatedAt = currentMs
+                    taken = taken
                 )
 
-                repository.create(userId, plan)   // 여기가 서버 전송 위치
+                // 필요하면 로컬 DB 동기화
+                repository.refresh(userId)
 
-                Log.d("PlanViewModel", "💾 Plan 생성 요청 완료: $medName")
-
+                Log.d("PlanViewModel", "💾 Plan 생성 완료: $medName")
             } catch (e: Exception) {
                 Log.e("PlanViewModel", "❌ createPlan 실패", e)
                 _uiState.update { it.copy(error = e.message) }
@@ -115,7 +115,6 @@ class PlanViewModel @Inject constructor(
             }
         }
     }
-
 
     fun updatePlan(userId: Long, plan: Plan) {
         if (userId <= 0L) return

@@ -13,7 +13,7 @@ import com.data.db.entity.*
         FavoriteEntity::class,
         InquiryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {

@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
 data class PlanResponse(
     @Json(name = "id") val id: Long,
     @Json(name = "userId") val userId: Long,
-    @Json(name = "prescriptionId") val prescriptionId: Long,
+    @Json(name = "prescriptionId") val prescriptionId: Long?,
     @Json(name = "medName") val medName: String,
     @Json(name = "takenAt") val takenAt: Long?,
     @Json(name = "mealTime") val mealTime: String?,

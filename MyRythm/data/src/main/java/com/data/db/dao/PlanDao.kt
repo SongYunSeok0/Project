@@ -21,6 +21,9 @@ interface PlanDao {
 
     @Query("DELETE FROM 'plan' WHERE userId = :userId")
     suspend fun deleteAllByUser(userId: Long)
+
+    @Query("SELECT * FROM 'plan' WHERE userId = :userId")
+    suspend fun getAllOnce(userId: Long): List<PlanEntity>
 }
 
 

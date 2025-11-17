@@ -10,8 +10,7 @@ data class PlanCreateRequest(
     @Json(name = "takenAt") val takenAt: Long,
     @Json(name = "mealTime") val mealTime: String?,
     @Json(name = "note") val note: String?,
-    @Json(name = "taken") val taken: Long?,
-    @Json(name = "createdAt") val createdAt: Long,
-    @Json(name = "updatedAt") val updatedAt: Long
+    @Json(name = "taken") val taken: Long?
 )
+
 

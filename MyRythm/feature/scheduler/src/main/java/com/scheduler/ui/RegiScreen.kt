@@ -413,7 +413,7 @@ fun RegiScreen(
                             cleanMeds.forEach { medName ->
                                 viewModel.createPlan(
                                     userId = userId,
-                                    prescriptionId = prescriptionId,
+                                    prescriptionId = null,
                                     medName = medName,
                                     takenAt = takenAtMillis,
                                     mealTime = mealRelation,          // before / after / none

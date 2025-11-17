@@ -15,10 +15,13 @@ import androidx.room.*
     indices = [Index(value = ["prescriptionId"])]
 )
 data class PlanEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val userId: String,
-    val prescriptionId: Long,
+    @PrimaryKey(autoGenerate = false) // 🔥 서버 ID 사용
+    val id: Long,
+
+    val userId: Long, // 🔥 Long 으로 변경
+
+    val prescriptionId: Long?, // 🔥 nullable
+
     val medName: String,
     val takenAt: Long?,
     val mealTime: String?,

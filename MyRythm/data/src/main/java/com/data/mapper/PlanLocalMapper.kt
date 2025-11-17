@@ -4,29 +4,31 @@ import com.data.db.entity.PlanEntity
 import com.domain.model.Plan
 
 // ---------- DB → Domain ----------
-fun PlanEntity.toDomain(): Plan = Plan(
-    id = id,
-    userId = userId.toLongOrNull() ?: 0L,
-    prescriptionId = prescriptionId,
-    medName = medName,
-    takenAt = takenAt,
-    mealTime = mealTime,
-    note = note,
-    taken = taken,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
+fun PlanEntity.toDomainLocal(): Plan =
+    Plan(
+        id = id,
+        userId = userId,               // Long 그대로
+        prescriptionId = prescriptionId,
+        medName = medName,
+        takenAt = takenAt,
+        mealTime = mealTime,
+        note = note,
+        taken = taken,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
 
 // ---------- Domain → DB ----------
-fun Plan.toEntity(): PlanEntity = PlanEntity(
-    id = id,
-    userId = userId.toString(),
-    prescriptionId = prescriptionId,
-    medName = medName,
-    takenAt = takenAt,
-    mealTime = mealTime,
-    note = note,
-    taken = taken,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
+fun Plan.toEntity(): PlanEntity =
+    PlanEntity(
+        id = id,
+        userId = userId,               // Domain은 Long, Room도 Long → 그대로!
+        prescriptionId = prescriptionId,
+        medName = medName,
+        takenAt = takenAt,
+        mealTime = mealTime,
+        note = note,
+        taken = taken,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
