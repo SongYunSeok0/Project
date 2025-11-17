@@ -85,6 +85,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
+    fcm_token = models.CharField(
+        max_length=512,
+        blank=True,
+        null=True,
+        help_text="마지막으로 등록된 FCM 디바이스 토큰"
+    )
+
     # 인증 설정
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
@@ -94,6 +101,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     class Meta:
+        db_table = "users"
         constraints = [
             # 이메일 대소문자 무시 고유
             models.UniqueConstraint(Lower("email"), name="uniq_user_email_ci"),
@@ -104,3 +112,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+class FcmToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=300)
+    updated_at = models.DateTimeField(auto_now=True)

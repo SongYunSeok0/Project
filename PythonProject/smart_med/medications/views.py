@@ -8,15 +8,12 @@ from .serializers import PlanCreateIn
 import datetime
 
 def to_ms(dt):
-    """datetime → millisecond 변환"""
-    if dt is None:
-        return None
+    if dt is None: return None
     if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
         dt = datetime.datetime.combine(dt, datetime.time.min, tzinfo=timezone.get_current_timezone())
     if timezone.is_naive(dt):
         dt = timezone.make_aware(dt, timezone.get_current_timezone())
     return int(dt.timestamp() * 1000)
-
 
 class PlanListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -73,6 +70,5 @@ class PlanListView(APIView):
         )
 
         return Response({"id": plan.id}, status=status.HTTP_201_CREATED)
-
 
 

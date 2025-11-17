@@ -38,7 +38,7 @@ class Prescription(models.Model):
         verbose_name_plural = "사용자 처방전 목록"
 
     def __str__(self):
-        return f"{self.user} - {self.prescription_type} ({self.issued_date})"
+        return f"{self.name} ({self.user.username})"
 
 
 
@@ -76,6 +76,11 @@ class Plan(models.Model):
     def __str__(self):
         return f"{self.user} , {self.med_name} ({self.taken_at})"
 
+    class Meta:
+        ordering = ["-due_at"]
+
+    def __str__(self):
+        return f"{self.medication.name} - {self.status}"
 
 
 

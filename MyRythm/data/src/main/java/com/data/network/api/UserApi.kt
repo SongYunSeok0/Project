@@ -1,5 +1,6 @@
 package com.data.network.api
 
+import com.data.network.dto.user.FcmTokenRequestDto
 import com.data.network.dto.user.SocialLoginRequest
 import com.data.network.dto.user.SocialLoginResponse
 import com.data.network.dto.user.UserDto
@@ -22,7 +23,7 @@ interface UserApi {
     @GET("users/{uuid}")
     suspend fun getUser(@Path("uuid") uuid: String): UserDto
 
-    @POST("auth/social-login")
+    @POST("users/social-login")
     suspend fun socialLogin(@Body request: SocialLoginRequest): Response<SocialLoginResponse>
 
     @POST("users/signup/")
@@ -37,4 +38,7 @@ interface UserApi {
     // 본인 정보 조회
     @GET("users/me/")
     suspend fun getMe(): UserDto
+
+    @POST("users/fcm/")
+    suspend fun registerFcmToken(@Body body: FcmTokenRequestDto): Response<Unit>
 }

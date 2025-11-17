@@ -9,12 +9,14 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.push.PushManager
 import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.auth.SocialLoginUseCase
+import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.user.SignupUseCase
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -41,7 +43,8 @@ class AuthViewModel @Inject constructor(
     private val refreshUseCase: RefreshTokenUseCase,
     private val logoutUseCase: LogoutUseCase,
     private val signupUseCase: SignupUseCase,
-    private val socialLoginUseCase: SocialLoginUseCase
+    private val socialLoginUseCase: SocialLoginUseCase,
+    private val registerFcmTokenUseCase: RegisterFcmTokenUseCase
 ) : ViewModel() {
 
     data class UiState(
@@ -65,16 +68,23 @@ class AuthViewModel @Inject constructor(
         try {
             val tokens = loginUseCase(email, password)
             val ok = tokens != null
-            _state.update { it.copy(loading = false, isLoggedIn = ok) }
-            _events.tryEmit(
-                if (ok) {
-                    "로그인 성공"
-                } else {
-                    "이메일 또는 비밀번호가 올바르지 않습니다."
+
+            if (ok) {
+                // ✅ 로그인 성공 시 서버에 FCM 토큰 등록 (화면 이동 전에 처리)
+                val token = PushManager.fcmToken
+                if (token != null) {
+                    runCatching { registerFcmTokenUseCase(token) }
+                        .onFailure { _events.tryEmit("푸시 토큰 등록 실패") }
                 }
+            }
+
+            _state.update { it.copy(loading = false, isLoggedIn = ok) }
+
+            _events.tryEmit(
+                if (ok) "로그인 성공"
+                else "이메일 또는 비밀번호가 올바르지 않습니다."
             )
         } catch (e: Throwable) {
-            // 네트워크 예외 등 실제 예외가 난 경우
             _state.update { it.copy(loading = false, isLoggedIn = false) }
             _events.tryEmit(parseError(e) ?: "로그인 실패")
         }
@@ -85,7 +95,10 @@ class AuthViewModel @Inject constructor(
         _state.update { it.copy(loading = true) }
         val result = runCatching { signupUseCase(req) }
         _state.update { it.copy(loading = false) }
-        _events.tryEmit(if (result.getOrDefault(false)) "회원가입 성공" else parseError(result.exceptionOrNull()) ?: "회원가입 실패")
+        _events.tryEmit(
+            if (result.getOrDefault(false)) "회원가입 성공"
+            else parseError(result.exceptionOrNull()) ?: "회원가입 실패"
+        )
     }
 
     /** 토큰 갱신 */
@@ -102,7 +115,7 @@ class AuthViewModel @Inject constructor(
     }
 
     // ----------------------------
-    // ✅ 카카오 로그인
+    // 카카오 로그인
     // ----------------------------
     fun kakaoOAuth(
         context: Context,
@@ -113,7 +126,7 @@ class AuthViewModel @Inject constructor(
             if (error != null) {
                 onResult(false, "카카오 로그인 실패")
             } else if (token != null) {
-                UserApiClient.instance.me { user, e ->
+                UserApiClient.instance.me { user, _ ->
                     if (user != null) {
                         val socialId = user.id.toString()
                         handleSocialLogin(
@@ -138,8 +151,16 @@ class AuthViewModel @Inject constructor(
                     UserApiClient.instance.loginWithKakaoAccount(context, callback = callback)
                 } else if (token != null) {
                     UserApiClient.instance.me { user, _ ->
-                        if (user != null)
-                            handleSocialLogin("kakao", token.accessToken, null, user.id.toString(), onResult, onNeedAdditionalInfo)
+                        if (user != null) {
+                            handleSocialLogin(
+                                "kakao",
+                                token.accessToken,
+                                null,
+                                user.id.toString(),
+                                onResult,
+                                onNeedAdditionalInfo
+                            )
+                        }
                     }
                 }
             }
@@ -149,7 +170,7 @@ class AuthViewModel @Inject constructor(
     }
 
     // ----------------------------
-    // ✅ 구글 로그인
+    // 구글 로그인
     // ----------------------------
     fun googleOAuth(
         context: Context,
@@ -165,7 +186,9 @@ class AuthViewModel @Inject constructor(
                     .setServerClientId(googleClientId)
                     .build()
 
-                val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
 
                 val result = try {
                     credentialManager.getCredential(context, request)
@@ -174,7 +197,9 @@ class AuthViewModel @Inject constructor(
                         .setFilterByAuthorizedAccounts(false)
                         .setServerClientId(googleClientId)
                         .build()
-                    val reqAll = GetCredentialRequest.Builder().addCredentialOption(optAll).build()
+                    val reqAll = GetCredentialRequest.Builder()
+                        .addCredentialOption(optAll)
+                        .build()
                     credentialManager.getCredential(context, reqAll)
                 }
 
@@ -182,7 +207,7 @@ class AuthViewModel @Inject constructor(
             } catch (e: GetCredentialCancellationException) {
                 onResult(false, "구글 로그인 취소")
             } catch (e: Exception) {
-                onResult(false, "구글 로그인 실패: ${e.localizedMessage}")
+                onResult(false, "구글 로그인 실패: ${e.localizedMessage.orEmpty()}")
             }
         }
     }
@@ -193,7 +218,8 @@ class AuthViewModel @Inject constructor(
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
         val credential = result.credential
-        if (credential is CustomCredential &&
+        if (
+            credential is CustomCredential &&
             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
         ) {
             try {
@@ -213,7 +239,7 @@ class AuthViewModel @Inject constructor(
     }
 
     // ----------------------------
-    // ✅ 공통 소셜 로그인 처리
+    // 공통 소셜 로그인 처리
     // ----------------------------
     private fun handleSocialLogin(
         provider: String,
@@ -241,11 +267,19 @@ class AuthViewModel @Inject constructor(
 
                 when (val r = call.getOrNull()) {
                     is SocialLoginResult.Success -> {
+                        // 소셜 로그인 성공 시 FCM 토큰 등록
+                        val token = PushManager.fcmToken
+                        if (token != null) {
+                            runCatching { registerFcmTokenUseCase(token) }
+                                .onFailure { _events.tryEmit("푸시 토큰 등록 실패") }
+                        }
                         onResult(true, "$provider 로그인 성공")
                     }
+
                     SocialLoginResult.NeedAdditionalInfo -> {
                         onNeedAdditionalInfo(socialId, provider)
                     }
+
                     is SocialLoginResult.Error, null -> {
                         onResult(false, r?.message ?: "서버 오류")
                     }
@@ -262,7 +296,11 @@ class AuthViewModel @Inject constructor(
         return when (t) {
             is HttpException -> {
                 val code = t.code()
-                val body = try { t.response()?.errorBody()?.string() } catch (_: Throwable) { null }
+                val body = try {
+                    t.response()?.errorBody()?.string()
+                } catch (_: Throwable) {
+                    null
+                }
                 body?.takeIf { it.isNotBlank() } ?: "HTTP $code"
             }
             else -> t.message
