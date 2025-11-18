@@ -48,18 +48,16 @@ fun LoginScreen(
     // 문자열 리소스화 선언
     val idText = stringResource(R.string.auth_id)
     val passwordText = stringResource(R.string.auth_password)
-    val pwMissingText = stringResource(R.string.auth_password_missing)
+    val pwMissingMessage = stringResource(R.string.auth_message_password_missing)
     val loginText = stringResource(R.string.auth_login)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val idpwBlank = stringResource(R.string.auth_id_pw_blank)
-    val testLoginMessage = stringResource(R.string.auth_testlogin_message)
+    val errorIdpwBlank = stringResource(R.string.auth_error_id_pw_blank)
+    val testLoginMessage = stringResource(R.string.auth_message_testlogin)
     val testLogin = stringResource(R.string.auth_testlogin)
-    val OAuthText = stringResource(R.string.auth_oauth)
+    val oauthText = stringResource(R.string.auth_oauth)
     val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
     val googleLoginText = stringResource(R.string.auth_googlelogin_description)
-
-
 
     var id by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -104,11 +102,10 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(12.dp))
 
-                    // AuthInputField.kt 컴포넌트 불러오기 : 비밀번호 토글 버튼 로직은 AuthInputField.kt 컴포넌트 내에 존재함
                     AuthInputField(
                         value = password,
                         onValueChange = { password = it },
-                        hint = stringResource(R.string.auth_password),
+                        hint = passwordText,
                         isPassword = true,
                         modifier = Modifier.fillMaxWidth(),
                         imeAction = ImeAction.Done
@@ -121,7 +118,7 @@ fun LoginScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = "비밀번호를 잊으셨나요?",
+                            text = pwMissingMessage,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.loginTheme.loginTertiary,
                             modifier = Modifier
@@ -157,20 +154,16 @@ fun LoginScreen(
 
                     //1112 수정버전
                     AuthPrimaryButton(
-                        // 💡 텍스트 설정: 로딩 상태에 따라 버튼 텍스트가 바뀌도록 설정해야 합니다.
-                        text = if (ui.loading) "로그인 중..." else "Login",
+                        text = if (ui.loading) loginLoading else loginText,
                         onClick = {
-                            // [유효성 검사]: 컴포넌트 내부가 아닌 여기(화면 로직)에서 처리하는 것이 좋습니다.
+                            // 유효성 검사는 컴포넌트 내부가 아닌 화면 로직에서 처리
                             if (id.isBlank() || password.isBlank()) {
-                                viewModel.emitInfo("ID와 비밀번호를 입력해주세요.") // 사용자에게 안내
+                                viewModel.emitInfo(errorIdpwBlank) // 사용자 안내 메시지 리소스화 적용
                                 return@AuthPrimaryButton
                             }
-                            // ✅ 뷰모델의 콜백 없는 login 함수 호출
-                            // 결과 처리는 뷰모델의 _events와 _state를 Composable에서 관찰하여 처리됩니다.
+                            // 뷰모델의 콜백 없는 login 함수 호출
+                            // 결과 처리는 뷰모델의 _events와 _state를 Composable에서 관찰하여 처리
                             viewModel.login(id, password)
-
-                            // ⚠️ 주의: 이 방식으로는 onLogin(화면 이동)을 즉시 처리할 수 없으므로,
-                            // onLogin 호출은 반드시 Composable이 viewModel.events를 관찰하는 곳에 구현되어야 합니다.
                         },
 
                         modifier = Modifier
@@ -206,23 +199,23 @@ fun LoginScreen(
                         )
                     }*/
 
-                    // 💡 [여기에 임시 로그인 버튼 추가] ---------------------------------------------
-                    Spacer(Modifier.height(8.dp)) // 기존 버튼과의 간격
+                    // 임시 로그인 버튼 추가
+                    Spacer(Modifier.height(8.dp))
 
                     Button(
                         onClick = {
-                            // ⚠️ 디버그 및 테스트 용도: 유효성 검사 없이 즉시 메인 화면으로 이동
+                            // 디버그 및 테스트 용도: 유효성 검사 없이 즉시 메인 화면으로 이동
                             onLogin("test_id", "test_pw")
-                            viewModel.emitInfo("테스트 로그인으로 즉시 이동합니다.")
+                            viewModel.emitInfo(testLoginMessage)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary), // 눈에 띄게 다른 색상 사용
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(40.dp), // 기존 버튼보다 작게
+                            .height(40.dp),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text(
-                            "임시 테스트 로그인 (SKIP)",
+                            testLogin,
                             color = MaterialTheme.colorScheme.onTertiary,
                             fontSize = 16.sp
                         )
@@ -230,11 +223,8 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(14.dp))
 
-                    //여기부터 다시 병합해둔 부분
-                    Spacer(Modifier.height(14.dp))
-
                     AuthSecondaryButton(
-                        text = "회원가입",
+                        text = signupText,
                         onClick = onSignUp,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -244,10 +234,8 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(30.dp))
                 }
-                // 1107 16:48 추가중
                 item {
                     var expandedSns by remember { mutableStateOf(false) }
-                    // 아이콘 리소스 제거 (R.drawable.up_chevron 등)
 
                     // SNS 토글 헤더 (글자만 표시, 클릭 영역은 Row 전체)
                     Row(
@@ -259,7 +247,7 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "SNS 연동 로그인 하기",
+                            text = oauthText,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.loginTheme.loginTertiary
                         )
@@ -273,7 +261,7 @@ fun LoginScreen(
                         // 카카오 로그인 버튼 (PNG 이미지)
                         Image(
                             painter = painterResource(R.drawable.kakao_login_button), // 이미지 버튼 리소스 ID 가정
-                            contentDescription = "카카오톡 로그인",
+                            contentDescription = kakaoLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
@@ -283,14 +271,12 @@ fun LoginScreen(
                                         context,
                                         onResult = { success, message ->
                                             if (success) {
-                                                // 소셜 로그인 성공 시 onLogin 호출
                                                 onLogin("", "")
                                             } else {
                                                 Log.e("LoginScreen", "카카오 로그인 실패: $message")
                                             }
                                         },
                                         onNeedAdditionalInfo = { socialId, provider ->
-                                            // 추가 정보 필요 시 회원가입 화면으로 이동
                                             onSocialSignUp(socialId, provider)
                                             Log.d("LoginScreen", "카카오 신규 회원: socialId=$socialId, provider=$provider")
                                         }
@@ -304,7 +290,7 @@ fun LoginScreen(
                         // 구글 로그인 버튼 (PNG 이미지)
                         Image(
                             painter = painterResource(R.drawable.google_login_button),
-                            contentDescription = "구글 로그인",
+                            contentDescription = googleLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
@@ -315,14 +301,12 @@ fun LoginScreen(
                                         googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
                                         onResult = { success, message ->
                                             if (success) {
-                                                // 소셜 로그인 성공 시 onLogin 호출
                                                 onLogin("", "")
                                             } else {
                                                 Log.e("LoginScreen", "구글 로그인 실패: $message")
                                             }
                                         },
                                         onNeedAdditionalInfo = { socialId, provider ->
-                                            // 추가 정보 필요 시 처리
                                             onSocialSignUp(socialId, provider)
                                             Log.d(
                                                 "LoginScreen", "구글 신규 회원: socialId=$socialId, provider=$provider"
@@ -333,7 +317,7 @@ fun LoginScreen(
                             contentScale = ContentScale.FillBounds
                         )
 
-                        Spacer(Modifier.height(30.dp)) // SNS 버튼 아래 여백
+                        Spacer(Modifier.height(30.dp))
                     }
                 }
             }

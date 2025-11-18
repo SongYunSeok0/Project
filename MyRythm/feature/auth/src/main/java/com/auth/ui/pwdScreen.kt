@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -39,6 +40,14 @@ fun PwdScreen(
     var code by remember { mutableStateOf("") }
     var sent by remember { mutableStateOf(false) }
 
+    // 문자열 리소스화 선언
+    val phoneText = stringResource(R.string.auth_phone)
+    val sendText = stringResource(R.string.auth_send)
+    val sentText = stringResource(R.string.auth_sent)
+    val codeText = stringResource(R.string.auth_code)
+    val checkText = stringResource(R.string.auth_check)
+    val backtologinText = stringResource(R.string.auth_backtologin)
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -66,7 +75,7 @@ fun PwdScreen(
                 AuthInputField(
                     value = phone,
                     onValueChange = { phone = it },
-                    hint = "휴대폰 번호",
+                    hint = phoneText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next
                 )
@@ -74,7 +83,7 @@ fun PwdScreen(
                 Spacer(Modifier.width(8.dp))
 
                 AuthActionButton(
-                    text = if (sent) "전송됨" else "전송",
+                    text = if (sent) sentText else sendText,
                     onClick = {
                         sent = true
                         onSendCode(phone)
@@ -92,7 +101,7 @@ fun PwdScreen(
             AuthInputField(
                 value = code,
                 onValueChange = { code = it },
-                hint = "인증번호",
+                hint = codeText,
                 modifier = Modifier.fillMaxWidth(),
                 imeAction = ImeAction.Done
             )
@@ -100,7 +109,7 @@ fun PwdScreen(
             Spacer(Modifier.height(58.dp))
 
             AuthPrimaryButton(
-                text = "확인",
+                text = checkText,
                 onClick = { onConfirm(phone, code) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -112,7 +121,7 @@ fun PwdScreen(
             Spacer(Modifier.height(14.dp))
 
             AuthSecondaryButton(
-                text = "로그인으로",
+                text = backtologinText,
                 onClick = onBackToLogin,
                 modifier = Modifier
                     .fillMaxWidth()

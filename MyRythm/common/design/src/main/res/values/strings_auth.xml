@@ -2,18 +2,48 @@
 <resources>
     <string name="auth_id">아이디</string>
     <string name="auth_password">비밀번호</string>
-    <string name="auth_password_missing">비밀번호를 잊으셨나요?</string>
     <string name="auth_login">로그인</string>
     <string name="auth_login_loading">로그인 중...</string>
     <string name="auth_signup">회원가입</string>
-    <string name="auth_id_pw_blank">ID와 비밀번호를 입력해주세요.</string>
-    <string name="auth_testlogin_message">테스트 로그인으로 즉시 이동합니다.</string>
     <string name="auth_testlogin">임시 테스트 로그인 (SKIP)</string>
     <string name="auth_oauth">SNS 연동 로그인 하기</string>
     <string name="auth_kakaologin_description">카카오톡 로그인</string>
     <string name="auth_googlelogin_description">구글 로그인</string>
-    <!--<string name="auth_login">로그인</string>
-    뷰모델 내부엔 문자열이 있으면 안된다고 함, enum으로 처리해서 넘겨야한다는데 아직 편집안함
-    -->
+    <string name="auth_phone">휴대폰 번호 (010-1111-1111)</string>
+    <string name="auth_sent">전송됨</string>
+    <string name="auth_send">전송</string>
+    <string name="auth_code">인증번호</string>
+    <string name="auth_check">확인</string>
+    <string name="auth_backtologin">로그인으로</string>
+    <string name="auth_signupcomplete">회원가입 성공</string>
+    <string name="auth_email">이메일</string>
+    <string name="auth_name">이름</string>
+    <string name="auth_birth">생년월일</string>
+    <string name="auth_year">YYYY</string>
+    <string name="auth_month">MM</string>
+    <string name="auth_day">DD</string>
+    <string name="auth_gender">성별</string>
+    <string name="auth_height">키 (cm)</string>
+    <string name="auth_weight">몸무게 (kg)</string>
+    <string name="auth_phone_verification">전화번호 인증 *</string>
+    <string name="auth_verification">인증</string>
+    <string name="auth_testcode">0000</string>
+    <string name="auth_signup_loading">가입 중...</string>
+    <string name="auth_back">돌아가기</string>
+
+    <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
+    <string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>
+    <string name="auth_message_code_sent">인증번호가 전송되었습니다. 테스트 코드는 0000 입니다</string>
+    <string name="auth_message_verification_completed">전화번호 인증이 완료되었습니다</string>
+    <string name="auth_message_backtologin">이미 계정이 있으신가요?</string>
+
+    <string name="auth_error_id_pw_blank">ID와 비밀번호를 입력해주세요.</string>
+    <string name="auth_error_phone_blank">전화번호를 입력하세요</string>
+    <string name="auth_error_code_blank">먼저 인증번호를 전송하세요</string>
+    <string name="auth_error_code_incorrent">인증번호가 올바르지 않습니다. 테스트 코드는 0000 입니다</string>
+    <string name="auth_error_blank">필수 항목을 정확히 입력하세요</string>
+    <string name="auth_error_verification_incompleted">전화번호 인증을 완료하세요</string>
+
+    <!--<string name="auth_login">로그인</string>-->
 
 </resources>

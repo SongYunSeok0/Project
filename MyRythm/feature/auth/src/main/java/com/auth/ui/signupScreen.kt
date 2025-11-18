@@ -4,27 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.common.design.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.auth.viewmodel.AuthViewModel
 import com.domain.model.SignupRequest
@@ -35,14 +26,7 @@ import com.ui.components.AuthLogoIcon
 import com.ui.components.AuthPrimaryButton
 import com.ui.components.AuthSecondaryButton
 import com.ui.theme.AuthBackground
-import com.ui.theme.AuthOnPrimary
-import com.ui.theme.AuthOnSecondray
-import com.ui.theme.AuthSecondrayButton
-import com.ui.theme.Primary
-import com.ui.theme.defaultFontFamily
 import com.ui.theme.loginTheme
-
-private val SecondaryBtnDisabled = AuthSecondrayButton.copy(alpha = 0.5f)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +60,37 @@ fun SignupScreen(
     val ui = viewModel.state.collectAsState().value
     val snackbar = remember { SnackbarHostState() }
 
+    //문자열 리소스화
+    val signupComplete = stringResource(R.string.auth_signupcomplete)
+    val emailText = stringResource(R.string.auth_email)
+    val nameText = stringResource(R.string.auth_name)
+    val passwordText = stringResource(R.string.auth_password)
+    val birthText = stringResource(R.string.auth_birth)
+    val yearText = stringResource(R.string.auth_year)
+    val monthText = stringResource(R.string.auth_month)
+    val dayText = stringResource(R.string.auth_day)
+    val genderText = stringResource(R.string.auth_gender)
+    val heightText = stringResource(R.string.auth_height)
+    val weightText = stringResource(R.string.auth_weight)
+    val phoneVerification = stringResource(R.string.auth_phone_verification)
+    val phoneText = stringResource(R.string.auth_phone)
+    val sendText = stringResource(R.string.auth_send)
+    val sentText = stringResource(R.string.auth_sent)
+    val verificationText = stringResource(R.string.auth_verification)
+    val codeText = stringResource(R.string.auth_code)
+    val testCodeText = stringResource(R.string.auth_testcode)
+    val signupLoading = stringResource(R.string.auth_signup_loading)
+    val signupText = stringResource(R.string.auth_signup)
+    val backText = stringResource(R.string.auth_back)
+    val codeSentMessage = stringResource(R.string.auth_message_code_sent)
+    val verificationCompletedMessage = stringResource(R.string.auth_message_verification_completed)
+    val backToLoginMessage = stringResource(R.string.auth_message_backtologin)
+    val errorPhoneBlank = stringResource(R.string.auth_error_phone_blank)
+    val errorCodeBlank = stringResource(R.string.auth_error_code_blank)
+    val errorCodeIncorrent = stringResource(R.string.auth_error_code_incorrent)
+    val errorBlank = stringResource(R.string.auth_error_blank)
+    val errorVerificationIncompleted = stringResource(R.string.auth_error_verification_incompleted)
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { msg ->
             snackbar.showSnackbar(msg)
@@ -89,7 +104,6 @@ fun SignupScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = AuthBackground,
         snackbarHost = { SnackbarHost(snackbar) },
-        // ✅ 내부 스캐폴드 인셋 제거로 상·하 여백 제거
         contentWindowInsets = WindowInsets(0)
     ) { inner ->
         Column(
@@ -109,7 +123,7 @@ fun SignupScreen(
             AuthInputField(
                 value = email,
                 onValueChange = { email = it },
-                hint = "이메일",
+                hint = emailText,
                 modifier = Modifier.fillMaxWidth(),
                 imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.Email
@@ -120,7 +134,7 @@ fun SignupScreen(
             AuthInputField(
                 value = username,
                 onValueChange = { username = it },
-                hint = "사용자 이름",
+                hint = nameText,
                 modifier = Modifier.fillMaxWidth(),
                 imeAction = ImeAction.Next
             )
@@ -128,7 +142,7 @@ fun SignupScreen(
             AuthInputField(
                 value = password,
                 onValueChange = { password = it },
-                hint = "비밀번호",
+                hint = passwordText,
                 isPassword = true,
                 modifier = Modifier.fillMaxWidth(),
                 imeAction = ImeAction.Next,
@@ -137,7 +151,8 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Text("생년월일",
+            Text(
+                birthText,
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth()
@@ -152,7 +167,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = birthYear,
                     onValueChange = { birthYear = it.filter { c -> c.isDigit() }.take(4) },
-                    hint = "YYYY",
+                    hint = yearText,
                     modifier = Modifier.weight(1.5f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
@@ -161,7 +176,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = birthMonth,
                     onValueChange = { birthMonth = it.filter { c -> c.isDigit() }.take(2) },
-                    hint = "MM",
+                    hint = monthText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
@@ -170,7 +185,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = birthDay,
                     onValueChange = { birthDay = it.filter { c -> c.isDigit() }.take(2) },
-                    hint = "DD",
+                    hint = dayText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
@@ -184,7 +199,7 @@ fun SignupScreen(
             AuthGenderDropdown(
                 value = gender,
                 onValueChange = { gender = it },
-                hint = "성별",
+                hint = genderText,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -233,7 +248,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = height,
                     onValueChange = { height = it },
-                    hint = "키 (cm)",
+                    hint = heightText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
@@ -241,7 +256,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = weight,
                     onValueChange = { weight = it },
-                    hint = "몸무게 (kg)",
+                    hint = weightText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
@@ -249,7 +264,8 @@ fun SignupScreen(
             }
             Spacer(Modifier.height(24.dp))
 
-            Text("전화번호 인증 *",
+            Text(
+                phoneVerification,
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth()
@@ -262,7 +278,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = phone,
                     onValueChange = { phone = it },
-                    hint = "전화번호 (010-1111-1111)",
+                    hint = phoneText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Phone,
@@ -270,15 +286,15 @@ fun SignupScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 AuthActionButton(
-                    text = if (isPhoneVerificationSent) "전송됨" else "전송",
+                    text = if (isPhoneVerificationSent) sentText else sendText,
                     onClick = {
                         if (phone.isBlank()) {
-                            viewModel.emitInfo("전화번호를 입력하세요")
+                            viewModel.emitInfo(errorPhoneBlank)
                         } else {
                             isPhoneVerificationSent = true
                             isVerificationCompleted = false
                             code = ""
-                            viewModel.emitInfo("인증번호가 전송되었습니다. 테스트 코드는 0000 입니다")
+                            viewModel.emitInfo(codeSentMessage)
                         }
                     },
                     enabled = !isVerificationCompleted,
@@ -298,7 +314,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = code,
                     onValueChange = { code = it },
-                    hint = "인증번호",
+                    hint = codeText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Done,
                     keyboardType = KeyboardType.Number,
@@ -308,18 +324,18 @@ fun SignupScreen(
                 Spacer(Modifier.width(8.dp))
 
                 AuthSecondaryButton(
-                    text = "인증",
+                    text = verificationText,
                     onClick = {
                         if (!isPhoneVerificationSent) {
-                            viewModel.emitInfo("먼저 인증번호를 전송하세요")
+                            viewModel.emitInfo(errorCodeBlank)
                             return@AuthSecondaryButton
                         }
-                        if (code == "0000") {
+                        if (code == testCodeText) {
                             isVerificationCompleted = true
-                            viewModel.emitInfo("전화번호 인증이 완료되었습니다")
+                            viewModel.emitInfo(verificationCompletedMessage)
                         } else {
                             isVerificationCompleted = false
-                            viewModel.emitInfo("인증번호가 올바르지 않습니다. 테스트 코드는 0000 입니다")
+                            viewModel.emitInfo(errorCodeIncorrent)
                         }
                     },
                     enabled = isPhoneVerificationSent && !isVerificationCompleted,
@@ -333,7 +349,7 @@ fun SignupScreen(
 
             // 소셜로그인 관련 추가 없이 기존 코드 로직 그대로 두고 컴포넌트화만 진행
             AuthPrimaryButton(
-                text = if (ui.loading) "가입 중..." else "회원가입",
+                text = if (ui.loading) signupLoading else signupText,
                 onClick = {
                     val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
                     val heightOk = validNumber(height)
@@ -344,11 +360,11 @@ fun SignupScreen(
                         birthYear.length != 4 || birthMonth.isBlank() || birthDay.isBlank() ||
                         !heightOk || !weightOk || phone.isBlank()
                     ) {
-                        viewModel.emitInfo("필수 항목을 정확히 입력하세요")
+                        viewModel.emitInfo(errorBlank)
                         return@AuthPrimaryButton
                     }
                     if (!isVerificationCompleted) {
-                        viewModel.emitInfo("전화번호 인증을 완료하세요")
+                        viewModel.emitInfo(errorVerificationIncompleted)
                         return@AuthPrimaryButton
                     }
 
@@ -374,7 +390,7 @@ fun SignupScreen(
             Spacer(Modifier.height(24.dp))
 
             AuthSecondaryButton(
-                text = "돌아가기",
+                text = backText,
                 onClick = { onBackToLogin() },
                 enabled = true,
                 useLoginTheme = false,
@@ -394,7 +410,7 @@ fun SignupScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Text(
-                    text = "이미 계정이 있으신가요?",
+                    text = backToLoginMessage,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.loginTheme.loginTertiary,
                     modifier = Modifier
@@ -440,41 +456,3 @@ private fun SignupPreview() {
         SignupScreen()
     }
 }
-/*
-@Preview(showBackground = true)
-@Composable
-private fun SignupScreenPreview() {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Primary
-        ),
-        typography = MaterialTheme.typography.copy(
-            labelLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            // 입력 필드와 본문 글씨
-            bodyLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            // 안내메시지 등 작은 글씨
-            bodySmall = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.25.sp
-            )
-        )
-    ) {
-        SignupScreen()
-    }
-}
-*/
