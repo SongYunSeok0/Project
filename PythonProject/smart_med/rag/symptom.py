@@ -94,11 +94,42 @@ def classify_product_age(item_name: str) -> str:
     return "unknown"
 
 
+def _score_chunk_for_symptoms(text_norm: str, symptoms: List[str]) -> (int, set):
+    """
+    한 Chunk에 대해:
+    - 어떤 증상들이 매칭됐는지
+    - 점수는 얼마나 되는지 계산
+    """
+    score = 0
+    matched = set()
+
+    for s in symptoms:
+        matched_flag = False
+
+        # 증상 단어 직접 포함
+        if s in text_norm:
+            score += 2
+            matched_flag = True
+
+        # 매핑된 카테고리 단어 포함
+        for cat in SYMPTOM_CATEGORY_MAP.get(s, []):
+            if cat in text_norm:
+                score += 1
+                matched_flag = True
+
+        if matched_flag:
+            matched.add(s)
+
+    return score, matched
+
+
 def recommend_by_symptom(question: str, topn: int = 5) -> List[Dict[str, Any]]:
     """
     증상 기반 약 추천:
-    - 효능/효과 섹션에서 증상 + 카테고리 단어를 검색
-    - 여러 증상 동시에 평가
+    - 효능/효과 섹션에서 증상/카테고리 단어 검색
+    - 질문에 나온 여러 증상을 동시에 평가
+      1) 우선: 모든 증상을 다 포함하는 약만(strict)
+      2) 그런 약이 없으면: 일부 증상만 포함하는 약도 허용(loose)
     - 어린이/성인 여부 반영
     - 동일 item_name 중 최고 점수만 사용
     """
@@ -112,25 +143,20 @@ def recommend_by_symptom(question: str, topn: int = 5) -> List[Dict[str, Any]]:
         Q(section__icontains="효능효과") | Q(section__icontains="효능")
     )
 
-    best: Dict[str, Dict[str, Any]] = {}  # item_name -> {score, chunk, age_tag}
+    strict_best: Dict[str, Dict[str, Any]] = {}  # 모든 증상 포함
+    loose_best: Dict[str, Dict[str, Any]] = {}   # 일부만 포함
 
     for c in qs:
         text_norm = _normalize((c.text or "") + " " + (c.item_name or ""))
-        score = 0
 
-        for s in symptoms:
-            if s in text_norm:
-                score += 2
-
-            for cat in SYMPTOM_CATEGORY_MAP.get(s, []):
-                if cat in text_norm:
-                    score += 1
-
-        if score <= 0:
+        base_score, matched = _score_chunk_for_symptoms(text_norm, symptoms)
+        if base_score <= 0:
             continue
 
+        # 연령대 보정
         prod_age = classify_product_age(c.item_name or "")
         age_tag = ""
+        score = base_score
 
         if age_group == "child":
             if prod_age == "child":
@@ -150,14 +176,32 @@ def recommend_by_symptom(question: str, topn: int = 5) -> List[Dict[str, Any]]:
             continue
 
         key = c.item_name
-        if key not in best or score > best[key]["score"]:
-            best[key] = {
+
+        # loose: 증상 일부만 매칭돼도 포함
+        if key not in loose_best or score > loose_best[key]["score"]:
+            loose_best[key] = {
                 "score": score,
                 "chunk": c,
                 "age_tag": age_tag,
+                "matched": matched,
             }
 
-    recs = sorted(best.values(), key=lambda x: -x["score"])[:topn]
+        # strict: 모든 증상을 다 매칭한 경우만
+        if len(matched) == len(symptoms):
+            if key not in strict_best or score > strict_best[key]["score"]:
+                strict_best[key] = {
+                    "score": score,
+                    "chunk": c,
+                    "age_tag": age_tag,
+                    "matched": matched,
+                }
+
+    # 우선 strict 결과 사용, 없으면 loose 사용
+    target = strict_best if strict_best else loose_best
+    if not target:
+        return []
+
+    recs = sorted(target.values(), key=lambda x: -x["score"])[:topn]
     return recs
 
 

@@ -13,3 +13,14 @@ class Chunk(models.Model):
 
     def __str__(self):
         return f"{self.item_name} ({self.section}#{self.chunk_index})"
+
+class QAPair(models.Model):
+    
+    qa_id = models.CharField(max_length=128, unique=True)
+    question = models.TextField()
+    answer = models.TextField()
+    category = models.CharField(max_length=256, blank=True)
+    embedding = VectorField(dimensions=EMB_DIM)
+
+    def __str__(self):
+        return f"QAPair[{self.category}] {self.qa_id}"
