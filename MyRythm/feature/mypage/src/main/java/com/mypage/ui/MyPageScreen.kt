@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
 
-
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
@@ -126,7 +125,6 @@ fun InfoCard(
         }
     }
 }
-
 
 @Composable
 fun MenuItem(title: String, onClick: () -> Unit) {

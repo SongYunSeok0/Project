@@ -11,4 +11,3 @@ interface AuthRepository {
     suspend fun tryRefreshFromLocal(): Result<Boolean>
     suspend fun clearTokens(): Result<Unit>
 }
-

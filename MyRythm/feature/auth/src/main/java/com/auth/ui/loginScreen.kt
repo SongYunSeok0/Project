@@ -7,8 +7,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -34,7 +38,7 @@ import com.ui.theme.Primary
 import com.ui.theme.defaultFontFamily
 import com.ui.theme.loginTheme
 
-//val BalooThambi = FontFamily(Font(R.font.baloo_thambi, FontWeight.Bold))
+val BalooThambi = FontFamily(Font(R.font.baloo_thambi, FontWeight.Bold))
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

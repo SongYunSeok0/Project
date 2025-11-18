@@ -73,7 +73,6 @@ fun AppRoot() {
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 
-    // 탭 이동 함수
     fun goHome() = nav.navigate(MainRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true

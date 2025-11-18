@@ -39,6 +39,8 @@ class AuthViewModel @Inject constructor(
     private val socialLoginUseCase: SocialLoginUseCase
 ) : ViewModel() {
 
+    private val isOfflineMode = false
+
     data class UiState(
         val loading: Boolean = false,
         val isLoggedIn: Boolean = false
@@ -235,6 +237,8 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun isLoggedIn(): Boolean = tokenStore.current().access != null
+}
 
     private fun parseError(t: Throwable?): String? {
         if (t == null) return null
