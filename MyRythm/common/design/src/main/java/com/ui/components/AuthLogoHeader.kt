@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.common.design.R // common 모듈의 R 사용
@@ -28,14 +29,16 @@ fun AuthLogoHeader(
     iconSize: Dp = AuthLogoSize,
     modifier: Modifier = Modifier
 ) {
+    val iconLogoText = stringResource(R.string.auth_iconlogo_description)
+    val textLogoText = stringResource(R.string.auth_textlogo_description)
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth()
     ) {
-        // 아이콘 로고
         Image(
             painter = painterResource(id = R.drawable.logo),
-            contentDescription = "MyRhythm Logo Icon",
+            contentDescription = iconLogoText,
             modifier = Modifier
                 .size(iconSize)
                 .clip(CircleShape)
@@ -43,10 +46,9 @@ fun AuthLogoHeader(
 
         Spacer(Modifier.height(16.dp))
 
-        // 텍스트 로고 이미지
         Image(
             painter = painterResource(id = textLogoResId),
-            contentDescription = "My Rhythm Text Logo",
+            contentDescription = textLogoText,
             modifier = Modifier
                 .width(AuthTextLogoWidth)
                 .height(AuthTextLogoHeight)
@@ -61,9 +63,10 @@ fun AuthLogoIcon(
     iconSize: Dp = 120.dp,
     modifier: Modifier = Modifier
 ) {
+    val miniIconLogoText = stringResource(R.string.auth_mini_iconlogo_description)
     Image(
         painter = painterResource(id = R.drawable.logo),
-        contentDescription = "Mini logo Icon",
+        contentDescription = miniIconLogoText,
         modifier = Modifier
             .size(iconSize)
             .clip(CircleShape)

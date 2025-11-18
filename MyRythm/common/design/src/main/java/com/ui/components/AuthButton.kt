@@ -35,7 +35,6 @@ fun AuthPrimaryButton(
     val buttonShape = MaterialTheme.shapes.medium
     val textStyle = MaterialTheme.typography.labelLarge
 
-    // 테마에서 색상 가져오기
     val buttonColor = if (useLoginTheme) {
         MaterialTheme.loginTheme.loginPrimaryButton
     } else {
@@ -49,7 +48,7 @@ fun AuthPrimaryButton(
     }
 
     val clickColor = if (useLoginTheme) {
-        buttonColor.copy(alpha = 0.5f)  // loginTheme은 별도 clickColor 없음
+        buttonColor.copy(alpha = 0.5f)
     } else {
         MaterialTheme.authTheme.authPrimaryButtonClick
     }
@@ -57,7 +56,6 @@ fun AuthPrimaryButton(
     // 클릭 상태 감지
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-
     // 클릭 효과 적용 여부에 따라 색상 결정
     val finalButtonColor = if (useClickEffect && isPressed) clickColor else buttonColor
 
@@ -76,7 +74,7 @@ fun AuthPrimaryButton(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge
+            style = textStyle
         )
     }
 }
@@ -129,7 +127,7 @@ fun AuthSecondaryButton(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge
+            style = textStyle
         )
     }
 }
@@ -201,41 +199,3 @@ fun AuthActionButton(
         )
     }
 }
-
-// 사용 예시:
-/*
-// 로그인 화면 - 메인 버튼
-AuthPrimaryButton(
-    text = "로그인",
-    onClick = { onLogin() },
-    modifier = Modifier.fillMaxWidth().height(56.dp),
-    useLoginTheme = true
-)
-
-// 로그인 화면 - 서브 버튼
-AuthSecondaryButton(
-    text = "회원가입",
-    onClick = { onSignUp() },
-    modifier = Modifier.fillMaxWidth().height(52.dp),
-    useLoginTheme = true
-)
-
-// 회원가입 화면 - 메인 버튼 (클릭 효과 있음)
-AuthPrimaryButton(
-    text = "회원 가입 완료",
-    onClick = { onComplete() },
-    modifier = Modifier.fillMaxWidth().height(62.dp),
-    useLoginTheme = false,  // authTheme 사용
-    useClickEffect = true
-)
-
-// 전송 버튼 (작은 버튼, 클릭 효과 있음)
-AuthActionButton(
-    text = "전송",
-    onClick = { onSend() },
-    modifier = Modifier.height(56.dp),
-    enabled = phone.isNotBlank(),
-    useLoginTheme = false,
-    useClickEffect = true
-)
-*/

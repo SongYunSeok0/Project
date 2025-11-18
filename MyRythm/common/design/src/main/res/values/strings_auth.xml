@@ -30,6 +30,13 @@
     <string name="auth_testcode">0000</string>
     <string name="auth_signup_loading">가입 중...</string>
     <string name="auth_back">돌아가기</string>
+    <string name="auth_iconlogo_description">MyRhythm Logo Icon</string>
+    <string name="auth_textlogo_description">My Rhythm Text Logo</string>
+    <string name="auth_mini_iconlogo_description">Mini logo Icon</string>
+    <string name="auth_password_hide">비밀번호 숨기기</string>
+    <string name="auth_password_show">비밀번호 보기</string>
+    <string name="auth_male">남성</string>
+    <string name="auth_female">여성</string>
 
     <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
     <string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>

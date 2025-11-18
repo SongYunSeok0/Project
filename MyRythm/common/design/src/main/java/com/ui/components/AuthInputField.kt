@@ -10,10 +10,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.common.design.R
 import com.ui.theme.AuthFieldHeight // Dimension.kt에서 가져옴
 import com.ui.theme.ShadowElevationDefault
 import com.ui.theme.authTheme
@@ -45,21 +47,17 @@ fun AuthInputField(
 ) {
     // 비밀번호 표시/숨김 상태
     var passwordVisible by remember { mutableStateOf(false) }
-
-    // 모든 입력 필드는 MaterialTheme.authTheme의 색상을 사용하도록 고정 (통합)
     val authColors = MaterialTheme.authTheme
-
     val surfaceColor = authColors.authSurface
     val hintColor = authColors.authOnFieldHint
     val textColor = authColors.authOnSurface
     val accentColor = authColors.authPrimaryButton
-
-    // Shape와 Typography는 공통 (Theme.kt에서 MaterialTheme에 제공됨)
-    // extraSmall은 Shape.kt에서 AuthFieldShape(10.dp)로 매핑되어 있습니다.
     val fieldShape = MaterialTheme.shapes.extraSmall
     val textStyle = MaterialTheme.typography.bodyLarge
 
-    // OutlinedTextField는 Material 3의 표준 입력 필드입니다.
+    val passwordShow = stringResource(R.string.auth_password_show)
+    val passwordHide = stringResource(R.string.auth_password_hide)
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -87,7 +85,7 @@ fun AuthInputField(
                             Icons.Filled.VisibilityOff
                         else
                             Icons.Filled.Visibility,
-                        contentDescription = if (passwordVisible) "비밀번호 숨기기" else "비밀번호 보기",
+                        contentDescription = if (passwordVisible) passwordHide else passwordShow,
                         tint = accentColor
                     )
                 }
@@ -100,7 +98,7 @@ fun AuthInputField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = surfaceColor,
             unfocusedContainerColor = surfaceColor,
-            focusedBorderColor = accentColor, // OutlinedTextField의 테두리 색상
+            focusedBorderColor = accentColor,
             unfocusedBorderColor = hintColor.copy(alpha = 0.5f),
             cursorColor = accentColor,
             focusedTextColor = textColor,
@@ -122,7 +120,7 @@ fun AuthInputField(
 fun AuthGenderDropdown(
     value: String,
     onValueChange: (String) -> Unit,
-    hint: String = "성별",
+    hint: String = stringResource(R.string.auth_gender),
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -133,14 +131,16 @@ fun AuthGenderDropdown(
     val hintColor = authColors.authOnFieldHint
     val textColor = authColors.authOnSurface
     val accentColor = authColors.authPrimaryButton
-
     val fieldShape = MaterialTheme.shapes.extraSmall
     val textStyle = MaterialTheme.typography.bodyLarge
 
+    val maleText = stringResource(R.string.auth_male)
+    val femaleText = stringResource(R.string.auth_female)
+
     // 표시할 텍스트
     val displayText = when (value) {
-        "M" -> "남성"
-        "F" -> "여성"
+        "M" -> maleText
+        "F" -> femaleText
         else -> ""
     }
 
@@ -186,14 +186,14 @@ fun AuthGenderDropdown(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("남성", style = textStyle) },
+                text = { Text(maleText, style = textStyle) },
                 onClick = {
                     onValueChange("M")
                     expanded = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("여성", style = textStyle) },
+                text = { Text(femaleText, style = textStyle) },
                 onClick = {
                     onValueChange("F")
                     expanded = false
