@@ -24,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 //import coil.compose.rememberAsyncImagePainter
 import com.common.design.R
@@ -70,6 +71,13 @@ fun ImageAttachmentSection(
     onImageRemove: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val attachImage = stringResource(R.string.mypage_attachimage)
+    val addText = stringResource(R.string.mypage_add)
+    //val attachedImages = stringResource(R.string.mypage_attachedimages)
+    val ImagesText = stringResource(R.string.mypage_images)
+    val deleteImage = stringResource(R.string.mypage_deleteimage)
+
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
@@ -86,7 +94,7 @@ fun ImageAttachmentSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "이미지 첨부",
+                text = attachImage,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -125,13 +133,13 @@ fun ImageAttachmentSection(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.camera),
-                                contentDescription = "이미지 추가",
+                                contentDescription = attachImage,
                                 tint = Color.Gray,
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "추가",
+                                text = addText,
                                 fontSize = 12.sp,
                                 color = Color.Gray
                             )
@@ -148,7 +156,7 @@ fun ImageAttachmentSection(
                     // coil 의존성 추가 필요해서 임시 블록처리
                     /*Image(
                         painter = rememberAsyncImagePainter(uri),
-                        contentDescription = "첨부 이미지 ${index + 1}",
+                        contentDescription = "$attachedImages ${index + 1}",
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(12.dp)),
@@ -164,7 +172,7 @@ fun ImageAttachmentSection(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "이미지 ${index + 1}",
+                            text = "$ImagesText ${index + 1}",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -184,7 +192,7 @@ fun ImageAttachmentSection(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_android_black_24dp), // X 아이콘으로 교체
-                            contentDescription = "이미지 삭제",
+                            contentDescription = deleteImage,
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )

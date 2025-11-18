@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,6 +60,15 @@ enum class InquiryStatus(val text: String, val showAnswerBlock: Boolean) {
     ANSWERED("답변완료", true)
 }
 
+// enum 내부의 문자열은 건드리지 말고 매핑, 이후 ui엔 status.toDisplayText() 사용
+@Composable
+fun InquiryStatus.toDisplayText(): String {
+    return when (this) {
+        InquiryStatus.UNANSWERED -> stringResource(R.string.mypage_inquiry_status_unanswered)
+        InquiryStatus.ANSWERED -> stringResource(R.string.mypage_inquiry_status_answered)
+    }
+}
+
 @Composable
 fun InquiryCard(
     inquiry: Inquiry,
@@ -80,10 +90,14 @@ fun InquiryCard(
         InquiryStatus.UNANSWERED -> Color.Gray
         InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-
     // 날짜는 기본값 (추후 domain에 필드 추가 가능, 현재는 임의 설정)
     val questionDate = "2025/11/03"
     val answerDate = "2025/11/04"
+
+    val faqIcon = stringResource(R.string.mypage_faqicon)
+    val expandText = stringResource(R.string.mypage_expand)
+    val collapseText = stringResource(R.string.mypage_collapse)
+    val answerText = stringResource(R.string.mypage_answer)
 
     Column(
         modifier = modifier
@@ -108,7 +122,7 @@ fun InquiryCard(
         ) {
             Image(
                 painterResource(chatIcon),
-                contentDescription = "FAQ 아이콘",
+                contentDescription = faqIcon,
                 modifier = Modifier.size(24.dp)
             )
 
@@ -138,7 +152,7 @@ fun InquiryCard(
                 ) {
                     // 답변/미답변
                     Text(
-                        text = status.text,
+                        text = status.toDisplayText(),
                         color = when (status) {
                             InquiryStatus.UNANSWERED -> Color.Gray
                             InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -149,7 +163,7 @@ fun InquiryCard(
                     // 업/다운 아이콘
                     Image(
                         painter = painterResource(if (expanded) upIcon else downIcon),
-                        contentDescription = if (expanded) "닫기" else "열기",
+                        contentDescription = if (expanded) collapseText else expandText,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -203,7 +217,7 @@ fun InquiryCard(
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "답변:",
+                            text = answerText,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyLarge
                         )

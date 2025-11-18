@@ -21,10 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.common.design.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.design.AppTopBar
 import com.domain.model.Inquiry
@@ -40,6 +42,8 @@ fun FAQScreen(
     onSubmit: (type: String, title: String, content: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val faqPage = stringResource(R.string.mypage_faqpage)
+
     // rememberPagerState : 탭 간의 전환 상태 관리 용도
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
@@ -48,7 +52,7 @@ fun FAQScreen(
             modifier = modifier.fillMaxSize(),
             topBar = {
                 AppTopBar(
-                    title = "문의사항",
+                    title = faqPage,
                     showBack = true,
                     onBackClick = {}
                 )
@@ -85,10 +89,11 @@ fun FAQScreenWrapper(
 // 0번 탭 - 나의 문의 내역 화면 (InquiryHistory)+컴포넌트 FAQInquiryCard.kt 호출
 @Composable
 private fun InquiryHistory(
-    inquiries: List<Inquiry>
+    viewModel: MyPageViewModel
+    //inquiries: List<Inquiry>
 ) {
     //실제 코드에선 뷰모델로 연결하기
-    //val inquiries by viewModel.inquiries.collectAsState()
+    val inquiries by viewModel.inquiries.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -109,7 +114,10 @@ private fun InquiryHistory(
 @Composable
 private fun FAQTabRow(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
-    val tabs = listOf("나의 문의 내역", "1:1 문의하기")
+    val tabs = listOf(
+        stringResource(id = R.string.mypage_myinquirylist),
+        stringResource(id = R.string.mypage_one_on_one_inquiry)
+    )
 
     PrimaryTabRow(
         selectedTabIndex = pagerState.currentPage,
@@ -128,7 +136,7 @@ private fun FAQTabRow(pagerState: PagerState) {
             Tab(
                 selected = pagerState.currentPage == index,
                 onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                selectedContentColor = Color(0xFF6AE0D9),
+                selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = Color.Gray,
                 modifier = Modifier.height(50.dp)
             ) {
@@ -155,12 +163,14 @@ private fun FAQTabContent(
     // HorizontalPager: 좌우 스와이프 전환이 가능한 화면 구성
     HorizontalPager(state = pagerState) { index ->
         when (index) {
-            0 -> InquiryHistory(inquiries = inquiries)
+            0 -> InquiryHistory(viewModel = viewModel)  //프리뷰용은 inquiries=inquiries
             1 -> NewInquiryForm(onSubmit)
         }
     }
 }
 
+/*
+프리뷰용
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
 fun FAQScreenWithSampleDataPreview() {
@@ -204,4 +214,4 @@ fun FAQScreenWithSampleDataPreview() {
             }
         }
     }
-}
+}*/
