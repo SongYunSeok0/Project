@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.common.design.R
 
 @Composable
-fun HeartReportScreen() {
+fun HeartReportScreen(userId: String?) {
     Scaffold { innerPadding ->
         Box(
             modifier = Modifier
@@ -157,5 +157,5 @@ fun HeartReportScreen() {
 @Preview(widthDp = 392, heightDp = 1271)
 @Composable
 private fun HeartReportScreenPreview() {
-    HeartReportScreen()
+    HeartReportScreen(userId = null)
 }

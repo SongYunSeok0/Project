@@ -79,7 +79,7 @@ fun AppRoot() {
         launchSingleTop = true
         restoreState = true
     }
-    fun goMyPage() = nav.navigate(MyPageRoute) {
+    fun goMyPage() = nav.navigate(MyPageRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
@@ -150,12 +150,12 @@ private fun titleFor(routeName: String) = when (routeName) {
     else -> "마이 리듬"
 }
 
-private fun tabFor(routeName: String) = when (routeName) {
-    MyPageRoute::class.qualifiedName -> "MyPage"
-    SchedulerRoute::class.qualifiedName,
-    CameraRoute::class.qualifiedName,
-    OcrRoute::class.qualifiedName,
-    RegiRoute::class.qualifiedName   -> "Schedule"
-    MainRoute::class.qualifiedName   -> "Home"
+private fun tabFor(routeName: String) = when {
+    routeName.startsWith(MyPageRoute::class.qualifiedName.orEmpty()) -> "MyPage"
+    routeName.startsWith(SchedulerRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(CameraRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(OcrRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(RegiRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(MainRoute::class.qualifiedName.orEmpty()) -> "Home"
     else -> "Other"
 }

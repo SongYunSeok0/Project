@@ -61,6 +61,7 @@ fun FAQScreen(
 // 뷰모델진입점
 @Composable
 fun FAQScreenWrapper(
+    userId: String?,
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
     FAQScreen(
