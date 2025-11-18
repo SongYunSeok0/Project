@@ -64,6 +64,7 @@ fun MainScreen(
                 onClick = onOpenChatBot,
                 modifier = Modifier.weight(1f).height(140.dp)
             )
+
             MainFeatureCard(
                 title = "스케줄러",
                 bg = Color(0x33EB80FF),

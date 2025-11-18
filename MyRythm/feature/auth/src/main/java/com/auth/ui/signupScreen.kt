@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.viewmodel.AuthViewModel
 import com.domain.model.SignupRequest
 import com.ui.components.AuthActionButton
@@ -73,7 +74,7 @@ fun SignupScreen(
     var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
     var code by rememberSaveable { mutableStateOf("") }
 
-    val ui = viewModel.state.collectAsState().value
+    val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -440,41 +441,3 @@ private fun SignupPreview() {
         SignupScreen()
     }
 }
-/*
-@Preview(showBackground = true)
-@Composable
-private fun SignupScreenPreview() {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Primary
-        ),
-        typography = MaterialTheme.typography.copy(
-            labelLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            // 입력 필드와 본문 글씨
-            bodyLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            // 안내메시지 등 작은 글씨
-            bodySmall = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.25.sp
-            )
-        )
-    ) {
-        SignupScreen()
-    }
-}
-*/

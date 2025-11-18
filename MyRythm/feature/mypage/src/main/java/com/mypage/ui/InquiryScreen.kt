@@ -1,5 +1,6 @@
 package com.mypage.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,57 +11,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.mypage.viewmodel.MyPageViewModel
 import com.ui.components.AppSelectableButton
 
-// 1번탭 - 1:1 문의하기 - 1:1 문의 작성 화면
-
-/*
-1117 프리뷰용+중복로직이라고 해서 일단 주석처리
-@Composable
-fun InquiryScreen() {
-    // 상위에서 상태 관리
-    val inquiryList = remember { mutableStateListOf<Inquiry>() }
-
-    AppTheme {
-        Column(
-            modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .background(MaterialTheme.colorScheme.background)
-        ) {
-            // NewInquiryForm
-            NewInquiryForm { type, title, content ->
-                // 제출 시 리스트에 추가
-                inquiryList.add(
-                    Inquiry(
-                        type = type,
-                        title = title,
-                        content = content
-                    )
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // InquiryHistory
-            InquiryHistoryList(inquiries = inquiryList)
-        }
-    }
-}
-
-@Composable
-fun InquiryHistoryList(inquiries: List<com.domain.model.Inquiry>) {
-    Column {
-        inquiries.forEach { inquiry ->
-            //FAQItem(inquiry = inquiry)   // ✅ 통째로 전달
-            InquiryCard(inquiry = inquiry)
-        }
-    }
-}
-*/
 @Composable
 fun InquiryTypeSelector(
     selectedType: String,
@@ -100,18 +58,38 @@ fun InquiryTypeSelector(
 }
 
 @Composable
-fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> Unit) {
+fun NewInquiryForm(
+    viewModel: MyPageViewModel = hiltViewModel()
+) {
     var selectedType by remember { mutableStateOf("일반 문의") }
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-    //var images by remember { mutableStateOf(listOf<Uri>()) }
+
+    val context = LocalContext.current
+
+    // 🔥 ViewModel 이벤트 수신
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is MyPageEvent.InquirySubmitSuccess -> {
+                    Toast.makeText(context, "문의가 등록되었습니다!", Toast.LENGTH_SHORT).show()
+                }
+
+                is MyPageEvent.InquirySubmitFailed -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+
+                else -> Unit
+            }
+        }
+    }
 
     Column {
-        // 문의 유형 선택
         InquiryTypeSelector(
             selectedType = selectedType,
             onTypeSelected = { selectedType = it }
         )
+
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
@@ -121,9 +99,8 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
 
             Text(
                 text = "제목",
-                style = MaterialTheme.typography.titleMedium, // AppTheme 기반 폰트 적용
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.align(Alignment.Start)
             )
             InquiryTextField(
                 value = title,
@@ -133,12 +110,10 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
                 maxLines = 1
             )
 
-            // 내용 입력 (3번 InquiryTextField 컴포넌트)
             Text(
                 text = "내용",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.align(Alignment.Start)
             )
             InquiryTextField(
                 value = content,
@@ -147,45 +122,17 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
                 height = 150.dp
             )
 
-            /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)
-        ImageAttachmentSection(
-            images = images,
-            onImagesSelected = { newImages ->
-                images = newImages
-            },
-            onImageRemove = { index ->
-                images = images.filterIndexed { i, _ -> i != index }
-            }
-        )
-*/
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .requiredHeight(height = 91.dp)
-            ) {
-                Column {
-                    Text(
-                        text = "• 영업일 기준 1-2일 이내에 답변드립니다.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 1.63.em,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(10.dp)
-                    )
-                    Text(
-                        text = "• 개인정보가 포함된 문의는 1:1 문의를 이용해주세요.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 1.63.em,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .requiredWidth(width = 310.dp)
-                    )
-                }
-            }
             SubmitButton {
                 if (title.isNotBlank() && content.isNotBlank()) {
-                    onSubmit(selectedType, title, content)
+                    viewModel.addInquiry(
+                        type = selectedType,
+                        title = title,
+                        content = content
+                    )
+
+                    // 입력 초기화
                     title = ""
                     content = ""
                 }
@@ -193,6 +140,7 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
         }
     }
 }
+
 
 @Composable
 fun SubmitButton(

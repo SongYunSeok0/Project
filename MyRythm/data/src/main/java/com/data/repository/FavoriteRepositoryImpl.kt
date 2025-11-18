@@ -17,20 +17,28 @@ import javax.inject.Singleton
 @Singleton
 class FavoriteRepositoryImpl @Inject constructor(
     private val dao: FavoriteDao,
-    private val ioDispatcher: CoroutineDispatcher
+    private val io: CoroutineDispatcher = Dispatchers.IO
 ) : FavoriteRepository {
 
-    override suspend fun insertFavorite(favorite: Favorite) = withContext(Dispatchers.IO) {
-        dao.insertFavorite(favorite.toEntity())
-    }
+    override suspend fun insertFavorite(favorite: Favorite) =
+        withContext(io) {
+            dao.insertFavorite(favorite.toEntity())
+        }
 
-    override suspend fun deleteFavorite(keyword: String, userId: String) = withContext(Dispatchers.IO) {
-        dao.deleteFavorite(keyword, userId)
-    }
-
-    override fun getFavorites(userId: String): Flow<List<Favorite>> =
-        dao.getFavorites(userId).map { list -> list.map { it.toDomain() } }.flowOn(ioDispatcher)
+    override suspend fun deleteFavorite(keyword: String, userId: String) =
+        withContext(io) {
+            dao.deleteFavorite(keyword, userId)
+        }
 
     override suspend fun isFavorite(keyword: String, userId: String): Boolean =
-        withContext(Dispatchers.IO) { dao.isFavorite(keyword, userId) }
+        withContext(io) {
+            dao.isFavorite(keyword, userId)
+        }
+
+    override fun getFavorites(userId: String): Flow<List<Favorite>> =
+        dao.getFavorites(userId)
+            .map { list -> list.map { it.toDomain() } }
+            .flowOn(io)
 }
+
+

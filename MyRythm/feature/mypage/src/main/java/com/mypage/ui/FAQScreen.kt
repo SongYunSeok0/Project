@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.design.AppTopBar
 import com.domain.model.Inquiry
 import com.mypage.viewmodel.MyPageViewModel
@@ -145,7 +146,7 @@ private fun FAQTabContent(
     HorizontalPager(state = pagerState) { index ->
         when (index) {
             0 -> InquiryHistory(inquiries = inquiries)
-            1 -> NewInquiryForm(onSubmit)
+            1 -> NewInquiryForm()
         }
     }
 }
@@ -185,9 +186,9 @@ fun FAQScreenWithSampleDataPreview() {
                 HorizontalPager(state = pagerState) { index ->
                     when (index) {
                         0 -> InquiryHistory(inquiries = inquiriesState)
-                        1 -> NewInquiryForm { type, title, content ->
-                            inquiriesState.add(Inquiry(type = type, title = title, content = content))
-                        }
+                        1 -> NewInquiryForm(
+
+                        )
                     }
                 }
             }

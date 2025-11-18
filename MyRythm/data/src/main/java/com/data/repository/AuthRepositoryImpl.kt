@@ -11,6 +11,7 @@ import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
 import com.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
@@ -18,7 +19,7 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val api: UserApi,
     private val tokenStore: TokenStore,
-    private val io: CoroutineDispatcher
+    private val io: CoroutineDispatcher = Dispatchers.IO
 ) : AuthRepository {
 
     override suspend fun login(id: String, pw: String): Result<AuthTokens> =

@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.viewmodel.AuthViewModel
 import com.common.design.R
 import com.ui.components.AuthInputField
@@ -35,22 +36,20 @@ import com.ui.theme.Primary
 import com.ui.theme.defaultFontFamily
 import com.ui.theme.loginTheme
 
-//val BalooThambi = FontFamily(Font(R.font.baloo_thambi, FontWeight.Bold))
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = hiltViewModel(),
-    onLogin: (String, String) -> Unit = { _, _ -> },
+    onLogin: (String, String) -> Unit = {_,_ ->},
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {},
     onSocialSignUp: (String, String) -> Unit = { _, _ -> }
 ) {
-    var id by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    val form by viewModel.form.collectAsStateWithLifecycle()
 
-    val ui = viewModel.state.collectAsState().value
+    val ui by viewModel.state.collectAsStateWithLifecycle()
+
     val snackbar = remember { SnackbarHostState() }
 
     val context = LocalContext.current
@@ -59,7 +58,7 @@ fun LoginScreen(
         viewModel.events.collect { msg -> snackbar.showSnackbar(msg) }
     }
     LaunchedEffect(ui.isLoggedIn) {
-        if (ui.isLoggedIn) onLogin(id, password)
+        if (ui.isLoggedIn) onLogin(form.email, form.password)
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
@@ -83,8 +82,8 @@ fun LoginScreen(
                     Spacer(Modifier.height(10.dp))
 
                     AuthInputField(
-                        value = id,
-                        onValueChange = { id = it },
+                        value = form.email,
+                        onValueChange = { viewModel.updateEmail(it) },
                         hint = "아이디",
                         modifier = Modifier.fillMaxWidth(),
                         imeAction = ImeAction.Next
@@ -94,8 +93,8 @@ fun LoginScreen(
 
                     // AuthInputField.kt 컴포넌트 불러오기 : 비밀번호 토글 버튼 로직은 AuthInputField.kt 컴포넌트 내에 존재함
                     AuthInputField(
-                        value = password,
-                        onValueChange = { password = it },
+                        value = form.password,
+                        onValueChange = { viewModel.updatePW(it) },
                         hint = "비밀번호",
                         isPassword = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -121,46 +120,11 @@ fun LoginScreen(
                     Spacer(Modifier.height(18.dp))
 
 
-                    //// AuthButton.kt 컴포넌트 불러오기 : 클릭 효과(useClickEffect) 포함, 로그인 테마 적용
-                    //                AuthPrimaryButton( 부분 병합미완
-
-                    /*병합 전 LoginViewModel과 연결되어있던 원래 코드
-                    AuthPrimaryButton(
-                        text = "로그인",
-                        onClick = {
-                            viewModel.login(id, password) { success, message ->
-                                if (success) {
-                                    onLogin(id, password)
-                                } else {
-                                    Log.e("LoginScreen", "로그인 실패: $message")
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        useLoginTheme = true,
-                        useClickEffect = true
-                    )*/
-
                     //1112 수정버전
                     AuthPrimaryButton(
                         // 💡 텍스트 설정: 로딩 상태에 따라 버튼 텍스트가 바뀌도록 설정해야 합니다.
                         text = if (ui.loading) "로그인 중..." else "Login",
-                        onClick = {
-                            // [유효성 검사]: 컴포넌트 내부가 아닌 여기(화면 로직)에서 처리하는 것이 좋습니다.
-                            if (id.isBlank() || password.isBlank()) {
-                                viewModel.emitInfo("ID와 비밀번호를 입력해주세요.") // 사용자에게 안내
-                                return@AuthPrimaryButton
-                            }
-                            // ✅ 뷰모델의 콜백 없는 login 함수 호출
-                            // 결과 처리는 뷰모델의 _events와 _state를 Composable에서 관찰하여 처리됩니다.
-                            viewModel.login(id, password)
-
-                            // ⚠️ 주의: 이 방식으로는 onLogin(화면 이동)을 즉시 처리할 수 없으므로,
-                            // onLogin 호출은 반드시 Composable이 viewModel.events를 관찰하는 곳에 구현되어야 합니다.
-                        },
-
+                        onClick = { viewModel.login() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -170,29 +134,7 @@ fun LoginScreen(
                         useLoginTheme = true,
                         useClickEffect = true
                     )
-                    /* 1112 블록
-                    Button(
-                        onClick = {
-                            if (id.isBlank() || password.isBlank()) {
-                                onLogin(id, password)   // ✅ 입력 없이 진행
-                                viewModel.emitInfo("입력 없이 진행했습니다")
-                                return@Button
-                            }
-                            viewModel.login(id, password)
-                        },
-                        enabled = !ui.loading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xff6ac0e0)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            if (ui.loading) "로그인 중..." else "Login",
-                            color = Color.White,
-                            fontSize = 24.sp
-                        )
-                    }*/
+
 
                     // 💡 [여기에 임시 로그인 버튼 추가] ---------------------------------------------
                     Spacer(Modifier.height(8.dp)) // 기존 버튼과의 간격
@@ -200,7 +142,7 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             // ⚠️ 디버그 및 테스트 용도: 유효성 검사 없이 즉시 메인 화면으로 이동
-                            onLogin("test_id", "test_pw")
+                            onLogin(form.email, form.password)
                             viewModel.emitInfo("테스트 로그인으로 즉시 이동합니다.")
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary), // 눈에 띄게 다른 색상 사용
@@ -272,7 +214,7 @@ fun LoginScreen(
                                         onResult = { success, message ->
                                             if (success) {
                                                 // 소셜 로그인 성공 시 onLogin 호출
-                                                onLogin("", "")
+                                                onLogin(form.email, form.password)
                                             } else {
                                                 Log.e("LoginScreen", "카카오 로그인 실패: $message")
                                             }
@@ -304,7 +246,7 @@ fun LoginScreen(
                                         onResult = { success, message ->
                                             if (success) {
                                                 // 소셜 로그인 성공 시 onLogin 호출
-                                                onLogin("", "")
+                                                onLogin(form.email, form.password)
                                             } else {
                                                 Log.e("LoginScreen", "구글 로그인 실패: $message")
                                             }

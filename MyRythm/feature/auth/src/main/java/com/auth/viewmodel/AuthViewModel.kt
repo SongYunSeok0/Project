@@ -45,6 +45,11 @@ class AuthViewModel @Inject constructor(
         val isLoggedIn: Boolean = false
     )
 
+    data class FormState(
+        val email: String="",
+        val password: String=""
+    )
+
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state
 
@@ -54,22 +59,27 @@ class AuthViewModel @Inject constructor(
     private fun emit(msg: String) = _events.tryEmit(msg)
     fun emitInfo(msg: String) = emit(msg)
 
+    private val _form = MutableStateFlow(FormState())
+    val form: StateFlow<FormState> = _form
+
+    fun updateEmail(v: String) = _form.update{it.copy(email=v)}
+    fun updatePW(v: String) = _form.update{it.copy(password=v)}
+
     // -------------------------------------------------------------------------
     // 이메일 로그인 + FCM 등록
     // -------------------------------------------------------------------------
-    fun login(email: String, password: String) = viewModelScope.launch(Dispatchers.IO) {
+    fun login() = viewModelScope.launch {
+        val email = form.value.email
+        val pw = form.value.password
+
+        if(email.isBlank() || pw.isBlank()){
+            emit("ID와 비번을 입력하세요")
+            return@launch
+        }
         _state.update { it.copy(loading = true) }
 
-        val result = runCatching { loginUseCase(email, password) }
-        val ok = result.getOrNull() != null
-
-        if (ok) {
-            // ⭐ FCM 토큰 서버 등록
-            PushManager.fcmToken?.let { token ->
-                runCatching { registerFcmTokenUseCase(token) }
-                    .onFailure { emit("푸시 토큰 등록 실패") }
-            }
-        }
+        val result = loginUseCase(email, pw)
+        val ok = result.isSuccess
 
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
 
@@ -79,7 +89,7 @@ class AuthViewModel @Inject constructor(
     // -------------------------------------------------------------------------
     // 회원가입
     // -------------------------------------------------------------------------
-    fun signup(req: SignupRequest) = viewModelScope.launch(Dispatchers.IO) {
+    fun signup(req: SignupRequest) = viewModelScope.launch {
         _state.update { it.copy(loading = true) }
 
         val ok = runCatching { signupUseCase(req) }.getOrDefault(false)
@@ -91,7 +101,7 @@ class AuthViewModel @Inject constructor(
     // -------------------------------------------------------------------------
     // 토큰 갱신
     // -------------------------------------------------------------------------
-    fun tryRefresh() = viewModelScope.launch(Dispatchers.IO) {
+    fun tryRefresh() = viewModelScope.launch {
         val ok = runCatching { refreshUseCase() }.getOrDefault(false)
         if (ok) emit("토큰 갱신")
     }
@@ -99,7 +109,7 @@ class AuthViewModel @Inject constructor(
     // -------------------------------------------------------------------------
     // 로그아웃
     // -------------------------------------------------------------------------
-    fun logout() = viewModelScope.launch(Dispatchers.IO) {
+    fun logout() = viewModelScope.launch {
         runCatching { logoutUseCase() }
         _state.update { it.copy(isLoggedIn = false) }
         emit("로그아웃 완료")
@@ -238,7 +248,7 @@ class AuthViewModel @Inject constructor(
         onResult: (Boolean, String) -> Unit,
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             val call = runCatching {
                 socialLoginUseCase(
                     provider = provider,
