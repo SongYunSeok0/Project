@@ -3,18 +3,20 @@ package com.scheduler.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-object SchedulerRoute
+data class SchedulerRoute(val userId: String)
 
 @Serializable
 data class RegiRoute(
     val userId: String,
-    val drugNamesCsv: String? = null,
-    val times: Int? = null,
-    val days: Int? = null
+    val prescriptionId: Long
 )
 
 @Serializable
-data class OcrRoute(val path: String)
+data class OcrRoute(
+    val userId: String,
+    val path: String
+)
 
 @Serializable
-object CameraRoute
+data class CameraRoute(val userId: String)
+

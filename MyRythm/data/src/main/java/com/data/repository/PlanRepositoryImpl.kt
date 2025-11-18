@@ -1,20 +1,22 @@
 package com.data.repository
 
 import com.data.db.dao.PlanDao
-import com.data.mapper.toEntities
+import com.data.mapper.toDomain              // DB → Domain
+import com.data.mapper.toDomainLocal
+import com.data.mapper.toEntity             // Domain → Entity
 import com.data.network.api.PlanApi
-import com.data.network.dto.plan.PlanResponse
-import com.data.network.mapper.toCreateRequest
+import com.data.network.dto.plan.PlanCreateRequest
+import com.data.network.mapper.toDomain
 import com.data.network.mapper.toUpdateRequest
+import com.data.network.mapper.toDomain as toRemoteDomain  // Remote → Domain (alias)
 import com.domain.model.Plan
 import com.domain.repository.PlanRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.data.mapper.toDomain as toDomainLocal
-import com.data.network.mapper.toDomain as toDomainRemote
 
 @Singleton
 class PlanRepositoryImpl @Inject constructor(
@@ -22,39 +24,61 @@ class PlanRepositoryImpl @Inject constructor(
     private val api: PlanApi
 ) : PlanRepository {
 
-    override fun observePlans(userId: String) =
-        dao.observePlans(userId).map { rows -> rows.map { it.toDomainLocal() } }
+    // ----------------------------
+    // 🔥 로컬 DB → 도메인
+    // ----------------------------
+    override fun observePlans(userId: Long): Flow<List<Plan>> =
+        dao.observePlans(userId).map { list ->
+            list.map { it.toDomainLocal() }
+        }
 
-    override suspend fun refresh(userId: String) = withContext(Dispatchers.IO) {
-        val remote: List<PlanResponse> = api.getPlans()
+    // ----------------------------
+    // 🔥 서버 → 로컬 동기화
+    // ----------------------------
+    override suspend fun refresh(userId: Long) = withContext(Dispatchers.IO) {
+        val remote = api.getPlans()
         dao.deleteAllByUser(userId)
         remote.forEach { resp ->
-            val plan = resp.toDomainRemote()
-            val (entity, meds, times) = plan.toEntities(userId)
-            dao.insertAll(entity, meds, times)
+            dao.insert(resp.toDomain().toEntity())
         }
     }
 
-    override suspend fun create(userId: String, plan: Plan): Long = withContext(Dispatchers.IO) {
-        val newId = api.createPlan(plan.toCreateRequest(userId)).id
-        val (entity, meds, times) = plan.copy(id = newId).toEntities(userId)
-        dao.insertAll(entity, meds, times)
-        newId
+
+    // ----------------------------
+    // 🔥 서버로 새로운 Plan 생성
+    // ----------------------------
+    override suspend fun create(
+        prescriptionId: Long?,
+        medName: String,
+        takenAt: Long,
+        mealTime: String?,
+        note: String?,
+        taken: Long?
+    ) {
+        val body = PlanCreateRequest(
+            prescriptionId = prescriptionId,
+            medName = medName,
+            takenAt = takenAt,
+            mealTime = mealTime,
+            note = note,
+            taken = taken
+        )
+        api.createPlan(body)
     }
 
-    override suspend fun update(userId: String, plan: Plan) {
-        withContext(Dispatchers.IO) {
-            api.updatePlan(plan.id, plan.toUpdateRequest())
-            dao.deletePlan(plan.id)
-            val (e, meds, times) = plan.toEntities(userId)
-            dao.insertAll(e, meds, times)
-        }
+    // ----------------------------
+    // 🔥 수정
+    // ----------------------------
+    override suspend fun update(userId: Long, plan: Plan) {
+        api.updatePlan(plan.id, plan.toUpdateRequest())
+        dao.update(plan.toEntity())
     }
 
-    override suspend fun delete(userId: String, planId: Long) {
-        withContext(Dispatchers.IO) {
-            api.deletePlan(planId)
-            dao.deletePlan(planId)
-        }
+    // ----------------------------
+    // 🔥 삭제
+    // ----------------------------
+    override suspend fun delete(userId: Long, planId: Long) {
+        api.deletePlan(planId)
+        dao.deleteById(planId)
     }
 }

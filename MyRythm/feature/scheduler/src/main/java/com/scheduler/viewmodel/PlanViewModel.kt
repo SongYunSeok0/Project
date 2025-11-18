@@ -1,31 +1,28 @@
 package com.scheduler.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.domain.model.MealRelation
 import com.domain.model.Plan
-import com.domain.model.PlanType
-import com.domain.usecase.plan.CreatePlanUseCase
-import com.domain.usecase.plan.DeletePlanUseCase
-import com.domain.usecase.plan.GetPlansUseCase
-import com.domain.usecase.plan.RefreshPlansUseCase
-import com.domain.usecase.plan.UpdatePlanUseCase
+import com.domain.repository.PlanRepository
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import javax.inject.Inject
 
 @HiltViewModel
 class PlanViewModel @Inject constructor(
-    private val getPlans: GetPlansUseCase,
-    private val refreshPlans: RefreshPlansUseCase,
-    private val createPlan: CreatePlanUseCase,
-    private val updatePlan: UpdatePlanUseCase,
-    private val deletePlan: DeletePlanUseCase
+    private val repository: PlanRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -40,117 +37,138 @@ class PlanViewModel @Inject constructor(
     private val _itemsByDate = MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
     val itemsByDate: StateFlow<Map<LocalDate, List<MedItem>>> = _itemsByDate.asStateFlow()
 
-    private var observeJob: Job? = null
-
+    // ✅ Plan 목록 로드
     fun load(userId: String) {
-        observeJob?.cancel()
-        observeJob = viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
+        if (userId.isBlank()) {
+            Log.e("PlanViewModel", "❌ userId가 비어있음")
+            return
+        }
 
-            // observe
-            launch {
-                getPlans(userId)
-                    .catch { e -> _uiState.update { it.copy(error = e.message) } }
-                    .collect { list ->
-                        _uiState.update { it.copy(plans = list) }
-                        _itemsByDate.value = makeItemsByDate(list)
-                    }
-            }
+        val uid = userId.toLongOrNull()
+        if (uid == null) {
+            Log.e("PlanViewModel", "❌ userId 숫자 변환 실패: $userId")
+            return
+        }
 
-            // refresh
-            runCatching { refreshPlans(userId) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-
-            _uiState.update { it.copy(loading = false) }
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.observePlans(uid)
+                .catch { e -> _uiState.update { it.copy(error = e.message) } }
+                .collect { list ->
+                    _uiState.update { it.copy(plans = list) }
+                    _itemsByDate.value = makeItemsByDate(list)
+                }
         }
     }
 
-    fun create(
-        userId: String,
-        type: PlanType,
-        diseaseName: String?,
-        supplementName: String?,
-        dosePerDay: Int,
-        mealRelation: MealRelation?,
-        memo: String?,
-        startDay: Long,
-        endDay: Long?,
-        meds: List<String>,
-        times: List<String>
+    // ✅ Plan 생성 (서버에는 userId 안 보내고, 필요하면 끝에서 refresh에만 사용)
+    fun createPlan(
+        userId: Long,          // 로컬 refresh 용 (서버에는 안 감)
+        prescriptionId: Long?,
+        medName: String,
+        takenAt: Long,
+        mealTime: String?,
+        note: String?,
+        taken: Long?
     ) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
-            val plan = Plan(
-                id = 0L,
-                type = type,
-                diseaseName = diseaseName,
-                supplementName = supplementName,
-                dosePerDay = dosePerDay,
-                mealRelation = mealRelation,
-                memo = memo,
-                startDay = startDay,
-                endDay = endDay,
-                meds = if (type == PlanType.DISEASE) meds.filter { it.isNotBlank() } else emptyList(),
-                times = times
-            )
-            runCatching { createPlan(userId, plan) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-            _uiState.update { it.copy(loading = false) }
+        if (userId <= 0L) {
+            Log.e("PlanViewModel", "❌ createPlan: userId <= 0")
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _uiState.update { it.copy(loading = true, error = null) }
+
+                Log.e(
+                    "PlanViewModel",
+                    """
+                    🔥 서버로 보낼 값 =================
+                    prescriptionId = $prescriptionId
+                    medName        = $medName
+                    takenAt        = $takenAt
+                    mealTime       = $mealTime
+                    note           = $note
+                    taken          = $taken
+                    =================================
+                    """.trimIndent()
+                )
+
+                // 👉 여기서는 domain 레이어 함수만 호출
+                repository.create(
+                    prescriptionId = prescriptionId,
+                    medName = medName,
+                    takenAt = takenAt,
+                    mealTime = mealTime,
+                    note = note,
+                    taken = taken
+                )
+
+                // 필요하면 로컬 DB 동기화
+                repository.refresh(userId)
+
+                Log.d("PlanViewModel", "💾 Plan 생성 완료: $medName")
+            } catch (e: Exception) {
+                Log.e("PlanViewModel", "❌ createPlan 실패", e)
+                _uiState.update { it.copy(error = e.message) }
+            } finally {
+                _uiState.update { it.copy(loading = false) }
+            }
         }
     }
 
-    fun update(userId: String, plan: Plan) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
-            runCatching { updatePlan(userId, plan) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-            _uiState.update { it.copy(loading = false) }
+    fun updatePlan(userId: Long, plan: Plan) {
+        if (userId <= 0L) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _uiState.update { it.copy(loading = true, error = null) }
+                repository.update(userId, plan)
+                Log.d("PlanViewModel", "✏️ Plan 수정 완료: ${plan.medName}")
+            } catch (e: Exception) {
+                Log.e("PlanViewModel", "❌ updatePlan 실패", e)
+                _uiState.update { it.copy(error = e.message) }
+            } finally {
+                _uiState.update { it.copy(loading = false) }
+            }
         }
     }
 
-    fun delete(userId: String, planId: Long) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
-            runCatching { deletePlan(userId, planId) }
-                .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-            _uiState.update { it.copy(loading = false) }
+    fun deletePlan(userId: Long, planId: Long) {
+        if (userId <= 0L) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _uiState.update { it.copy(loading = true, error = null) }
+                repository.delete(userId, planId)
+                Log.d("PlanViewModel", "🗑️ Plan 삭제 완료: $planId")
+            } catch (e: Exception) {
+                Log.e("PlanViewModel", "❌ deletePlan 실패", e)
+                _uiState.update { it.copy(error = e.message) }
+            } finally {
+                _uiState.update { it.copy(loading = false) }
+            }
         }
     }
 
-    private fun makeItemsByDate(
-        plans: List<Plan>,
-        zone: ZoneId = ZoneId.systemDefault()
-    ): Map<LocalDate, List<MedItem>> {
+    private fun makeItemsByDate(plans: List<Plan>): Map<LocalDate, List<MedItem>> {
+        val zone = ZoneId.systemDefault()
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
-        fun dateRange(startMs: Long, endMs: Long?): Sequence<LocalDate> {
-            val s = Instant.ofEpochMilli(startMs).atZone(zone).toLocalDate()
-            val e = Instant.ofEpochMilli(endMs ?: startMs).atZone(zone).toLocalDate()
-            return generateSequence(s) { prev -> if (prev.isBefore(e)) prev.plusDays(1) else null }
-                .plus(e)
-        }
-
         plans.forEach { p ->
-            val names =
-                if (p.type == PlanType.DISEASE)
-                    (p.meds.takeIf { it.isNotEmpty() } ?: listOf(p.diseaseName ?: "약"))
-                else listOf(p.supplementName ?: "영양제")
+            val takenAt = p.takenAt ?: return@forEach
+            val instant = Instant.ofEpochMilli(takenAt)
+            val localDateTime = instant.atZone(zone)
+            val localDate = localDateTime.toLocalDate()
+            val localTime = localDateTime.toLocalTime().toString().substring(0, 5)
 
-            val times = p.times.ifEmpty { listOf("08:00") }
-
-            dateRange(p.startDay, p.endDay).forEach { day ->
-                val bucket = out.getOrPut(day) { mutableListOf() }
-                names.forEach { n ->
-                    times.forEach { t ->
-                        bucket += MedItem(
-                            name = n,
-                            time = t,
-                            status = IntakeStatus.SCHEDULED
-                        )
-                    }
-                }
-            }
+            val item = MedItem(
+                name = p.medName,
+                time = localTime,
+                status = IntakeStatus.SCHEDULED
+            )
+            out.getOrPut(localDate) { mutableListOf() }.add(item)
         }
+
         return out.mapValues { (_, v) -> v.sortedBy { it.time } }
     }
 }

@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -93,6 +94,11 @@ dependencies {
 
     //카카오
     implementation("com.kakao.sdk:v2-user:2.11.0")
+    //firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
 
 
 }

@@ -6,7 +6,7 @@ import javax.inject.Inject
 class DeletePlanUseCase @Inject constructor(
     private val repository: PlanRepository
 ) {
-    suspend operator fun invoke(userId: String, planId: Long) {
+    suspend operator fun invoke(userId: Long, planId: Long) {
         repository.delete(userId, planId)
     }
 }

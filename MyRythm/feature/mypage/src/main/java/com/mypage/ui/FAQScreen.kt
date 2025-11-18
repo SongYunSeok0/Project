@@ -44,20 +44,8 @@ fun FAQScreen(
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
     OnlyColorTheme {
-        Scaffold(
-            modifier = modifier.fillMaxSize(),
-            topBar = {
-                AppTopBar(
-                    title = "문의사항",
-                    showBack = true,
-                    onBackClick = {}
-                )
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) { paddingValues ->
             Column(modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
             ) {
                 FAQTabRow(pagerState = pagerState)
 
@@ -66,7 +54,7 @@ fun FAQScreen(
                     onSubmit = onSubmit
                 )
             }
-        }
+
     }
 }
 

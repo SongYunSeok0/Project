@@ -6,6 +6,7 @@ import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.user.SignupUseCase
+import com.domain.usecase.push.RegisterFcmTokenUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,4 +38,10 @@ object UseCaseModule {
     @Singleton
     fun provideSignupUseCase(repo: UserRepository) =
         SignupUseCase(repo)
+
+    @Provides
+    @Singleton
+    fun provideRegisterFcmTokenUseCase(
+        userRepository: UserRepository
+    ) = RegisterFcmTokenUseCase(userRepository)
 }

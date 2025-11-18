@@ -73,7 +73,8 @@ fun AppRoot() {
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 
-    fun goHome() = nav.navigate(MainRoute) {
+    // 탭 이동 함수
+    fun goHome() = nav.navigate(MainRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
@@ -83,7 +84,7 @@ fun AppRoot() {
         launchSingleTop = true
         restoreState = true
     }
-    fun goScheduleFlow() = nav.navigate(CameraRoute) {
+    fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
@@ -123,7 +124,7 @@ fun AppRoot() {
         Box(Modifier.padding(inner)) {
             NavHost(navController = nav, startDestination = AuthGraph) {
                 authNavGraph(nav)
-                mainNavGraph(nav)
+                mainNavGraph(nav, userId)
                 mapNavGraph()
                 newsNavGraph(nav)
                 schedulerNavGraph(nav, userId) // userId 전달

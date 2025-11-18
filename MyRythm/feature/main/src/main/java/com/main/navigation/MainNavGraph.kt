@@ -15,11 +15,11 @@ import com.map.navigation.MapRoute
 import com.news.navigation.NewsRoute
 
 @OptIn(ExperimentalSerializationApi::class)
-fun NavGraphBuilder.mainNavGraph(nav: NavController) {
+fun NavGraphBuilder.mainNavGraph(nav: NavController, userId: String) {
     composable<MainRoute> {
         MainScreen(
-            onOpenChatBot   = { nav.navigate(ChatBotRoute) },
-            onOpenScheduler = { nav.navigate(SchedulerRoute) },
+            onOpenChatBot   = { nav.navigate(ChatBotRoute()) },
+            onOpenScheduler = { nav.navigate(SchedulerRoute(userId)) },
             onOpenSteps     = { nav.navigate(MyPageRoute) },          // 임시: 걸음수 → 마이페이지
             onOpenHeart     = { nav.navigate(HeartReportRoute) },   // 마이페이지 상세
             onOpenMap       = { nav.navigate(MapRoute) },

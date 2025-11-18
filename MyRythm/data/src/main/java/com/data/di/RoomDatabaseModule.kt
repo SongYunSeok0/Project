@@ -7,6 +7,7 @@ import com.data.db.dao.FavoriteDao
 import com.data.db.dao.InquiryDao
 import com.data.db.dao.PlanDao
 import com.data.db.dao.UserDao
+import com.data.db.dao.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,4 +30,5 @@ object RoomDatabaseModule {
     @Provides fun provideFavoriteDao(db: AppRoomDatabase): FavoriteDao = db.favoriteDao()
     @Provides fun providePlanDao(db: AppRoomDatabase): PlanDao = db.planDao()
     @Provides fun provideInquiryDao(db: AppRoomDatabase): InquiryDao = db.inquiryDao()
+    @Provides fun providePrescriptionDao(db: AppRoomDatabase): PrescriptionDao = db.prescriptionDao()
 }
