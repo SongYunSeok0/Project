@@ -5,10 +5,12 @@ import androidx.room.RoomDatabase
 import com.data.db.dao.FavoriteDao
 import com.data.db.dao.InquiryDao
 import com.data.db.dao.PlanDao
+import com.data.db.dao.PrescriptionDao
 import com.data.db.dao.UserDao
 import com.data.db.entity.FavoriteEntity
 import com.data.db.entity.InquiryEntity
 import com.data.db.entity.PlanEntity
+import com.data.db.entity.PrescriptionEntity
 import com.data.db.entity.UserEntity
 
 @Database(
