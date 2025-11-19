@@ -6,10 +6,12 @@ import com.data.mapper.user.asDomain
 import com.data.mapper.user.asEntity
 import com.data.mapper.user.toDomain
 import com.data.mapper.user.toDto
+import com.data.mapper.user.toProfile
 import com.data.network.api.UserApi
 import com.data.network.dto.user.FcmTokenRequestDto
 import com.domain.model.SignupRequest
 import com.domain.model.User
+import com.domain.model.UserProfile
 import com.domain.repository.UserRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -64,5 +66,20 @@ class UserRepositoryImpl @Inject constructor(
             Log.e("Signup", "네트워크 예외", e)
             false
         }
+    }
+
+    override suspend fun getProfile(): UserProfile {
+        val dto = api.getMe()
+        dao.upsert(dto.asEntity())
+        return dto.toProfile()
+    }
+
+
+    override suspend fun updateProfile(profile: UserProfile) {
+        // 서버 업데이트 요청
+        val updatedDto = api.updateProfile(profile.toDto())
+
+        // DB 업데이트
+        dao.upsert(updatedDto.asEntity())
     }
 }

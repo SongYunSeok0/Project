@@ -29,7 +29,7 @@ fun NavGraphBuilder.mypageNavGraph(
 
     composable<EditProfileRoute> { backStackEntry ->
         val args = backStackEntry.toRoute<EditProfileRoute>()
-        EditScreen(userId = args.userId, onDone = { nav.navigateUp() })
+        EditScreen(onDone = { nav.navigateUp() })
     }
 
     composable<HeartReportRoute> { backStackEntry ->

@@ -10,6 +10,7 @@ import com.data.network.dto.user.RefreshRequest
 import com.data.network.dto.user.RefreshResponse
 import com.data.network.dto.user.SignupResponse
 import com.data.network.dto.user.UserSignupRequest
+import com.data.network.dto.user.UserUpdateDto
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -41,4 +42,8 @@ interface UserApi {
 
     @POST("users/fcm/")
     suspend fun registerFcmToken(@Body body: FcmTokenRequestDto): Response<Unit>
+
+    @PUT("users/me/")
+    suspend fun updateProfile(@Body dto: UserUpdateDto): UserDto
+
 }
