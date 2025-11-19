@@ -13,6 +13,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+FIREBASE_CREDENTIAL_PATH = env(
+    "FIREBASE_CREDENTIAL_PATH",
+    default=str(BASE_DIR / "smart_med_firebase_admin.json"),
+)
+
+
 # CSRF 허용 출처 (개발용)
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",

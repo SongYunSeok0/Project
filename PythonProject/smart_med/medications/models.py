@@ -76,13 +76,6 @@ class Plan(models.Model):
     def __str__(self):
         return f"{self.user} , {self.med_name} ({self.taken_at})"
 
-    class Meta:
-        ordering = ["-due_at"]
-
-    def __str__(self):
-        return f"{self.medication.name} - {self.status}"
-
-
 
 #약 정보 (공공데이터)
 class DrugInfo(models.Model):
