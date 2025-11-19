@@ -6,5 +6,8 @@ data class UserProfile(
     val weight: Double?,
     val age: Int?,
     val gender: String?,
+    val phone: String?,
+    val prot_phone: String?,
+    val email: String,
 )
 

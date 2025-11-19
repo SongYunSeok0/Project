@@ -37,10 +37,9 @@ fun EditScreen(
     var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
     var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
     var age by remember(profile) { mutableStateOf(profile?.age?.toString() ?: "") }
-    var selectedGender by remember(profile) { mutableStateOf(profile?.gender ?: "남성") }
-
-    // ❗ 혈액형은 아직 UserProfile에 없음 → 임시 유지
-    var selectedBloodType by remember { mutableStateOf("A형") }
+    var phone by remember(profile) { mutableStateOf(profile?.phone?.toString() ?: "") }
+    var prot_phone by remember(profile) { mutableStateOf(profile?.prot_phone?.toString() ?: "") }
+    var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
 
     val context = LocalContext.current
 
@@ -76,20 +75,11 @@ fun EditScreen(
             EditableField("키 (cm)", height) { height = it }
             EditableField("몸무게 (kg)", weight) { weight = it }
             EditableField("나이", age) { age = it }
+            EditableField("이메일", email) { email = it }
+            EditableField("휴대폰 번호(01012345678)", phone) { phone = it }
+            EditableField("보호자 휴대폰 번호(01012345678)", prot_phone) { prot_phone = it }
 
-            SelectableButtonGroup(
-                label = "성별",
-                options = listOf("남성", "여성"),
-                selectedOption = selectedGender,
-                onOptionSelected = { selectedGender = it }
-            )
 
-            SelectableButtonGroup(
-                label = "혈액형",
-                options = listOf("A형", "B형", "AB형", "O형"),
-                selectedOption = selectedBloodType,
-                onOptionSelected = { selectedBloodType = it }
-            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -107,7 +97,9 @@ fun EditScreen(
                         heightText = height,
                         weightText = weight,
                         ageText = age,
-                        gender = selectedGender
+                        email = email,
+                        phone = phone,
+                        prot_phone = prot_phone,
                     )
                 },
             contentAlignment = Alignment.Center

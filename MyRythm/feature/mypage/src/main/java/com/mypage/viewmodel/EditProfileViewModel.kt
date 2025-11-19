@@ -47,7 +47,10 @@ class EditProfileViewModel @Inject constructor(
         heightText: String,
         weightText: String,
         ageText: String,
-        gender: String?
+        gender: String? = null,
+        phone: String?,
+        prot_phone: String?,
+        email: String,
     ) = viewModelScope.launch {
 
         // 문자열 → 숫자 변환 (실패하면 null)
@@ -60,7 +63,10 @@ class EditProfileViewModel @Inject constructor(
             height = height,
             weight = weight,
             age = age,
-            gender = gender
+            gender = gender,
+            phone = phone,
+            prot_phone = prot_phone,
+            email = email,
         )
 
         runCatching {
