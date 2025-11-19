@@ -18,8 +18,6 @@ fun PlanResponse.toDomain(): Plan =
         mealTime = mealTime,
         note = note,
         taken = taken,
-        createdAt = createdAt,
-        updatedAt = updatedAt
     )
 
 // ----------------------

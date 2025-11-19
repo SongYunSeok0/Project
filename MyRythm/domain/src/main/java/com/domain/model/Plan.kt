@@ -9,6 +9,4 @@ data class Plan(
     val mealTime: String?,
     val note: String?,
     val taken: Long?,
-    val createdAt: Long,
-    val updatedAt: Long
 )

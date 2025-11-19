@@ -1,6 +1,7 @@
 package com.auth.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.credentials.*
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
@@ -72,23 +73,40 @@ class AuthViewModel @Inject constructor(
         val email = form.value.email
         val pw = form.value.password
 
-        if(email.isBlank() || pw.isBlank()){
+        Log.e("AuthViewModel", "⏳ [1] login() 호출됨")
+        Log.e("AuthViewModel", "📩 입력값 email=$email, pw=${"*".repeat(pw.length)}")
+
+        if (email.isBlank() || pw.isBlank()) {
+            Log.e("AuthViewModel", "❌ [2] email 또는 pw 비어있음")
             emit("ID와 비번을 입력하세요")
             return@launch
         }
+
         _state.update { it.copy(loading = true) }
+        Log.e("AuthViewModel", "⏳ [3] loginUseCase 실행 시작")
 
         val result = loginUseCase(email, pw)
+
+        Log.e("AuthViewModel", "📡 [4] loginUseCase 결과: isSuccess=${result.isSuccess}, exception=${result.exceptionOrNull()}")
+
         val ok = result.isSuccess
+
         if (ok) {
-            // ⭐ FCM 토큰 서버 등록
+            Log.e("AuthViewModel", "✅ [5] 로그인 성공 → FCM 토큰 등록 시도")
+
             PushManager.fcmToken?.let { token ->
+                Log.e("AuthViewModel", "📨 [5-1] FCM token = $token")
                 runCatching { registerFcmTokenUseCase(token) }
-                    .onFailure { emit("푸시 토큰 등록 실패") }
-            }
+                    .onSuccess { Log.e("AuthViewModel", "🎉 [5-2] FCM 토큰 등록 성공") }
+                    .onFailure { Log.e("AuthViewModel", "❌ [5-2] FCM 토큰 등록 실패: ${it.message}") }
+            } ?: Log.e("AuthViewModel", "⚠️ [5-1] FCM token 없음")
+        } else {
+            Log.e("AuthViewModel", "❌ [5] 로그인 실패")
         }
 
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
+
+        Log.e("AuthViewModel", "🏁 [6] login() 종료 isLoggedIn=$ok")
 
         emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
     }

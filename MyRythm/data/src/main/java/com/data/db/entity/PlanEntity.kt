@@ -27,7 +27,5 @@ data class PlanEntity(
     val mealTime: String?,
     val note: String?,
     val taken: Long?,
-    val createdAt: Long,
-    val updatedAt: Long
 )
 

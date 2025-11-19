@@ -6,12 +6,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlanDao {
-
-    @Query("SELECT * FROM 'plan' WHERE userId = :userId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM 'plan' WHERE userId = :userId")
     fun observePlans(userId: Long): Flow<List<PlanEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(plan: PlanEntity)
+    suspend fun insert(entity: PlanEntity)
 
     @Update
     suspend fun update(plan: PlanEntity)

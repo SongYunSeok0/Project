@@ -14,8 +14,6 @@ fun PlanEntity.toDomainLocal(): Plan =
         mealTime = mealTime,
         note = note,
         taken = taken,
-        createdAt = createdAt,
-        updatedAt = updatedAt
     )
 
 // ---------- Domain → DB ----------
@@ -29,6 +27,4 @@ fun Plan.toEntity(): PlanEntity =
         mealTime = mealTime,
         note = note,
         taken = taken,
-        createdAt = createdAt,
-        updatedAt = updatedAt
     )
