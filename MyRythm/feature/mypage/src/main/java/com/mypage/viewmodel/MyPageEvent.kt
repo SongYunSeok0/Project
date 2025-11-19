@@ -1,4 +1,4 @@
-package com.mypage.ui
+package com.mypage.viewmodel
 
 sealed interface MyPageEvent {
     object LogoutSuccess : MyPageEvent
