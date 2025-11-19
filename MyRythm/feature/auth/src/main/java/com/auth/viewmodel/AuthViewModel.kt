@@ -80,6 +80,13 @@ class AuthViewModel @Inject constructor(
 
         val result = loginUseCase(email, pw)
         val ok = result.isSuccess
+        if (ok) {
+            // ⭐ FCM 토큰 서버 등록
+            PushManager.fcmToken?.let { token ->
+                runCatching { registerFcmTokenUseCase(token) }
+                    .onFailure { emit("푸시 토큰 등록 실패") }
+            }
+        }
 
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
 

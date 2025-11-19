@@ -1,59 +1,74 @@
 from django.contrib import admin
-from .models import Medication, MedicationSchedule, MedicationHistory
+from .models import Prescription, Plan, DrugInfo
 
 
-class MedicationScheduleInline(admin.TabularInline):
-    model = MedicationSchedule
+# --------------------------
+#  복용 스케줄 인라인 (처방전 상세 내에서)
+# --------------------------
+class PlanInline(admin.TabularInline):
+    model = Plan
     extra = 0
-    fields = ("time", "days_of_week", "is_active", "created_at", "updated_at")
-    readonly_fields = ("created_at", "updated_at")
-    raw_id_fields = ("user",)
-
-
-class MedicationHistoryInline(admin.TabularInline):
-    model = MedicationHistory
-    extra = 0
-    fields = ("status", "due_at", "taken_at", "source", "note", "recorded_at")
-    readonly_fields = ("status", "due_at", "taken_at", "source", "note", "recorded_at")
-    can_delete = False
+    fields = (
+        "id",             # plan_id 대신 Django 기본 PK
+        "med_name",       # medicine_name → med_name
+        "taken_at",
+        "meal_time",
+        "note",
+        "taken",
+    )
+    readonly_fields = ("id",)
     show_change_link = True
-    raw_id_fields = ("user", "schedule")
 
 
-@admin.register(Medication)
-class MedicationAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "name", "dose", "start_date", "end_date", "updated_at", "schedules_count")
-    list_filter = ("start_date", "end_date")
-    search_fields = ("name", "user__email", "user__username")
-    ordering = ("-updated_at",)
-    readonly_fields = ("created_at", "updated_at")
-    raw_id_fields = ("user",)
-    inlines = [MedicationScheduleInline, MedicationHistoryInline]
-    list_per_page = 50
-
-    def schedules_count(self, obj):
-        return obj.medicationschedule_set.count()
-    schedules_count.short_description = "스케줄 수"
-
-
-@admin.register(MedicationSchedule)
-class MedicationScheduleAdmin(admin.ModelAdmin):
-    list_display = ("id", "medication", "user", "time", "is_active", "updated_at")
-    list_filter = ("is_active",)
-    search_fields = ("medication__name", "user__email", "user__username")
-    readonly_fields = ("created_at", "updated_at")
-    raw_id_fields = ("user", "medication")
-    ordering = ("medication", "time")
+# --------------------------
+#  처방전 관리자
+# --------------------------
+@admin.register(Prescription)
+class PrescriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "prescription_id",
+        "user",
+        "prescription_type",
+        "disease_name",
+        "issued_date",
+    )
+    list_filter = ("prescription_type", "issued_date")
+    search_fields = ("user", "disease_name", "prescription_type")
+    ordering = ("-issued_date",)
+    inlines = [PlanInline]
     list_per_page = 50
 
 
-@admin.register(MedicationHistory)
-class MedicationHistoryAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "medication", "schedule", "status", "due_at", "taken_at", "source", "recorded_at")
-    list_filter = ("status", "source")
-    search_fields = ("medication__name", "user__email", "user__username", "note")
-    date_hierarchy = "due_at"
-    readonly_fields = ("recorded_at",)
-    raw_id_fields = ("user", "medication", "schedule")
-    ordering = ("-due_at",)
+# --------------------------
+#  복용 스케줄 관리자
+# --------------------------
+@admin.register(Plan)
+class PlanAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",             # plan_id → id
+        "user",           # user_id → user
+        "prescription",   # prescription_id → prescription
+        "med_name",       # medicine_name → med_name
+        "taken_at",
+        "meal_time",
+        "taken",
+    )
+    list_filter = ("meal_time",)
+    search_fields = ("med_name", "user__email")
+    list_per_page = 50
+
+
+# --------------------------
+#  약 정보 (공공데이터)
+# --------------------------
+@admin.register(DrugInfo)
+class DrugInfoAdmin(admin.ModelAdmin):
+    list_display = (
+        "item_name",
+        "efcy_qesitm",
+        "use_method_qesitm",
+        "imported_at",
+    )
+    search_fields = ("item_name",)
+    ordering = ("item_name",)
     list_per_page = 50
