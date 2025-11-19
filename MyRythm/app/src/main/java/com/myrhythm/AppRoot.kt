@@ -70,6 +70,7 @@ fun AppRoot() {
     val isMain = isRoute(MainRoute::class)
     val isNews = isRoute(NewsRoute::class)
 
+
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 

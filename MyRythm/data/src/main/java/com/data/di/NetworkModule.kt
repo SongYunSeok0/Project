@@ -6,6 +6,7 @@ import com.data.network.api.MapApi
 import com.data.network.api.NewsApi
 import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
+import com.data.network.api.ChatbotApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -49,9 +50,9 @@ object NetworkModule {
 
     private fun OkHttpClient.Builder.commonTimeouts() = apply {
         connectTimeout(15, TimeUnit.SECONDS)
-        readTimeout(20, TimeUnit.SECONDS)
-        writeTimeout(20, TimeUnit.SECONDS)
-        callTimeout(30, TimeUnit.SECONDS)
+        readTimeout(120, TimeUnit.SECONDS)
+        writeTimeout(120, TimeUnit.SECONDS)
+        callTimeout(130, TimeUnit.SECONDS)
     }
 
     // ---- Auth Interceptors (API Key) ----
@@ -149,7 +150,7 @@ object NetworkModule {
     fun providePlanApi(@UserRetrofit retrofit: Retrofit): PlanApi =
         retrofit.create(PlanApi::class.java)
 
-
-
-
+    @Provides @Singleton
+    fun provideChatbotApi(@UserRetrofit retrofit: Retrofit): ChatbotApi =
+        retrofit.create(ChatbotApi::class.java)
 }

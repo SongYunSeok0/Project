@@ -88,8 +88,16 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
 
+    // Moshi
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.converter)
+
+    // OkHttp
+    implementation(libs.okhttp.logging.interceptor)
+
+    // 테스트
     testImplementation(libs.bundles.test)
 
     //카카오

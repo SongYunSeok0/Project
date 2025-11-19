@@ -96,7 +96,7 @@ WSGI_APPLICATION = "smart_med.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", default="RNB"),
+        "NAME": env("POSTGRES_DB", default="RNB2"),
         "USER": env("POSTGRES_USER", default="postgres"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="1234"),
         # ← 연결 이슈 피하려면 localhost 대신 127.0.0.1 권장
