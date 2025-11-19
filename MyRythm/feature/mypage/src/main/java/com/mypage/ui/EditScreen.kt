@@ -1,5 +1,6 @@
 package com.mypage.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,20 +13,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.common.design.R
+import com.mypage.viewmodel.EditProfileEvent
+import com.mypage.viewmodel.EditProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: () -> Unit = {}) {
-    var name by remember { mutableStateOf("김이름") }
-    var height by remember { mutableStateOf("170") }
-    var weight by remember { mutableStateOf("47") }
-    var age by remember { mutableStateOf("25") }
-    var selectedGender by remember { mutableStateOf("남성") }
+fun EditScreen(
+    modifier: Modifier = Modifier,
+    onDone: () -> Unit = {},
+    viewModel: EditProfileViewModel = hiltViewModel()
+) {
+    val profile by viewModel.profile.collectAsState()
+
+    // ⚡ 서버에서 받은 값으로 초기값 설정 · 서버에서 값 오기 전 null이면 "" 처리
+    var name by remember(profile) { mutableStateOf(profile?.username ?: "") }
+    var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
+    var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
+    var age by remember(profile) { mutableStateOf(profile?.age?.toString() ?: "") }
+    var selectedGender by remember(profile) { mutableStateOf(profile?.gender ?: "남성") }
+
+    // ❗ 혈액형은 아직 UserProfile에 없음 → 임시 유지
     var selectedBloodType by remember { mutableStateOf("A형") }
 
     //문자열 리소스화
@@ -38,6 +53,26 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
     val genderText = stringResource(R.string.mypage_gender)
     val bloodTypeText = stringResource(R.string.mypage_bloodtype)
     val editDone = stringResource(R.string.mypage_edit_done)
+
+    val context = LocalContext.current
+
+    // 저장 이벤트 처리
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                EditProfileEvent.SaveSuccess -> {
+                    Toast.makeText(context, "저장되었습니다!", Toast.LENGTH_SHORT).show()
+                    onDone()
+                }
+                EditProfileEvent.SaveFailed -> {
+                    Toast.makeText(context, "저장 실패!", Toast.LENGTH_SHORT).show()
+                }
+                EditProfileEvent.LoadFailed -> {
+                    Toast.makeText(context, "프로필 불러오기 실패", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -105,15 +140,15 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
                 }
             }
         }
+        /* ... 중략: 프로필 사진 UI 동일 ... */
 
         // 🔹 입력 필드
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EditableField(label = nameText, value = name, onValueChange = { name = it })
-            EditableField(label = heightText, value = height, onValueChange = { height = it })
-            EditableField(label = weightText, value = weight, onValueChange = { weight = it })
-            EditableField(label = ageText, value = age, onValueChange = { age = it })
+            EditableField(nameText, name) { name = it }
+            EditableField(heightText, height) { height = it }
+            EditableField(weightText, weight) { weight = it }
+            EditableField(ageText, age) { age = it }
 
-            // ✅ 성별 선택
             SelectableButtonGroup(
                 label = genderText,
                 options = listOf(stringResource(id = R.string.mypage_male),stringResource(id = R.string.mypage_female), ),
@@ -121,7 +156,6 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
                 onOptionSelected = { selectedGender = it }
             )
 
-            // ✅ 혈액형 선택
             SelectableButtonGroup(
                 label = bloodTypeText,
                 options = listOf(
@@ -135,15 +169,24 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
             )
         }
 
-        // 🔹 수정 완료 버튼
         Spacer(modifier = Modifier.height(16.dp))
+
+        // 🔹 저장 버튼
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.primary)
-                .clickable { onDone() },
+                .clickable {
+                    viewModel.saveProfile(
+                        username = name,
+                        heightText = height,
+                        weightText = weight,
+                        ageText = age,
+                        gender = selectedGender
+                    )
+                },
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

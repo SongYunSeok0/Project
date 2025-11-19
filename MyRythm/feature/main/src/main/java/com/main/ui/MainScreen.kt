@@ -75,6 +75,7 @@ fun MainScreen(
                 onClick = onOpenChatBot,
                 modifier = Modifier.weight(1f).height(140.dp)
             )
+
             MainFeatureCard(
                 title = schedulerText,
                 bg = MaterialTheme.componentTheme.schedulerCard,

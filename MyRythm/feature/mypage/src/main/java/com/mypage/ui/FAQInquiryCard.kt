@@ -59,7 +59,7 @@ enum class InquiryStatus(val text: String, val showAnswerBlock: Boolean) {
     ANSWERED("답변완료", true)
 }
 
-// enum 내부의 문자열은 건드리지 말고 매핑, 이후 ui엔 status.toDisplayText() 사용
+// enum 내부의 문자열은 건드리지 말고 문자열 리소스 매핑, 이후 ui엔 status.toDisplayText() 사용
 @Composable
 fun InquiryStatus.toDisplayText(): String {
     return when (this) {

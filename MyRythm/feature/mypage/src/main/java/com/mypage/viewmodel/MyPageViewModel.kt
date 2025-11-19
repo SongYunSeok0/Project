@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.repository.InquiryRepository
 import com.domain.usecase.auth.LogoutUseCase
+import com.mypage.ui.MyPageEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -18,13 +19,13 @@ class MyPageViewModel @Inject constructor(
     private val repository: InquiryRepository
 ) : ViewModel() {
 
-    private val _events = Channel<String>(Channel.BUFFERED)
+    private val _events = Channel<MyPageEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
     fun onLogout() = viewModelScope.launch {
         runCatching { logoutUseCase() }
-            .onSuccess { _events.send("logout_ok") }
-            .onFailure { _events.send("logout_fail") }
+            .onSuccess { _events.send(MyPageEvent.LogoutSuccess) }
+            .onFailure { _events.send(MyPageEvent.LogoutFailed) }
     }
 
     val inquiries = repository.getInquiries()
@@ -32,8 +33,14 @@ class MyPageViewModel @Inject constructor(
 
     fun addInquiry(type: String, title: String, content: String) {
         viewModelScope.launch {
-            repository.addInquiry(type, title, content)
+            runCatching {
+                repository.addInquiry(type, title, content)
+            }.onSuccess {
+                _events.send(MyPageEvent.InquirySubmitSuccess)
+            }.onFailure { e ->
+                _events.send(MyPageEvent.InquirySubmitFailed(e.message ?: "문의 실패"))
+            }
         }
     }
-
 }
+

@@ -15,9 +15,9 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
 
         composable<LoginRoute> {
             LoginScreen(
-                onLogin = { _, _ ->
-                    nav.navigate(MainRoute) {
-                        popUpTo<AuthGraph> { inclusive = true }
+                onLogin = { userId, _ ->
+                    nav.navigate(MainRoute(userId = userId)) {
+                        popUpTo(AuthGraph) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
@@ -57,3 +57,4 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
         }
     }
 }
+

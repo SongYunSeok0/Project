@@ -70,21 +70,22 @@ fun AppRoot() {
     val isMain = isRoute(MainRoute::class)
     val isNews = isRoute(NewsRoute::class)
 
+
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth
 
     // 탭 이동 함수
-    fun goHome() = nav.navigate(MainRoute) {
+    fun goHome() = nav.navigate(MainRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
-    fun goMyPage() = nav.navigate(MyPageRoute) {
+    fun goMyPage() = nav.navigate(MyPageRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
-    fun goScheduleFlow() = nav.navigate(CameraRoute) {
+    fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
@@ -124,7 +125,7 @@ fun AppRoot() {
         Box(Modifier.padding(inner)) {
             NavHost(navController = nav, startDestination = AuthGraph) {
                 authNavGraph(nav)
-                mainNavGraph(nav)
+                mainNavGraph(nav, userId)
                 mapNavGraph()
                 newsNavGraph(nav)
                 schedulerNavGraph(nav, userId) // userId 전달
@@ -150,12 +151,12 @@ private fun titleFor(routeName: String) = when (routeName) {
     else -> "마이 리듬"
 }
 
-private fun tabFor(routeName: String) = when (routeName) {
-    MyPageRoute::class.qualifiedName -> "MyPage"
-    SchedulerRoute::class.qualifiedName,
-    CameraRoute::class.qualifiedName,
-    OcrRoute::class.qualifiedName,
-    RegiRoute::class.qualifiedName   -> "Schedule"
-    MainRoute::class.qualifiedName   -> "Home"
+private fun tabFor(routeName: String) = when {
+    routeName.startsWith(MyPageRoute::class.qualifiedName.orEmpty()) -> "MyPage"
+    routeName.startsWith(SchedulerRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(CameraRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(OcrRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(RegiRoute::class.qualifiedName.orEmpty()) -> "Schedule"
+    routeName.startsWith(MainRoute::class.qualifiedName.orEmpty()) -> "Home"
     else -> "Other"
 }

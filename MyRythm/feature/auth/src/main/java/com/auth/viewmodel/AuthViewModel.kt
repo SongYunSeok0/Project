@@ -1,20 +1,20 @@
 package com.auth.viewmodel
 
 import android.content.Context
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
+import android.util.Log
+import androidx.credentials.*
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.core.push.PushManager
 import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.auth.SocialLoginUseCase
+import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.user.SignupUseCase
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -26,11 +26,7 @@ import com.kakao.sdk.user.UserApiClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
@@ -41,12 +37,18 @@ class AuthViewModel @Inject constructor(
     private val refreshUseCase: RefreshTokenUseCase,
     private val logoutUseCase: LogoutUseCase,
     private val signupUseCase: SignupUseCase,
-    private val socialLoginUseCase: SocialLoginUseCase
+    private val socialLoginUseCase: SocialLoginUseCase,
+    private val registerFcmTokenUseCase: RegisterFcmTokenUseCase
 ) : ViewModel() {
 
     data class UiState(
         val loading: Boolean = false,
         val isLoggedIn: Boolean = false
+    )
+
+    data class FormState(
+        val email: String="",
+        val password: String=""
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -55,42 +57,92 @@ class AuthViewModel @Inject constructor(
     private val _events = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val events: SharedFlow<String> = _events
 
-    fun info(msg: String) = _events.tryEmit(msg)
-    fun emitInfo(msg: String) = info(msg)
+    private fun emit(msg: String) = _events.tryEmit(msg)
+    fun emitInfo(msg: String) = emit(msg)
 
-    /** 기본 로그인 */
-    fun login(email: String, password: String) = viewModelScope.launch(Dispatchers.IO) {
+    private val _form = MutableStateFlow(FormState())
+    val form: StateFlow<FormState> = _form
+
+    fun updateEmail(v: String) = _form.update{it.copy(email=v)}
+    fun updatePW(v: String) = _form.update{it.copy(password=v)}
+
+    // -------------------------------------------------------------------------
+    // 이메일 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
+    fun login() = viewModelScope.launch {
+        val email = form.value.email
+        val pw = form.value.password
+
+        Log.e("AuthViewModel", "⏳ [1] login() 호출됨")
+        Log.e("AuthViewModel", "📩 입력값 email=$email, pw=${"*".repeat(pw.length)}")
+
+        if (email.isBlank() || pw.isBlank()) {
+            Log.e("AuthViewModel", "❌ [2] email 또는 pw 비어있음")
+            emit("ID와 비번을 입력하세요")
+            return@launch
+        }
+
         _state.update { it.copy(loading = true) }
-        val result = runCatching { loginUseCase(email, password) }
+        Log.e("AuthViewModel", "⏳ [3] loginUseCase 실행 시작")
+
+        val result = loginUseCase(email, pw)
+
+        Log.e("AuthViewModel", "📡 [4] loginUseCase 결과: isSuccess=${result.isSuccess}, exception=${result.exceptionOrNull()}")
+
         val ok = result.isSuccess
+
+        if (ok) {
+            Log.e("AuthViewModel", "✅ [5] 로그인 성공 → FCM 토큰 등록 시도")
+
+            PushManager.fcmToken?.let { token ->
+                Log.e("AuthViewModel", "📨 [5-1] FCM token = $token")
+                runCatching { registerFcmTokenUseCase(token) }
+                    .onSuccess { Log.e("AuthViewModel", "🎉 [5-2] FCM 토큰 등록 성공") }
+                    .onFailure { Log.e("AuthViewModel", "❌ [5-2] FCM 토큰 등록 실패: ${it.message}") }
+            } ?: Log.e("AuthViewModel", "⚠️ [5-1] FCM token 없음")
+        } else {
+            Log.e("AuthViewModel", "❌ [5] 로그인 실패")
+        }
+
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
-        _events.tryEmit(if (ok) "로그인 성공" else parseError(result.exceptionOrNull()) ?: "로그인 실패")
+
+        Log.e("AuthViewModel", "🏁 [6] login() 종료 isLoggedIn=$ok")
+
+        emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
     }
 
-    /** 회원가입 */
-    fun signup(req: SignupRequest) = viewModelScope.launch(Dispatchers.IO) {
+    // -------------------------------------------------------------------------
+    // 회원가입
+    // -------------------------------------------------------------------------
+    fun signup(req: SignupRequest) = viewModelScope.launch {
         _state.update { it.copy(loading = true) }
-        val result = runCatching { signupUseCase(req) }
+
+        val ok = runCatching { signupUseCase(req) }.getOrDefault(false)
+
         _state.update { it.copy(loading = false) }
-        _events.tryEmit(if (result.getOrDefault(false)) "회원가입 성공" else parseError(result.exceptionOrNull()) ?: "회원가입 실패")
+        emit(if (ok) "회원가입 성공" else "회원가입 실패")
     }
 
-    /** 토큰 갱신 */
-    fun tryRefresh() = viewModelScope.launch(Dispatchers.IO) {
+    // -------------------------------------------------------------------------
+    // 토큰 갱신
+    // -------------------------------------------------------------------------
+    fun tryRefresh() = viewModelScope.launch {
         val ok = runCatching { refreshUseCase() }.getOrDefault(false)
-        if (ok) _events.tryEmit("토큰 갱신")
+        if (ok) emit("토큰 갱신")
     }
 
-    /** 로그아웃 */
-    fun logout() = viewModelScope.launch(Dispatchers.IO) {
+    // -------------------------------------------------------------------------
+    // 로그아웃
+    // -------------------------------------------------------------------------
+    fun logout() = viewModelScope.launch {
         runCatching { logoutUseCase() }
         _state.update { it.copy(isLoggedIn = false) }
-        _events.tryEmit("로그아웃 완료")
+        emit("로그아웃 완료")
     }
 
-    // ----------------------------
-    // ✅ 카카오 로그인
-    // ----------------------------
+    // -------------------------------------------------------------------------
+    // 카카오 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
     fun kakaoOAuth(
         context: Context,
         onResult: (Boolean, String) -> Unit,
@@ -100,14 +152,13 @@ class AuthViewModel @Inject constructor(
             if (error != null) {
                 onResult(false, "카카오 로그인 실패")
             } else if (token != null) {
-                UserApiClient.instance.me { user, e ->
+                UserApiClient.instance.me { user, _ ->
                     if (user != null) {
-                        val socialId = user.id.toString()
                         handleSocialLogin(
                             provider = "kakao",
                             accessToken = token.accessToken,
                             idToken = null,
-                            socialId = socialId,
+                            socialId = user.id.toString(),
                             onResult = onResult,
                             onNeedAdditionalInfo = onNeedAdditionalInfo
                         )
@@ -126,7 +177,14 @@ class AuthViewModel @Inject constructor(
                 } else if (token != null) {
                     UserApiClient.instance.me { user, _ ->
                         if (user != null)
-                            handleSocialLogin("kakao", token.accessToken, null, user.id.toString(), onResult, onNeedAdditionalInfo)
+                            handleSocialLogin(
+                                "kakao",
+                                token.accessToken,
+                                null,
+                                user.id.toString(),
+                                onResult,
+                                onNeedAdditionalInfo
+                            )
                     }
                 }
             }
@@ -135,9 +193,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------
-    // ✅ 구글 로그인
-    // ----------------------------
+    // -------------------------------------------------------------------------
+    // 구글 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
     fun googleOAuth(
         context: Context,
         googleClientId: String,
@@ -152,7 +210,9 @@ class AuthViewModel @Inject constructor(
                     .setServerClientId(googleClientId)
                     .build()
 
-                val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
 
                 val result = try {
                     credentialManager.getCredential(context, request)
@@ -161,7 +221,9 @@ class AuthViewModel @Inject constructor(
                         .setFilterByAuthorizedAccounts(false)
                         .setServerClientId(googleClientId)
                         .build()
-                    val reqAll = GetCredentialRequest.Builder().addCredentialOption(optAll).build()
+                    val reqAll = GetCredentialRequest.Builder()
+                        .addCredentialOption(optAll)
+                        .build()
                     credentialManager.getCredential(context, reqAll)
                 }
 
@@ -180,7 +242,8 @@ class AuthViewModel @Inject constructor(
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
         val credential = result.credential
-        if (credential is CustomCredential &&
+        if (
+            credential is CustomCredential &&
             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
         ) {
             try {
@@ -199,9 +262,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------
-    // ✅ 공통 소셜 로그인 처리
-    // ----------------------------
+    // -------------------------------------------------------------------------
+    // 공통 소셜 로그인 처리 + FCM 등록
+    // -------------------------------------------------------------------------
     private fun handleSocialLogin(
         provider: String,
         accessToken: String?,
@@ -210,7 +273,7 @@ class AuthViewModel @Inject constructor(
         onResult: (Boolean, String) -> Unit,
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             val call = runCatching {
                 socialLoginUseCase(
                     provider = provider,
@@ -228,30 +291,31 @@ class AuthViewModel @Inject constructor(
 
                 when (val r = call.getOrNull()) {
                     is SocialLoginResult.Success -> {
+                        // ⭐ 소셜 로그인 성공 → FCM 등록
+                        PushManager.fcmToken?.let { token ->
+                            runCatching { registerFcmTokenUseCase(token) }
+                                .onFailure { emit("푸시 토큰 등록 실패") }
+                        }
                         onResult(true, "$provider 로그인 성공")
                     }
-                    SocialLoginResult.NeedAdditionalInfo -> {
+
+                    is SocialLoginResult.NeedAdditionalInfo ->
                         onNeedAdditionalInfo(socialId, provider)
-                    }
-                    is SocialLoginResult.Error, null -> {
+
+                    is SocialLoginResult.Error, null ->
                         onResult(false, r?.message ?: "서버 오류")
-                    }
                 }
             }
         }
     }
 
-    // ----------------------------
+    // -------------------------------------------------------------------------
     // 예외 메시지 파싱
-    // ----------------------------
+    // -------------------------------------------------------------------------
     private fun parseError(t: Throwable?): String? {
         if (t == null) return null
         return when (t) {
-            is HttpException -> {
-                val code = t.code()
-                val body = try { t.response()?.errorBody()?.string() } catch (_: Throwable) { null }
-                body?.takeIf { it.isNotBlank() } ?: "HTTP $code"
-            }
+            is HttpException -> "HTTP ${t.code()}"
             else -> t.message
         }
     }

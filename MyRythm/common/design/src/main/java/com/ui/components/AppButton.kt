@@ -48,6 +48,10 @@ fun AppSelectableButton(
     unselectedTextColor: Color =  Color.Gray,
     useClickEffect: Boolean = true
 ) {
+    val themeSelectedColor = selectedColor ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+    val themeSelectedBorder = selectedBorderColor ?: MaterialTheme.colorScheme.primary
+    val themeSelectedText = selectedTextColor ?: MaterialTheme.colorScheme.primary
+
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 

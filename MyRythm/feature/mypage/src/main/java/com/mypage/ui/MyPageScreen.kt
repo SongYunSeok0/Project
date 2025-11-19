@@ -20,14 +20,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
 
-
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    onFaqClick: () -> Unit = {}
+    onFaqClick: () -> Unit = {},
+    onMediClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -67,7 +67,7 @@ fun MyPageScreen(
         Column(Modifier.fillMaxWidth()) {
             MenuItem("내 정보 수정", onEditClick)
             MenuItem("심박수", onHeartClick)
-            MenuItem("복약 그래프") { }
+            MenuItem("복약 그래프") { onMediClick }
             MenuItem("FAQ 문의사항", onFaqClick)
             MenuItem("로그아웃", onLogoutClick)
         }
@@ -125,7 +125,6 @@ fun InfoCard(
         }
     }
 }
-
 
 @Composable
 fun MenuItem(title: String, onClick: () -> Unit) {

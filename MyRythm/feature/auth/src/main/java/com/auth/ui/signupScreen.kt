@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.common.design.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.viewmodel.AuthViewModel
 import com.domain.model.SignupRequest
 import com.ui.components.AuthActionButton
@@ -57,7 +59,9 @@ fun SignupScreen(
     var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
     var code by rememberSaveable { mutableStateOf("") }
 
-    val ui = viewModel.state.collectAsState().value
+    // 1119 18:00 eun->yun
+    //val ui = viewModel.state.collectAsState().value
+    val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     //문자열 리소스화
@@ -104,6 +108,7 @@ fun SignupScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = AuthBackground,
         snackbarHost = { SnackbarHost(snackbar) },
+        // ✅ 내부 스캐폴드 인셋 제거로 상·하 여백 제거
         contentWindowInsets = WindowInsets(0)
     ) { inner ->
         Column(
@@ -157,7 +162,6 @@ fun SignupScreen(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth()
             )
-
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),

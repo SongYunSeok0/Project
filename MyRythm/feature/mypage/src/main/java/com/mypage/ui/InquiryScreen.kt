@@ -1,5 +1,6 @@
 package com.mypage.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -21,6 +23,10 @@ import com.ui.components.AppSelectableButton
 
 /*
 1117 프리뷰용+중복로직이라고 해서 일단 주석처리
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.mypage.viewmodel.MyPageViewModel
+import com.ui.components.AppSelectableButton
+
 @Composable
 fun InquiryScreen() {
     // 상위에서 상태 관리
@@ -63,6 +69,7 @@ fun InquiryHistoryList(inquiries: List<com.domain.model.Inquiry>) {
     }
 }
 */
+
 @Composable
 fun InquiryTypeSelector(
     selectedType: String,
@@ -106,7 +113,9 @@ fun InquiryTypeSelector(
 }
 
 @Composable
-fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> Unit) {
+fun NewInquiryForm(
+    viewModel: MyPageViewModel = hiltViewModel()
+) {
     var selectedType by remember { mutableStateOf("일반 문의") }
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
@@ -118,12 +127,37 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
     val content_Message = stringResource(R.string.mypage_message_content)
     val inquiry_Message = stringResource(R.string.mypage_message_inquiry)
 
+    val context = LocalContext.current
+
+    // 🔥 ViewModel 이벤트 수신
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is MyPageEvent.InquirySubmitSuccess -> {
+                    Toast.makeText(context, "문의가 등록되었습니다!", Toast.LENGTH_SHORT).show()
+                }
+
+                is MyPageEvent.InquirySubmitFailed -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+
+                else -> Unit
+            }
+        }
+    }
+
     Column {
-        // 문의 유형 선택
         InquiryTypeSelector(
             selectedType = selectedType,
             onTypeSelected = { selectedType = it }
         )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+        ) {
+
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
@@ -171,6 +205,7 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
         )
 */
 
+            /*1113 eun->yun 병합하면서 주석처리
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -187,10 +222,16 @@ fun NewInquiryForm(onSubmit: (type: String, title: String, content: String) -> U
                             .requiredWidth(width = 310.dp)
                     )
                 }
-            }
+            }*/
             SubmitButton {
                 if (title.isNotBlank() && content.isNotBlank()) {
-                    onSubmit(selectedType, title, content)
+                    viewModel.addInquiry(
+                        type = selectedType,
+                        title = title,
+                        content = content
+                    )
+
+                    // 입력 초기화
                     title = ""
                     content = ""
                 }

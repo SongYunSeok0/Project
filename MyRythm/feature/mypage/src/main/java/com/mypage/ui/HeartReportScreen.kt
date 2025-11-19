@@ -21,8 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.common.design.R
 
 @Composable
-fun HeartReportScreen() {
-
+fun HeartReportScreen(userId: String?) {
     val heartDescription = stringResource(R.string.mypage_heart_description)
     val currentHeartRateText = stringResource(R.string.mypage_currentheartrate)
     val rateDescription = stringResource(R.string.mypage_rate_description)
@@ -170,5 +169,5 @@ fun HeartReportScreen() {
 @Preview(widthDp = 392, heightDp = 1271)
 @Composable
 private fun HeartReportScreenPreview() {
-    HeartReportScreen()
+    HeartReportScreen(userId = null)
 }

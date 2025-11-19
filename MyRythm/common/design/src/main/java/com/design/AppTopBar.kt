@@ -85,8 +85,9 @@ fun AppBottomBar(
             .fillMaxWidth()
             .height(80.dp)
             .background(Color.White)
-
     ) {
+
+        // 좌/우 탭 버튼 (Home / MyPage)
         Row(
             Modifier
                 .fillMaxSize()
@@ -103,6 +104,7 @@ fun AppBottomBar(
                     tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else Color.Gray
                 )
             }
+
             IconButton(onClick = { onTabSelected("MyPage") }) {
                 Icon(
                     imageVector = Icons.Default.Person,
@@ -112,6 +114,7 @@ fun AppBottomBar(
             }
         }
 
+        // 중앙 알약 버튼
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -121,7 +124,9 @@ fun AppBottomBar(
                 .clip(CircleShape)
                 .background(Color(0xFF6AE0D9))
                 .zIndex(2f)
-                .clickable { onTabSelected("Schedule") },
+                .clickable {
+                    onTabSelected("Schedule")  // ⭐ 핵심
+                },
             contentAlignment = Alignment.Center
         ) {
             Image(

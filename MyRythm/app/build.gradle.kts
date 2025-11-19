@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -87,12 +88,25 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
 
+    // Moshi
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.converter)
+
+    // OkHttp
+    implementation(libs.okhttp.logging.interceptor)
+
+    // 테스트
     testImplementation(libs.bundles.test)
 
     //카카오
     implementation("com.kakao.sdk:v2-user:2.11.0")
+    //firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
 
 
 }
