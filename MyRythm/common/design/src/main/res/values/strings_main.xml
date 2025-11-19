@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_chatbot">챗봇</string>
+    <string name="main_scheduler">스케줄러</string>
+    <string name="main_step">걸음수</string>
+    <string name="main_rate">최근 심박 수</string>
+    <string name="main_timeremainder">복용까지 남은 시간</string>
+    <string name="main_map">지도</string>
+    <string name="main_news">뉴스</string>
+    <string name="main_healthinsight">건강 인사이트</string>
+
+    <string name="main_message_remainder">전 알림 예정</string>
+    <string name="main_message_healthinsight">오늘의 건강 데이터를 확인하세요</string>
+
+
+</resources>

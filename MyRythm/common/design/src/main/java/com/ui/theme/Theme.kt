@@ -16,16 +16,16 @@ import androidx.core.view.WindowCompat
 // Material3 기본 테마
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
-    onPrimary = OnPrimary,
-    surface = Surface,
-    onSurface = OnSurface,
-    background = BackGround,
-    onBackground = BasicBlack,
-    secondary = Color(0x4DB5E5E1),
-    onSurfaceVariant = Color(0xFF5DB0A8),
+    onPrimary = Color.White,
+    surface = Color.White,
+    onSurface = Color.Black,
+    background = Color.White,
+    onBackground = Color.Black,
+    secondary = Secondary,
+    onSurfaceVariant = OnSurfaceVariant,
     // 오류 팝업
     error = Color.Red,
-    onError = BasicWhite
+    onError = Color.White
 )
 
 @Composable
@@ -49,7 +49,6 @@ fun AppTheme(
     }
 
     // 커스텀 테마 토큰을 CompositionLocalProvider를 통해 제공
-    // MaterialTheme.loginTheme, MaterialTheme.authTheme로 접근 가능
     CompositionLocalProvider(
         LocalLoginThemeColors provides LoginThemeColors,
         LocalAuthThemeColors provides AuthThemeColors,

@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import com.common.design.R
 import com.domain.model.Inquiry
 import com.ui.theme.AppTheme
-import com.ui.theme.authTheme
 import com.ui.theme.componentTheme
 
 // FAQScreen.kt 에서 사용되는 문의 내역+답변 카드 컴포넌트
