@@ -77,6 +77,9 @@ class Plan(models.Model):
         return f"{self.user} , {self.med_name} ({self.taken_at})"
 
 
+
+
+
 #약 정보 (공공데이터)
 class DrugInfo(models.Model):
     item_name = models.CharField(max_length=200, db_index=True)  # 제품명
