@@ -7,8 +7,15 @@
     <string name="chatbot_return_to_option">처음으로</string>
     <string name="chatbot_send">send</string>
 
+    <string name="chatbot_error">오류:</string>
+    <string name="chatbot_example">예:</string>
+    <string name="chatbot_sideeffectreported">부작용 확인</string>
+
+
     <string name="chatbot_message_prompt_start">안녕하세요! AI 약사입니다.\n무엇을 도와드릴까요?</string>
-    <string name="chatbot_message_prompt_question">에 대해 질문해주세요.</string>
+    <string name="chatbot_message_prompt_question">약, 부작용, 복용법, 증상, 병원 찾기 등에 대해 자유롭게 질문해보세요.</string>
     <string name="chatbot_message_content">메시지를 입력하세요.</string>
+    <string name="chatbot_message_answer_loading">답변을 불러오는 중입니다...</string>
+    <string name="chatbot_message_example_question">메시지를 입력하세요.</string>
 
 </resources>

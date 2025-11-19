@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -55,6 +56,21 @@ fun ChatBotScreen(
     )
 
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val chatbotText = stringResource(R.string.chatbot_chatbot)
+    val backText = stringResource(R.string.chatbot_back)
+    val botIconText = stringResource(R.string.chatbot_bot_icon)
+    val chatbotProfile = stringResource(R.string.chatbot_chatbotprofile)
+    val returnToOptionText = stringResource(R.string.chatbot_return_to_option)
+    val sendText = stringResource(R.string.chatbot_send)
+    val errorText = stringResource(R.string.chatbot_error)
+    val exampleText = stringResource(R.string.chatbot_example)
+    val sideEffectReportedText = stringResource(R.string.chatbot_sideeffectreported)
+    val promptStartMessage = stringResource(R.string.chatbot_message_prompt_start)
+    val promptQuestionMessage = stringResource(R.string.chatbot_message_prompt_question)
+    val contentMessage = stringResource(R.string.chatbot_message_content)
+    val answerLoadingMessage = stringResource(R.string.chatbot_message_answer_loading)
+    val exampleQuestionMessage = stringResource(R.string.chatbot_message_example_question)
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
@@ -87,12 +103,12 @@ fun ChatBotScreen(
                             .background(Color(0xff6ae0d9)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("🤖", color = Color.White, fontSize = 16.sp, lineHeight = 1.5.em)
+                        Text(botIconText, color = Color.White, fontSize = 16.sp, lineHeight = 1.5.em)
                     }
                     Column {
-                        Text("챗봇", color = Color(0xff5db0a8), fontSize = 16.sp)
+                        Text(chatbotText, color = Color(0xff5db0a8), fontSize = 16.sp)
                         Text(
-                            "AI 약사 의사 응답 모델",
+                            chatbotProfile,
                             color = Color(0xff4a5565),
                             fontSize = 14.sp
                         )
@@ -102,7 +118,7 @@ fun ChatBotScreen(
 
                     InputChip(
                         label = {
-                            Text("처음으로", color = Color(0xff5db0a8), fontSize = 14.sp)
+                            Text(returnToOptionText, color = Color(0xff5db0a8), fontSize = 14.sp)
                         },
                         leadingIcon = {
                             Image(
@@ -136,7 +152,7 @@ fun ChatBotScreen(
                             .background(Color(0xffb5e5e1))
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        Text("안녕하세요! AI 약사입니다.\n무엇을 도와드릴까요?", color = Color.Black, fontSize = 14.sp)
+                        Text(promptStartMessage, color = Color.Black, fontSize = 14.sp)
                     }
                 }
 
@@ -152,14 +168,14 @@ fun ChatBotScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xffb5e5e1))
                             .clickable {
-                                val example = "타이레놀 부작용 알려줘"
+                                val example = exampleQuestionMessage
                                 viewModel.onQuestionChange(example)
                                 viewModel.send()
                             }
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        Text("부작용 확인", color = Color.Black, fontSize = 14.sp)
-                        Text("예: \"타이레놀 부작용 알려줘\"", color = Color(0xff4a5565), fontSize = 12.sp)
+                        Text(sideEffectReportedText, color = Color.Black, fontSize = 14.sp)
+                        Text("$exampleText \"타이레놀 부작용 알려줘\"", color = Color(0xff4a5565), fontSize = 12.sp)
                     }
                 }
 
@@ -198,7 +214,7 @@ fun ChatBotScreen(
                                 .background(Color(0xfff0fdfb))
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
                         ) {
-                            Text("답변을 불러오는 중입니다...", color = Color.Gray, fontSize = 14.sp)
+                            Text(answerLoadingMessage, color = Color.Gray, fontSize = 14.sp)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -208,7 +224,7 @@ fun ChatBotScreen(
                 if (!state.loading && state.messages.isEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "약, 부작용, 복용법, 증상, 병원 찾기 등에 대해 자유롭게 질문해보세요.",
+                        promptQuestionMessage,
                         color = Color(0xff4a5565),
                         fontSize = 13.sp
                     )
@@ -216,7 +232,7 @@ fun ChatBotScreen(
 
                 if (state.error != null) {
                     Spacer(Modifier.height(8.dp))
-                    Text("오류: ${state.error}", color = Color(0xffe11d48), fontSize = 12.sp)
+                    Text("$errorText ${state.error}", color = Color(0xffe11d48), fontSize = 12.sp)
                 }
 
                 Spacer(Modifier.height(80.dp))
@@ -250,7 +266,7 @@ fun ChatBotScreen(
                         modifier = Modifier.fillMaxWidth(),
                         decorationBox = { inner ->
                             if (state.input.isEmpty()) {
-                                Text("메시지를 입력하세요...", color = Color(0xff99a1af), fontSize = 14.sp)
+                                Text(contentMessage, color = Color(0xff99a1af), fontSize = 14.sp)
                             }
                             inner()
                         }
@@ -275,7 +291,7 @@ fun ChatBotScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.upload),
-                        contentDescription = "send",
+                        contentDescription = sendText,
                         modifier = Modifier.height(20.dp)
                     )
                 }
