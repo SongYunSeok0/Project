@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,6 +31,17 @@ fun MyPageScreen(
     onFaqClick: () -> Unit = {},
     onMediClick: () -> Unit = {}
 ) {
+    val bpmText = stringResource(R.string.mypage_bpm)
+    val userText = stringResource(R.string.mypage_user)
+    val cmText = stringResource(R.string.mypage_cm)
+    val kgText = stringResource(R.string.mypage_kg)
+    val editPageText = stringResource(R.string.mypage_editpage)
+    val heartRateText = stringResource(R.string.mypage_heartrate)
+    val medicationInsightText = stringResource(R.string.mypage_medicationinsight)
+    val faqCategoryText = stringResource(R.string.mypage_faqcategory)
+    val logoutText = stringResource(R.string.mypage_logout)
+    val profileGreetingMessage = stringResource(R.string.mypage_message_profile_greeting)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -49,27 +62,28 @@ fun MyPageScreen(
             Spacer(Modifier.width(16.dp))
 
             Column {
-                Text(text = "안녕하세요", style = TextStyle(fontSize = 14.sp), color = Color(0xff221f1f))
-                Text(text = "김이름님", style = TextStyle(fontSize = 16.sp), color = Color(0xff221f1f))
+                Text(
+                    profileGreetingMessage, style = TextStyle(fontSize = 14.sp), color = Color(0xff221f1f))
+                Text(text = "김이름 $userText", style = TextStyle(fontSize = 16.sp), color = Color(0xff221f1f))
             }
         }
 
         Spacer(Modifier.height(24.dp))
 
         Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-            InfoCard("Heart rate", "215bpm", R.drawable.heart)
-            InfoCard("Height", "170cm", R.drawable.height)
-            InfoCard("Weight", "103lbs", R.drawable.weight)
+            InfoCard("Heart rate", "215 $bpmText", R.drawable.heart)
+            InfoCard("Height", "170 $cmText", R.drawable.height)
+            InfoCard("Weight", "103 $kgText", R.drawable.weight)
         }
 
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            MenuItem("내 정보 수정", onEditClick)
-            MenuItem("심박수", onHeartClick)
-            MenuItem("복약 그래프") { onMediClick }
-            MenuItem("FAQ 문의사항", onFaqClick)
-            MenuItem("로그아웃", onLogoutClick)
+            MenuItem(editPageText, onEditClick)
+            MenuItem(heartRateText, onHeartClick)
+            MenuItem(medicationInsightText) { onMediClick }
+            MenuItem(faqCategoryText, onFaqClick)
+            MenuItem(logoutText, onLogoutClick)
         }
     }
 }
@@ -97,7 +111,8 @@ fun InfoCard(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF6AE0D9).copy(alpha = 0.15f)),
+                    .background(MaterialTheme.colorScheme.primary
+                        .copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -119,7 +134,7 @@ fun InfoCard(
 
             Text(
                 text = title,
-                color = Color(0xFF5DB0A8),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
         }

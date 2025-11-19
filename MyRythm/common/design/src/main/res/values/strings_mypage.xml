@@ -17,7 +17,7 @@
     <string name="mypage_inquiry">문의하기</string>
     <string name="mypage_myinquirylist">나의 문의 내역</string>
     <string name="mypage_one_on_one_inquiry">1:1 문의하기</string>
-    <string name="mypage_faqpage">문의사항</string>
+    <string name="mypage_faq">문의사항</string>
     <string name="mypage_general_inquiry">일반 문의</string>
     <string name="mypage_bug_report">버그 신고</string>
     <string name="mypage_editprofilephoto">프로필 사진 변경</string>
@@ -47,6 +47,17 @@
     <string name="mypage_measureheartrate">심박수 측정하기</string>
     <string name="mypage_recent_measurement_heartrate">최근 측정 기록</string>
 
+    <string name="mypage_user">님</string>
+    <string name="mypage_cm">cm</string>
+    <string name="mypage_kg">kg</string>
+    <string name="mypage_editpage">내 정보 수정</string>
+    <string name="mypage_heartrate">심박수</string>
+    <string name="mypage_medicationinsight">복약 그래프</string>
+    <string name="mypage_faqcategory">FAQ 문의사항</string>
+    <string name="mypage_logout">로그아웃</string>
+
+
+    <string name="mypage_message_profile_greeting">안녕하세요</string>
 
     <string name="mypage_message_title">문의 제목을 입력해주세요</string>
     <string name="mypage_message_content">문의 내용을 작성해주세요</string>
