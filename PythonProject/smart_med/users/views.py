@@ -3,11 +3,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer
 from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
-
+from firebase_admin import auth as fb_auth
+User = get_user_model()
 
 
 
@@ -124,3 +125,60 @@ class RegisterFcmTokenView(APIView):
         )
 
         return Response({"detail": "ok"}, status=status.HTTP_200_OK)
+
+
+class PhoneSignupView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        id_token = request.data.get("firebase_id_token")
+        if not id_token:
+            return Response({"detail": "id_token 필요"}, status=400)
+
+        try:
+            decoded = fb_auth.verify_id_token(id_token)
+        except Exception:
+            return Response({"detail": "유효하지 않은 토큰"}, status=400)
+
+        uid = decoded["uid"]
+        phone = decoded.get("phone_number")  # "+8210..." 형식
+
+        # 추가로 받을 정보들
+        email = request.data.get("email")
+        username = request.data.get("username")
+        password = request.data.get("password")  # 있으면 사용, 없으면 랜덤 생성
+
+        if not email or not username:
+            return Response({"detail": "email/username 필요"}, status=400)
+
+        try:
+            # 이미 firebase_uid로 가입된 사용자면 그대로 사용
+            user = User.objects.get(firebase_uid=uid)
+            created = False
+        except User.DoesNotExist:
+            # 없으면 새로 생성 (UserManager 사용)
+            if not password:
+                password = User.objects.make_random_password()
+
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                username=username,
+                phone=phone,
+                firebase_uid=uid,
+                birth_date=request.data.get("birth_date"),
+                gender=request.data.get("gender"),
+            )
+            created = True
+
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user_id": user.id,
+                "created": created,
+            },
+            status=201 if created else 200,
+        )
