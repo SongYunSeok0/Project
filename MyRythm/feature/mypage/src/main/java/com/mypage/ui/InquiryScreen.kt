@@ -98,7 +98,6 @@ fun InquiryTypeSelector(
                     onClick = { onTypeSelected(type) },
                     modifier = Modifier.weight(1f),
                     height = 50.dp,
-                    // 디자인용 색상은 이미 AppSelectableButton 내부에서 지정해놨음
                     useClickEffect = true
                 )
             }
@@ -212,7 +211,7 @@ fun SubmitButton(
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF6AE0D9))
+            .background(MaterialTheme.colorScheme.primary)
             .clickable { onClick() }
             .padding(horizontal = 16.dp)
     ) {

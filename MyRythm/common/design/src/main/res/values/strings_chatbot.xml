@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chatbot_chatbot">챗봇</string>
+    <string name="chatbot_back">뒤로 가기</string>
+    <string name="chatbot_bot_icon">🤖</string>
+    <string name="chatbot_chatbotprofile">AI 약사 의사 응답 챗봇</string>
+    <string name="chatbot_return_to_option">처음으로</string>
+    <string name="chatbot_send">send</string>
+
+    <string name="chatbot_message_prompt_start">안녕하세요! AI 약사입니다.\n무엇을 도와드릴까요?</string>
+    <string name="chatbot_message_prompt_question">에 대해 질문해주세요.</string>
+    <string name="chatbot_message_content">메시지를 입력하세요.</string>
+
+</resources>

@@ -23,26 +23,36 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.res.stringResource
 import com.common.design.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatBotScreen(modifier: Modifier = Modifier) {
+    // 문자열리소스화 적용
+    val chatbotText = stringResource(R.string.chatbot_chatbot)
+    val backText = stringResource(R.string.chatbot_back)
+    val botIconText = stringResource(R.string.chatbot_bot_icon)
+    val chatbotProfile = stringResource(R.string.chatbot_chatbotprofile)
+    val returnToOptionText = stringResource(R.string.chatbot_return_to_option)
+    val sendText = stringResource(R.string.chatbot_send)
+    val promptStartMessage = stringResource(R.string.chatbot_message_prompt_start)
+    val promptQuestionMessage = stringResource(R.string.chatbot_message_prompt_question)
+    val contentMessage = stringResource(R.string.chatbot_message_content)
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "챗봇",
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
+                        text = chatbotText,
                         style = TextStyle(fontSize = 16.sp, letterSpacing = 1.sp)
                     )
                 },
                 navigationIcon = {
                     Image(
-                        painter = painterResource(id = R.drawable.upload),
-                        contentDescription = "back",
+                        painter = painterResource(id = R.drawable.back),
+                        contentDescription = backText,
                         modifier = Modifier.size(22.dp) // 음수 패딩 제거
                     )
                 }
@@ -74,15 +84,15 @@ fun ChatBotScreen(modifier: Modifier = Modifier) {
                             .background(Color(0xff6ae0d9)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("🤖", color = Color.White, fontSize = 16.sp, lineHeight = 1.5.em)
+                        Text(botIconText, fontSize = 16.sp, lineHeight = 1.5.em)
                     }
                     Column {
-                        Text("챗봇", color = Color(0xff5db0a8), fontSize = 16.sp, lineHeight = 1.5.em)
-                        Text("AI 약사 의사 응답 모델", color = Color(0xff4a5565), fontSize = 14.sp, lineHeight = 1.43.em)
+                        Text(chatbotText, color = Color(0xff5db0a8), fontSize = 16.sp, lineHeight = 1.5.em)
+                        Text(chatbotProfile, color = Color(0xff4a5565), fontSize = 14.sp, lineHeight = 1.43.em)
                     }
                     Spacer(Modifier.weight(1f))
                     InputChip(
-                        label = { Text("처음으로", color = Color(0xff5db0a8), fontSize = 14.sp) },
+                        label = { Text(returnToOptionText, color = Color(0xff5db0a8), fontSize = 14.sp) },
                         leadingIcon = {
                             Image(
                                 painter = painterResource(id = R.drawable.upload),
@@ -106,7 +116,7 @@ fun ChatBotScreen(modifier: Modifier = Modifier) {
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        "안녕하세요! AI 약사입니다.\n무엇을 도와드릴까요?",
+                        promptStartMessage,
                         color = Color.Black,
                         fontSize = 14.sp,
                         lineHeight = 1.43.em
@@ -132,7 +142,7 @@ fun ChatBotScreen(modifier: Modifier = Modifier) {
                         .background(Color(0xffb5e5e1))
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    Text("부작용 확인에 대해 질문해주세요.", color = Color.Black, fontSize = 14.sp, lineHeight = 1.43.em)
+                    Text("부작용 확인 $promptQuestionMessage", color = Color.Black, fontSize = 14.sp, lineHeight = 1.43.em)
                 }
 
                 Spacer(Modifier.height(80.dp)) // 입력창 공간 확보
@@ -158,7 +168,7 @@ fun ChatBotScreen(modifier: Modifier = Modifier) {
                         .background(Color(0xfff9fafb))
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    Text("메시지를 입력하세요...", color = Color(0xff99a1af), fontSize = 14.sp)
+                    Text(contentMessage, color = Color(0xff99a1af), fontSize = 14.sp)
                 }
                 Box(
                     modifier = Modifier
@@ -170,7 +180,7 @@ fun ChatBotScreen(modifier: Modifier = Modifier) {
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.upload),
-                        contentDescription = "send",
+                        contentDescription = sendText,
                         modifier = Modifier.height(20.dp)
                     )
                 }

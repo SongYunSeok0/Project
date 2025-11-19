@@ -37,8 +37,7 @@ fun AppTopBar(
         title = {
             Text(
                 text = title,
-                fontSize = 20.sp,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
             )

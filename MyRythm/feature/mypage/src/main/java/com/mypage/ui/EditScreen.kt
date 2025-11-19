@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.common.design.R
@@ -26,6 +27,17 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
     var age by remember { mutableStateOf("25") }
     var selectedGender by remember { mutableStateOf("남성") }
     var selectedBloodType by remember { mutableStateOf("A형") }
+
+    //문자열 리소스화
+    val editprofilephoto = stringResource(R.string.mypage_editprofilephoto)
+    val editText = stringResource(R.string.mypage_edit)
+    val nameText = stringResource(R.string.mypage_name)
+    val heightText = stringResource(R.string.mypage_height)
+    val weightText = stringResource(R.string.mypage_weight)
+    val ageText = stringResource(R.string.mypage_age)
+    val genderText = stringResource(R.string.mypage_gender)
+    val bloodTypeText = stringResource(R.string.mypage_bloodtype)
+    val editDone = stringResource(R.string.mypage_edit_done)
 
     Column(
         modifier = modifier
@@ -55,7 +67,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.camera),
-                        contentDescription = "프로필 사진 변경",
+                        contentDescription = editprofilephoto,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -66,7 +78,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
             Column {
                 Text(text = name, fontSize = 16.sp, color = Color(0xff221f1f))
                 Text(
-                    text = "프로필 사진 변경",
+                    text = editprofilephoto,
                     fontSize = 14.sp,
                     color = Color(0xff5db0a8)
                 )
@@ -89,30 +101,35 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
-                    Text(text = "편집", color = Color.White, fontSize = 16.sp)
+                    Text(text = editText, color = Color.White, fontSize = 16.sp)
                 }
             }
         }
 
         // 🔹 입력 필드
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EditableField(label = "이름", value = name, onValueChange = { name = it })
-            EditableField(label = "키 (cm)", value = height, onValueChange = { height = it })
-            EditableField(label = "몸무게 (kg)", value = weight, onValueChange = { weight = it })
-            EditableField(label = "나이", value = age, onValueChange = { age = it })
+            EditableField(label = nameText, value = name, onValueChange = { name = it })
+            EditableField(label = heightText, value = height, onValueChange = { height = it })
+            EditableField(label = weightText, value = weight, onValueChange = { weight = it })
+            EditableField(label = ageText, value = age, onValueChange = { age = it })
 
             // ✅ 성별 선택
             SelectableButtonGroup(
-                label = "성별",
-                options = listOf("남성", "여성"),
+                label = genderText,
+                options = listOf(stringResource(id = R.string.mypage_male),stringResource(id = R.string.mypage_female), ),
                 selectedOption = selectedGender,
                 onOptionSelected = { selectedGender = it }
             )
 
             // ✅ 혈액형 선택
             SelectableButtonGroup(
-                label = "혈액형",
-                options = listOf("A형", "B형", "AB형", "O형"),
+                label = bloodTypeText,
+                options = listOf(
+                    stringResource(id = R.string.mypage_blood_a),
+                    stringResource(id = R.string.mypage_blood_b),
+                    stringResource(id = R.string.mypage_blood_ab),
+                    stringResource(id = R.string.mypage_blood_o)
+                ),
                 selectedOption = selectedBloodType,
                 onOptionSelected = { selectedBloodType = it }
             )
@@ -125,7 +142,7 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xff6ae0d9))
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable { onDone() },
             contentAlignment = Alignment.Center
         ) {
@@ -136,7 +153,11 @@ fun EditScreen(userId: String? = null, modifier: Modifier = Modifier, onDone: ()
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "수정 완료", color = Color.White, fontSize = 16.sp)
+                Text(
+                    text = editDone,
+                    color = MaterialTheme.colorScheme.surface,
+                    fontSize = 16.sp
+                )
             }
         }
     }
@@ -180,7 +201,7 @@ fun SelectableButtonGroup(
                         .height(44.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(
-                            if (option == selectedOption) Color(0xff6ae0d9)
+                            if (option == selectedOption) MaterialTheme.colorScheme.primary
                             else Color(0xffdddddd)
                         )
                         .clickable { onOptionSelected(option) },
@@ -188,7 +209,7 @@ fun SelectableButtonGroup(
                 ) {
                     Text(
                         text = option,
-                        color = if (option == selectedOption) Color.White
+                        color = if (option == selectedOption) MaterialTheme.colorScheme.surface
                         else Color(0xff3b566e).copy(alpha = 0.7f),
                         fontSize = 14.sp
                     )

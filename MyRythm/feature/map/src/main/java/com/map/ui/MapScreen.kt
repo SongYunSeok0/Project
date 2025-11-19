@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -136,6 +137,12 @@ fun MapScreen(modifier: Modifier = Modifier) {
         hasLocationPermission = fine || coarse
         if (!hasLocationPermission) Log.d("MapScreen", "권한 거부")
     }
+
+    // 문자열리소스화 적용
+    val searchText = stringResource(R.string.map_search)
+    val hospitalText = stringResource(R.string.map_hospital)
+    val pharmacyText = stringResource(R.string.map_pharmacy)
+    val searchMessage = stringResource(R.string.map_message_search)
 
     LaunchedEffect(Unit) {
         val fine = ContextCompat.checkSelfPermission(
@@ -314,7 +321,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("병원, 약국 등 검색어를 입력하세요") },
+                    placeholder = { Text(searchMessage) },
                     singleLine = true,
                     modifier = Modifier
                         .weight(1f)
@@ -342,7 +349,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     shape = RoundedCornerShape(30.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
                 ) {
-                    Text("검색", color = Color.White)
+                    Text(searchText, color = Color.White)
                 }
             }
 
@@ -359,7 +366,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         showSearchHere = false
                         searchPlaces(searchQuery.ifBlank { selectedChip }, center)
                     },
-                    label = { Text("병원") }
+                    label = { Text(hospitalText) }
                 )
 
                 FilterChip(
@@ -371,7 +378,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         showSearchHere = false
                         searchPlaces(searchQuery.ifBlank { selectedChip }, center)
                     },
-                    label = { Text("약국") }
+                    label = { Text(pharmacyText) }
                 )
             }
         }
@@ -441,6 +448,14 @@ fun PlaceInfoContent(
     val cleanTitle = cleanHtml(place.title)
     val prettyCategory = cleanCategoryForDisplay(place.category)
 
+    // 문자열리소스화 적용
+    val phoneText = stringResource(R.string.map_phone)
+    val navigationText = stringResource(R.string.map_navigation)
+    val closeText = stringResource(R.string.map_close)
+    val errorAddressNotFound = stringResource(R.string.map_error_address_not_found)
+    val errorNavigationFailed = stringResource(R.string.map_error_navigation_failed)
+    val errorLocationNotFound = stringResource(R.string.map_error_location_not_found)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -459,11 +474,11 @@ fun PlaceInfoContent(
         }
 
         // 주소
-        Text(text = place.address.ifBlank { "주소 정보 없음" })
+        Text(text = place.address.ifBlank { errorAddressNotFound })
 
         // 전화(대부분 빈 값일 수 있음)
         place.telephone?.takeIf { it.isNotBlank() }?.let {
-            Text(text = "전화번호: $it")
+            Text(text = "$phoneText $it")
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -515,20 +530,20 @@ fun PlaceInfoContent(
                             }
                         } catch (e: Exception) {
                             Log.e("MapDebug", "길찾기 처리 실패", e)
-                            Toast.makeText(context, "길찾기를 시작할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, errorNavigationFailed, Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(context, "위치 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, errorLocationNotFound, Toast.LENGTH_SHORT).show()
                     }
                 }
             ) {
-                Text("길찾기")
+                Text(navigationText)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Button(onClick = onClose) {
-                Text("닫기")
+                Text(closeText)
             }
         }
     }
@@ -542,6 +557,8 @@ fun SearchHereChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val search_here = stringResource(R.string.map_search_here)
+
     if (!visible) return
     Surface(
         modifier = modifier
@@ -553,7 +570,7 @@ fun SearchHereChip(
         onClick = onClick
     ) {
         Text(
-            text = "이 위치에서 검색",
+            text = search_here,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             fontSize = 14.sp,
             color = Color(0xFF4A5565)
@@ -563,6 +580,7 @@ fun SearchHereChip(
 
 @Composable
 fun RoundRecenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val mylocationText = stringResource(R.string.map_mylocation)
     Surface(
         modifier = modifier
             .size(56.dp)
@@ -574,7 +592,7 @@ fun RoundRecenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 painter = painterResource(R.drawable.location),
-                contentDescription = "현재 위치",
+                contentDescription = mylocationText,
                 tint = Color(0xFF4A5565)
             )
         }

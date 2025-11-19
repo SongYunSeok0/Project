@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.ui.theme.componentTheme
 
 @Composable
 private fun BaseCardBox(
@@ -51,7 +52,7 @@ fun MainFeatureCard(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(bg)
-            .border(BorderStroke(0.7.dp, Color(0xfff3f4f6)), RoundedCornerShape(14.dp))
+            .border(BorderStroke(0.7.dp, MaterialTheme.componentTheme.mainFeatureCardBorderStroke),RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

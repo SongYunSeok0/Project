@@ -40,7 +40,8 @@ data class ComponentThemeColor(
     val timeRemainingCard : Color,
     val mapCard : Color,
     val newsCard : Color,
-    val healthInsightCard : Color
+    val healthInsightCard : Color,
+    val mainFeatureCardBorderStroke : Color
 )
 
 val LoginThemeColors = LoginThemeColor(
@@ -79,7 +80,8 @@ val ComponentThemeColors = ComponentThemeColor(
     timeRemainingCard = TimeRemainingCard,
     mapCard = MapCard,
     newsCard = NewsCard,
-    healthInsightCard = HealthInsightCard
+    healthInsightCard = HealthInsightCard,
+    mainFeatureCardBorderStroke = MainFeatureCardBorderStroke
 )
 
 // Login Local
