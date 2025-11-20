@@ -72,6 +72,7 @@ fun UserDto.toProfile(): UserProfile {
         height = height,
         weight = weight,
         age = age,
+        birth_date = birth_date,
         gender = gender,
         phone = phone,
         prot_phone = prot_phone,
@@ -81,18 +82,14 @@ fun UserDto.toProfile(): UserProfile {
 
 fun UserProfile.toDto(): UserUpdateDto {
     return UserUpdateDto(
-        username = username,
+        username = username?: "",
         height = height,
         weight = weight,
         gender = gender,
-        birth_date = age?.let { year ->
-            // 나이 → 출생연도로 역산 (대충 예시)
-            val now = LocalDate.now().year
-            "${now - year}-01-01"
-        },
+        birth_date =birth_date,
         phone = phone,
         prot_phone = prot_phone,
-        email = email,
+        email = email?: "",
     )
 }
 

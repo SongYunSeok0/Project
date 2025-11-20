@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -50,8 +52,8 @@ fun NewsScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
 
-    // PagingData 수집 → LazyPagingItems
     val pagingItems = viewModel.newsPagingFlow.collectAsLazyPagingItems()
 
     Column(
@@ -72,26 +74,37 @@ fun NewsScreen(
                     placeholder = { Text(searchMessage) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = {
-                        viewModel.triggerSearch()
-                    }),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { viewModel.triggerSearch() }
+                    ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFFF2F2F5),
                         unfocusedContainerColor = Color(0xFFF2F2F5),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
                     ),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
 
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(6.dp))
+
+                IconButton(
+                    onClick = {
+                        if (searchQuery.isNotBlank()) viewModel.addFavorite(searchQuery)
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.bookmark),
+                        contentDescription = null,
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(Modifier.width(6.dp))
 
                 Button(
                     onClick = {
-                        if (searchQuery.isNotBlank()) {
-                            viewModel.updateCategory(searchQuery)
-                        }
+                        if (searchQuery.isNotBlank()) viewModel.triggerSearch()
                     },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
@@ -109,22 +122,20 @@ fun NewsScreen(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        FavoriteBannerCard(
+            title = "즐겨찾기 키워드",
+            favorites = favorites,
+            onClickFavorite = { keyword ->
+                viewModel.onFavoriteClick(keyword)
+            },
             modifier = Modifier
-                .padding(horizontal = 16.dp)
                 .fillMaxWidth()
-        ) {
-            BannerCard("건강 뉴스", "최신 건강 정보", Modifier.weight(1f)) {
-                viewModel.updateCategory("건강")
-            }
-            BannerCard("의학 뉴스", "최신 의학 연구", Modifier.weight(1f)) {
-                viewModel.updateCategory("의학")
-            }
-            BannerCard("복약 안전", "올바른 복용법", Modifier.weight(1f)) {
-                viewModel.updateCategory("복약")
-            }
-        }
+                .padding(horizontal = 16.dp)
+        )
+
+        // -----------------------------------------------------------
+        // 📰 네이버 뉴스 리스트
+        // -----------------------------------------------------------
 
         Text(
             text = naverNewsText,
@@ -140,6 +151,7 @@ fun NewsScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
+
             items(pagingItems.itemCount) { index ->
                 val item = pagingItems[index] ?: return@items
 
@@ -151,17 +163,12 @@ fun NewsScreen(
                     .replace("&apos;", "'")
                     .replace("&amp;", "&")
 
-                val url = item.link
-
                 NewsCard(
                     title = cleanTitle,
                     info = item.pubDate.take(16),
-                    imageUrl = item.image
-                        ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
+                    imageUrl = item.image ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
                     onClick = {
-                        if (url.isNotEmpty()) {
-                            onOpenDetail(Uri.encode(url))
-                        }
+                        onOpenDetail(Uri.encode(item.link))
                     }
                 )
             }
@@ -175,7 +182,9 @@ fun NewsScreen(
                             .fillMaxWidth()
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }
@@ -186,17 +195,16 @@ fun NewsScreen(
 /* --------------------------- UI Components --------------------------- */
 
 @Composable
-fun BannerCard(
+fun FavoriteBannerCard(
     title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    favorites: List<com.domain.model.Favorite>,
+    onClickFavorite: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .height(120.dp)
+            .height(150.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
     ) {
         Image(
             painter = painterResource(id = R.drawable.photo),
@@ -219,8 +227,32 @@ fun BannerCard(
                 .align(Alignment.BottomStart)
                 .padding(12.dp)
         ) {
-            Text(text = title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(text = subtitle, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(favorites) { fav ->
+                    AssistChip(
+                        onClick = { onClickFavorite(fav.keyword) },
+                        label = {
+                            Text(
+                                text = fav.keyword,
+                                color = Color.White,
+                                fontSize = 12.sp
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -262,20 +294,11 @@ fun NewsCard(
                 fontWeight = FontWeight.Medium,
                 maxLines = 2
             )
-            Text(text = info, fontSize = 12.sp, color = Color(0xFF6F8BA4))
+            Text(
+                text = info,
+                fontSize = 12.sp,
+                color = Color(0xFF6F8BA4)
+            )
         }
-    }
-}
-
-/* ------------------------------ Preview ------------------------------ */
-
-@Preview(showBackground = true)
-@Composable
-fun NewsScreenPreview() {
-    MaterialTheme {
-        NewsMainScreen(
-            nav = rememberNavController(),
-            onOpenDetail = {}
-        )
     }
 }

@@ -1,6 +1,7 @@
 package com.data.repository
 
 
+import android.util.Log
 import com.data.db.dao.UserDao
 import com.data.mapper.user.asEntity
 import com.data.mapper.user.toDto
@@ -22,11 +23,17 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
 
-    override suspend fun updateProfile(profile: UserProfile) {
-        // 서버 업데이트 요청
-        val updatedDto = api.updateProfile(profile.toDto())
+    override suspend fun updateProfile(profile: UserProfile): UserProfile {
+        return try {
+            val dto = profile.toDto()
+            val updatedDto = api.updateProfile(dto)
 
-        // DB 업데이트
-        dao.upsert(updatedDto.asEntity())
+            dao.upsert(updatedDto.asEntity())
+            updatedDto.toProfile()
+
+        } catch (e: Exception) {
+            Log.e("ProfileRepo", "🔥 updateProfile 실패: ${e.message}", e)
+            throw e
+        }
     }
 }

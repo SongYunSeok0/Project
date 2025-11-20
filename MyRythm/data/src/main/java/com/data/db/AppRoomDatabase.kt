@@ -21,7 +21,7 @@ import com.data.db.entity.UserEntity
         FavoriteEntity::class,
         InquiryEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {

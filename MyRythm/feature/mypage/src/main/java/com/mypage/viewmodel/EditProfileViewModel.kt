@@ -64,6 +64,7 @@ class EditProfileViewModel @Inject constructor(
             height = height,
             weight = weight,
             age = age,
+            birth_date = profile.value?.birth_date,
             gender = gender,
             phone = phone,
             prot_phone = prot_phone,
@@ -72,8 +73,8 @@ class EditProfileViewModel @Inject constructor(
 
         runCatching {
             userRepository.updateProfile(newProfile)
-        }.onSuccess {
-            _profile.value = newProfile
+        }.onSuccess { updatedProfile ->
+            _profile.value = updatedProfile
             _events.send(EditProfileEvent.SaveSuccess)
         }.onFailure {
             _events.send(EditProfileEvent.SaveFailed)
