@@ -120,7 +120,7 @@ fun AuthInputField(
 fun AuthGenderDropdown(
     value: String,
     onValueChange: (String) -> Unit,
-    hint: String = stringResource(R.string.auth_gender),
+    hint: String = stringResource(R.string.gender),
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -134,8 +134,8 @@ fun AuthGenderDropdown(
     val fieldShape = MaterialTheme.shapes.extraSmall
     val textStyle = MaterialTheme.typography.bodyLarge
 
-    val maleText = stringResource(R.string.auth_male)
-    val femaleText = stringResource(R.string.auth_female)
+    val maleText = stringResource(R.string.male)
+    val femaleText = stringResource(R.string.female)
 
     // 표시할 텍스트
     val displayText = when (value) {
