@@ -22,16 +22,16 @@ import com.common.design.R
 
 @Composable
 fun HeartReportScreen(userId: String?) {
-    val heartDescription = stringResource(R.string.mypage_heart_description)
-    val currentHeartRateText = stringResource(R.string.mypage_currentheartrate)
-    val rateDescription = stringResource(R.string.mypage_rate_description)
-    val bpmText = stringResource(R.string.mypage_bpm)
-    val normalText = stringResource(R.string.mypage_normal)
-    val cautionText = stringResource(R.string.mypage_caution)
-    val warningText = stringResource(R.string.mypage_warning)
-    val arrowDescription = stringResource(R.string.mypage_arrow_description)
-    val measureHeartRateText = stringResource(R.string.mypage_measureheartrate)
-    val recentMeasurementHeartRateText = stringResource(R.string.mypage_recent_measurement_heartrate)
+    val heartDescription = stringResource(R.string.heart_description)
+    val currentHeartRateText = stringResource(R.string.currentheartrate)
+    val rateDescription = stringResource(R.string.rate_description)
+    val bpmText = stringResource(R.string.bpm)
+    val normalText = stringResource(R.string.normal)
+    val cautionText = stringResource(R.string.caution)
+    val warningText = stringResource(R.string.warning)
+    val arrowDescription = stringResource(R.string.arrow_description)
+    val measureHeartRateText = stringResource(R.string.measureheartrate)
+    val recentMeasurementHeartRateText = stringResource(R.string.recent_measurement_heartrate)
 
     Scaffold { innerPadding ->
         Box(
@@ -153,7 +153,7 @@ fun HeartReportScreen(userId: String?) {
 
                 // 최근 측정 기록 제목
                 Text(
-                    text = currentHeartRateText,
+                    text = recentMeasurementHeartRateText,
                     fontSize = 16.sp,
                     color = Color(0xff101828)
                 )

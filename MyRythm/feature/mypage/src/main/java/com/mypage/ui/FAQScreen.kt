@@ -42,7 +42,7 @@ fun FAQScreen(
     onSubmit: (type: String, title: String, content: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val faqPage = stringResource(R.string.mypage_faqpage)
+    val faqText = stringResource(R.string.faq)
 
     // rememberPagerState : 탭 간의 전환 상태 관리 용도
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
@@ -52,7 +52,7 @@ fun FAQScreen(
             modifier = modifier.fillMaxSize(),
             topBar = {
                 AppTopBar(
-                    title = faqPage,
+                    title = faqText,
                     showBack = true,
                     onBackClick = {}
                 )
@@ -77,7 +77,8 @@ fun FAQScreen(
 // 뷰모델진입점
 @Composable
 fun FAQScreenWrapper(
-    viewModel: MyPageViewModel = hiltViewModel()
+    userId : String?,
+    viewModel: MyPageViewModel = hiltViewModel(),
 ) {
     FAQScreen(
         onSubmit = { type, title, content ->
@@ -115,8 +116,8 @@ private fun InquiryHistory(
 private fun FAQTabRow(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
     val tabs = listOf(
-        stringResource(id = R.string.mypage_myinquirylist),
-        stringResource(id = R.string.mypage_one_on_one_inquiry)
+        stringResource(id = R.string.myinquirylist),
+        stringResource(id = R.string.one_on_one_inquiry)
     )
 
     PrimaryTabRow(
@@ -164,7 +165,7 @@ private fun FAQTabContent(
     HorizontalPager(state = pagerState) { index ->
         when (index) {
             0 -> InquiryHistory(viewModel = viewModel)  //프리뷰용은 inquiries=inquiries
-            1 -> NewInquiryForm(onSubmit)
+            1 -> NewInquiryForm()
         }
     }
 }

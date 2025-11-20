@@ -46,14 +46,12 @@ fun LoginScreen(
     onSignUp: () -> Unit = {},
     onSocialSignUp: (String, String) -> Unit = { _, _ -> }
 ) {
-    // 문자열 리소스화 선언
     val idText = stringResource(R.string.auth_id)
     val passwordText = stringResource(R.string.auth_password)
     val pwMissingMessage = stringResource(R.string.auth_message_password_missing)
     val loginText = stringResource(R.string.auth_login)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val errorIdpwBlank = stringResource(R.string.auth_error_id_pw_blank)
     val testLoginMessage = stringResource(R.string.auth_message_testlogin)
     val testLogin = stringResource(R.string.auth_testlogin)
     val oauthText = stringResource(R.string.auth_oauth)

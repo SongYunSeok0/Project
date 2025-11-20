@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -22,7 +21,6 @@ import com.ui.components.AuthSecondaryButton
 import com.ui.components.AuthActionButton
 import com.ui.theme.authTheme
 import com.ui.theme.defaultFontFamily
-import com.ui.theme.loginTheme
 
 /**
  * 비밀번호 찾기/인증 화면 (반응형 레이아웃 적용)
@@ -41,11 +39,11 @@ fun PwdScreen(
     var sent by remember { mutableStateOf(false) }
 
     // 문자열 리소스화 선언
-    val phoneText = stringResource(R.string.auth_phone)
-    val sendText = stringResource(R.string.auth_send)
-    val sentText = stringResource(R.string.auth_sent)
-    val codeText = stringResource(R.string.auth_code)
-    val checkText = stringResource(R.string.auth_check)
+    val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
+    val sendText = stringResource(R.string.send)
+    val sentText = stringResource(R.string.sent)
+    val verificationCodeText = stringResource(R.string.verification_code)
+    val comfirmText = stringResource(R.string.confirm)
     val backtologinText = stringResource(R.string.auth_backtologin)
 
     Box(
@@ -75,7 +73,7 @@ fun PwdScreen(
                 AuthInputField(
                     value = phone,
                     onValueChange = { phone = it },
-                    hint = phoneText,
+                    hint = phoneNumberPlaceholderText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next
                 )
@@ -101,7 +99,7 @@ fun PwdScreen(
             AuthInputField(
                 value = code,
                 onValueChange = { code = it },
-                hint = codeText,
+                hint = verificationCodeText,
                 modifier = Modifier.fillMaxWidth(),
                 imeAction = ImeAction.Done
             )
@@ -109,7 +107,7 @@ fun PwdScreen(
             Spacer(Modifier.height(58.dp))
 
             AuthPrimaryButton(
-                text = checkText,
+                text = comfirmText,
                 onClick = { onConfirm(phone, code) },
                 modifier = Modifier
                     .fillMaxWidth()

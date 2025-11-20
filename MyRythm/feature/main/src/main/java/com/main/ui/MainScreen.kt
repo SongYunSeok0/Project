@@ -43,14 +43,14 @@ fun MainScreen(
     val mapIconResId = R.drawable.map
     val newsIconResId = R.drawable.news
     
-    val chatbotText = stringResource(R.string.main_chatbot)
-    val schedulerText = stringResource(R.string.main_scheduler)
-    val stepText = stringResource(R.string.main_step)
-    val rateText = stringResource(R.string.main_rate)
-    val timeremainder = stringResource(R.string.main_timeremainder)
-    val mapText = stringResource(R.string.main_map)
-    val newsText = stringResource(R.string.main_news)
-    val healthinsightText = stringResource(R.string.main_healthinsight)
+    val chatbotText = stringResource(R.string.chatbot)
+    val schedulerText = stringResource(R.string.scheduler)
+    val stepText = stringResource(R.string.step)
+    val rateText = stringResource(R.string.rate)
+    val timeremainder = stringResource(R.string.timeremainder)
+    val mapText = stringResource(R.string.map)
+    val newsText = stringResource(R.string.news)
+    val healthinsightText = stringResource(R.string.healthinsight)
     val remainderMessage = stringResource(R.string.main_message_remainder)
     val healthinsightMessage = stringResource(R.string.main_message_healthinsight)
 

@@ -31,15 +31,15 @@ fun MyPageScreen(
     onFaqClick: () -> Unit = {},
     onMediClick: () -> Unit = {}
 ) {
-    val bpmText = stringResource(R.string.mypage_bpm)
-    val userText = stringResource(R.string.mypage_user)
-    val cmText = stringResource(R.string.mypage_cm)
-    val kgText = stringResource(R.string.mypage_kg)
-    val editPageText = stringResource(R.string.mypage_editpage)
-    val heartRateText = stringResource(R.string.mypage_heartrate)
-    val medicationInsightText = stringResource(R.string.mypage_medicationinsight)
-    val faqCategoryText = stringResource(R.string.mypage_faqcategory)
-    val logoutText = stringResource(R.string.mypage_logout)
+    val bpmText = stringResource(R.string.bpm)
+    val userText = stringResource(R.string.user)
+    val cmText = stringResource(R.string.cm)
+    val kgText = stringResource(R.string.kg)
+    val editPageText = stringResource(R.string.editpage)
+    val heartRateText = stringResource(R.string.heartrate)
+    val medicationInsightText = stringResource(R.string.medicationinsight)
+    val faqCategoryText = stringResource(R.string.faqcategory)
+    val logoutText = stringResource(R.string.logout)
     val profileGreetingMessage = stringResource(R.string.mypage_message_profile_greeting)
 
     Column(

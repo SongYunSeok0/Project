@@ -16,7 +16,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.common.design.R
+import com.mypage.viewmodel.MyPageViewModel
 import com.ui.components.AppSelectableButton
 
 // 1번탭 - 1:1 문의하기 - 1:1 문의 작성 화면
@@ -75,7 +77,7 @@ fun InquiryTypeSelector(
     selectedType: String,
     onTypeSelected: (String) -> Unit
 ) {
-    val inquiryTypeText = stringResource(R.string.mypage_inquirytype)
+    val inquiryTypeText = stringResource(R.string.inquirytype)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -94,8 +96,8 @@ fun InquiryTypeSelector(
             modifier = Modifier.fillMaxWidth()
         ) {
             listOf(
-                stringResource(R.string.mypage_general_inquiry),
-                stringResource(R.string.mypage_bug_report)
+                stringResource(R.string.general_inquiry),
+                stringResource(R.string.bug_report)
             ).forEach { type ->
                 val isSelected = selectedType == type
 
@@ -121,11 +123,11 @@ fun NewInquiryForm(
     var content by remember { mutableStateOf("") }
     //var images by remember { mutableStateOf(listOf<Uri>()) }
 
-    val titleText = stringResource(R.string.mypage_title)
+    val titleText = stringResource(R.string.title)
     val title_Message = stringResource(R.string.mypage_message_title)
-    val contentText = stringResource(R.string.mypage_content)
+    val contentText = stringResource(R.string.content)
     val content_Message = stringResource(R.string.mypage_message_content)
-    val inquiry_Message = stringResource(R.string.mypage_message_inquiry)
+    val inquirySubmittedSuccessMessage = stringResource(R.string.message_inquiry_submitted_success)
 
     val context = LocalContext.current
 
@@ -134,7 +136,7 @@ fun NewInquiryForm(
         viewModel.events.collect { event ->
             when (event) {
                 is MyPageEvent.InquirySubmitSuccess -> {
-                    Toast.makeText(context, "문의가 등록되었습니다!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, inquirySubmittedSuccessMessage, Toast.LENGTH_SHORT).show()
                 }
 
                 is MyPageEvent.InquirySubmitFailed -> {
@@ -237,6 +239,7 @@ fun NewInquiryForm(
                 }
             }
         }
+        }
     }
 }
 
@@ -244,7 +247,7 @@ fun NewInquiryForm(
 fun SubmitButton(
     onClick: () -> Unit
 ) {
-    val inquiryText = stringResource(R.string.mypage_inquiry)
+    val inquiryText = stringResource(R.string.inquiry)
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,

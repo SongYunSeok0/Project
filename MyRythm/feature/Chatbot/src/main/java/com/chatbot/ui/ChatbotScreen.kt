@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.InputChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,20 +58,18 @@ fun ChatBotScreen(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val chatbotText = stringResource(R.string.chatbot_chatbot)
-    val backText = stringResource(R.string.chatbot_back)
-    val botIconText = stringResource(R.string.chatbot_bot_icon)
-    val chatbotProfile = stringResource(R.string.chatbot_chatbotprofile)
-    val returnToOptionText = stringResource(R.string.chatbot_return_to_option)
-    val sendText = stringResource(R.string.chatbot_send)
-    val errorText = stringResource(R.string.chatbot_error)
-    val exampleText = stringResource(R.string.chatbot_example)
-    val sideEffectReportedText = stringResource(R.string.chatbot_sideeffectreported)
+    val chatbotText = stringResource(R.string.chatbot)
+    val botIconText = stringResource(R.string.chatbot_icon)
+    val chatbotProfile = stringResource(R.string.chatbotprofile)
+    val returnToOptionText = stringResource(R.string.return_to_option)
+    val send_engText = stringResource(R.string.send)
+    val errorText = stringResource(R.string.error)
+    val exampleText = stringResource(R.string.example)
+    val sideEffectReportedText = stringResource(R.string.sideeffectreported)
     val promptStartMessage = stringResource(R.string.chatbot_message_prompt_start)
     val promptQuestionMessage = stringResource(R.string.chatbot_message_prompt_question)
     val contentMessage = stringResource(R.string.chatbot_message_content)
     val answerLoadingMessage = stringResource(R.string.chatbot_message_answer_loading)
-    val exampleQuestionMessage = stringResource(R.string.chatbot_message_example_question)
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
@@ -100,13 +99,17 @@ fun ChatBotScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0xff6ae0d9)),
+                            .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(botIconText, color = Color.White, fontSize = 16.sp, lineHeight = 1.5.em)
                     }
                     Column {
-                        Text(chatbotText, color = Color(0xff5db0a8), fontSize = 16.sp)
+                        Text(
+                            chatbotText,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 16.sp
+                        )
                         Text(
                             chatbotProfile,
                             color = Color(0xff4a5565),
@@ -118,7 +121,11 @@ fun ChatBotScreen(
 
                     InputChip(
                         label = {
-                            Text(returnToOptionText, color = Color(0xff5db0a8), fontSize = 14.sp)
+                            Text(
+                                returnToOptionText,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 14.sp
+                            )
                         },
                         leadingIcon = {
                             Image(
@@ -168,7 +175,7 @@ fun ChatBotScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xffb5e5e1))
                             .clickable {
-                                val example = exampleQuestionMessage
+                                val example = contentMessage
                                 viewModel.onQuestionChange(example)
                                 viewModel.send()
                             }
@@ -193,7 +200,7 @@ fun ChatBotScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(
-                                    if (isUser) Color(0xff6ae0d9)
+                                    if (isUser) MaterialTheme.colorScheme.primary
                                     else Color(0xfff0fdfb)
                                 )
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -282,7 +289,7 @@ fun ChatBotScreen(
                             if (state.loading || state.input.isBlank())
                                 Color(0xffc4f5f0)
                             else
-                                Color(0xff6ae0d9)
+                                MaterialTheme.colorScheme.primary
                         )
                         .clickable(enabled = !state.loading && state.input.isNotBlank()) {
                             viewModel.send()
@@ -291,7 +298,7 @@ fun ChatBotScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.upload),
-                        contentDescription = sendText,
+                        contentDescription = send_engText,
                         modifier = Modifier.height(20.dp)
                     )
                 }

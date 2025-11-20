@@ -63,8 +63,8 @@ enum class InquiryStatus(val text: String, val showAnswerBlock: Boolean) {
 @Composable
 fun InquiryStatus.toDisplayText(): String {
     return when (this) {
-        InquiryStatus.UNANSWERED -> stringResource(R.string.mypage_inquiry_status_unanswered)
-        InquiryStatus.ANSWERED -> stringResource(R.string.mypage_inquiry_status_answered)
+        InquiryStatus.UNANSWERED -> stringResource(R.string.inquiry_status_unanswered)
+        InquiryStatus.ANSWERED -> stringResource(R.string.inquiry_status_answered)
     }
 }
 
@@ -93,10 +93,10 @@ fun InquiryCard(
     val questionDate = "2025/11/03"
     val answerDate = "2025/11/04"
 
-    val faqIcon = stringResource(R.string.mypage_faqicon)
-    val expandText = stringResource(R.string.mypage_expand)
-    val collapseText = stringResource(R.string.mypage_collapse)
-    val answerText = stringResource(R.string.mypage_answer)
+    val faqIcon = stringResource(R.string.faqicon)
+    val expandText = stringResource(R.string.expand)
+    val collapseText = stringResource(R.string.collapse)
+    val answerText = stringResource(R.string.answer)
 
     Column(
         modifier = modifier

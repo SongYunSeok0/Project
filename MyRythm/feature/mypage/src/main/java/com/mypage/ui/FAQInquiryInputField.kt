@@ -71,11 +71,11 @@ fun ImageAttachmentSection(
     onImageRemove: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val attachImage = stringResource(R.string.mypage_attachimage)
-    val addText = stringResource(R.string.mypage_add)
+    val attachImage = stringResource(R.string.attachimage)
+    val addText = stringResource(R.string.add)
     //val attachedImages = stringResource(R.string.mypage_attachedimages)
-    val ImagesText = stringResource(R.string.mypage_images)
-    val deleteImage = stringResource(R.string.mypage_deleteimage)
+    val ImagesText = stringResource(R.string.images)
+    val deleteImage = stringResource(R.string.deleteimage)
 
 
     val imagePickerLauncher = rememberLauncherForActivityResult(

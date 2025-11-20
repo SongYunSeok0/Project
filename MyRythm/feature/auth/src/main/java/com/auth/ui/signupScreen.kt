@@ -66,26 +66,26 @@ fun SignupScreen(
 
     //문자열 리소스화
     val signupComplete = stringResource(R.string.auth_signupcomplete)
-    val emailText = stringResource(R.string.auth_email)
-    val nameText = stringResource(R.string.auth_name)
+    val emailText = stringResource(R.string.email)
+    val nameText = stringResource(R.string.name)
     val passwordText = stringResource(R.string.auth_password)
-    val birthText = stringResource(R.string.auth_birth)
-    val yearText = stringResource(R.string.auth_year)
-    val monthText = stringResource(R.string.auth_month)
-    val dayText = stringResource(R.string.auth_day)
-    val genderText = stringResource(R.string.auth_gender)
-    val heightText = stringResource(R.string.auth_height)
-    val weightText = stringResource(R.string.auth_weight)
-    val phoneVerification = stringResource(R.string.auth_phone_verification)
-    val phoneText = stringResource(R.string.auth_phone)
-    val sendText = stringResource(R.string.auth_send)
-    val sentText = stringResource(R.string.auth_sent)
-    val verificationText = stringResource(R.string.auth_verification)
-    val codeText = stringResource(R.string.auth_code)
+    val birthText = stringResource(R.string.birth)
+    val yearText = stringResource(R.string.year)
+    val monthText = stringResource(R.string.month)
+    val dayText = stringResource(R.string.day)
+    val genderText = stringResource(R.string.gender)
+    val heightText = stringResource(R.string.height)
+    val weightText = stringResource(R.string.weight)
+    val phoneVerification = stringResource(R.string.phone_verification)
+    val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
+    val sendText = stringResource(R.string.send)
+    val sentText = stringResource(R.string.sent)
+    val verificationText = stringResource(R.string.verification)
+    val verificationCodeText = stringResource(R.string.verification_code)
     val testCodeText = stringResource(R.string.auth_testcode)
     val signupLoading = stringResource(R.string.auth_signup_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val backText = stringResource(R.string.auth_back)
+    val backText = stringResource(R.string.back)
     val codeSentMessage = stringResource(R.string.auth_message_code_sent)
     val verificationCompletedMessage = stringResource(R.string.auth_message_verification_completed)
     val backToLoginMessage = stringResource(R.string.auth_message_backtologin)
@@ -282,7 +282,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = phone,
                     onValueChange = { phone = it },
-                    hint = phoneText,
+                    hint = phoneNumberPlaceholderText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Phone,
@@ -318,7 +318,7 @@ fun SignupScreen(
                 AuthInputField(
                     value = code,
                     onValueChange = { code = it },
-                    hint = codeText,
+                    hint = verificationCodeText,
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Done,
                     keyboardType = KeyboardType.Number,

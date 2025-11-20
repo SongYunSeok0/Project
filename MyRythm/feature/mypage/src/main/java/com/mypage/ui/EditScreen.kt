@@ -44,15 +44,15 @@ fun EditScreen(
     var selectedBloodType by remember { mutableStateOf("A형") }
 
     //문자열 리소스화
-    val editprofilephoto = stringResource(R.string.mypage_editprofilephoto)
-    val editText = stringResource(R.string.mypage_edit)
-    val nameText = stringResource(R.string.mypage_name)
-    val heightText = stringResource(R.string.mypage_height)
-    val weightText = stringResource(R.string.mypage_weight)
-    val ageText = stringResource(R.string.mypage_age)
-    val genderText = stringResource(R.string.mypage_gender)
-    val bloodTypeText = stringResource(R.string.mypage_bloodtype)
-    val editDone = stringResource(R.string.mypage_edit_done)
+    val editprofilephoto = stringResource(R.string.editprofilephoto)
+    val editText = stringResource(R.string.edit)
+    val nameText = stringResource(R.string.name)
+    val heightText = stringResource(R.string.height)
+    val weightText = stringResource(R.string.weight)
+    val ageText = stringResource(R.string.age)
+    val genderText = stringResource(R.string.gender)
+    val bloodTypeText = stringResource(R.string.bloodtype)
+    val editDone = stringResource(R.string.edit_done)
 
     val context = LocalContext.current
 
@@ -151,7 +151,7 @@ fun EditScreen(
 
             SelectableButtonGroup(
                 label = genderText,
-                options = listOf(stringResource(id = R.string.mypage_male),stringResource(id = R.string.mypage_female), ),
+                options = listOf(stringResource(id = R.string.male),stringResource(id = R.string.female), ),
                 selectedOption = selectedGender,
                 onOptionSelected = { selectedGender = it }
             )
@@ -159,10 +159,10 @@ fun EditScreen(
             SelectableButtonGroup(
                 label = bloodTypeText,
                 options = listOf(
-                    stringResource(id = R.string.mypage_blood_a),
-                    stringResource(id = R.string.mypage_blood_b),
-                    stringResource(id = R.string.mypage_blood_ab),
-                    stringResource(id = R.string.mypage_blood_o)
+                    stringResource(id = R.string.blood_a),
+                    stringResource(id = R.string.blood_b),
+                    stringResource(id = R.string.blood_ab),
+                    stringResource(id = R.string.blood_o)
                 ),
                 selectedOption = selectedBloodType,
                 onOptionSelected = { selectedBloodType = it }

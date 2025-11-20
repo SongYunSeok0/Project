@@ -25,11 +25,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.scheduler.viewmodel.PlanViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.common.design.R
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 
 private val Mint = Color(0xFF6AE0D9)
 private val MintDark = Color(0xFF5DB0A8)
@@ -72,6 +76,14 @@ fun SchedulerContent(
     resetKey: Any? = null,
     onOpenRegi: () -> Unit = {}
 ) {
+    val monthSuffixText = stringResource(R.string.month_suffix)
+    val weekSuffixText = stringResource(R.string.week_suffix)
+    val formatDateMonthDayText = stringResource(R.string.format_date_month_day)
+    val statusUpcoming = stringResource(R.string.status_upcoming)
+    val scheduleEmptyMessage = stringResource(R.string.scheduler_message_schedule_empty)
+    // getString()용
+    val context = LocalContext.current
+
     val today = remember(clock) { LocalDate.now(clock) }
     var weekAnchor by remember { mutableStateOf(today) }
     var selected by remember { mutableStateOf(today) }
@@ -96,7 +108,7 @@ fun SchedulerContent(
     val dayItems by remember(selected, itemsByDate) {
         mutableStateOf(itemsByDate[selected].orEmpty())
     }
-    val banner = remember(dayItems) { bannerInfo(dayItems) }
+    val banner = remember(dayItems) { bannerInfo(dayItems, context) }   //getString추가
 
     Scaffold(containerColor = BG, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
         Column(
@@ -105,7 +117,7 @@ fun SchedulerContent(
             val wf = WeekFields.of(Locale.KOREAN)
             val startOfWeek = weekRangeOf(weekAnchor).first()
             val weekNum = weekAnchor.get(wf.weekOfMonth())
-            val title = "${startOfWeek.monthValue}월 ${weekNum}주차"
+            val title = "${startOfWeek.monthValue}$monthSuffixText ${weekNum}$weekSuffixText"
 
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
@@ -119,7 +131,15 @@ fun SchedulerContent(
                 Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach {
+                listOf(
+                    stringResource(id = R.string.sunday),
+                    stringResource(id = R.string.monday),
+                    stringResource(id = R.string.tuesday),
+                    stringResource(id = R.string.wednesday),
+                    stringResource(id = R.string.thursday),
+                    stringResource(id = R.string.friday),
+                    stringResource(id = R.string.saturday)
+                ).forEach {
                     Text(it, color = Color(0xFF999999), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
@@ -180,14 +200,14 @@ fun SchedulerContent(
             ) {
                 Column(Modifier.padding(20.dp)) {
                     Text(
-                        selected.format(DateTimeFormatter.ofPattern("M월 d일 (E)", Locale.KOREAN)),
+                        selected.format(DateTimeFormatter.ofPattern(formatDateMonthDayText, Locale.KOREAN)),
                         fontSize = 16.sp,
                         lineHeight = 1.5.em,
                         color = Color(0xFF101828)
                     )
                     Spacer(Modifier.height(16.dp))
                     if (dayItems.isEmpty()) {
-                        Text("등록된 복약 일정이 없습니다", color = GrayText, fontSize = 13.sp)
+                        Text(scheduleEmptyMessage, color = GrayText, fontSize = 13.sp)
                     } else {
                         dayItems.sortedBy { it.time }.forEachIndexed { i, it ->
                             PillRow(
@@ -196,7 +216,7 @@ fun SchedulerContent(
                                 time = it.time,
                                 trailing = {
                                     if (it.status == IntakeStatus.DONE) DoneText()
-                                    else Text("예정", color = Color(0xFF999999), fontSize = 12.sp)
+                                    else Text(statusUpcoming, color = Color(0xFF999999), fontSize = 12.sp)
                                 }
                             )
                             if (i != dayItems.lastIndex) Spacer(Modifier.height(12.dp))
@@ -243,15 +263,33 @@ private fun weekRangeOf(anchor: LocalDate): List<LocalDate> {
 
 private data class Banner(val title: String, val sub: String, val positive: Boolean)
 
-private fun bannerInfo(items: List<MedItem>): Banner {
-    if (items.isEmpty()) return Banner("오늘 복약 일정이 없습니다", "", true)
+private fun bannerInfo(items: List<MedItem>, context: Context): Banner {
+    val todayScheduleEmptyMessageId = R.string.scheduler_message_today_schedule_empty
+    val doseAllCompletedMessageId = R.string.scheduler_message_dose_all_completed
+    val doseGoodProgressMessageId = R.string.scheduler_message_dose_good_progress
+    val doseLowProgressMessageId = R.string.scheduler_message_dose_low_progress
+    val status_upcomingId = R.string.status_upcoming
+    val completionRateLabelId = R.string.completion_rate
+    val percentSuffixId = R.string.percent_suffix
+
+    if (items.isEmpty()) {
+        val title = context.getString(todayScheduleEmptyMessageId)
+        return Banner(title, "", true)
+    }
     val done = items.count { it.status == IntakeStatus.DONE }
     val total = items.size
     val pct = (done * 100f / total).toInt()
+
+    // GETSTRING
+    val label = context.getString(completionRateLabelId)
+    val suffix = context.getString(percentSuffixId)
+    val subText = "$label $pct$suffix" // 예: "완료율 75%"
+
     return when {
-        done == total -> Banner("모든 복약을 완료했습니다", "완료율 $pct%", true)
-        pct >= 60 -> Banner("좋습니다. 나머지도 잊지 마세요", "완료율 $pct%", true)
-        else -> Banner("복약 주기를 지키면 리포트 정확도가 올라갑니다", "완료율 $pct%", false)
+        // context.getString() 적용
+        done == total -> Banner(context.getString(doseAllCompletedMessageId), subText, true)
+        pct >= 60 -> Banner(context.getString(doseGoodProgressMessageId), subText, true)
+        else -> Banner(context.getString(doseLowProgressMessageId), subText, false)
     }
 }
 @Composable
@@ -274,5 +312,6 @@ private fun PillRow(dot: Color, title: String, time: String, trailing: @Composab
 }
 @Composable
 private fun DoneText() {
-    Text("복용 완료", color = Mint, fontSize = 12.sp)
+    val doseCompleteText = stringResource(R.string.dose_complete)
+    Text(doseCompleteText, color = Mint, fontSize = 12.sp)
 }

@@ -139,9 +139,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
     }
 
     // 문자열리소스화 적용
-    val searchText = stringResource(R.string.map_search)
-    val hospitalText = stringResource(R.string.map_hospital)
-    val pharmacyText = stringResource(R.string.map_pharmacy)
+    val searchText = stringResource(R.string.search)
+    val hospitalText = stringResource(R.string.hospital)
+    val pharmacyText = stringResource(R.string.pharmacy)
     val searchMessage = stringResource(R.string.map_message_search)
 
     LaunchedEffect(Unit) {
@@ -449,9 +449,9 @@ fun PlaceInfoContent(
     val prettyCategory = cleanCategoryForDisplay(place.category)
 
     // 문자열리소스화 적용
-    val phoneText = stringResource(R.string.map_phone)
-    val navigationText = stringResource(R.string.map_navigation)
-    val closeText = stringResource(R.string.map_close)
+    val phoneText = stringResource(R.string.phone)
+    val navigationText = stringResource(R.string.navigation)
+    val closeText = stringResource(R.string.close)
     val errorAddressNotFound = stringResource(R.string.map_error_address_not_found)
     val errorNavigationFailed = stringResource(R.string.map_error_navigation_failed)
     val errorLocationNotFound = stringResource(R.string.map_error_location_not_found)
@@ -557,7 +557,7 @@ fun SearchHereChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val search_here = stringResource(R.string.map_search_here)
+    val search_here = stringResource(R.string.search_here)
 
     if (!visible) return
     Surface(
@@ -580,7 +580,7 @@ fun SearchHereChip(
 
 @Composable
 fun RoundRecenterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val mylocationText = stringResource(R.string.map_mylocation)
+    val mylocationText = stringResource(R.string.mylocation)
     Surface(
         modifier = modifier
             .size(56.dp)
