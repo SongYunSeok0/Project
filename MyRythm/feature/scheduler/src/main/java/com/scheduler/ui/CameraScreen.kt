@@ -25,7 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.common.design.R
+import com.shared.R
 import com.scheduler.ocr.CameraActivity
 import java.io.File
 import java.io.FileOutputStream

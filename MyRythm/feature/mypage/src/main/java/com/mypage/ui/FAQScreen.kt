@@ -26,11 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.design.AppTopBar
+import com.shared.bar.AppTopBar
 import com.domain.model.Inquiry
 import com.mypage.viewmodel.MyPageViewModel
-import com.ui.theme.OnlyColorTheme
+import com.shared.ui.theme.OnlyColorTheme
 import kotlinx.coroutines.launch
 
 // 컴포넌트 적용했던 기존faq스크린을 2개로 분리, 이쪽은 기존 0번탭 그 외는 1번탭

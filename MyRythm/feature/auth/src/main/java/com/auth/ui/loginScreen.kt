@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,14 +25,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.viewmodel.AuthViewModel
-import com.common.design.R
-import com.ui.components.AuthInputField
-import com.ui.components.AuthLogoHeader
-import com.ui.components.AuthPrimaryButton
-import com.ui.components.AuthSecondaryButton
-import com.ui.theme.Primary
-import com.ui.theme.defaultFontFamily
-import com.ui.theme.loginTheme
+import com.shared.R
+import com.shared.ui.components.AuthInputField
+import com.shared.ui.components.AuthLogoHeader
+import com.shared.ui.components.AuthPrimaryButton
+import com.shared.ui.components.AuthSecondaryButton
+import com.shared.ui.theme.Primary
+import com.shared.ui.theme.defaultFontFamily
+import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

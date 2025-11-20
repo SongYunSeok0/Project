@@ -26,7 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 //import coil.compose.rememberAsyncImagePainter
-import com.common.design.R
+import com.shared.R
 
 @Composable
 fun InquiryTextField(

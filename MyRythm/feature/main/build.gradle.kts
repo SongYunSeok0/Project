@@ -40,7 +40,7 @@ android {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":common:design"))
+    implementation(project(":shared"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:map"))

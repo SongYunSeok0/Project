@@ -24,10 +24,7 @@ dependencyResolutionManagement {
 
 include(
     ":app",
-    ":common",
-    ":common:design",
     ":feature:auth",
-    ":feature:main",
     ":feature:map",
     ":feature:mypage",
     ":feature:news",
@@ -37,3 +34,4 @@ include(
 include(":data")
 include(":domain")
 include(":core")
+include(":shared")

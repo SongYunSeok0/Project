@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel
-import com.ui.components.AppSelectableButton
+import com.shared.ui.components.AppSelectableButton
 
 @Composable
 fun InquiryTypeSelector(

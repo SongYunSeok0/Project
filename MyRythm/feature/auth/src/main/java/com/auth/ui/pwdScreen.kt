@@ -6,22 +6,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.common.design.R
-import com.ui.components.AuthInputField
-import com.ui.components.AuthLogoHeader
-import com.ui.components.AuthPrimaryButton
-import com.ui.components.AuthSecondaryButton
-import com.ui.components.AuthActionButton
-import com.ui.theme.authTheme
-import com.ui.theme.defaultFontFamily
-import com.ui.theme.loginTheme
+import com.shared.R
+import com.shared.ui.components.AuthInputField
+import com.shared.ui.components.AuthLogoHeader
+import com.shared.ui.components.AuthPrimaryButton
+import com.shared.ui.components.AuthSecondaryButton
+import com.shared.ui.components.AuthActionButton
+import com.shared.ui.theme.authTheme
+import com.shared.ui.theme.defaultFontFamily
 
 /**
  * 비밀번호 찾기/인증 화면 (반응형 레이아웃 적용)

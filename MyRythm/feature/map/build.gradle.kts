@@ -40,7 +40,7 @@ android {
 
 dependencies {
     // 모듈
-    implementation(project(":common:design"))
+    implementation(project(":shared"))
     implementation(project(":domain"))
 
     // Compose BOM + 기본 세트

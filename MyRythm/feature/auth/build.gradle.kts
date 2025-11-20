@@ -50,8 +50,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":common:design"))
-    implementation(project(":feature:main"))
+    implementation(project(":shared"))
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":core"))

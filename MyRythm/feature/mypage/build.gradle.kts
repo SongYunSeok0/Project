@@ -48,7 +48,7 @@ kotlin {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":common:design"))
+    implementation(project(":shared"))
     implementation(project(":domain"))
 
     //기본

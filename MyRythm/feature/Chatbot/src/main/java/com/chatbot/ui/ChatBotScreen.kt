@@ -41,7 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chatbot.viewmodel.ChatbotViewModel
 import com.chatbot.viewmodel.ChatbotViewModelFactory
-import com.common.design.R
+import com.shared.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

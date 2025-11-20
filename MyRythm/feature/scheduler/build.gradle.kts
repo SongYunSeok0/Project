@@ -33,7 +33,7 @@ android {
 
 dependencies {
     implementation(project(":feature"))
-    implementation(project(":common:design"))
+    implementation(project(":shared"))
     implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))

@@ -63,7 +63,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":common:design"))
+    implementation(project(":shared"))
     implementation(project(":domain"))
 
     // ✅ Compose 필수 라이브러리

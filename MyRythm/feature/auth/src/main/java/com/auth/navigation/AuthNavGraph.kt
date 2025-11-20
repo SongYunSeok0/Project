@@ -8,7 +8,7 @@ import androidx.navigation.toRoute
 import com.auth.ui.LoginScreen
 import com.auth.ui.PwdScreen
 import com.auth.ui.SignupScreen
-import com.main.navigation.MainRoute
+import com.shared.navigation.MainRoute
 
 fun NavGraphBuilder.authNavGraph(nav: NavController) {
     navigation<AuthGraph>(startDestination = LoginRoute) {
