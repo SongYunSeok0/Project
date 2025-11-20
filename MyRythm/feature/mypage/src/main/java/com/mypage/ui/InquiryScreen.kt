@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.common.design.R
+import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel

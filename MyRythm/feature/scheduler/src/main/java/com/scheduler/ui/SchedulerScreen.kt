@@ -26,7 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.scheduler.viewmodel.PlanViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
-import com.common.design.R
+import com.shared.R
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters

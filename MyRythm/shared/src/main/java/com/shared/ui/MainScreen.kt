@@ -22,7 +22,7 @@ import com.shared.R
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.res.stringResource
-import com.ui.theme.componentTheme
+import com.shared.ui.theme.componentTheme
 
 @Composable
 fun MainScreen(

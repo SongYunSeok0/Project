@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.common.design.R
+import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.scheduler.viewmodel.PlanViewModel
 import java.text.SimpleDateFormat

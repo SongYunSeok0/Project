@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.res.stringResource
-import com.common.design.R
+import com.shared.R
 import com.scheduler.ocr.OcrCropView
 
 @Composable

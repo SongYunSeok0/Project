@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.ui.theme.componentTheme
+import com.shared.ui.theme.componentTheme
 
 @Composable
 private fun BaseCardBox(
