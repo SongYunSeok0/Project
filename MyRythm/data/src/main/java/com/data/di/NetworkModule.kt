@@ -23,6 +23,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.core.net.AuthHeaderInterceptor
 
+
 // ---- Qualifiers ----
 @Qualifier annotation class UserRetrofit
 @Qualifier annotation class NewsRetrofit
@@ -138,9 +139,6 @@ object NetworkModule {
     fun provideUserApi(@UserRetrofit retrofit: Retrofit): UserApi =
         retrofit.create(UserApi::class.java)
 
-    @Provides @Singleton
-    fun provideNewsApi(@NewsRetrofit retrofit: Retrofit): NewsApi =
-        retrofit.create(NewsApi::class.java)
 
     @Provides @Singleton
     fun provideMapApi(@MapRetrofit retrofit: Retrofit): MapApi =
@@ -153,4 +151,10 @@ object NetworkModule {
     @Provides @Singleton
     fun provideChatbotApi(@UserRetrofit retrofit: Retrofit): ChatbotApi =
         retrofit.create(ChatbotApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNewsApi(@NewsRetrofit retrofit: Retrofit): NewsApi =
+        retrofit.create(NewsApi::class.java)
+
 }

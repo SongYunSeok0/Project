@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -80,8 +82,9 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.paging.compose)
     implementation(libs.compose.runtime.livedata)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
-    implementation("androidx.compose.material:material-icons-extended:1.5.0")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
 }

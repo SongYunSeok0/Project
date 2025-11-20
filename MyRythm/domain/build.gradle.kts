@@ -1,5 +1,4 @@
 plugins {
-    id("java-library")
     alias(libs.plugins.jetbrains.kotlin.jvm)
 }
 java {
@@ -13,4 +12,7 @@ dependencies{
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
     implementation(libs.moshi)
+    implementation("androidx.paging:paging-common:3.2.1")
+
+
 }
