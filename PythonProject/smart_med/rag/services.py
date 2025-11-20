@@ -5,7 +5,7 @@ from typing import List, Optional
 from django.db.models import Q
 from pgvector.django import CosineDistance
 
-from .models import Chunk, QAPair
+from .models import Chunk
 from .embeddings import get_embedding
 from .llm import generate_answer
 from .symptom import (
@@ -37,7 +37,6 @@ INTENT_GENERAL = "general"
 SIDE_EFFECT_KEYS = ["부작용", "이상반응"]
 EFFICACY_KEYS = ["효능", "효과", "어디에좋아", "무엇에좋아", "어디에 좋", "무엇에 좋"]
 
-# "언제 먹어?" 류를 용법/용량으로 인식하도록 키워드
 DOSAGE_KEYS = [
     "용법", "용량", "복용법", "먹는법",
     "하루몇번", "하루 몇 번", "몇번", "몇 번", "몇회", "몇 회",
@@ -47,15 +46,20 @@ DOSAGE_KEYS = [
 INTERACTION_KEYS = ["상호작용", "같이먹어도", "같이 먹어도", "병용", "함께복용", "함께 복용"]
 WARNING_KEYS = ["주의사항", "주의", "경고", "사용상 주의사항"]
 
-# 약처럼 보이는 토큰 힌트
 MED_NAME_HINT = ["정", "캡슐", "액", "시럽", "산", "펜", "콜", "타이레놀", "판콜", "콜드"]
 
-# 증상 관련 후속질문 힌트 (포함 돼? 안 돼? 등)
 FOLLOWUP_INCLUDE_KEYS = [
     "포함돼", "포함되", "포함안돼", "포함안되",
     "해당돼", "해당되",
     "들어가", "들어있", "들어가있",
 ]
+
+DISEASE_SUB_SYMPTOM = "symptom"
+DISEASE_SUB_CAUSE = "cause"
+DISEASE_SUB_COMPLICATION = "complication"
+DISEASE_SUB_PREVENTION = "prevention"
+DISEASE_SUB_TREATMENT = "treatment"
+DISEASE_SUB_GENERAL = "general"
 
 
 # ───────────────────────────────
@@ -65,57 +69,12 @@ def _normalize(s: str) -> str:
     return s.replace(" ", "").strip()
 
 
-def _normalize_ko_text(s: str) -> str:
-    if not s:
-        return ""
-    return re.sub(r"\s+", "", s).strip()
-
-
-def normalize_bullets(text: str) -> str:
-    """
-    '1. 문장 2. 문장 3. 문장'처럼 붙어서 나온 번호 목록을
-    줄바꿈된 bullet 형태로 정리한다.
-    """
-    if not text:
-        return text
-
-    pattern = r"(\d+\.\s+)"
-    parts = re.split(pattern, text)
-
-    if len(parts) <= 1:
-        return text
-
-    out = []
-    buffer = ""
-
-    for p in parts:
-        if re.fullmatch(pattern, p):
-            if buffer.strip():
-                out.append(buffer.strip())
-            buffer = p
-        else:
-            buffer += p
-
-    if buffer.strip():
-        out.append(buffer.strip())
-
-    return "\n".join(out)
-
-
 def dedupe_sentences(text: str) -> str:
-    """
-    QAPair.answer처럼 문장이 그대로 또는 거의 그대로 두 번 반복된 경우
-    문장 단위로 중복/부분중복을 제거.
-    """
     if not text:
         return ""
 
     t = text.strip()
-
-    # '다\n', '니다\n', '요\n' → '다.\n' 식으로 문장 경계 보정
     t = re.sub(r"(다|니다|요)\s*\n", r"\1.\n", t)
-
-    # 마침표/물음표/느낌표 뒤 공백 기준 분리 (고정 길이 lookbehind)
     parts = re.split(r"(?<=[\.!?])\s+", t)
 
     out: List[str] = []
@@ -145,52 +104,8 @@ def dedupe_sentences(text: str) -> str:
 
     return " ".join(out)
 
-def dedupe_numbered_bullets(text: str) -> str:
-    """
-    '1. 문장' 형식의 번호 매긴 bullet 중에서
-    내용이 거의 같은 항목을 제거한다.
-    - 공백 제거 후 문장 전체를 비교
-    - '일반적으로', '또한', '따라서' 같은 앞머리는 무시
-    """
-    if not text:
-        return text
-
-    lines = text.splitlines()
-    out: List[str] = []
-    seen_norms: List[str] = []
-
-    for ln in lines:
-        m = re.match(r"\s*(\d+)\.\s*(.+)", ln)
-        if not m:
-            out.append(ln)
-            continue
-
-        body = m.group(2).strip()
-        body_core = re.sub(r"^(일반적으로|또한|따라서)\s*", "", body)
-        norm = re.sub(r"\s+", "", body_core)
-
-        skip = False
-        for prev in seen_norms:
-            # 서로 포함 관계면 의미 중복으로 처리
-            if norm == prev or norm in prev or prev in norm:
-                skip = True
-                break
-
-        if not skip:
-            seen_norms.append(norm)
-            out.append(ln)
-
-    return "\n".join(out)
 
 def clean_output(text: str) -> str:
-    """
-    공통 후처리:
-    - 전체가 두 번 반복된 형태(AAA...AAA...)면 한 번만 남김
-    - 문단/문장 중복 제거
-    - 깨진 문자 제거
-    - 번호 목록 포맷 보정
-    - 번호 bullet 중복 제거
-    """
     if not text:
         return ""
 
@@ -215,38 +130,11 @@ def clean_output(text: str) -> str:
 
     t = dedupe_sentences(t)
     t = t.replace("\ufffd", "")
-    t = normalize_bullets(t)
-
-    # ★ 핵심: bullet 중복 제거 추가
-    t = dedupe_numbered_bullets(t)
 
     return t.strip()
 
 
-def force_numbered_bullets(text: str, max_n: int = 6) -> str:
-    """
-    질환 '증상' 답변처럼 꼭 1. 2. 3. 형식으로 정리하고 싶은 경우 사용.
-    이미 '1. ' 패턴이 있으면 그대로 둔다.
-    """
-    if not text:
-        return ""
-
-    if re.search(r"\d+\.\s", text):
-        return text.strip()
-
-    sents = [s.strip() for s in re.split(r"[\.!?]\s*", text) if s.strip()]
-    if not sents:
-        return text.strip()
-
-    bullets = []
-    for i, s in enumerate(sents[:max_n]):
-        bullets.append(f"{i + 1}. {s}")
-
-    return "\n".join(bullets).strip()
-
-
 def extract_med_names(query: str) -> List[str]:
-    """질문에서 약품명 후보만 추출."""
     toks = re.split(r"[^\w가-힣]+", query)
     meds: List[str] = []
     for t in toks:
@@ -263,15 +151,31 @@ def extract_disease_keyword(question: str) -> Optional[str]:
     if not m:
         return None
 
-    disease = m.group(1)  # 예: '폐렴', 'HIV', 'HIV 감염'
+    disease = m.group(1)
     return disease.strip()
+
+
+def detect_disease_subintent(question: str) -> str:
+    q = question.replace(" ", "")
+
+    if "증상" in q:
+        return DISEASE_SUB_SYMPTOM
+    if "합병증" in q or "후유증" in q:
+        return DISEASE_SUB_COMPLICATION
+    if "원인" in q or "왜걸려" in q or "왜생겨" in q:
+        return DISEASE_SUB_CAUSE
+    if "예방" in q or "예방법" in q or "예방접종" in q or "백신" in q:
+        return DISEASE_SUB_PREVENTION
+    if "치료" in q or "치료법" in q or "치료방법" in q or "치료는어떻게" in q:
+        return DISEASE_SUB_TREATMENT
+
+    return DISEASE_SUB_GENERAL
 
 
 # ───────────────────────────────
 # Intent 감지 + 비교 의도
 # ───────────────────────────────
 def detect_compare_intent(question: str) -> Optional[List[str]]:
-    """타이레놀 vs 판콜에스 같은 비교 질문 여부 + 약 2개 추출."""
     q = question.replace("VS", "vs").replace("Vs", "vs")
     q = q.replace("비교", "vs")
 
@@ -313,126 +217,7 @@ def detect_intent(question: str) -> str:
 
 
 # ───────────────────────────────
-# QA JSONL 기반 RAG
-# ───────────────────────────────
-def retrieve_qa_pairs(
-    query: str,
-    k: int = 5,
-    max_distance: float = 0.45,
-    disease_kw: Optional[str] = None,
-):
-    """
-    질환/건강 Q&A용 QAPair 벡터 검색.
-    """
-    q_emb = get_embedding(query)
-
-    qs = (
-        QAPair.objects
-        .annotate(distance=CosineDistance("embedding", q_emb))
-        .order_by("distance")[:k]
-    )
-    items = list(qs)
-    if not items:
-        return []
-
-    first_dist = float(items[0].distance) if items[0].distance is not None else None
-    print(f"[QA-RAG] top_k={len(items)}, first_dist={first_dist}")
-
-    if first_dist is not None and first_dist > max_distance:
-        print(f"[QA-RAG] distance too far ({first_dist} > {max_distance}) → 사용 안 함")
-        return []
-
-    if disease_kw:
-        norm_kw = _normalize_ko_text(disease_kw)
-
-        def has_kw(txt: Optional[str]) -> bool:
-            if not txt:
-                return False
-            return norm_kw in _normalize_ko_text(txt)
-
-        def is_primary_question(txt: Optional[str]) -> bool:
-            if not txt:
-                return False
-            qn = _normalize_ko_text(txt)
-            window = max(10, len(norm_kw) * 2)
-            return norm_kw in qn[:window]
-
-        def select_from_queryset(qs_base):
-            cand = [it for it in qs_base if has_kw(it.question) or has_kw(it.answer)]
-            if not cand:
-                return []
-            primary = [it for it in cand if is_primary_question(it.question)]
-            return primary
-
-        primary_items = select_from_queryset(items)
-
-        if primary_items:
-            return primary_items
-
-        kw_qs = QAPair.objects.filter(
-            Q(question__icontains=disease_kw) | Q(answer__icontains=disease_kw)
-        )
-        if not kw_qs.exists():
-            print(f"[QA-RAG] disease_kw='{disease_kw}' 포함된 QA 자체가 없음 → discard")
-            return []
-
-        kw_qs = kw_qs.annotate(distance=CosineDistance("embedding", q_emb)).order_by("distance")[:k]
-        kw_items = list(kw_qs)
-        if not kw_items:
-            print(f"[QA-RAG] disease_kw='{disease_kw}' 재검색 결과 없음 → discard")
-            return []
-
-        first_dist = float(kw_items[0].distance) if kw_items[0].distance is not None else None
-        print(f"[QA-RAG] disease_kw='{disease_kw}' 재검색 top_k={len(kw_items)}, first_dist={first_dist}")
-
-        if first_dist is not None and first_dist > max_distance:
-            print(f"[QA-RAG] disease_kw 재검색 distance too far ({first_dist} > {max_distance}) → discard")
-            return []
-
-        primary_items = select_from_queryset(kw_items)
-        if not primary_items:
-            print(
-                f"[QA-RAG] disease_kw='{disease_kw}' 포함 QA는 있지만 "
-                f"질문 앞부분에 메인 질환으로 쓰인 QA가 없음 → discard"
-            )
-            return []
-
-        return primary_items
-
-    return items
-
-
-# ───────────────────────────────
-# 질환별 증상용 QA 선택 헬퍼
-# ───────────────────────────────
-def find_symptom_qa(disease_kw: str, base_items: List[QAPair]) -> Optional[QAPair]:
-    """
-    disease_kw에 대해 answer 안에 '증상'이 들어간 QAPair를 우선 선택.
-    """
-    norm_kw = _normalize_ko_text(disease_kw)
-
-    def has_disease(txt: Optional[str]) -> bool:
-        if not txt:
-            return False
-        return norm_kw in _normalize_ko_text(txt)
-
-    for it in base_items:
-        ans = it.answer or ""
-        if "증상" in ans and (has_disease(it.question) or has_disease(it.answer)):
-            return it
-
-    qs = QAPair.objects.filter(
-        Q(question__icontains=disease_kw) | Q(answer__icontains=disease_kw),
-        answer__icontains="증상",
-    )
-    if qs.exists():
-        return qs.first()
-
-    return None
-
-
-# ───────────────────────────────
-# 약 설명서 기반 RAG
+# 약 설명서 기반 RAG (Chunk만 사용)
 # ───────────────────────────────
 def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> List[Chunk]:
     intent = detect_intent(query)
@@ -472,6 +257,9 @@ def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> Li
     qs = qs.annotate(distance=CosineDistance("embedding", q_emb)).order_by("distance")[:k]
     chunks = list(qs)
 
+    if meds:
+        chunks = _prioritize_base_brand(meds[0], chunks)
+
     if not chunks:
         print(f"[RAG] no chunks found for query='{query}' (intent={intent}, meds={meds})")
         return []
@@ -484,6 +272,89 @@ def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> Li
         return []
 
     return chunks
+
+
+def _prioritize_base_brand(med: str, chunks: List[Chunk]) -> List[Chunk]:
+    exact: List[Chunk] = []
+    contains: List[Chunk] = []
+    others: List[Chunk] = []
+
+    for c in chunks:
+        name = (c.item_name or "").strip()
+        if name.startswith(med):
+            exact.append(c)
+        elif med in name:
+            contains.append(c)
+        else:
+            others.append(c)
+
+    return exact + contains + others
+
+
+# ───────────────────────────────
+# 건강기능식품(hf_*) RAG
+# ───────────────────────────────
+def search_health_food_chunks(query: str, k: int = 5, max_distance: float = 0.6) -> List[Chunk]:
+    """
+    건강기능식품(hf_*) 전용 Chunk 검색
+    """
+    q_emb = get_embedding(query)
+
+    qs = (
+        Chunk.objects
+        .filter(section__startswith="hf_")
+        .annotate(distance=CosineDistance("embedding", q_emb))
+        .order_by("distance")[:k]
+    )
+
+    chunks = list(qs)
+    if not chunks:
+        return []
+
+    first_dist = float(chunks[0].distance) if chunks[0].distance is not None else None
+    print(f"[HF-RAG] top_k={len(chunks)}, first_dist={first_dist}")
+
+    if first_dist is not None and first_dist > max_distance:
+        print(f"[HF-RAG] distance too far ({first_dist} > {max_distance}) → 사용 안 함")
+        return []
+
+    return chunks
+
+
+def build_health_food_answer(question: str, chunks: List[Chunk]) -> str:
+    """
+    건강기능식품 / 영양제 추천·설명용 답변 생성
+    (hf_usage / hf_caution / hf_function 섹션 사용)
+    """
+    if not chunks:
+        return build_general_answer(question, [])
+
+    context = build_context(chunks)
+
+    prompt = f"""
+너는 '건강기능식품/영양제' 정보를 설명하는 한국어 상담 어시스턴트이다.
+
+[참고 문서]
+{context}
+
+[질문]
+{question}
+
+[지시]
+1. 위 문서에서 사용자의 질문과 가장 관련 있는 건강기능식품 1~3개만 골라라.
+2. 각 제품에 대해 다음을 한국어로 정리해라.
+   - 제품명
+   - 어떤 도움(효과/기능성)을 줄 수 있는지 (기능성)
+   - 기본적인 섭취 방법 (있다면)
+   - 중요한 주의사항 (있다면)
+3. 문서에 없는 내용은 지어내지 말고, '문서에 정보 없음' 수준으로만 언급해라.
+4. 질병 진단·치료나 처방은 하지 말고,
+   실제 복용 전에는 의사 또는 약사와 상의해야 한다는 점을 함께 언급해라.
+5. 목록(bullet)과 짧은 문장 위주로, 이해하기 쉽게 정리해라.
+
+[최종 답변]
+"""
+    return generate_answer(prompt).strip()
 
 
 # ───────────────────────────────
@@ -503,7 +374,6 @@ def build_context(chunks: List[Chunk]) -> str:
 
 
 def _extract_after_label(text: str, labels: List[str]) -> str:
-    """'효능효과:', '용법용량:' 같은 라벨 이후만 잘라냄."""
     if not text:
         return ""
     for label in labels:
@@ -517,9 +387,6 @@ def _extract_after_label(text: str, labels: List[str]) -> str:
 
 
 def _select_chunk_for_med(med: str, section_keywords: List[str]) -> Optional[Chunk]:
-    """
-    특정 약(med)에 대해 원하는 섹션에 가장 잘 맞는 Chunk 하나 선택.
-    """
     qs = Chunk.objects.filter(item_name__icontains=med)
     if not qs.exists():
         return None
@@ -536,9 +403,6 @@ def _select_chunk_for_med(med: str, section_keywords: List[str]) -> Optional[Chu
 
 
 def build_compare_answer(question: str, meds: List[str]) -> str:
-    """
-    두 약 비교용 답변 생성 (타이레놀 vs 판콜에스 등)
-    """
     med_a, med_b = meds[0], meds[1]
 
     c_a_eff = _select_chunk_for_med(med_a, ["효능효과", "효능"])
@@ -601,10 +465,6 @@ def build_compare_answer(question: str, meds: List[str]) -> str:
 
 
 def build_general_answer(question: str, chunks: List[Chunk]) -> str:
-    """
-    - drug Chunk가 없으면: 일반 질의용 LLM
-    - drug Chunk가 있으면: RAG + LLM
-    """
     if not chunks:
         q = question.replace(" ", "")
 
@@ -675,117 +535,148 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
     intent = detect_intent(question)
     print("[INTENT]", intent, "/ q =", question)
 
-    # 0. 질환/건강 일반 질문
     if intent == INTENT_GENERAL:
         disease_kw = extract_disease_keyword(question)
         print("disease_kw =", disease_kw)
 
         if disease_kw:
-            q_norm = question.replace(" ", "")
+            sub = detect_disease_subintent(question)
+            print("disease_subintent =", sub)
 
-            # 0-1. '증상' 질문이면 bullet 형태 강제
-            if "증상" in q_norm:
-                qa_items = retrieve_qa_pairs(
-                    query=question,
-                    k=3,
-                    max_distance=0.45,
-                    disease_kw=disease_kw,
-                )
-
-                symptom_text = ""
-
-                if qa_items:
-                    symptom_qa = find_symptom_qa(disease_kw, qa_items)
-
-                    if symptom_qa:
-                        raw_answer = (symptom_qa.answer or "").strip()
-                        raw_answer = dedupe_sentences(raw_answer)
-
-                        print(
-                            "[QA-RAG] symptom_branch, use QAPair id=",
-                            getattr(symptom_qa, "id", None),
-                        )
-
-                        symptom_sents: List[str] = []
-                        seen = set()
-                        for sent in re.split(r"[\.!?]\s*", raw_answer):
-                            s = sent.strip()
-                            if "증상" in s and s and s not in seen:
-                                seen.add(s)
-                                symptom_sents.append(s)
-
-                        symptom_text = "\n".join(symptom_sents).strip()
-                        print(
-                            "[QA-RAG] symptom_branch, extracted_symptom_text =",
-                            bool(symptom_text),
-                        )
-
-                if symptom_text:
-                    instruction = f"""
-아래는 '{disease_kw}'에 대한 의료 정보 중 '증상'이 언급된 부분입니다.
-
-[증상 관련 원문]
-{symptom_text}
-
-[지시]
-위 텍스트에서 '{disease_kw}'의 '증상'만 골라서
-핵심 증상들을 한국어 bullet 형식(1. 2. 3. ...)으로 간단히 정리해라.
-다른 내용(원인, 진단, 검사, 치료, 예방)은 포함하지 마라.
-
-[답변]
-"""
-                    result = generate_answer(instruction).strip()
-                    result = clean_output(result)
-                    return force_numbered_bullets(result)
-
+            if sub == DISEASE_SUB_SYMPTOM:
                 instruction = f"""
 너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
 
 [질환명]
 {disease_kw}
 
-[지시]
-위 질환에 대해, 일반적으로 알려진 '대표 증상'만 한국어 bullet 형식(1. 2. 3. ...)으로 정리해라.
+[사용자 질문]
+{question}
 
-- 핵심 증상 위주로 4~6개 bullet로 정리해라.
-- '원인, 진단, 검사, 치료, 예방' 내용은 절대 포함하지 마라.
-- 확실하지 않은 것은 적지 말고, 필요한 경우에는 의사 진료를 권고해라.
+[지시]
+- 이 질환에서 일반적으로 알려진 '대표 증상'만 한국어로 정리해라.
+- 4~6개 정도의 핵심 증상을 bullet 또는 짧은 문장으로 정리해라.
+- 정의, 원인, 감염경로, 진단, 검사, 치료, 예방, 예후, 합병증 등
+  증상이 아닌 정보는 쓰지 마라.
+- 특정 약 이름, 용량, 처방 지시는 제시하지 마라.
+- 확실하지 않은 내용은 적지 말고, 필요한 경우 의사 진료를 권고해라.
 
 [답변]
 """
-                print("[QA-RAG] symptom_branch, fallback to LLM by disease name only")
                 result = generate_answer(instruction).strip()
-                result = clean_output(result)
-                return force_numbered_bullets(result)
+                return clean_output(result)
 
-            # 0-2. '증상'이 아닌 질환 질문일 때만 QAPair answer 그대로 사용
-            qa_items = retrieve_qa_pairs(
-                query=question,
-                k=3,
-                max_distance=0.45,
-                disease_kw=disease_kw,
-            )
-            if qa_items:
-                top = qa_items[0]
-                raw_answer = (top.answer or "").strip()
-                raw_answer = dedupe_sentences(raw_answer)
-                print("[QA-RAG] hit → QAPair.answer 사용 (non-symptom)")
-                return clean_output(raw_answer)
+            if sub == DISEASE_SUB_CAUSE:
+                instruction = f"""
+너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
 
-        # disease_kw 없거나 QA 실패 → 아래 intent 분기로 계속 진행
+[질환명]
+{disease_kw}
 
-    # 1. 비교 질문 (타이레놀 vs 판콜)
+[사용자 질문]
+{question}
+
+[지시]
+- 이 질환이 발생하는 '주요 원인'과 '위험요인'을 중심으로 설명해라.
+- 일반적으로 알려진 내용만 요약해서 설명하고, 개별 환자 진단처럼 말하지 마라.
+- 증상, 검사 방법, 치료 방법, 예방 방법, 합병증에 대한 자세한 설명은 하지 마라.
+- 특정 약 이름, 검사, 수술 등을 구체적으로 지시하지 말고,
+  궁극적인 진단과 치료는 의사가 결정해야 한다고 명시해라.
+
+[답변]
+"""
+                result = generate_answer(instruction).strip()
+                return clean_output(result)
+
+            if sub == DISEASE_SUB_COMPLICATION:
+                instruction = f"""
+너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
+
+[질환명]
+{disease_kw}
+
+[사용자 질문]
+{question}
+
+[지시]
+- 이 질환에서 발생할 수 있는 '대표적인 합병증'을 설명해라.
+- 합병증 이름과, 아주 간단한 특징 정도만 설명해라.
+- 일반적인 증상, 원인, 예방, 치료 방법에 대한 장황한 설명은 하지 마라.
+- 실제로 이런 합병증이 의심되면 반드시 의료진 진료가 필요하다는 점을 강조해라.
+
+[답변]
+"""
+                result = generate_answer(instruction).strip()
+                return clean_output(result)
+
+            if sub == DISEASE_SUB_PREVENTION:
+                instruction = f"""
+너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
+
+[질환명]
+{disease_kw}
+
+[사용자 질문]
+{question}
+
+[지시]
+- 이 질환을 예방하기 위해 일반적으로 권장되는 생활습관, 위생수칙,
+  백신/예방접종 여부 등을 정리해라.
+- 구체적인 약 이름, 용량, 처방 지시는 하지 말고, '일반적인 건강 수칙' 수준에서 설명해라.
+- 이미 증상이 있는 사람은 스스로 판단하지 말고 의사 진료를 받아야 한다는 점을 같이 언급해라.
+
+[답변]
+"""
+                result = generate_answer(instruction).strip()
+                return clean_output(result)
+
+            if sub == DISEASE_SUB_TREATMENT:
+                instruction = f"""
+너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
+
+[질환명]
+{disease_kw}
+
+[사용자 질문]
+{question}
+
+[지시]
+- 이 질환에서 일반적으로 사용되는 '치료/관리 방법'을 큰 틀에서만 설명해라.
+- 예: 휴식, 수분 섭취, 해열제·진통제 사용 가능 여부, 항생제/항바이러스제 사용 여부,
+  입원이 필요한 상황 등 '원칙' 수준으로만 설명해라.
+- 특정 약의 이름, 정확한 용량, 복용 기간 등 구체적 처방은 쓰지 마라.
+- 실제 치료 계획은 반드시 의사가 결정해야 하며, 사용자의 상태에 따라 달라질 수 있음을 명시해라.
+
+[답변]
+"""
+                result = generate_answer(instruction).strip()
+                return clean_output(result)
+
+        instruction = f"""
+너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
+
+[질문]
+{question}
+
+[지시]
+- 네가 학습한 일반 의학 상식을 사용해, 안전하고 보수적으로 답변해라.
+- 확실하지 않은 부분은 추측하지 말고 모른다고 말하며, 의사 또는 약사 상담을 권고해라.
+- 진단이나 처방을 내리지 말고, 일반적인 정보 수준에서 설명해라.
+
+[답변]
+"""
+        result = generate_answer(instruction).strip()
+        return clean_output(result)
+
     if intent == INTENT_COMPARE:
         meds = detect_compare_intent(question) or []
         if len(meds) >= 2:
             return clean_output(build_compare_answer(question, meds))
 
-    # 2. 증상 기반 약 추천 (증상 → 어떤 약?)
     if intent == INTENT_SYMPTOM:
         recs = recommend_by_symptom(question)
         return clean_output(build_symptom_answer(question, recs))
 
-    # 3. 단일 약 질문들
     if intent == INTENT_SIDE_EFFECT:
         if chunks:
             return clean_output(build_side_effect_answer(question, chunks))
@@ -794,7 +685,12 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
     if intent == INTENT_EFFICACY:
         if chunks:
             return clean_output(build_efficacy_answer(question, chunks))
-        return clean_output(build_general_answer(question, chunks))
+
+        hf_chunks = search_health_food_chunks(question, k=5)
+        if hf_chunks:
+            return clean_output(build_health_food_answer(question, hf_chunks))
+
+        return clean_output(build_general_answer(question, []))
 
     if intent == INTENT_DOSAGE:
         if chunks:
@@ -811,5 +707,4 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
             return clean_output(build_warning_answer(question, chunks))
         return clean_output(build_general_answer(question, chunks))
 
-    # 4. 나머지 → 일반 LLM
     return clean_output(build_general_answer(question, chunks))
