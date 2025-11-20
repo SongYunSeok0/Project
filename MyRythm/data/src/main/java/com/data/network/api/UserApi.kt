@@ -43,7 +43,7 @@ interface UserApi {
     @POST("users/fcm/")
     suspend fun registerFcmToken(@Body body: FcmTokenRequestDto): Response<Unit>
 
-    @PUT("users/me/")
+    @PATCH("users/me/")
     suspend fun updateProfile(@Body dto: UserUpdateDto): UserDto
 
 }

@@ -7,7 +7,7 @@ plugins {
 }
 
 val localProps = Properties().apply {
-    val f = rootProject.file("local.properties")
+    val f = rootProject.file("secret.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
 fun prop(key: String) = localProps.getProperty(key) ?: ""
@@ -26,8 +26,8 @@ android {
         // 3) 키 주입
         buildConfigField("String", "NAVER_MAP_CLIENT_ID", "\"${prop("NAVER_MAP_CLIENT_ID")}\"")
         buildConfigField("String", "NAVER_MAP_CLIENT_SECRET", "\"${prop("NAVER_MAP_CLIENT_SECRET")}\"")
-        buildConfigField("String", "NAVER_NEWS_CLIENT_ID", "\"${prop("NAVER_NEWS_CLIENT_ID")}\"")
-        buildConfigField("String", "NAVER_NEWS_CLIENT_SECRET", "\"${prop("NAVER_NEWS_CLIENT_SECRET")}\"")
+        buildConfigField("String", "NAVER_NEWS_CLIENT_ID", "\"${prop("NAVER_CLIENT_ID")}\"")
+        buildConfigField("String", "NAVER_NEWS_CLIENT_SECRET", "\"${prop("NAVER_CLIENT_SECRET")}\"")
     }
 
     // Compose 비활성화(데이터 계층은 UI 불필요)
@@ -63,6 +63,9 @@ dependencies {
     implementation(libs.moshi.converter)
     ksp(libs.moshi.kotlin.codegen)
 
+    implementation(libs.coil.compose)
+    implementation(libs.jsoup)
+    implementation(libs.paging.compose)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okhttp.logging.interceptor)
 }

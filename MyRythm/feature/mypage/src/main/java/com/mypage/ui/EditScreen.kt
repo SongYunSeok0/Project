@@ -38,10 +38,9 @@ fun EditScreen(
     var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
     var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
     var age by remember(profile) { mutableStateOf(profile?.age?.toString() ?: "") }
-    var selectedGender by remember(profile) { mutableStateOf(profile?.gender ?: "남성") }
-
-    // ❗ 혈액형은 아직 UserProfile에 없음 → 임시 유지
-    var selectedBloodType by remember { mutableStateOf("A형") }
+    var phone by remember(profile) { mutableStateOf(profile?.phone?.toString() ?: "") }
+    var prot_phone by remember(profile) { mutableStateOf(profile?.prot_phone?.toString() ?: "") }
+    var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
 
     //문자열 리소스화
     val editprofilephoto = stringResource(R.string.editprofilephoto)
@@ -50,6 +49,7 @@ fun EditScreen(
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
     val ageText = stringResource(R.string.age)
+    val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
     val genderText = stringResource(R.string.gender)
     val bloodTypeText = stringResource(R.string.bloodtype)
     val editDone = stringResource(R.string.edit_done)
@@ -80,66 +80,6 @@ fun EditScreen(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 🔹 프로필 영역
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(90.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Color(0xffffb7c5))
-                    .shadow(4.dp, RoundedCornerShape(999.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "😊", fontSize = 48.sp)
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .align(Alignment.BottomEnd)
-                        .offset(x = -9.dp, y = -9.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(Color(0xff6ae0d9))
-                        .padding(5.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.camera),
-                        contentDescription = editprofilephoto,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(text = name, fontSize = 16.sp, color = Color(0xff221f1f))
-                Text(
-                    text = editprofilephoto,
-                    fontSize = 14.sp,
-                    color = Color(0xff5db0a8)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(66.dp))
-
-            Box(
-                modifier = Modifier
-                    .width(90.dp)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xff6ae0d9))
-                    .clickable { /* 편집 모드 로직 */ },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(id = R.drawable.edit),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(text = editText, color = Color.White, fontSize = 16.sp)
-                }
-            }
-        }
         /* ... 중략: 프로필 사진 UI 동일 ... */
 
         // 🔹 입력 필드
@@ -148,25 +88,11 @@ fun EditScreen(
             EditableField(heightText, height) { height = it }
             EditableField(weightText, weight) { weight = it }
             EditableField(ageText, age) { age = it }
+            EditableField("이메일", email) { email = it }
+            EditableField(phoneNumberPlaceholderText, phone) { phone = it }
+            EditableField("보호자 휴대폰 번호(01012345678)", prot_phone) { prot_phone = it }
 
-            SelectableButtonGroup(
-                label = genderText,
-                options = listOf(stringResource(id = R.string.male),stringResource(id = R.string.female), ),
-                selectedOption = selectedGender,
-                onOptionSelected = { selectedGender = it }
-            )
 
-            SelectableButtonGroup(
-                label = bloodTypeText,
-                options = listOf(
-                    stringResource(id = R.string.blood_a),
-                    stringResource(id = R.string.blood_b),
-                    stringResource(id = R.string.blood_ab),
-                    stringResource(id = R.string.blood_o)
-                ),
-                selectedOption = selectedBloodType,
-                onOptionSelected = { selectedBloodType = it }
-            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -184,7 +110,9 @@ fun EditScreen(
                         heightText = height,
                         weightText = weight,
                         ageText = age,
-                        gender = selectedGender
+                        email = email,
+                        phone = phone,
+                        prot_phone = prot_phone,
                     )
                 },
             contentAlignment = Alignment.Center

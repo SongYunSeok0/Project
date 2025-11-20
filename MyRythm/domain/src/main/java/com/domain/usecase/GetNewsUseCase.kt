@@ -1,10 +1,15 @@
 package com.domain.usecase
 
+import androidx.paging.PagingData
+import com.domain.model.News
 import com.domain.repository.NewsRepository
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class GetNewsUseCase(
-    private val newsRepository: NewsRepository
+class GetNewsUseCase @Inject constructor(
+    private val repository: NewsRepository
 ) {
-    suspend operator fun invoke() = newsRepository.getNews()
+    operator fun invoke(query: String): Flow<PagingData<News>> {
+        return repository.getNews(query)
+    }
 }
-

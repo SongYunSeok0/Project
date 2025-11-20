@@ -40,7 +40,7 @@ import androidx.compose.ui.res.stringResource
 fun NewsScreen(
     nav: NavController,
     onOpenDetail: (String) -> Unit,
-    viewModel: NewsViewModel = viewModel()
+    viewModel: NewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val searchText = stringResource(R.string.search)
     val todayText = stringResource(R.string.today)
@@ -52,19 +52,8 @@ fun NewsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
 
-    val openSearch = nav.currentBackStackEntry
-        ?.savedStateHandle
-        ?.getLiveData<Boolean>("openSearch")
-        ?.observeAsState()
-
-    LaunchedEffect(openSearch?.value) {
-        if (openSearch?.value == true) {
-            viewModel.openSearch()
-            nav.currentBackStackEntry?.savedStateHandle?.set("openSearch", false)
-        }
-    }
-
-    val pagingItems = viewModel.newsPager.collectAsLazyPagingItems()
+    // PagingData 수집 → LazyPagingItems
+    val pagingItems = viewModel.newsPagingFlow.collectAsLazyPagingItems()
 
     Column(
         modifier = Modifier
@@ -85,7 +74,7 @@ fun NewsScreen(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = {
-                        viewModel.executeSearch()
+                        viewModel.triggerSearch()
                     }),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFFF2F2F5),
@@ -102,7 +91,7 @@ fun NewsScreen(
                 Button(
                     onClick = {
                         if (searchQuery.isNotBlank()) {
-                            viewModel.selectedCategory(searchQuery)
+                            viewModel.updateCategory(searchQuery)
                         }
                     },
                     shape = RoundedCornerShape(10.dp),
@@ -113,7 +102,6 @@ fun NewsScreen(
             }
         }
 
-        // ✅ “오늘의 뉴스”
         Text(
             text = "$todayText ${selectedCategory} $newsText",
             fontSize = 16.sp,
@@ -122,7 +110,6 @@ fun NewsScreen(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        // ✅ 카테고리 배너
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
@@ -130,17 +117,16 @@ fun NewsScreen(
                 .fillMaxWidth()
         ) {
             BannerCard("건강 뉴스", "최신 건강 정보", Modifier.weight(1f)) {
-                viewModel.selectedCategory("건강")
+                viewModel.updateCategory("건강")
             }
             BannerCard("의학 뉴스", "최신 의학 연구", Modifier.weight(1f)) {
-                viewModel.selectedCategory("의학")
+                viewModel.updateCategory("의학")
             }
             BannerCard("복약 안전", "올바른 복용법", Modifier.weight(1f)) {
-                viewModel.selectedCategory("복약")
+                viewModel.updateCategory("복약")
             }
         }
 
-        // ✅ 네이버 뉴스 목록
         Text(
             text = naverNewsText,
             fontSize = 16.sp,
@@ -156,28 +142,29 @@ fun NewsScreen(
                 .padding(horizontal = 16.dp)
         ) {
             items(pagingItems.itemCount) { index ->
-                val item = pagingItems[index]
-                item?.let {
-                    val url = (it.originallink?.takeIf { s -> s.isNotBlank() } ?: it.link).trim()
-                    val cleanTitle = it.title
-                        .replace("<b>", "")
-                        .replace("</b>", "")
-                        .replace("&quot;", "\"")
-                        .replace("&apos;", "'")
-                        .replace("&amp;", "&")
+                val item = pagingItems[index] ?: return@items
 
-                    NewsCard(
-                        title = cleanTitle,
-                        info = it.pubDate.take(16),
-                        imageUrl = it.image
-                            ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
-                        onClick = {
-                            if (url.isNotEmpty()) {
-                                onOpenDetail(Uri.encode(url))
-                            }
+                // 🔥 Domain model 기준 매핑
+                val cleanTitle = item.title
+                    .replace("<b>", "")
+                    .replace("</b>", "")
+                    .replace("&quot;", "\"")
+                    .replace("&apos;", "'")
+                    .replace("&amp;", "&")
+
+                val url = item.link
+
+                NewsCard(
+                    title = cleanTitle,
+                    info = item.pubDate.take(16),
+                    imageUrl = item.image
+                        ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
+                    onClick = {
+                        if (url.isNotEmpty()) {
+                            onOpenDetail(Uri.encode(url))
                         }
-                    )
-                }
+                    }
+                )
             }
 
             if (pagingItems.loadState.refresh is LoadState.Loading ||
@@ -195,6 +182,7 @@ fun NewsScreen(
         }
     }
 }
+
 
 /* --------------------------- UI Components --------------------------- */
 

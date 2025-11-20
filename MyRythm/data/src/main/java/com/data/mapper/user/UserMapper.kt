@@ -8,6 +8,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.domain.model.UserProfile
 import java.time.LocalDate
+import kotlin.String
 
 private val moshi = Moshi.Builder().build()
 private val mapType = Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
@@ -71,7 +72,10 @@ fun UserDto.toProfile(): UserProfile {
         height = height,
         weight = weight,
         age = age,
-        gender = gender
+        gender = gender,
+        phone = phone,
+        prot_phone = prot_phone,
+        email = email,
     )
 }
 
@@ -85,7 +89,10 @@ fun UserProfile.toDto(): UserUpdateDto {
             // 나이 → 출생연도로 역산 (대충 예시)
             val now = LocalDate.now().year
             "${now - year}-01-01"
-        }
+        },
+        phone = phone,
+        prot_phone = prot_phone,
+        email = email,
     )
 }
 

@@ -1,6 +1,5 @@
-package com.news.data
+package com.data.network.dto.news
 
-//data모듈의 remote/dto 로 옮겨야함
 data class NaverNewsResponse(
     val items: List<NaverNewsItem>
 )

@@ -1,96 +1,77 @@
 package com.news
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.news.data.RetrofitInstance
-import com.news.data.NaverNewsItem
-import com.news.data.NaverNewsPagingSource
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import com.domain.model.News
+import com.domain.usecase.GetNewsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
+import javax.inject.Inject
 
-class NewsViewModel : ViewModel() {
+@HiltViewModel
+class NewsViewModel @Inject constructor(
+    private val getNewsUseCase: GetNewsUseCase
+) : ViewModel() {
 
-    // ✅ Paging3 (무한스크롤용)
-    fun getNewsPager(query: String) = Pager(
-        PagingConfig(
-            pageSize = 10,
-            enablePlaceholders = false
-        )
-    ) {
-        NaverNewsPagingSource(query)
-    }.flow.cachedIn(viewModelScope)
+    // 🔥 카테고리 상태
+    private val _selectedCategory = MutableStateFlow("건강")
+    val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    // ✅ 일반 리스트 (기존 loadNews 용)
-    private val _newsList = MutableStateFlow<List<NaverNewsItem>>(emptyList())
-    val newsList: StateFlow<List<NaverNewsItem>> = _newsList
+    // 🔥 검색어
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    fun loadNews(query: String = "건강") {
-        viewModelScope.launch {
-            try {
-                Log.d("NaverNews", "뉴스 API 요청: $query")
+    // 🔥 검색 모드 여부
+    private val _isSearchMode = MutableStateFlow(false)
+    val isSearchMode: StateFlow<Boolean> = _isSearchMode.asStateFlow()
 
-                val response = RetrofitInstance.api.getNews(
-                    clientId = BuildConfig.NAVER_CLIENT_ID,
-                    clientSecret = BuildConfig.NAVER_CLIENT_SECRET,
-                    query = query
-                )
-
-                val newsWithImages = response.items.map { item ->
-                    val imageUrl = fetchThumbnail(item.link)
-                    item.copy(image = imageUrl)
-                }
-
-                _newsList.value = newsWithImages
-                Log.d("NaverNews", "✅ '${query}' 뉴스 ${newsWithImages.size}개 로드 완료")
-
-            } catch (e: Exception) {
-                Log.e("NaverNews", "❌ API 호출 중 오류", e)
+    // 🔥 PagingData 흐름 (핵심)
+    val newsPagingFlow: Flow<PagingData<News>> =
+        selectedCategory
+            .flatMapLatest { category ->
+                getNewsUseCase(category)
             }
+            .cachedIn(viewModelScope)
+
+    // -------------------
+    // 🔥 UI 액션
+    // -------------------
+
+    fun updateCategory(cat: String) {
+        _selectedCategory.value = cat
+    }
+
+    fun updateSearchQuery(q: String) {
+        _searchQuery.value = q
+    }
+
+    fun triggerSearch() {
+        if (_searchQuery.value.isNotBlank()) {
+            _selectedCategory.value = _searchQuery.value
         }
     }
 
-    // ✅ 기사 본문에서 og:image 추출
+    fun openSearch() { _isSearchMode.value = true }
+    fun closeSearch() { _isSearchMode.value = false }
+
     private suspend fun fetchThumbnail(url: String): String? = withContext(Dispatchers.IO) {
         try {
-            val doc = Jsoup.connect(url).get()
+            val doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                .timeout(3000)
+                .get()
+
             val metaTag = doc.select("meta[property=og:image]").attr("content")
+
             if (metaTag.isNotEmpty()) metaTag else null
         } catch (e: Exception) {
             null
         }
     }
 
-    private val _selectedCategory = MutableStateFlow("건강")
-    val selectedCategory = _selectedCategory.asStateFlow()
-
-    fun selectedCategory(cat: String){
-        _selectedCategory.value = cat
-    }
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery = _searchQuery.asStateFlow()
-
-    fun updateSearchQuery(q: String){
-        _searchQuery.value = q
-    }
-    fun executeSearch(){
-        _selectedCategory.value = _searchQuery.value
-    }
-
-    private val _isSearchMode = MutableStateFlow(false)
-    val isSearchMode = _isSearchMode.asStateFlow()
-
-    fun openSearch() { _isSearchMode.value = true }
-    fun closeSearch() { _isSearchMode.value = false }
-    val newsPager = selectedCategory.flatMapLatest { category ->  getNewsPager(category)}
 }
