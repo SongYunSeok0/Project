@@ -8,7 +8,11 @@ from pgvector.django import CosineDistance
 from .models import Chunk, QAPair
 from .embeddings import get_embedding
 from .llm import generate_answer
-from .symptom import SYMPTOM_CATEGORY_MAP, recommend_by_symptom, build_symptom_answer
+from .symptom import (
+    SYMPTOM_KEYWORDS,
+    recommend_by_symptom,
+    build_symptom_answer,
+)
 from .intents import (
     build_side_effect_answer,
     build_efficacy_answer,
@@ -66,6 +70,32 @@ def _normalize_ko_text(s: str) -> str:
         return ""
     return re.sub(r"\s+", "", s).strip()
 
+
+def dedupe_sentences(text: str) -> str:
+    """
+    QAPair.answer처럼 문장이 그대로 두 번 반복된 경우
+    문장 단위로 중복을 제거.
+    """
+    if not text:
+        return ""
+
+    # 문장 단위로 대략 분리 (., ?, ! 기준)
+    parts = re.split(r"(?<=[\.!?])\s+", text.strip())
+    seen = set()
+    out: List[str] = []
+
+    for p in parts:
+        p_strip = p.strip()
+        if not p_strip:
+            continue
+        if p_strip in seen:
+            continue
+        seen.add(p_strip)
+        out.append(p_strip)
+
+    return " ".join(out)
+
+
 def extract_med_names(query: str) -> List[str]:
     """질문에서 약품명 후보만 추출."""
     toks = re.split(r"[^\w가-힣]+", query)
@@ -80,13 +110,13 @@ def extract_med_names(query: str) -> List[str]:
 
 
 def extract_disease_keyword(question: str) -> Optional[str]:
-    """
-    '폐렴 증상은 뭐야?' 같은 패턴에서 질환명만 추출.
-    """
-    m = re.search(r"([가-힣0-9\-\(\)]+)\s*(증상|원인|치료|검사|진단|합병증|예방)", question)
-    if m:
-        return m.group(1).strip()
-    return None
+    pattern = r"([A-Za-z가-힣0-9\-\(\) ]+?)\s*(?:감염|질환)?\s*(증상|원인|치료|검사|진단|합병증|예방)"
+    m = re.search(pattern, question, flags=re.IGNORECASE)
+    if not m:
+        return None
+
+    disease = m.group(1)  # 예: '폐렴', 'HIV', 'HIV 감염'
+    return disease.strip()
 
 
 # ───────────────────────────────
@@ -125,17 +155,17 @@ def detect_intent(question: str) -> str:
     if any(k in q for k in WARNING_KEYS):
         return INTENT_WARNING
 
-    # 증상 + 약
-    if "약" in q and any(sym in q for sym in SYMPTOM_CATEGORY_MAP.keys()):
-        return INTENT_SYMPTOM
-
-    # 증상 + "포함돼/안돼/들어가" 같은 후속 질문 → 효능 의도로 간주
-    if any(sym in q for sym in SYMPTOM_CATEGORY_MAP.keys()) and any(
+    # 증상 + 후속질문 → 효능 의도
+    if any(sym in q for sym in SYMPTOM_KEYWORDS) and any(
         k in q for k in FOLLOWUP_INCLUDE_KEYS
     ):
         return INTENT_EFFICACY
 
-    # 그 외는 일반 질의
+    # 증상 기반 질문 (약 단어 없어도)
+    if any(sym in q for sym in SYMPTOM_KEYWORDS):
+        return INTENT_SYMPTOM
+
+    # 나머지 일반 질의
     return INTENT_GENERAL
 
 
@@ -150,12 +180,6 @@ def retrieve_qa_pairs(
 ):
     """
     질환/건강 Q&A용 QAPair 벡터 검색.
-
-    1차: 전체 QAPair에서 top_k 임베딩 검색
-    2차: disease_kw가 있을 경우,
-        - 해당 단어가 question/answer에 포함되고
-        - 가능하면 question 앞부분(메인 질환)에 나오는 QA만 사용
-        - 그런 QA가 없으면 QAPair를 쓰지 않고 LLM으로 fallback
     """
     q_emb = get_embedding(query)
 
@@ -187,12 +211,6 @@ def retrieve_qa_pairs(
             return norm_kw in _normalize_ko_text(txt)
 
         def is_primary_question(txt: Optional[str]) -> bool:
-            """
-            질문의 맨 앞쪽(대략 10~20자) 안에 질환명이 들어가면
-            그 질환을 '메인 질환'으로 본다.
-            예) '폐렴 증상 알려줘' → 폐렴 메인
-                '패혈증의 원인(폐렴 등)은?' → 패혈증 메인, 폐렴은 서브
-            """
             if not txt:
                 return False
             qn = _normalize_ko_text(txt)
@@ -200,14 +218,10 @@ def retrieve_qa_pairs(
             return norm_kw in qn[:window]
 
         def select_from_queryset(qs_base):
-            """주어진 queryset/list에서 질환 키워드+메인질환 조건 만족하는 QAPair만 선택."""
             cand = [it for it in qs_base if has_kw(it.question) or has_kw(it.answer)]
             if not cand:
                 return []
-
             primary = [it for it in cand if is_primary_question(it.question)]
-            # 메인 질환으로 등장하는 QA가 있으면 그것만 사용,
-            # 없으면 '폐렴이 원인 중 하나' 같은 케이스로 간주하고 버린다.
             return primary
 
         # 1차: 임베딩 top_k 결과 안에서 필터
@@ -216,9 +230,7 @@ def retrieve_qa_pairs(
         if primary_items:
             return primary_items
 
-        # 2차: 아예 DB에서 disease_kw가 들어간 QA만 다시 뽑아서 top_k 검색
-        from django.db.models import Q
-
+        # 2차: disease_kw 포함된 QA만 재검색
         kw_qs = QAPair.objects.filter(
             Q(question__icontains=disease_kw) | Q(answer__icontains=disease_kw)
         )
@@ -252,6 +264,36 @@ def retrieve_qa_pairs(
     # disease_kw 없거나, 위 조건 통과한 경우
     return items
 
+
+# ───────────────────────────────
+# 질환별 증상용 QA 선택 헬퍼
+# ───────────────────────────────
+def find_symptom_qa(disease_kw: str, base_items: List[QAPair]) -> Optional[QAPair]:
+    """
+    disease_kw에 대해 answer 안에 '증상'이 들어간 QAPair를 우선 선택.
+    """
+    norm_kw = _normalize_ko_text(disease_kw)
+
+    def has_disease(txt: Optional[str]) -> bool:
+        if not txt:
+            return False
+        return norm_kw in _normalize_ko_text(txt)
+
+    # 1차: 현재 top_k 결과 안에서 찾기
+    for it in base_items:
+        ans = it.answer or ""
+        if "증상" in ans and (has_disease(it.question) or has_disease(it.answer)):
+            return it
+
+    # 2차: 전체 DB에서 재검색
+    qs = QAPair.objects.filter(
+        Q(question__icontains=disease_kw) | Q(answer__icontains=disease_kw),
+        answer__icontains="증상",
+    )
+    if qs.exists():
+        return qs.first()
+
+    return None
 
 
 # ───────────────────────────────
@@ -345,7 +387,7 @@ def _extract_after_label(text: str, labels: List[str]) -> str:
 
 def _select_chunk_for_med(med: str, section_keywords: List[str]) -> Optional[Chunk]:
     """
-    특정 약(med)에 대해 원하는 섹션(효능/부작용/용법/주의사항)에 가장 잘 맞는 Chunk 하나 선택
+    특정 약(med)에 대해 원하는 섹션에 가장 잘 맞는 Chunk 하나 선택.
     """
     qs = Chunk.objects.filter(item_name__icontains=med)
     if not qs.exists():
@@ -365,7 +407,6 @@ def _select_chunk_for_med(med: str, section_keywords: List[str]) -> Optional[Chu
 def build_compare_answer(question: str, meds: List[str]) -> str:
     """
     두 약 비교용 답변 생성 (타이레놀 vs 판콜에스 등)
-    LLM을 쓰지 않고 문서 내용만 간단 요약해서 직접 비교 문자열 생성
     """
     med_a, med_b = meds[0], meds[1]
 
@@ -507,10 +548,12 @@ def build_general_answer(question: str, chunks: List[Chunk]) -> str:
 # ───────────────────────────────
 def build_answer(question: str, chunks: List[Chunk]) -> str:
     intent = detect_intent(question)
+    print("[INTENT]", intent, "/ q =", question)
 
     # 0. 질환/건강 일반 질문 → '질환명 + (증상/원인/치료/검사/진단/합병증/예방)' 패턴일 때만 QAPair RAG 사용
     if intent == INTENT_GENERAL:
         disease_kw = extract_disease_keyword(question)
+        print("disease_kw =", disease_kw)
 
         # 질환 키워드가 실제로 뽑힌 경우에만 QAPair를 시도
         if disease_kw:
@@ -521,9 +564,80 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
                 disease_kw=disease_kw,
             )
             if qa_items:
+                q_norm = question.replace(" ", "")
+
+                # (A) 증상 질문일 때: 증상 전용 QAPair 우선 선택
+                if "증상" in q_norm:
+                    symptom_qa = find_symptom_qa(disease_kw, qa_items)
+
+                    # 1) 증상 QAPair를 찾은 경우
+                    if symptom_qa:
+                        raw_answer = (symptom_qa.answer or "").strip()
+                        raw_answer = dedupe_sentences(raw_answer)
+
+                        print(
+                            "[QA-RAG] symptom_branch, use QAPair id=",
+                            getattr(symptom_qa, "id", None),
+                        )
+
+                        # answer 안에서 '증상'이 들어간 문장만 추출 + 중복 제거
+                        symptom_sents: List[str] = []
+                        seen = set()
+                        for sent in re.split(r"[\.!?]\s*", raw_answer):
+                            s = sent.strip()
+                            if "증상" in s and s and s not in seen:
+                                seen.add(s)
+                                symptom_sents.append(s)
+
+                        symptom_text = "\n".join(symptom_sents).strip()
+                        print(
+                            "[QA-RAG] symptom_branch, extracted_symptom_text =",
+                            bool(symptom_text),
+                        )
+
+                        # 증상 문장이 있으면 그 부분만 요약
+                        if symptom_text:
+                            instruction = f"""
+아래는 '{disease_kw}'에 대한 의료 정보 중 '증상'이 언급된 부분입니다.
+
+[증상 관련 원문]
+{symptom_text}
+
+[지시]
+위 텍스트에서 '{disease_kw}'의 '증상'만 골라서
+핵심 증상들을 한국어 bullet 형식으로 간단히 정리해라.
+다른 내용(원인, 진단, 검사, 치료, 예방)은 포함하지 마라.
+
+[답변]
+"""
+                            return generate_answer(instruction).strip()
+
+                    # 2) 증상 QAPair를 못 찾았거나, 증상 문장이 전혀 없을 때
+                    instruction = f"""
+너는 의료 정보를 설명하는 한국어 상담 어시스턴트이다.
+
+[질환명]
+{disease_kw}
+
+[지시]
+위 질환에 대해, 일반적으로 알려진 '대표 증상'만 한국어 bullet 형식으로 정리해라.
+
+- '원인, 진단, 검사, 치료, 예방' 내용은 절대 포함하지 마라.
+- 증상 이름과 특징 위주로만 간단하게 설명해라.
+- 확실하지 않은 것은 적지 말고, 필요한 경우에는 의사 진료를 권고해라.
+
+[답변]
+"""
+                    print("[QA-RAG] symptom_branch, fallback to LLM by disease name only")
+                    return generate_answer(instruction).strip()
+
+                # (B) 증상 질문이 아닌 경우 → QAPair answer 그대로 사용 (중복 제거만)
                 top = qa_items[0]
-                print("[QA-RAG] hit → QAPair.answer 사용")
-                return (top.answer or "").strip()
+                raw_answer = (top.answer or "").strip()
+                raw_answer = dedupe_sentences(raw_answer)
+                print("[QA-RAG] hit → QAPair.answer 사용 (non-symptom)")
+                return raw_answer
+
         # disease_kw 없거나 매칭 QA 없으면 아래로 그냥 진행
 
     # 1. 비교 질문 (타이레놀 vs 판콜)

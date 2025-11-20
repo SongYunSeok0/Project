@@ -45,7 +45,7 @@ import com.common.design.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatBotScreen(
+fun ChatbotScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
