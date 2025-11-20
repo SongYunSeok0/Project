@@ -38,3 +38,6 @@ venv/
 
 # === Misc ===
 captures/
+
+keystore/
+keystore_base64.txt
