@@ -55,8 +55,6 @@ datastore = "1.1.1"
 securityCrypto = "1.1.0"
 monitor = "1.8.0"
 
-firebaseBom = "34.5.0"
-
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4  = { group = "androidx.compose.ui", name = "ui-test-junit4" }
