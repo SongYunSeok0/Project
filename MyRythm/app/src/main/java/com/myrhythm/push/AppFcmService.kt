@@ -2,8 +2,8 @@
 package com.myrhythm.push
 
 import android.util.Log
-import com.core.push.NotificationUtil
-import com.core.push.PushManager
+import com.data.core.push.NotificationUtil
+import com.data.core.push.PushManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 

@@ -18,8 +18,8 @@ def _extract_after_label(text: str, labels: List[str]) -> str:
         if idx != -1:
             colon_idx = text.find(":", idx)
             if colon_idx != -1:
-                return text[colon_idx + 1 :].strip()
-            return text[idx + len(label) :].strip()
+                return text[colon_idx + 1:].strip()
+            return text[idx + len(label):].strip()
     return text.strip()
 
 
@@ -77,7 +77,8 @@ def build_side_effect_answer(question: str, chunks: List[Chunk]) -> str:
 
     lines: List[str] = []
 
-    lines.append("1. 주요 부작용")
+    # 번호 제거
+    lines.append("주요 부작용")
     if main:
         for p in main:
             lines.append(f"- {p}")
@@ -85,7 +86,7 @@ def build_side_effect_answer(question: str, chunks: List[Chunk]) -> str:
         lines.append("- 부작용 정보를 추출할 수 없습니다.")
 
     lines.append("")
-    lines.append("2. 복용 시 주의사항")
+    lines.append("복용 시 주의사항")
     if cautions:
         for p in cautions:
             lines.append(f"- {p}")
@@ -104,6 +105,7 @@ def build_efficacy_answer(question: str, chunks: List[Chunk]) -> str:
         chunks,
         prefer_sections=["효능효과", "효능"],
     )
+
     if not c:
         return "참고 문서에서 해당 약의 효능·효과 정보를 찾지 못했습니다."
 
@@ -111,7 +113,10 @@ def build_efficacy_answer(question: str, chunks: List[Chunk]) -> str:
     core = _extract_after_label(text, ["효능효과", "효능"])
     core = core.replace("\n", " ").strip()
 
-    return "1. 효능·효과\n- " + (core or "효능·효과 정보를 추출할 수 없습니다.")
+    if not core:
+        return "효능·효과 정보를 추출할 수 없습니다."
+
+    return core
 
 
 def build_dosage_answer(question: str, chunks: List[Chunk]) -> str:
@@ -127,7 +132,11 @@ def build_dosage_answer(question: str, chunks: List[Chunk]) -> str:
     core = _extract_after_label(text, ["용법용량"])
     core = core.replace("\n", " ").strip()
 
-    return "1. 용법·용량 요약\n- " + (core or "용법·용량 정보를 추출할 수 없습니다.")
+    if not core:
+        return "용법·용량 정보를 추출할 수 없습니다."
+
+    # 숫자/섹션 헤더 없이 그대로 반환
+    return core
 
 
 def build_interaction_answer(question: str, chunks: List[Chunk]) -> str:
@@ -143,7 +152,10 @@ def build_interaction_answer(question: str, chunks: List[Chunk]) -> str:
     core = _extract_after_label(text, ["상호작용"])
     core = core.replace("\n", " ").strip()
 
-    return "1. 약물 상호작용 요약\n- " + (core or "상호작용 정보를 추출할 수 없습니다.")
+    if not core:
+        return "상호작용 정보를 추출할 수 없습니다."
+
+    return core
 
 
 def build_warning_answer(question: str, chunks: List[Chunk]) -> str:
@@ -159,4 +171,7 @@ def build_warning_answer(question: str, chunks: List[Chunk]) -> str:
     core = _extract_after_label(text, ["사용상 주의사항", "주의사항", "주의", "경고"])
     core = core.replace("\n", " ").strip()
 
-    return "1. 주의사항·경고 요약\n- " + (core or "주의사항·경고 정보를 추출할 수 없습니다.")
+    if not core:
+        return "주의사항·경고 정보를 추출할 수 없습니다."
+
+    return core

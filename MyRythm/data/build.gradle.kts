@@ -45,7 +45,7 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":domain"))
-    implementation(project(":core"))
+    implementation(project(":common:design"))
 
     // Hilt
     implementation(libs.hilt.android)
@@ -68,4 +68,9 @@ dependencies {
     implementation(libs.paging.compose)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.security.crypto)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 }

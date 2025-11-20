@@ -14,13 +14,19 @@ class Chunk(models.Model):
     def __str__(self):
         return f"{self.item_name} ({self.section}#{self.chunk_index})"
 
-class QAPair(models.Model):
-    
-    qa_id = models.CharField(max_length=128, unique=True)
-    question = models.TextField()
-    answer = models.TextField()
-    category = models.CharField(max_length=256, blank=True)
-    embedding = VectorField(dimensions=EMB_DIM)
+class HealthFood(models.Model):
+    manufacturer = models.CharField("제조사", max_length=200)
+    product_name = models.CharField("제품명", max_length=300)
+    serve_use = models.TextField("섭취 방법", null=True, blank=True)
+    intake_hint = models.TextField("주의사항", null=True, blank=True)
+    main_function = models.TextField("기능성", null=True, blank=True)
+
+    class Meta:
+        unique_together = ("manufacturer", "product_name")
+        indexes = [
+            models.Index(fields=["manufacturer"]),
+            models.Index(fields=["product_name"]),
+        ]
 
     def __str__(self):
-        return f"QAPair[{self.category}] {self.qa_id}"
+        return f"{self.manufacturer} - {self.product_name}"

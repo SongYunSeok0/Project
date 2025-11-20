@@ -7,7 +7,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.core.push.PushManager
+import com.data.core.push.PushManager
 import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
 import com.domain.usecase.auth.LoginUseCase
