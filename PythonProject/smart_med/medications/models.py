@@ -3,21 +3,30 @@ from django.conf import settings
 
 
 
-#처방전
-class Prescription(models.Model):
+# 등록 이력(기존 Prescription)
+class RegiHistory(models.Model):
     # 사용자 ID (ForeignKey로 User 테이블과 연결 가능)
-    user = models.IntegerField(null=False, verbose_name="사용자 ID")
-    # 처방전 고유 ID
-    prescription_id = models.BigAutoField(primary_key=True, verbose_name="처방전 ID")
 
-    # 처방전 유형 (영양제 / 병원약 등)
-    prescription_type = models.CharField(
-        max_length=50,
-        verbose_name="처방전 유형 (영양제/병원약)"
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="사용자 ID"
     )
 
-    # 병명
-    disease_name = models.CharField(
+    # 고유 ID 자동 생성
+    # id = models.BigAutoField(
+    #     primary_key=True,
+    #     verbose_name="등록 이력 ID"
+    # )
+
+    # 등록 유형 (영양제 / 병원약 등)
+    regi_type = models.CharField(
+        max_length=50,
+        verbose_name="등록 유형 (영양제/병원약)"
+    )
+
+    # 병명 (기존 disase_name)
+    label = models.CharField(
         max_length=100,
         blank=True,
         null=True,
@@ -33,21 +42,23 @@ class Prescription(models.Model):
     )
 
     class Meta:
-        db_table = "prescription"
-        verbose_name = "사용자 처방전"
-        verbose_name_plural = "사용자 처방전 목록"
+        db_table = "regiHistory"
+        verbose_name = "등록 이력"
+        verbose_name_plural = "등록 이력 목록"
 
     def __str__(self):
-        return f"{self.name} ({self.user.username})"
+        return f"RegiHistory #{self.id} (user={self.user})"
 
 
 
 #복용 스케줄
 class Plan(models.Model):
     #PK id자동생성
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    prescription = models.ForeignKey(
-        Prescription,
+
+    #유저FK삭제
+    # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    regihistory = models.ForeignKey(
+        RegiHistory,
         on_delete=models.SET_NULL,
         null=True,  # ← 필수!!
         blank=True  # ← 필수!!
@@ -74,26 +85,4 @@ class Plan(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.user} , {self.med_name} ({self.taken_at})"
-
-
-
-
-
-#약 정보 (공공데이터)
-class DrugInfo(models.Model):
-    item_name = models.CharField(max_length=200, db_index=True)  # 제품명
-    efcy_qesitm = models.TextField(blank=True, null=True)        # 효능/효과
-    use_method_qesitm = models.TextField(blank=True, null=True)  # 용법/용량
-    atpn_warn_qesitm = models.TextField(blank=True, null=True)   # 사용상 주의사항(경고)
-    atpn_qesitm = models.TextField(blank=True, null=True)        # 주의사항
-    intrc_qesitm = models.TextField(blank=True, null=True)       # 상호작용
-    se_qesitm = models.TextField(blank=True, null=True)          # 부작용
-    imported_at = models.DateTimeField(auto_now_add=True)        # 데이터 수집 시각
-
-    class Meta:
-        db_table = "medications_druginfo"
-        ordering = ["item_name"]
-
-    def __str__(self):
-        return self.item_name
+        return f" {self.med_name} ({self.taken_at})"

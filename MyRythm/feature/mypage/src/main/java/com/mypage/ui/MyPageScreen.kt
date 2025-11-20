@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,6 +35,17 @@ fun MyPageScreen(
 ) {
     // 🔥 프로필 상태 Flow → Compose State
     val profile = viewModel.profile.collectAsState().value
+
+    val bpmText = stringResource(R.string.bpm)
+    val userText = stringResource(R.string.user)
+    val cmText = stringResource(R.string.cm)
+    val kgText = stringResource(R.string.kg)
+    val editPageText = stringResource(R.string.editpage)
+    val heartRateText = stringResource(R.string.heartrate)
+    val medicationInsightText = stringResource(R.string.medicationinsight)
+    val faqCategoryText = stringResource(R.string.faqcategory)
+    val logoutText = stringResource(R.string.logout)
+    val profileGreetingMessage = stringResource(R.string.mypage_message_profile_greeting)
 
     Column(
         modifier = Modifier
@@ -74,15 +88,14 @@ fun MyPageScreen(
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            MenuItem("내 정보 수정", onEditClick)
-            MenuItem("심박수", onHeartClick)
-            MenuItem("복약 그래프") { onMediClick }
-            MenuItem("FAQ 문의사항", onFaqClick)
-            MenuItem("로그아웃", onLogoutClick)
+            MenuItem(editPageText, onEditClick)
+            MenuItem(heartRateText, onHeartClick)
+            MenuItem(medicationInsightText) { onMediClick }
+            MenuItem(faqCategoryText, onFaqClick)
+            MenuItem(logoutText, onLogoutClick)
         }
     }
 }
-
 
 @Composable
 fun InfoCard(
@@ -107,7 +120,8 @@ fun InfoCard(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF6AE0D9).copy(alpha = 0.15f)),
+                    .background(MaterialTheme.colorScheme.primary
+                        .copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -129,7 +143,7 @@ fun InfoCard(
 
             Text(
                 text = title,
-                color = Color(0xFF5DB0A8),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
         }

@@ -31,6 +31,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.shared.R
 import com.news.NewsViewModel
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +41,12 @@ fun NewsScreen(
     onOpenDetail: (String) -> Unit,
     viewModel: NewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
+    val searchText = stringResource(R.string.search)
+    val todayText = stringResource(R.string.today)
+    val newsText = stringResource(R.string.news)
+    val naverNewsText = stringResource(R.string.naver_news)
+    val searchMessage = stringResource(R.string.news_message_search)
+
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
@@ -61,7 +69,7 @@ fun NewsScreen(
                 TextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = { Text("검색어를 입력하세요") },
+                    placeholder = { Text(searchMessage) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = {
@@ -88,13 +96,13 @@ fun NewsScreen(
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
                 ) {
-                    Text("검색", color = Color.White)
+                    Text(searchText, color = Color.White)
                 }
             }
         }
 
         Text(
-            text = "오늘의 ${selectedCategory} 뉴스",
+            text = "$todayText ${selectedCategory} $newsText",
             fontSize = 16.sp,
             color = Color(0xFF3B566E),
             fontWeight = FontWeight.SemiBold,
@@ -119,7 +127,7 @@ fun NewsScreen(
         }
 
         Text(
-            text = "네이버 뉴스",
+            text = naverNewsText,
             fontSize = 16.sp,
             color = Color(0xFF3B566E),
             fontWeight = FontWeight.SemiBold,

@@ -3,6 +3,7 @@ from pathlib import Path
 import environ
 from datetime import timedelta
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # .env 로드 (django-environ만 사용, dotenv 중복 제거)
@@ -99,13 +100,10 @@ DATABASES = {
         "NAME": env("POSTGRES_DB", default="RNB"),
         "USER": env("POSTGRES_USER", default="postgres"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="1234"),
-        # ← 연결 이슈 피하려면 localhost 대신 127.0.0.1 권장
         "HOST": env("POSTGRES_HOST", default="127.0.0.1"),
         "PORT": env("POSTGRES_PORT", default="5432"),
         "OPTIONS": {
-            # psycopg2가 DSN을 UTF-8로 고정해 읽도록
             "options": "-c client_encoding=UTF8",
-            # 선택: 앱 이름을 ASCII로 고정(경로/로캘 관련 문제 회피)
             "application_name": "django",
         },
     }

@@ -21,10 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shared.bar.AppTopBar
 import com.domain.model.Inquiry
@@ -40,12 +42,26 @@ fun FAQScreen(
     onSubmit: (type: String, title: String, content: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val faqText = stringResource(R.string.faq)
+
     // rememberPagerState : 탭 간의 전환 상태 관리 용도
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
     OnlyColorTheme {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            topBar = {
+                AppTopBar(
+                    title = faqText,
+                    showBack = true,
+                    onBackClick = {}
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { paddingValues ->
             Column(modifier = modifier
                 .fillMaxSize()
+                .padding(paddingValues)
             ) {
                 FAQTabRow(pagerState = pagerState)
 
@@ -54,15 +70,15 @@ fun FAQScreen(
                     onSubmit = onSubmit
                 )
             }
-
+        }
     }
 }
 
 // 뷰모델진입점
 @Composable
 fun FAQScreenWrapper(
-    userId: String?,
-    viewModel: MyPageViewModel = hiltViewModel()
+    userId : String?,
+    viewModel: MyPageViewModel = hiltViewModel(),
 ) {
     FAQScreen(
         onSubmit = { type, title, content ->
@@ -98,7 +114,10 @@ private fun InquiryHistory(
 @Composable
 private fun FAQTabRow(pagerState: PagerState) {
     val scope = rememberCoroutineScope()
-    val tabs = listOf("나의 문의 내역", "1:1 문의하기")
+    val tabs = listOf(
+        stringResource(id = R.string.myinquirylist),
+        stringResource(id = R.string.one_on_one_inquiry)
+    )
 
     PrimaryTabRow(
         selectedTabIndex = pagerState.currentPage,
@@ -117,7 +136,7 @@ private fun FAQTabRow(pagerState: PagerState) {
             Tab(
                 selected = pagerState.currentPage == index,
                 onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                selectedContentColor = Color(0xFF6AE0D9),
+                selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = Color.Gray,
                 modifier = Modifier.height(50.dp)
             ) {

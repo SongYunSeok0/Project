@@ -22,12 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.common.design.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.scheduler.viewmodel.PlanViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-private val Mint = Color(0xFF6AE0D9)
 private val CardBg = Color(0xFFF9FAFB)
 private val SectionTitle = Color(0xFF3B566E)
 private val Hint = Color(0x800A0A0A)
@@ -54,6 +55,35 @@ fun RegiScreen(
     viewModel: PlanViewModel = hiltViewModel(),
     onCompleted: () -> Unit = {},
 ) {
+    val addiconDescription = stringResource(R.string.addicon_description)
+    val removeiconDescription = stringResource(R.string.removeicon_description)
+    val minusiconDescription = stringResource(R.string.minusicon_description)
+    val plusiconDescription = stringResource(R.string.plusicon_description)
+    val daySuffixText = stringResource(R.string.day_suffix)
+    val cancelText = stringResource(R.string.cancel)
+    val confirmText = stringResource(R.string.confirm)
+    val diseaseText = stringResource(R.string.disease)
+    val supplementText = stringResource(R.string.supplement)
+    val diseaseNameText = stringResource(R.string.disease_name)
+    val supplementNameText = stringResource(R.string.supplement_name)
+    val medicationNameText = stringResource(R.string.medication_name)
+    val doseDailyCount = stringResource(R.string.dose_daily_count)
+    val countPerDay = stringResource(R.string.count_per_day)
+    val doseTime = stringResource(R.string.dose_time)
+    val timeSlot = stringResource(R.string.time_slot)
+    val dosePeriod = stringResource(R.string.dose_period)
+    val startDateText = stringResource(R.string.start_date)
+    val endDateText = stringResource(R.string.end_date)
+    val mealRelationText = stringResource(R.string.meal_relation)
+    val mealRelationBefore = stringResource(R.string.meal_relation_before)
+    val mealRelationAfter = stringResource(R.string.meal_relation_after)
+    val mealRelationIrrelevant = stringResource(R.string.meal_relation_irrelevant)
+    val memoNotesText = stringResource(R.string.memo_notes)
+    val registrationComplete = stringResource(R.string.registration_complete)
+    val diseaseNameMessage = stringResource(R.string.scheduler_message_disease_name)
+    val supplementNameMessage = stringResource(R.string.scheduler_message_supplement_name)
+    val medicationNameMessage = stringResource(R.string.scheduler_message_medication_name)
+    val doseNotesMessage = stringResource(R.string.scheduler_message_dose_notes)
 
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
 
@@ -99,8 +129,8 @@ fun RegiScreen(
                 if (s != null && e != null && e >= s) {
                     val daysInclusive =
                         ((e - s) / (1000L * 60 * 60 * 24)).toInt() + 1
-                    "(${daysInclusive}일)"
-                } else "(일)"
+                    "(${daysInclusive}$daySuffixText)"
+                } else "($daySuffixText)"
             }
         )
     }
@@ -121,11 +151,11 @@ fun RegiScreen(
                         state.selectedDateMillis?.let { startDay = dateFmt.format(Date(it)) }
                         showStart = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Mint)
-                ) { Text("확인", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) { Text(confirmText, color = Color.White) }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showStart = false }) { Text("취소") }
+                OutlinedButton(onClick = { showStart = false }) { Text(cancelText) }
             },
         ) { DatePicker(state = state) }
     }
@@ -142,11 +172,11 @@ fun RegiScreen(
                         state.selectedDateMillis?.let { endDay = dateFmt.format(Date(it)) }
                         showEnd = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Mint)
-                ) { Text("확인", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) { Text(confirmText, color = Color.White) }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showEnd = false }) { Text("취소") }
+                OutlinedButton(onClick = { showEnd = false }) { Text(cancelText) }
             },
         ) { DatePicker(state = state) }
     }
@@ -219,19 +249,19 @@ fun RegiScreen(
                     TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(positions[idx]),
                         height = 3.dp,
-                        color = Mint
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             ) {
                 Tab(
                     selected = tab == RegiTab.DISEASE,
                     onClick = { tab = RegiTab.DISEASE },
-                    text = { Text("질병", color = if (tab == RegiTab.DISEASE) Mint else SectionTitle) }
+                    text = { Text(diseaseText, color = if (tab == RegiTab.DISEASE) MaterialTheme.colorScheme.primary else SectionTitle) }
                 )
                 Tab(
                     selected = tab == RegiTab.SUPPLEMENT,
                     onClick = { tab = RegiTab.SUPPLEMENT },
-                    text = { Text("영양제", color = if (tab == RegiTab.SUPPLEMENT) Mint else SectionTitle) }
+                    text = { Text(supplementText, color = if (tab == RegiTab.SUPPLEMENT) MaterialTheme.colorScheme.primary else SectionTitle) }
                 )
             }
 
@@ -239,11 +269,11 @@ fun RegiScreen(
             when (tab) {
                 RegiTab.DISEASE -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("병명 *", color = SectionTitle, fontSize = 14.sp)
+                        Text(diseaseNameText, color = SectionTitle, fontSize = 14.sp)
                         OutlinedTextField(
                             value = disease,
                             onValueChange = { disease = it },
-                            placeholder = { Text("병명을 입력하세요", color = Hint) },
+                            placeholder = { Text(diseaseNameMessage, color = Hint) },
                             singleLine = true,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -253,11 +283,11 @@ fun RegiScreen(
 
                 RegiTab.SUPPLEMENT -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("영양제명 *", color = SectionTitle, fontSize = 14.sp)
+                        Text(supplementNameText, color = SectionTitle, fontSize = 14.sp)
                         OutlinedTextField(
                             value = supplement,
                             onValueChange = { supplement = it },
-                            placeholder = { Text("영양제명을 입력하세요", color = Hint) },
+                            placeholder = { Text(supplementNameMessage, color = Hint) },
                             singleLine = true,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -269,23 +299,23 @@ fun RegiScreen(
             // 약 이름: 질병에서만
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("약 이름", color = SectionTitle)
+                    Text(medicationNameText, color = SectionTitle)
                     meds.forEachIndexed { idx, value ->
                         val isLast = idx == meds.lastIndex
 
                         OutlinedTextField(
                             value = value,
                             onValueChange = { meds[idx] = it },
-                            placeholder = { Text("약 이름을 입력하세요", color = Hint) },
+                            placeholder = { Text(medicationNameMessage, color = Hint) },
                             singleLine = true,
                             trailingIcon = {
                                 if (isLast) {
                                     IconButton(onClick = { meds.add("") }) {
-                                        Icon(Icons.Filled.Add, contentDescription = "add", tint = Mint)
+                                        Icon(Icons.Filled.Add, contentDescription = addiconDescription, tint = MaterialTheme.colorScheme.primary)
                                     }
                                 } else if (meds.size > 1) {
                                     IconButton(onClick = { meds.removeAt(idx) }) {
-                                        Icon(Icons.Filled.Close, contentDescription = "remove")
+                                        Icon(Icons.Filled.Close, contentDescription = removeiconDescription)
                                     }
                                 }
                             },
@@ -298,25 +328,25 @@ fun RegiScreen(
 
             // 횟수
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("복용 횟수(하루) *", color = SectionTitle)
+                Text(doseDailyCount, color = SectionTitle)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { dose = (dose - 1).coerceAtLeast(1) }) {
-                        Icon(Icons.Filled.Remove, contentDescription = "minus", tint = Mint)
+                        Icon(Icons.Filled.Remove, contentDescription = minusiconDescription, tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.weight(1f))
-                    Text("${dose}회", color = Mint)
+                    Text("${dose}$countPerDay", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.weight(1f))
                     IconButton(onClick = { dose = (dose + 1).coerceAtMost(6) }) {
-                        Icon(Icons.Filled.Add, contentDescription = "plus", tint = Mint)
+                        Icon(Icons.Filled.Add, contentDescription = plusiconDescription, tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
 
             // 시간
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("복용 시간 *", color = SectionTitle)
+                Text(doseTime, color = SectionTitle)
                 intakeTimes.forEachIndexed { i, t ->
-                    RepeatTimeRow("${i + 1}회차", t) { new ->
+                    RepeatTimeRow("${i + 1}$timeSlot", t) { new ->
                         intakeTimes[i] = new
                     }
                 }
@@ -325,31 +355,31 @@ fun RegiScreen(
             // 기간
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("복용 기간 *", color = SectionTitle)
+                    Text(dosePeriod, color = SectionTitle)
                     Text(totalDaysLabel, color = Color(0xFF6F8BA4))
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DateBox("시작일", startDay, Modifier.weight(1f)) { showStart = true }
-                    DateBox("종료일", endDay, Modifier.weight(1f)) { showEnd = true }
+                    DateBox(startDateText, startDay, Modifier.weight(1f)) { showStart = true }
+                    DateBox(endDateText, endDay, Modifier.weight(1f)) { showEnd = true }
                 }
             }
 
             // 식사 관계 (질병 탭만)
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("식사 관계", color = SectionTitle)
+                    Text(mealRelationText, color = SectionTitle)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                        SegChip("식전", selected = mealRelation == "before", modifier = Modifier.weight(1f)) {
+                        SegChip(mealRelationBefore, selected = mealRelation == "before", modifier = Modifier.weight(1f)) {
                             mealRelation = "before"
                         }
 
-                        SegChip("식후", selected = mealRelation == "after", modifier = Modifier.weight(1f)) {
+                        SegChip(mealRelationAfter, selected = mealRelation == "after", modifier = Modifier.weight(1f)) {
                             mealRelation = "after"
                         }
 
-                        SegChip("관계없음", selected = mealRelation == "none", modifier = Modifier.weight(1f)) {
+                        SegChip(mealRelationIrrelevant, selected = mealRelation == "none", modifier = Modifier.weight(1f)) {
                             mealRelation = "none"
                         }
                     }
@@ -358,11 +388,11 @@ fun RegiScreen(
 
             // 메모
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("메모 / 주의사항", color = SectionTitle)
+                Text(memoNotesText, color = SectionTitle)
                 OutlinedTextField(
                     value = memo,
                     onValueChange = { memo = it },
-                    placeholder = { Text("복용 시 주의사항을 입력하세요", color = Hint) },
+                    placeholder = { Text(doseNotesMessage, color = Hint) },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -431,9 +461,9 @@ fun RegiScreen(
                     .height(56.dp)
                     .shadow(4.dp, RoundedCornerShape(14.dp)),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Mint)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("등록 완료", color = Color.White, fontSize = 16.sp)
+                Text(registrationComplete, color = Color.White, fontSize = 16.sp)
             }
 
             Spacer(Modifier.height(30.dp))
@@ -445,6 +475,7 @@ fun RegiScreen(
 
 @Composable
 private fun RepeatTimeRow(label: String, value: String, onChange: (String) -> Unit) {
+    val timeExampleText = stringResource(R.string.time_example)
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -454,7 +485,7 @@ private fun RepeatTimeRow(label: String, value: String, onChange: (String) -> Un
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
-            placeholder = { Text("예: 08:00", color = Hint) },
+            placeholder = { Text(timeExampleText, color = Hint) },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth()
@@ -469,6 +500,7 @@ private fun DateBox(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val selectText = stringResource(R.string.select)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, color = Color(0xFF6F8BA4), fontSize = 12.sp)
         Box(
@@ -481,7 +513,7 @@ private fun DateBox(
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = value.ifBlank { "선택" },
+                text = value.ifBlank { selectText },
                 color = if (value.isNotBlank()) Color(0xFF0A0A0A) else Hint,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(horizontal = 14.dp)
@@ -501,7 +533,7 @@ private fun SegChip(
         modifier = modifier
             .height(44.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(if (selected) Mint else CardBg)
+            .background(if (selected) MaterialTheme.colorScheme.primary else CardBg)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {

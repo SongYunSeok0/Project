@@ -1,4 +1,3 @@
-# rag/llm.py
 import time
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -10,16 +9,13 @@ _tokenizer = None
 _model = None
 
 # 프롬프트/생성 길이 제한 (속도에 직접 영향)
-MAX_INSTRUCTION_CHARS = 3000   # instruction이 너무 길면 잘라서 토큰 수 줄이기
-MAX_PROMPT_TOKENS = 768        # 입력 프롬프트 최대 토큰 수
-MAX_NEW_TOKENS = 192           # 생성 길이
+MAX_INSTRUCTION_CHARS = 3000    # instruction이 너무 길면 잘라서 토큰 수 줄이기
+MAX_PROMPT_TOKENS = 768         # 입력 프롬프트 최대 토큰 수
+MAX_NEW_TOKENS = 256            # 생성 길이 (기존 192 → 96으로 줄여서 속도 개선)
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def _load_model():
-    """
-    내부용: 실제로 Qwen 모델을 로드하는 함수.
-    이미 로드돼 있으면 그대로 토크나이저/모델을 반환한다.
-    """
     global _tokenizer, _model
 
     # 이미 한 번 로드됐으면 다시 로드 안 함
@@ -33,18 +29,32 @@ def _load_model():
         MODEL_PATH,
         trust_remote_code=True,
     )
-    _model = AutoModelForCausalLM.from_pretrained(
-        MODEL_PATH,
-        device_map="cuda",          # GPU 사용
-        dtype=torch.float16,        # torch_dtype 대신 dtype 사용 (경고 제거)
-        trust_remote_code=True,
-    )
+
+    # pad_token 없으면 eos로 맞춰 두기 (generate 시 경고 방지)
+    if _tokenizer.pad_token is None:
+        _tokenizer.pad_token = _tokenizer.eos_token
+
+    if DEVICE == "cuda":
+        # GPU + float16
+        _model = AutoModelForCausalLM.from_pretrained(
+            MODEL_PATH,
+            dtype=torch.float16,
+            trust_remote_code=True,
+        ).to(DEVICE)
+    else:
+        # CPU 환경이면 float32
+        _model = AutoModelForCausalLM.from_pretrained(
+            MODEL_PATH,
+            dtype=torch.float32,
+            trust_remote_code=True,
+        )
+
     _model.eval()  # 추론 모드
 
     # 실제로 어디에 올라갔는지 확인용 로그
     try:
         any_param = next(_model.parameters())
-        print(f"Qwen device: {any_param.device}")
+        print(f"Qwen device: {any_param.device}, dtype: {any_param.dtype}")
     except StopIteration:
         print("Qwen device: <no parameters?>")
 
@@ -69,29 +79,6 @@ def _build_alpaca_prompt(instruction: str) -> str:
 ### Response:
 """
 
-
-def _postprocess_answer(text: str) -> str:
-    """
-    문장 중간에서 끊긴 것처럼 보이지 않도록
-    마지막 완성된 문장까지만 잘라내는 간단 후처리.
-    """
-    text = text.strip()
-    if not text:
-        return text
-
-    ends = [
-        text.rfind("다."),
-        text.rfind("요."),
-        text.rfind("습니다."),
-        text.rfind("합니다."),
-        text.rfind("."),
-    ]
-    last = max(ends)
-    if last != -1 and last + 1 < len(text):
-        return text[: last + 1].strip()
-    return text
-
-
 def generate_answer(instruction: str) -> str:
     """
     외부에서 쓰는 메인 함수.
@@ -108,7 +95,10 @@ def generate_answer(instruction: str) -> str:
         return_tensors="pt",
         truncation=True,
         max_length=MAX_PROMPT_TOKENS,
-    ).to(model.device)
+    )
+
+    # 입력 텐서를 모델이 올라간 device로 이동
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
     input_len = inputs["input_ids"].shape[1]
 
@@ -117,11 +107,11 @@ def generate_answer(instruction: str) -> str:
         outputs = model.generate(
             **inputs,
             max_new_tokens=MAX_NEW_TOKENS,
-            do_sample=False,          # greedy
-            num_beams=1,              # beam search 안 씀
+            do_sample=False,              # greedy
+            num_beams=1,                  # beam search 안 씀
             use_cache=True,
             eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.pad_token_id,
         )
     gen_elapsed = time.time() - t0
 
@@ -139,7 +129,7 @@ def generate_answer(instruction: str) -> str:
         return ""
 
     answer = tokenizer.decode(generated_ids, skip_special_tokens=True)
-    return _postprocess_answer(answer)
+    return answer.strip()
 
 
 def preload_qwen():

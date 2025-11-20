@@ -12,6 +12,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.res.stringResource
+import com.common.design.R
 import com.scheduler.ocr.OcrCropView
 
 @Composable
@@ -21,16 +23,21 @@ fun OcrScreen(
     onConfirm: (names: List<String>, times: Int?, days: Int?) -> Unit,
     onRetake: () -> Unit,
 ) {
-    val mint = Color(0xFF6AE0D9)
+    val photoRecaptureButtonText = stringResource(R.string.photo_recapture_button)
+    val confirmText = stringResource(R.string.confirm)
+    val guideConfirmRecognitionAreaMessage = stringResource(R.string.scheduler_message_guide_confirm_recognition_area)
+    val errorRecognitionNoResultTitle = stringResource(R.string.scheduler_error_recognition_no_result_title)
+    val errorRecognitionNoTextDetail = stringResource(R.string.scheduler_error_recognition_no_text_detail)
+
     var viewRef by remember { mutableStateOf<OcrCropView?>(null) }
     var showNoResult by remember { mutableStateOf(false) }
 
     if (showNoResult) {
         AlertDialog(
             onDismissRequest = { showNoResult = false },
-            confirmButton = { TextButton(onClick = { showNoResult = false }) { Text("확인") } },
-            title = { Text("영역 인식 결과 없음") },
-            text  = { Text("선택한 영역에서 텍스트를 찾지 못했습니다. 영역을 다시 지정하세요.") }
+            confirmButton = { TextButton(onClick = { showNoResult = false }) { Text(confirmText) } },
+            title = { Text(errorRecognitionNoResultTitle) },
+            text  = { Text(errorRecognitionNoTextDetail) }
         )
     }
 
@@ -83,10 +90,10 @@ fun OcrScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = mint,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
                 )
-            ) { Text("영역 인식 후 확인") }
+            ) { Text(guideConfirmRecognitionAreaMessage) }
 
             // 다시 촬영 버튼
             OutlinedButton(
@@ -95,12 +102,12 @@ fun OcrScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.5.dp, mint),
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = Color.White,
-                    contentColor = mint
+                    contentColor = MaterialTheme.colorScheme.primary
                 )
-            ) { Text("다시 촬영") }
+            ) { Text(photoRecaptureButtonText) }
         }
     }
 }

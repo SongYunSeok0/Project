@@ -11,10 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.common.design.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel
@@ -25,6 +27,8 @@ fun InquiryTypeSelector(
     selectedType: String,
     onTypeSelected: (String) -> Unit
 ) {
+    val inquiryTypeText = stringResource(R.string.inquirytype)
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
@@ -32,7 +36,7 @@ fun InquiryTypeSelector(
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Text(
-            text = "문의 유형",
+            text = inquiryTypeText,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.align(Alignment.Start)
         )
@@ -41,7 +45,10 @@ fun InquiryTypeSelector(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            listOf("일반 문의", "버그 신고").forEach { type ->
+            listOf(
+                stringResource(R.string.general_inquiry),
+                stringResource(R.string.bug_report)
+            ).forEach { type ->
                 val isSelected = selectedType == type
 
                 AppSelectableButton(
@@ -50,7 +57,6 @@ fun InquiryTypeSelector(
                     onClick = { onTypeSelected(type) },
                     modifier = Modifier.weight(1f),
                     height = 50.dp,
-                    // 디자인용 색상은 이미 AppSelectableButton 내부에서 지정해놨음
                     useClickEffect = true
                 )
             }
@@ -65,6 +71,13 @@ fun NewInquiryForm(
     var selectedType by remember { mutableStateOf("일반 문의") }
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    //var images by remember { mutableStateOf(listOf<Uri>()) }
+
+    val titleText = stringResource(R.string.title)
+    val title_Message = stringResource(R.string.mypage_message_title)
+    val contentText = stringResource(R.string.content)
+    val content_Message = stringResource(R.string.mypage_message_content)
+    val inquirySubmittedSuccessMessage = stringResource(R.string.message_inquiry_submitted_success)
 
     val context = LocalContext.current
 
@@ -73,7 +86,7 @@ fun NewInquiryForm(
         viewModel.events.collect { event ->
             when (event) {
                 is MyPageEvent.InquirySubmitSuccess -> {
-                    Toast.makeText(context, "문의가 등록되었습니다!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, inquirySubmittedSuccessMessage, Toast.LENGTH_SHORT).show()
                 }
 
                 is MyPageEvent.InquirySubmitFailed -> {
@@ -99,31 +112,43 @@ fun NewInquiryForm(
         ) {
 
             Text(
-                text = "제목",
-                style = MaterialTheme.typography.titleMedium,
+                text = titleText,
+                style = MaterialTheme.typography.titleMedium, // AppTheme 기반 폰트 적용
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.Start)
             )
             InquiryTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = "문의 제목을 입력해주세요",
+                label = title_Message,
                 singleLine = true,
                 maxLines = 1
             )
 
             Text(
-                text = "내용",
+                text = contentText,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.Start)
             )
             InquiryTextField(
                 value = content,
                 onValueChange = { content = it },
-                label = "문의 내용을 작성해주세요",
+                label = content_Message,
                 height = 150.dp
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)
+        ImageAttachmentSection(
+            images = images,
+            onImagesSelected = { newImages ->
+                images = newImages
+            },
+            onImageRemove = { index ->
+                images = images.filterIndexed { i, _ -> i != index }
+            }
+        )
+*/
 
             SubmitButton {
                 if (title.isNotBlank() && content.isNotBlank()) {
@@ -142,11 +167,11 @@ fun NewInquiryForm(
     }
 }
 
-
 @Composable
 fun SubmitButton(
     onClick: () -> Unit
 ) {
+    val inquiryText = stringResource(R.string.inquiry)
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
@@ -154,12 +179,12 @@ fun SubmitButton(
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF6AE0D9))
+            .background(MaterialTheme.colorScheme.primary)
             .clickable { onClick() }
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            text = "문의하기",
+            text = inquiryText,
             color = Color.White,
             fontSize = 16.sp,
             lineHeight = 1.5.em

@@ -7,25 +7,36 @@ from django.db.models import Q
 from .models import Chunk
 
 
-# 증상 → 효능 카테고리 매핑
+from typing import Dict, List
+
 SYMPTOM_CATEGORY_MAP: Dict[str, List[str]] = {
-    "두통": ["두통", "해열진통", "진통"],
+    "두통": ["두통", "해열진통", "진통", "머리아픔", "머리아파", "머리가 아픔", "머리가아파"],
     "기침": ["기침", "진해", "거담", "감기"],
     "콧물": ["콧물", "비염", "감기"],
     "코막힘": ["코막힘", "비충혈", "비염"],
-    "열": ["해열", "발열", "해열진통"],
-    "발열": ["해열", "발열", "해열진통"],
-    "근육통": ["근육통", "근육통증", "해열진통"],
+    "열": ["해열", "발열", "해열진통", "열남", "열나요"],
+    "발열": ["해열", "발열", "해열진통", "열남", "열나요"],
+    "근육통": ["근육통", "근육통증", "해열진통", "몸살"],
     "감기": ["감기", "감기증상", "해열진통", "진해거담"],
-    "목아픔": ["인후통", "목통증"],
-    "몸살": ["감기", "몸살", "근육통"],
-    "매스꺼움": ["구역", "오심", "구토"],
-    "메스꺼움": ["구역", "오심", "구토"],
-    "구토": ["구토", "오심"],
-    "복통": ["복통", "위장관", "소화불량"],
-    "생리통": ["생리통", "월경통", "진통", "해열진통"],
-    "월경통": ["월경통", "생리통", "진통", "해열진통"],
+    "목아픔": ["인후통", "목통증", "목아픔", "목아파"],
+    "몸살": ["감기", "몸살", "근육통", "온몸아파"],
+    "매스꺼움": ["구역", "오심", "구토", "매스꺼움", "메스꺼움"],
+    "메스꺼움": ["구역", "오심", "구토", "메스꺼움", "매스꺼움"],
+    "구토": ["구토", "오심", "토함", "토할것같아"],
+    "복통": ["복통", "뱃아픔", "배아파", "위장관", "소화불량", "배가아파"],
+    "속쓰림": ["속쓰림", "속이쓰림", "명치쓰림", "위염", "속이쓰리고", "속이쓰려요", "속이쓰리고"],
+    "소화불량": ["소화불량", "체함", "식체"],
+    "생리통": ["생리통", "월경통", "진통", "해열진통", "하복통"],
+    "월경통": ["월경통", "생리통", "진통", "해열진통", "하복통"],
 }
+
+# key + value 전부를 증상 키워드로 사용
+SYMPTOM_KEYWORDS: List[str] = []
+for base, words in SYMPTOM_CATEGORY_MAP.items():
+    SYMPTOM_KEYWORDS.append(base)
+    SYMPTOM_KEYWORDS.extend(words)
+# 중복 제거
+SYMPTOM_KEYWORDS = list(dict.fromkeys(SYMPTOM_KEYWORDS))
 
 CHILD_HINTS = ["아이", "어린이", "소아", "키즈", "초등학생"]
 ADULT_HINTS = ["성인", "어른", "어른용", "성인용"]
@@ -43,21 +54,35 @@ def _normalize(s: str) -> str:
 
 
 def extract_symptoms(question: str) -> List[str]:
-    """문장에서 증상 후보 단어 추출."""
-    q = re.sub(r"[^가-힣\s]", " ", question)
-    toks = [t.strip() for t in q.split() if len(t.strip()) >= 2]
+    """문장에서 증상 후보 단어 추출 → 항상 카테고리 키(두통, 속쓰림 등)로 반환."""
+    # 한글 + 공백만 남기기
+    q_clean = re.sub(r"[^가-힣\s]", " ", question)
+    toks = [t.strip() for t in q_clean.split() if len(t.strip()) >= 2]
     toks = [t for t in toks if t not in SYMPTOM_STOPWORDS]
 
-    # 매핑 키워드 우선 매칭
+    # 공백 제거 버전(문장 전체)
+    q_norm = _normalize(q_clean)
+
     found = set()
-    for t in toks:
-        for base in SYMPTOM_CATEGORY_MAP.keys():
-            if base in t:
+
+    # 1) 문장 전체에서 base/동의어 매칭 → base(키값)만 모음
+    for base, words in SYMPTOM_CATEGORY_MAP.items():
+        # base 직접 포함
+        if base in q_norm:
+            found.add(base)
+            continue
+
+        # 동의어들 포함
+        for w in words:
+            if w and w in q_norm:
                 found.add(base)
+                break
 
     if found:
+        # 항상 "속쓰림", "두통" 같은 카테고리 이름만 반환
         return list(found)
 
+    # 2) 매핑에 없는 증상(새 단어)일 때만 토큰 그대로 fallback
     return toks
 
 

@@ -33,7 +33,16 @@ data class AuthThemeColor(
 
 data class ComponentThemeColor(
     val inquiryCardAnswer : Color,
-    val inquiryCardQuestion : Color
+    val inquiryCardQuestion : Color,
+    val chatbotCard : Color,
+    val schedulerCard : Color,
+    val stepCard : Color,
+    val rateCard : Color,
+    val timeRemainingCard : Color,
+    val mapCard : Color,
+    val newsCard : Color,
+    val healthInsightCard : Color,
+    val mainFeatureCardBorderStroke : Color
 )
 
 val LoginThemeColors = LoginThemeColor(
@@ -64,7 +73,16 @@ val AuthThemeColors = AuthThemeColor(
 //컴포넌트용
 val ComponentThemeColors = ComponentThemeColor(
     inquiryCardAnswer = InquiryCardAnswer,
-    inquiryCardQuestion = InquiryCardQuestion
+    inquiryCardQuestion = InquiryCardQuestion,
+    chatbotCard = ChatbotCard,
+    schedulerCard = SchedulerCard,
+    stepCard = StepCard,
+    rateCard = RateCard,
+    timeRemainingCard = TimeRemainingCard,
+    mapCard = MapCard,
+    newsCard = NewsCard,
+    healthInsightCard = HealthInsightCard,
+    mainFeatureCardBorderStroke = MainFeatureCardBorderStroke
 )
 
 // Login Local

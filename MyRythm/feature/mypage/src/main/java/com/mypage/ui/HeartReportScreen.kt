@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,6 +22,17 @@ import com.shared.R
 
 @Composable
 fun HeartReportScreen(userId: String?) {
+    val heartDescription = stringResource(R.string.heart_description)
+    val currentHeartRateText = stringResource(R.string.currentheartrate)
+    val rateDescription = stringResource(R.string.rate_description)
+    val bpmText = stringResource(R.string.bpm)
+    val normalText = stringResource(R.string.normal)
+    val cautionText = stringResource(R.string.caution)
+    val warningText = stringResource(R.string.warning)
+    val arrowDescription = stringResource(R.string.arrow_description)
+    val measureHeartRateText = stringResource(R.string.measureheartrate)
+    val recentMeasurementHeartRateText = stringResource(R.string.recent_measurement_heartrate)
+
     Scaffold { innerPadding ->
         Box(
             modifier = Modifier
@@ -54,8 +66,8 @@ fun HeartReportScreen(userId: String?) {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.heart),
-                            contentDescription = "Heart Icon",
+                            painter = painterResource(id = R.drawable.rate),
+                            contentDescription = heartDescription,
                             alpha = 0.66f,
                             colorFilter = ColorFilter.tint(Color(0xffff6b6b)),
                             modifier = Modifier.size(48.dp)
@@ -64,7 +76,7 @@ fun HeartReportScreen(userId: String?) {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "현재 심박수",
+                            text = currentHeartRateText,
                             color = Color(0xff4a5565),
                             fontSize = 14.sp
                         )
@@ -76,7 +88,7 @@ fun HeartReportScreen(userId: String?) {
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.heartrate),
-                                contentDescription = "Heart Line Background",
+                                contentDescription = rateDescription,
                                 modifier = Modifier
                                     .height(90.dp)
                                     .width(300.dp)
@@ -86,14 +98,14 @@ fun HeartReportScreen(userId: String?) {
                             )
 
                             Text(
-                                text = "112",
+                                text = "112",   // 하드코딩 심박수 데이터, 추후 실데이터 변수명 변경 필요
                                 color = Color(0xff101828),
                                 fontSize = 60.sp
                             )
                         }
 
                         Text(
-                            text = "BPM",
+                            text = bpmText,
                             color = Color(0xff4a5565),
                             fontSize = 18.sp
                         )
@@ -101,7 +113,7 @@ fun HeartReportScreen(userId: String?) {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         InputChip(
-                            label = { Text("정상", fontSize = 14.sp, color = Color(0xff364153)) },
+                            label = { Text(normalText, fontSize = 14.sp, color = Color(0xff364153)) },
                             shape = RoundedCornerShape(50.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 containerColor = Color.White.copy(alpha = 0.5f)
@@ -129,11 +141,11 @@ fun HeartReportScreen(userId: String?) {
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.arrow),
-                            contentDescription = "Arrow",
+                            contentDescription = arrowDescription,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("심박수 측정하기", color = Color.White, fontSize = 16.sp)
+                        Text(measureHeartRateText, color = Color.White, fontSize = 16.sp)
                     }
                 }
 
@@ -141,7 +153,7 @@ fun HeartReportScreen(userId: String?) {
 
                 // 최근 측정 기록 제목
                 Text(
-                    text = "최근 측정 기록",
+                    text = recentMeasurementHeartRateText,
                     fontSize = 16.sp,
                     color = Color(0xff101828)
                 )

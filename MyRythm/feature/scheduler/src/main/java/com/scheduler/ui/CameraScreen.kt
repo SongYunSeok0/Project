@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,7 +31,6 @@ import com.scheduler.ocr.CameraActivity
 import java.io.File
 import java.io.FileOutputStream
 
-private val Mint = Color(0xFF6AE0D9)
 
 @Composable
 fun CameraScreen(
@@ -38,6 +38,13 @@ fun CameraScreen(
     onOpenOcr: (String) -> Unit = {},
     onOpenRegi: () -> Unit = {},
 ) {
+    val photoGuideText = stringResource(R.string.photo_guide)
+    val photoCaptureButtonText = stringResource(R.string.photo_capture_button)
+    val photoSelectFromGallery = stringResource(R.string.photo_select_from_gallery)
+    val manualEntry = stringResource(R.string.manual_entry)
+    val guideCaptureBrightAreaMessage = stringResource(R.string.scheduler_message_guide_capture_bright_area)
+    val guideCaptureCheckClarityMessage = stringResource(R.string.scheduler_message_guide_capture_check_clarity)
+
     val context = LocalContext.current
 
     val takePhotoLauncher = rememberLauncherForActivityResult(
@@ -76,7 +83,10 @@ fun CameraScreen(
                     .background(Color(0xFFE4F5F4))
                     .padding(16.dp)
             ) {
-                Text("📋 촬영 가이드", color = Color(0xFF5DB0A8), fontSize = 14.sp)
+                Text(
+                    photoGuideText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp)
                 Image(
                     painter = painterResource(id = R.drawable.example),
                     contentDescription = null,
@@ -86,8 +96,8 @@ fun CameraScreen(
                         .clip(RoundedCornerShape(12.dp)),
                     contentScale = ContentScale.Crop
                 )
-                Text("• 밝은 곳에서 촬영", color = Color(0xFF6F8BA4), fontSize = 14.sp)
-                Text("• 글씨 선명도 확인", color = Color(0xFF6F8BA4), fontSize = 14.sp)
+                Text(guideCaptureBrightAreaMessage, color = Color(0xFF6F8BA4), fontSize = 14.sp)
+                Text(guideCaptureCheckClarityMessage, color = Color(0xFF6F8BA4), fontSize = 14.sp)
             }
 
             Spacer(Modifier.height(10.dp))
@@ -103,7 +113,7 @@ fun CameraScreen(
                         .height(48.dp)
                         .shadow(1.dp, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Mint)
+                    colors = ButtonDefaults.buttonColors(containerColor =  MaterialTheme.colorScheme.primary)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.camera),
@@ -112,7 +122,7 @@ fun CameraScreen(
                         colorFilter = ColorFilter.tint(Color.White)
                     )
                     Spacer(Modifier.width(12.dp))
-                    Text("사진 촬영", color = Color.White, fontSize = 16.sp)
+                    Text(photoCaptureButtonText, color = Color.White, fontSize = 16.sp)
                 }
 
                 // 갤러리
@@ -125,18 +135,18 @@ fun CameraScreen(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.White,
-                        contentColor = Mint
+                        contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    border = BorderStroke(1.66.dp, Mint)
+                    border = BorderStroke(1.66.dp,  MaterialTheme.colorScheme.primary)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.upload),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        colorFilter = ColorFilter.tint(Mint)
+                        colorFilter = ColorFilter.tint( MaterialTheme.colorScheme.primary)
                     )
                     Spacer(Modifier.width(12.dp))
-                    Text("갤러리에서 선택", fontSize = 16.sp)
+                    Text(photoSelectFromGallery, fontSize = 16.sp)
                 }
 
                 Button(
@@ -146,7 +156,7 @@ fun CameraScreen(
                         .height(48.dp)
                         .shadow(1.dp, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Mint)
+                    colors = ButtonDefaults.buttonColors(containerColor =  MaterialTheme.colorScheme.primary)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.camera),
@@ -155,7 +165,7 @@ fun CameraScreen(
                         colorFilter = ColorFilter.tint(Color.White)
                     )
                     Spacer(Modifier.width(12.dp))
-                    Text("수동 입력", color = Color.White, fontSize = 16.sp)
+                    Text(manualEntry, color = Color.White, fontSize = 16.sp)
                 }
             }
         }

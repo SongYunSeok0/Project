@@ -52,6 +52,7 @@ class DrugRAGView(APIView):
                 status=500,
             )
 
+        print("[RAG-ANSWER]", repr(answer), "LEN=", len(answer))
         elapsed = time.time() - start
         print(f"[RAG] q='{question[:30]}' elapsed={elapsed:.2f}s")
 

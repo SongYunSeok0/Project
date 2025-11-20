@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +39,18 @@ fun EditScreen(
     var phone by remember(profile) { mutableStateOf(profile?.phone?.toString() ?: "") }
     var prot_phone by remember(profile) { mutableStateOf(profile?.prot_phone?.toString() ?: "") }
     var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
+
+    //문자열 리소스화
+    val editprofilephoto = stringResource(R.string.editprofilephoto)
+    val editText = stringResource(R.string.edit)
+    val nameText = stringResource(R.string.name)
+    val heightText = stringResource(R.string.height)
+    val weightText = stringResource(R.string.weight)
+    val ageText = stringResource(R.string.age)
+    val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
+    val genderText = stringResource(R.string.gender)
+    val bloodTypeText = stringResource(R.string.bloodtype)
+    val editDone = stringResource(R.string.edit_done)
 
     val context = LocalContext.current
 
@@ -69,12 +82,12 @@ fun EditScreen(
 
         // 🔹 입력 필드
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EditableField("이름", name) { name = it }
-            EditableField("키 (cm)", height) { height = it }
-            EditableField("몸무게 (kg)", weight) { weight = it }
-            EditableField("나이", age) { age = it }
+            EditableField(nameText, name) { name = it }
+            EditableField(heightText, height) { height = it }
+            EditableField(weightText, weight) { weight = it }
+            EditableField(ageText, age) { age = it }
             EditableField("이메일", email) { email = it }
-            EditableField("휴대폰 번호(01012345678)", phone) { phone = it }
+            EditableField(phoneNumberPlaceholderText, phone) { phone = it }
             EditableField("보호자 휴대폰 번호(01012345678)", prot_phone) { prot_phone = it }
 
 
@@ -88,7 +101,7 @@ fun EditScreen(
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xff6ae0d9))
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable {
                     viewModel.saveProfile(
                         username = name,
@@ -109,12 +122,15 @@ fun EditScreen(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "수정 완료", color = Color.White, fontSize = 16.sp)
+                Text(
+                    text = editDone,
+                    color = MaterialTheme.colorScheme.surface,
+                    fontSize = 16.sp
+                )
             }
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,7 +170,7 @@ fun SelectableButtonGroup(
                         .height(44.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(
-                            if (option == selectedOption) Color(0xff6ae0d9)
+                            if (option == selectedOption) MaterialTheme.colorScheme.primary
                             else Color(0xffdddddd)
                         )
                         .clickable { onOptionSelected(option) },
@@ -162,7 +178,7 @@ fun SelectableButtonGroup(
                 ) {
                     Text(
                         text = option,
-                        color = if (option == selectedOption) Color.White
+                        color = if (option == selectedOption) MaterialTheme.colorScheme.surface
                         else Color(0xff3b566e).copy(alpha = 0.7f),
                         fontSize = 14.sp
                     )
