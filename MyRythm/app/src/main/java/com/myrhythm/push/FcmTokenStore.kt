@@ -1,4 +1,4 @@
-package com.core.push
+package com.myrhythm.push
 
 import android.content.Context
 import androidx.core.content.edit

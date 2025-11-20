@@ -7,7 +7,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.core.push.PushManager
+import com.domain.usecase.push.PushManager
 import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
 import com.domain.usecase.auth.LoginUseCase
@@ -92,16 +92,16 @@ class AuthViewModel @Inject constructor(
         val ok = result.isSuccess
 
         if (ok) {
-            Log.e("AuthViewModel", "✅ [5] 로그인 성공 → FCM 토큰 등록 시도")
+            Log.e("AuthViewModel", "로그인 성공 → FCM 토큰 등록 시도")
 
             PushManager.fcmToken?.let { token ->
-                Log.e("AuthViewModel", "📨 [5-1] FCM token = $token")
+                Log.e("AuthViewModel", "FCM token = $token")
                 runCatching { registerFcmTokenUseCase(token) }
-                    .onSuccess { Log.e("AuthViewModel", "🎉 [5-2] FCM 토큰 등록 성공") }
-                    .onFailure { Log.e("AuthViewModel", "❌ [5-2] FCM 토큰 등록 실패: ${it.message}") }
-            } ?: Log.e("AuthViewModel", "⚠️ [5-1] FCM token 없음")
+                    .onSuccess { Log.e("AuthViewModel", "FCM 토큰 등록 성공") }
+                    .onFailure { Log.e("AuthViewModel", "FCM 토큰 등록 실패: ${it.message}") }
+            } ?: Log.e("AuthViewModel", "FCM token 없음")
         } else {
-            Log.e("AuthViewModel", "❌ [5] 로그인 실패")
+            Log.e("AuthViewModel", "로그인 실패")
         }
 
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
@@ -291,7 +291,7 @@ class AuthViewModel @Inject constructor(
 
                 when (val r = call.getOrNull()) {
                     is SocialLoginResult.Success -> {
-                        // ⭐ 소셜 로그인 성공 → FCM 등록
+                        // 소셜 로그인 성공 → FCM 등록
                         PushManager.fcmToken?.let { token ->
                             runCatching { registerFcmTokenUseCase(token) }
                                 .onFailure { emit("푸시 토큰 등록 실패") }

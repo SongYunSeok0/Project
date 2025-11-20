@@ -37,7 +37,7 @@
 
     <!-- ✅ FCM 서비스 등록 -->
     <service
-        android:name="com.core.push.AppFcmService"
+        android:name=".push.AppFcmService"
         android:exported="false">
         <intent-filter>
             <action android:name="com.google.firebase.MESSAGING_EVENT" />

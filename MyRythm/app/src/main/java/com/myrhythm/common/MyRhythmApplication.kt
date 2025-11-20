@@ -18,7 +18,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import com.core.push.PushManager
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
@@ -62,16 +61,5 @@ class MyRhythmApplication : Application() {
                     Log.w("AppApplication", "Chatbot warmup failed: ${e.message}")
                 }
             }
-            // ✅ FCM 현재 토큰 가져와서 PushManager에 저장
-            FirebaseMessaging.getInstance().token
-                .addOnCompleteListener { task ->
-                    if (!task.isSuccessful) {
-                        Log.w("FCM", "getToken 실패", task.exception)
-                        return@addOnCompleteListener
-                    }
-                    val token = task.result
-                    Log.i("FCM", "current token = $token")
-                    PushManager.fcmToken = token
-                }
         }
     }
