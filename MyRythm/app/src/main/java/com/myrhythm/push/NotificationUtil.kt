@@ -1,4 +1,4 @@
-package com.core.push
+package com.myrhythm.push
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -8,7 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.core.R    // core 모듈 아이콘 사용
+import com.core.R
 
 object NotificationUtil {
 
