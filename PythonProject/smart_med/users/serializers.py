@@ -92,6 +92,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "gender",
             "height",
             "weight",
+            "prot_phone",
         )
 
     def validate_phone(self, v: str) -> str:
