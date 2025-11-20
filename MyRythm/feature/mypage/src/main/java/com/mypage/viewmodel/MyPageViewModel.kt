@@ -3,9 +3,9 @@ package com.mypage.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.repository.InquiryRepository
-import com.domain.repository.UserRepository   // 🔥 UserProfile 불러오는 repo 필요
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.model.UserProfile           // 🔥 프로필 모델
+import com.domain.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 class MyPageViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val inquiryRepository: InquiryRepository,
-    private val userRepository: UserRepository           // 🔥 프로필 호출하는 repository
+    private val userRepository: ProfileRepository           // 🔥 프로필 호출하는 repository
 ) : ViewModel() {
 
     // -------------------------------

@@ -36,7 +36,7 @@ object UseCaseModule {
 
     @Provides
     @Singleton
-    fun provideSignupUseCase(repo: UserRepository) =
+    fun provideSignupUseCase(repo: AuthRepository) =
         SignupUseCase(repo)
 
     @Provides

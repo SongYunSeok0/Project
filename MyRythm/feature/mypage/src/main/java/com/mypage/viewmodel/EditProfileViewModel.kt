@@ -3,6 +3,7 @@ package com.mypage.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.UserProfile
+import com.domain.repository.ProfileRepository
 import com.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: ProfileRepository
 ) : ViewModel() {
 
     // 서버에서 가져온 프로필 (도메인 모델 그대로)

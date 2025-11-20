@@ -1,6 +1,7 @@
 package com.domain.repository
 
 import com.domain.model.AuthTokens
+import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
 
@@ -10,4 +11,5 @@ interface AuthRepository {
     suspend fun socialLogin(param: SocialLoginParam): Result<SocialLoginResult>
     suspend fun tryRefreshFromLocal(): Result<Boolean>
     suspend fun clearTokens(): Result<Unit>
+    suspend fun signup(request: SignupRequest): Boolean
 }

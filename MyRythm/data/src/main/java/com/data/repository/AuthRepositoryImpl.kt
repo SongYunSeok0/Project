@@ -1,12 +1,15 @@
 package com.data.repository
 
+import android.util.Log
 import com.core.auth.TokenStore
 import com.data.mapper.auth.asAuthTokens
 import com.data.mapper.auth.toDomainTokens
 import com.data.mapper.auth.toDto
+import com.data.mapper.user.toDto
 import com.data.network.api.UserApi
 import com.data.network.dto.user.UserLoginRequest
 import com.domain.model.AuthTokens
+import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
 import com.domain.repository.AuthRepository
@@ -97,6 +100,25 @@ class AuthRepositoryImpl @Inject constructor(
         withContext(io) {
             runCatching { tokenStore.clear() }
         }
+
+    override suspend fun signup(request: SignupRequest): Boolean {
+        return try {
+            val res = api.signup(request.toDto())
+            if (!res.isSuccessful) {
+                Log.e(
+                    "Signup",
+                    "HTTP ${res.code()} ${res.message()}\n${res.errorBody()?.string()}"
+                )
+                false
+            } else {
+                Log.d("Signup", "회원가입 성공: ${res.body()}")
+                true
+            }
+        } catch (e: Exception) {
+            Log.e("Signup", "네트워크 예외", e)
+            false
+        }
+    }
 }
 
 class HttpAuthException(val code: Int, message: String?) :
