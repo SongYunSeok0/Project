@@ -9,15 +9,19 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FavoriteDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertFavorite(favorite: FavoriteEntity)
+    suspend fun insertFavorite(entity: FavoriteEntity)
 
-    @Query("DELETE FROM favorites WHERE keyword = :keyword AND userId = :userId")
-    suspend fun deleteFavorite(keyword: String, userId: String)
+    @Query("DELETE FROM favorites WHERE keyword = :keyword")
+    suspend fun deleteFavorite(keyword: String)
 
-    @Query("SELECT * FROM favorites WHERE userId = :userId ORDER BY timestamp DESC")
-    fun getFavorites(userId: String): Flow<List<FavoriteEntity>>
+    @Query("SELECT * FROM favorites ORDER BY lastUsed DESC")
+    fun getFavorites(): Flow<List<FavoriteEntity>>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE keyword = :keyword AND userId = :userId)")
-    suspend fun isFavorite(keyword: String, userId: String): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE keyword = :keyword)")
+    suspend fun isFavorite(keyword: String): Boolean
+
+    @Query("UPDATE favorites SET lastUsed = :time WHERE keyword = :keyword")
+    suspend fun updateLastUsed(keyword: String, time: Long)
 }

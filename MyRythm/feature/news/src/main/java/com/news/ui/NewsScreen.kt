@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,18 +23,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.common.design.R
 import com.news.NewsViewModel
-import androidx.compose.runtime.livedata.observeAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,11 +39,10 @@ fun NewsScreen(
     onOpenDetail: (String) -> Unit,
     viewModel: NewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
-    val selectedCategory by viewModel.selectedCategory.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
 
-    // PagingData 수집 → LazyPagingItems
     val pagingItems = viewModel.newsPagingFlow.collectAsLazyPagingItems()
 
     Column(
@@ -53,6 +50,10 @@ fun NewsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
+
+        // -----------------------------------------------------------
+        // 🔍 검색창 + ⭐ 즐겨찾기 추가 버튼
+        // -----------------------------------------------------------
         AnimatedVisibility(visible = isSearchMode) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -60,32 +61,44 @@ fun NewsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
+
                 TextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
                     placeholder = { Text("검색어를 입력하세요") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = {
-                        viewModel.triggerSearch()
-                    }),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { viewModel.triggerSearch() }
+                    ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFFF2F2F5),
                         unfocusedContainerColor = Color(0xFFF2F2F5),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
                     ),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp)
                 )
 
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(6.dp))
+
+                IconButton(
+                    onClick = {
+                        if (searchQuery.isNotBlank()) viewModel.addFavorite(searchQuery)
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.bookmark),
+                        contentDescription = null,
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(Modifier.width(6.dp))
 
                 Button(
                     onClick = {
-                        if (searchQuery.isNotBlank()) {
-                            viewModel.updateCategory(searchQuery)
-                        }
+                        if (searchQuery.isNotBlank()) viewModel.triggerSearch()
                     },
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
@@ -95,30 +108,31 @@ fun NewsScreen(
             }
         }
 
+        // -----------------------------------------------------------
+        // ⭐ 즐겨찾기 배너카드
+        // -----------------------------------------------------------
         Text(
-            text = "오늘의 ${selectedCategory} 뉴스",
+            text = "즐겨찾기 검색",
             fontSize = 16.sp,
             color = Color(0xFF3B566E),
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        FavoriteBannerCard(
+            title = "즐겨찾기 키워드",
+            favorites = favorites,
+            onClickFavorite = { keyword ->
+                viewModel.onFavoriteClick(keyword)
+            },
             modifier = Modifier
-                .padding(horizontal = 16.dp)
                 .fillMaxWidth()
-        ) {
-            BannerCard("건강 뉴스", "최신 건강 정보", Modifier.weight(1f)) {
-                viewModel.updateCategory("건강")
-            }
-            BannerCard("의학 뉴스", "최신 의학 연구", Modifier.weight(1f)) {
-                viewModel.updateCategory("의학")
-            }
-            BannerCard("복약 안전", "올바른 복용법", Modifier.weight(1f)) {
-                viewModel.updateCategory("복약")
-            }
-        }
+                .padding(horizontal = 16.dp)
+        )
+
+        // -----------------------------------------------------------
+        // 📰 네이버 뉴스 리스트
+        // -----------------------------------------------------------
 
         Text(
             text = "네이버 뉴스",
@@ -134,10 +148,10 @@ fun NewsScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
+
             items(pagingItems.itemCount) { index ->
                 val item = pagingItems[index] ?: return@items
 
-                // 🔥 Domain model 기준 매핑
                 val cleanTitle = item.title
                     .replace("<b>", "")
                     .replace("</b>", "")
@@ -145,17 +159,12 @@ fun NewsScreen(
                     .replace("&apos;", "'")
                     .replace("&amp;", "&")
 
-                val url = item.link
-
                 NewsCard(
                     title = cleanTitle,
                     info = item.pubDate.take(16),
-                    imageUrl = item.image
-                        ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
+                    imageUrl = item.image ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
                     onClick = {
-                        if (url.isNotEmpty()) {
-                            onOpenDetail(Uri.encode(url))
-                        }
+                        onOpenDetail(Uri.encode(item.link))
                     }
                 )
             }
@@ -169,7 +178,9 @@ fun NewsScreen(
                             .fillMaxWidth()
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }
@@ -177,27 +188,31 @@ fun NewsScreen(
 }
 
 
-/* --------------------------- UI Components --------------------------- */
+
+///////////////////////////////////////////////////////////////
+// ⭐ FavoriteBannerCard (NewsScreen 안에 포함)
+///////////////////////////////////////////////////////////////
 
 @Composable
-fun BannerCard(
+fun FavoriteBannerCard(
     title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    favorites: List<com.domain.model.Favorite>,
+    onClickFavorite: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .height(120.dp)
+            .height(150.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
     ) {
+
         Image(
             painter = painterResource(id = R.drawable.photo),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -208,16 +223,47 @@ fun BannerCard(
                     )
                 )
         )
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(12.dp)
         ) {
-            Text(text = title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(text = subtitle, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(favorites) { fav ->
+                    AssistChip(
+                        onClick = { onClickFavorite(fav.keyword) },
+                        label = {
+                            Text(
+                                text = fav.keyword,
+                                color = Color.White,
+                                fontSize = 12.sp
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
 }
+
+
+
+///////////////////////////////////////////////////////////////
+// 📰 NewsCard (NewsScreen 안에 포함)
+///////////////////////////////////////////////////////////////
 
 @Composable
 fun NewsCard(
@@ -245,6 +291,7 @@ fun NewsCard(
                 .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )
+
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxHeight()
@@ -256,20 +303,11 @@ fun NewsCard(
                 fontWeight = FontWeight.Medium,
                 maxLines = 2
             )
-            Text(text = info, fontSize = 12.sp, color = Color(0xFF6F8BA4))
+            Text(
+                text = info,
+                fontSize = 12.sp,
+                color = Color(0xFF6F8BA4)
+            )
         }
-    }
-}
-
-/* ------------------------------ Preview ------------------------------ */
-
-@Preview(showBackground = true)
-@Composable
-fun NewsScreenPreview() {
-    MaterialTheme {
-        NewsMainScreen(
-            nav = rememberNavController(),
-            onOpenDetail = {}
-        )
     }
 }

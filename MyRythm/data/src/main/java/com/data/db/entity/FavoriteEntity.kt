@@ -7,6 +7,6 @@ import androidx.room.PrimaryKey
 data class FavoriteEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val keyword: String,
-    val userId: String,
-    val timestamp: Long
+    val timestamp: Long = System.currentTimeMillis(),
+    val lastUsed: Long = System.currentTimeMillis()
 )

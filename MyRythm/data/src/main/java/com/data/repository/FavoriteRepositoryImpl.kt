@@ -8,7 +8,6 @@ import com.domain.repository.FavoriteRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -25,20 +24,22 @@ class FavoriteRepositoryImpl @Inject constructor(
             dao.insertFavorite(favorite.toEntity())
         }
 
-    override suspend fun deleteFavorite(keyword: String, userId: String) =
+    override suspend fun deleteFavorite(keyword: String) =
         withContext(io) {
-            dao.deleteFavorite(keyword, userId)
+            dao.deleteFavorite(keyword)
         }
 
-    override suspend fun isFavorite(keyword: String, userId: String): Boolean =
+    override suspend fun isFavorite(keyword: String): Boolean =
         withContext(io) {
-            dao.isFavorite(keyword, userId)
+            dao.isFavorite(keyword)
         }
 
-    override fun getFavorites(userId: String): Flow<List<Favorite>> =
-        dao.getFavorites(userId)
+    override fun getFavorites(): Flow<List<Favorite>> =
+        dao.getFavorites()
             .map { list -> list.map { it.toDomain() } }
-            .flowOn(io)
+
+    override suspend fun updateLastUsed(keyword: String) =
+        withContext(io) {
+            dao.updateLastUsed(keyword, System.currentTimeMillis())
+        }
 }
-
-

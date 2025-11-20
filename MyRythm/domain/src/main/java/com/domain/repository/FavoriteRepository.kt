@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface FavoriteRepository {
     suspend fun insertFavorite(favorite: Favorite)
-    suspend fun deleteFavorite(keyword: String, userId: String)
-    fun getFavorites(userId: String): Flow<List<Favorite>>
-    suspend fun isFavorite(keyword: String, userId: String): Boolean
+    suspend fun deleteFavorite(keyword: String)
+    suspend fun isFavorite(keyword: String): Boolean
+    fun getFavorites(): Flow<List<Favorite>>
+    suspend fun updateLastUsed(keyword: String)
 }
