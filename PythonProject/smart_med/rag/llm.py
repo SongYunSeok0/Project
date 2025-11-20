@@ -11,15 +11,11 @@ _model = None
 # 프롬프트/생성 길이 제한 (속도에 직접 영향)
 MAX_INSTRUCTION_CHARS = 3000    # instruction이 너무 길면 잘라서 토큰 수 줄이기
 MAX_PROMPT_TOKENS = 768         # 입력 프롬프트 최대 토큰 수
-MAX_NEW_TOKENS = 128             # 생성 길이 (기존 192 → 96으로 줄여서 속도 개선)
+MAX_NEW_TOKENS = 256            # 생성 길이 (기존 192 → 96으로 줄여서 속도 개선)
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def _load_model():
-    """
-    내부용: 실제로 Qwen 모델을 로드하는 함수.
-    이미 로드돼 있으면 그대로 토크나이저/모델을 반환한다.
-    """
     global _tokenizer, _model
 
     # 이미 한 번 로드됐으면 다시 로드 안 함
