@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserCreateSerializer
+from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
 
 
@@ -102,30 +102,16 @@ class MeView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
     def patch(self, request):
         user = request.user
-        allowed_fields = {
-            "username",
-            "phone",
-            "birth_date",
-            "gender",
-            "height",
-            "weight",
-            "preferences",
-            "prot_phone",
-            "email",
-        }
-        data = request.data
-        updated = False
-        for field, value in data.items():
-            if field in allowed_fields:
-                setattr(user, field, value)
-                updated = True
-        if updated:
-            user.save()
-            return Response({"detail": "updated"}, status=status.HTTP_200_OK)
-        else:
-            return Response({"detail": "업데이트 가능한 필드 없음"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # 여기서 UserSerializer로 전체 데이터 반환!
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
 # ✅ FCM 토큰 등록용 API

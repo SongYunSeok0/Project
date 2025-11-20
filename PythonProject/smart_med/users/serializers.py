@@ -8,6 +8,30 @@ def _normalize_phone(s: str) -> str:
     return "".join(ch for ch in (s or "") if ch.isdigit() or ch == "+")
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "uuid",
+            "email",
+            "username",
+            "phone",
+            "birth_date",
+            "gender",
+            "height",
+            "weight",
+            "preferences",
+            "prot_phone",
+            "relation",
+            "is_active",
+            "is_staff",
+            "created_at",
+            "updated_at",
+            "last_login",
+        )
+
+
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
 
