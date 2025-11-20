@@ -49,6 +49,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)  # 생략 가능. 명시 유지.
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)  # 앱 단용 식별자
 
+    firebase_uid = models.CharField(
+        max_length=128,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Firebase phone auth UID"
+    )
+
     # 로그인/식별
     email = models.EmailField(unique=True, db_index=True)
     # password 필드는 AbstractBaseUser에서 상속됨 (CharField, max_length=128)

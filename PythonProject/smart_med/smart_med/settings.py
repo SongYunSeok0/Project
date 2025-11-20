@@ -3,6 +3,7 @@ from pathlib import Path
 import environ
 from datetime import timedelta
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # .env 로드 (django-environ만 사용, dotenv 중복 제거)
