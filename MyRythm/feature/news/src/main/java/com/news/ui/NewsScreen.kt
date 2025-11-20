@@ -43,13 +43,6 @@ fun NewsScreen(
     onOpenDetail: (String) -> Unit,
     viewModel: NewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
-    val searchText = stringResource(R.string.search)
-    val todayText = stringResource(R.string.today)
-    val newsText = stringResource(R.string.news)
-    val naverNewsText = stringResource(R.string.naver_news)
-    val searchMessage = stringResource(R.string.news_message_search)
-
-    val selectedCategory by viewModel.selectedCategory.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
@@ -61,6 +54,10 @@ fun NewsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
+
+        // -----------------------------------------------------------
+        // 🔍 검색창 + ⭐ 즐겨찾기 버튼
+        // -----------------------------------------------------------
         AnimatedVisibility(visible = isSearchMode) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -68,10 +65,11 @@ fun NewsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
+
                 TextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = { Text(searchMessage) },
+                    placeholder = { Text("검색어를 입력하세요") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
@@ -95,8 +93,7 @@ fun NewsScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.bookmark),
                         contentDescription = null,
-                        tint = Color(0xFFFFC107),
-                        modifier = Modifier.size(24.dp)
+                        tint = Color(0xFFFFC107)
                     )
                 }
 
@@ -109,36 +106,42 @@ fun NewsScreen(
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
                 ) {
-                    Text(searchText, color = Color.White)
+                    Text("검색", color = Color.White)
                 }
             }
         }
 
         Text(
-            text = "$todayText ${selectedCategory} $newsText",
+            text = "즐겨찾기",
             fontSize = 16.sp,
             color = Color(0xFF3B566E),
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        FavoriteBannerCard(
-            title = "즐겨찾기 키워드",
-            favorites = favorites,
-            onClickFavorite = { keyword ->
-                viewModel.onFavoriteClick(keyword)
-            },
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-        )
+        ) {
+            items(favorites) { fav ->
+                FavoriteBannerCard(
+                    keyword = fav.keyword,
+                    onClick = { viewModel.onFavoriteClick(fav.keyword) },
+                    modifier = Modifier
+                        .size(120.dp)
+                )
+            }
+        }
+
 
         // -----------------------------------------------------------
         // 📰 네이버 뉴스 리스트
         // -----------------------------------------------------------
 
         Text(
-            text = naverNewsText,
+            text = "네이버 뉴스",
             fontSize = 16.sp,
             color = Color(0xFF3B566E),
             fontWeight = FontWeight.SemiBold,
@@ -155,7 +158,6 @@ fun NewsScreen(
             items(pagingItems.itemCount) { index ->
                 val item = pagingItems[index] ?: return@items
 
-                // 🔥 Domain model 기준 매핑
                 val cleanTitle = item.title
                     .replace("<b>", "")
                     .replace("</b>", "")
@@ -166,7 +168,8 @@ fun NewsScreen(
                 NewsCard(
                     title = cleanTitle,
                     info = item.pubDate.take(16),
-                    imageUrl = item.image ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
+                    imageUrl = item.image
+                        ?: "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
                     onClick = {
                         onOpenDetail(Uri.encode(item.link))
                     }
@@ -182,9 +185,7 @@ fun NewsScreen(
                             .fillMaxWidth()
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ) { CircularProgressIndicator() }
                 }
             }
         }
@@ -196,66 +197,49 @@ fun NewsScreen(
 
 @Composable
 fun FavoriteBannerCard(
-    title: String,
-    favorites: List<com.domain.model.Favorite>,
-    onClickFavorite: (String) -> Unit,
+    keyword: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .height(150.dp)
             .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
     ) {
+
         Image(
             painter = painterResource(id = R.drawable.photo),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to Color.Transparent,
-                        1f to Color.Black.copy(alpha = 0.6f)
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.75f)
+                        )
                     )
                 )
         )
-        Column(
+
+        Text(
+            text = keyword,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
-        ) {
-
-            Text(
-                text = title,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(6.dp))
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(favorites) { fav ->
-                    AssistChip(
-                        onClick = { onClickFavorite(fav.keyword) },
-                        label = {
-                            Text(
-                                text = fav.keyword,
-                                color = Color.White,
-                                fontSize = 12.sp
-                            )
-                        }
-                    )
-                }
-            }
-        }
+                .padding(10.dp)
+        )
     }
 }
+
+
 
 @Composable
 fun NewsCard(
