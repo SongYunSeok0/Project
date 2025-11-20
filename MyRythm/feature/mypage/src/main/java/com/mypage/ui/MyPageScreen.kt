@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,19 +19,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.common.design.R
+import com.mypage.viewmodel.MyPageViewModel
 
 @Composable
 fun MyPageScreen(
-    modifier: Modifier = Modifier,
+    viewModel: MyPageViewModel = hiltViewModel(),   // 🔥 viewModel 추가
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onFaqClick: () -> Unit = {},
     onMediClick: () -> Unit = {}
 ) {
+    // 🔥 프로필 상태 Flow → Compose State
+    val profile = viewModel.profile.collectAsState().value
+
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
     ) {
@@ -41,16 +47,19 @@ fun MyPageScreen(
                 modifier = Modifier
                     .size(90.dp)
                     .clip(CircleShape)
-                    .background(Color(0xffffb7c5))
-                    .shadow(4.dp, CircleShape),
+                    .background(Color(0xffffb7c5)),
                 contentAlignment = Alignment.Center
-            ) { Text(text = "😊", fontSize = 48.sp) }
+            ) {
+                Text(text = "😊", fontSize = 48.sp)
+            }
 
             Spacer(Modifier.width(16.dp))
 
             Column {
-                Text(text = "안녕하세요", style = TextStyle(fontSize = 14.sp), color = Color(0xff221f1f))
-                Text(text = "김이름님", style = TextStyle(fontSize = 16.sp), color = Color(0xff221f1f))
+                Text(text = "안녕하세요")
+
+                // 🔥 profile.username 표시
+                Text(text = "${profile?.username ?: ""}님")
             }
         }
 
@@ -58,8 +67,10 @@ fun MyPageScreen(
 
         Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
             InfoCard("Heart rate", "215bpm", R.drawable.heart)
-            InfoCard("Height", "170cm", R.drawable.height)
-            InfoCard("Weight", "103lbs", R.drawable.weight)
+
+            InfoCard("Height", "${profile?.height ?: "-"}cm", R.drawable.height)
+
+            InfoCard("Weight", "${profile?.weight ?: "-"}kg", R.drawable.weight)
         }
 
         Spacer(Modifier.height(32.dp))
@@ -73,6 +84,7 @@ fun MyPageScreen(
         }
     }
 }
+
 
 @Composable
 fun InfoCard(

@@ -102,6 +102,31 @@ class MeView(APIView):
             status=status.HTTP_200_OK,
         )
 
+    def patch(self, request):
+        user = request.user
+        allowed_fields = {
+            "username",
+            "phone",
+            "birth_date",
+            "gender",
+            "height",
+            "weight",
+            "preferences",
+            "prot_phone",
+            "email",
+        }
+        data = request.data
+        updated = False
+        for field, value in data.items():
+            if field in allowed_fields:
+                setattr(user, field, value)
+                updated = True
+        if updated:
+            user.save()
+            return Response({"detail": "updated"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": "업데이트 가능한 필드 없음"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 # ✅ FCM 토큰 등록용 API
 class RegisterFcmTokenView(APIView):
