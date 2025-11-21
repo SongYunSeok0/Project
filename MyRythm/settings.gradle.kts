@@ -23,8 +23,6 @@ dependencyResolutionManagement {
 
 include(
     ":app",
-    ":common",
-    ":common:design",
     ":feature:auth",
     ":feature:main",
     ":feature:map",
@@ -36,3 +34,4 @@ include(
 include(":data")
 include(":domain")
 include(":shared")
+include(":feature:healthinsight")

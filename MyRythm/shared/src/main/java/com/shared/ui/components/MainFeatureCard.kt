@@ -46,7 +46,8 @@ fun MainFeatureCard(
     bg: Color,
     icon: Int,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
 ) {
     Column(
         modifier = modifier
@@ -63,6 +64,15 @@ fun MainFeatureCard(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
+
+        if (subtitle != null) {
+            androidx.compose.foundation.layout.Spacer(Modifier.size(4.dp))
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 

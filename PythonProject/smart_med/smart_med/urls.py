@@ -5,14 +5,15 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from medications.views import (PlanListView
 )
 
-from health.views import HeartRateViewSet, StepCountViewSet
+from health.views import HeartRateViewSet, StepCountViewSet, DailyStepViewSet
 
 
 router = DefaultRouter()
 
 # ✅ health (심박수 / 걸음수)
-router.register(r'health/heart', HeartRateViewSet, basename='heart')
-router.register(r'health/steps', StepCountViewSet, basename='steps')
+# router.register(r'health/heart', HeartRateViewSet, basename='heart')
+# router.register(r'stepcount', StepCountViewSet, basename='stepcount')
+# router.register(r'dailystep', DailyStepViewSet, basename='dailystep')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,4 +24,5 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/plan/', PlanListView.as_view(), name='plan_list'),
     path('api/rag/', include('rag.urls')),
+    path('api/health/', include('health.urls')),
 ]
