@@ -28,7 +28,7 @@ class PlanRepositoryImpl @Inject constructor(
     // 🔥 로컬 DB → 도메인
     // ----------------------------
     override fun observePlans(userId: Long): Flow<List<Plan>> =
-        dao.observePlans(userId).map { list ->
+        dao.observePlans().map { list ->
             list.map { it.toDomainLocal() }
         }
 
@@ -37,12 +37,11 @@ class PlanRepositoryImpl @Inject constructor(
     // ----------------------------
     override suspend fun refresh(userId: Long) = withContext(Dispatchers.IO) {
         val remote = api.getPlans()
-        dao.deleteAllByUser(userId)
+        dao.deleteAllByUser()
         remote.forEach { resp ->
             dao.insert(resp.toDomain().toEntity())
         }
     }
-
 
     // ----------------------------
     // 🔥 서버로 새로운 Plan 생성

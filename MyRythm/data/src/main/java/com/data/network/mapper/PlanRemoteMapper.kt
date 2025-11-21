@@ -11,8 +11,8 @@ import com.domain.model.Plan
 fun PlanResponse.toDomain(): Plan =
     Plan(
         id = id,
-        userId = userId,
-        prescriptionId = prescriptionId,
+//        userId = userId,
+        regihistoryId = regihistoryId,
         medName = medName,
         takenAt = takenAt,
         mealTime = mealTime,
@@ -24,7 +24,7 @@ fun PlanResponse.toDomain(): Plan =
 // Domain → Network (Update)
 // ----------------------
 fun Plan.toUpdateRequest(): PlanUpdateRequest = PlanUpdateRequest(
-    prescriptionId = prescriptionId,
+    regihistoryId = regihistoryId,
     medName = medName,
     takenAt = takenAt,
     mealTime = mealTime,
