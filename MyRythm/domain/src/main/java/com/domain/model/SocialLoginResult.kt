@@ -16,4 +16,3 @@ sealed class SocialLoginResult {
         val message: String?
     ) : SocialLoginResult()
 }
-

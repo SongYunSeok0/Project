@@ -43,6 +43,7 @@ fun EditScreen(
     //문자열 리소스화
     val editprofilephoto = stringResource(R.string.editprofilephoto)
     val editText = stringResource(R.string.edit)
+    val emailText = stringResource(R.string.email)
     val nameText = stringResource(R.string.name)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
@@ -86,7 +87,7 @@ fun EditScreen(
             EditableField(heightText, height) { height = it }
             EditableField(weightText, weight) { weight = it }
             EditableField(ageText, age) { age = it }
-            EditableField("이메일", email) { email = it }
+            EditableField(emailText, email) { email = it }
             EditableField(phoneNumberPlaceholderText, phone) { phone = it }
             EditableField("보호자 휴대폰 번호(01012345678)", prot_phone) { prot_phone = it }
 
