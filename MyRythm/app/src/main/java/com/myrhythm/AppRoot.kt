@@ -23,8 +23,8 @@ import com.map.navigation.*
 import com.mypage.navigation.*
 import com.news.navigation.*
 import com.scheduler.navigation.*
-import com.core.auth.JwtUtils
-import com.core.di.CoreEntryPoint
+import com.data.core.auth.JwtUtils
+import com.data.core.di.CoreEntryPoint
 import com.myrhythm.navigation.mainNavGraph
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest

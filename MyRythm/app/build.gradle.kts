@@ -70,7 +70,6 @@ dependencies {
     // domain & data modules
     implementation(project(":domain"))
     implementation(project(":data"))
-    implementation(project(":core"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)

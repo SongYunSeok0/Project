@@ -53,7 +53,6 @@ dependencies {
     implementation(project(":shared"))
     implementation(project(":domain"))
     implementation(project(":data"))
-    implementation(project(":core"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.kotlinx.serialization.json)

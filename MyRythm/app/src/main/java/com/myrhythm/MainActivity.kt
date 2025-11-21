@@ -8,9 +8,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.domain.usecase.push.PushManager
 import com.google.firebase.messaging.FirebaseMessaging
-import com.myrhythm.push.FcmTokenStore
+import com.data.core.push.FcmTokenStore
+import com.data.core.push.PushManager
 import com.myrhythm.ui.theme.MyRhythmTheme
 import com.myrythm.AppRoot
 import dagger.hilt.android.AndroidEntryPoint

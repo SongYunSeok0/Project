@@ -1,7 +1,7 @@
 package com.data.repository
 
 import android.util.Log
-import com.core.auth.TokenStore
+import com.data.core.auth.TokenStore
 import com.data.mapper.auth.asAuthTokens
 import com.data.mapper.auth.toDomainTokens
 import com.data.mapper.auth.toDto
