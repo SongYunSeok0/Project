@@ -31,9 +31,26 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login",
         )
 
-
+# 1121 12:21 수정
 class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        min_length=8,
+        error_messages={
+            "required": "비밀번호는 필수입니다.",
+            "blank": "비밀번호는 필수입니다."
+        }
+    )
+    email = serializers.EmailField(
+        required=True,
+        error_messages={
+            "required": "이메일은 필수입니다.",
+            "blank": "이메일은 필수입니다."
+            # "invalid": "유효한 이메일 형식이 아닙니다."
+        }
+    )
+
 
     class Meta:
         model = User
