@@ -25,7 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.domain.model.HeartRateHistory   // 🔥 도메인 모델 위치에 맞게 수정
+import com.domain.model.HeartRateHistory
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import com.shared.R
 
 @Composable
@@ -212,39 +214,97 @@ private fun HeartHistoryList(
         return
     }
 
-    LazyColumn(
-        modifier = modifier
-            .heightIn(max = 280.dp)
-            .padding(top = 8.dp)
+    // 바깥을 살짝 카드처럼
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFF9FAFB),
+        tonalElevation = 1.dp,
+        shadowElevation = 1.dp
     ) {
-        items(history) { item ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${item.bpm} bpm",
-                    fontSize = 16.sp,
-                    color = Color(0xff101828)
-                )
-                Text(
-                    text = item.collectedAt,
-                    fontSize = 12.sp,
-                    color = Color(0xff667085),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .heightIn(max = 280.dp)
+        ) {
+            items(history) { item ->
+                val (statusText, statusColor) = bpmStatus(item.bpm)
+                val timeText = formatCollectedAt(item.collectedAt)
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 왼쪽: bpm + 상태 뱃지
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "${item.bpm} bpm",
+                            fontSize = 16.sp,
+                            color = Color(0xFF111827)
+                        )
+
+                        // 상태 뱃지
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(statusColor.copy(alpha = 0.12f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = statusText,
+                                fontSize = 11.sp,
+                                color = statusColor
+                            )
+                        }
+                    }
+
+                    // 오른쪽: 시간
+                    Text(
+                        text = timeText,
+                        fontSize = 12.sp,
+                        color = Color(0xFF6B7280),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Divider(
+                    color = Color(0xFFE5E7EB),
+                    thickness = 0.7.dp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
-            Divider(
-                color = Color(0xffe4e7ec),
-                thickness = 1.dp
-            )
         }
     }
 }
+
+
+//"2025-11-21T23:30:00+09:00" → "11/21 23:30" 같은 형식으로 변환
+private fun formatCollectedAt(raw: String): String {
+    return runCatching {
+        val odt = OffsetDateTime.parse(raw)
+        val formatter = DateTimeFormatter.ofPattern("MM/dd HH:mm")
+        odt.format(formatter)
+    }.getOrElse {
+        raw // 파싱 실패하면 그냥 원본 보여주기
+    }
+}
+
+//bpm에 따라 상태/색상 결정
+private fun bpmStatus(bpm: Int): Pair<String, Color> {
+    return when {
+        bpm < 50 -> "낮음" to Color(0xFF3B82F6)   // 파란색 느낌
+        bpm <= 90 -> "정상" to Color(0xFF16A34A) // 초록
+        else -> "주의" to Color(0xFFEF4444)       // 빨강
+    }
+}
+
 
 @Preview(widthDp = 392, heightDp = 1271)
 @Composable
