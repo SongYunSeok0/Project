@@ -1,5 +1,6 @@
 package com.news
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -19,9 +20,11 @@ import javax.inject.Inject
 @HiltViewModel
 class NewsViewModel @Inject constructor(
     private val getNewsUseCase: GetNewsUseCase,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    private val userId: String = savedStateHandle["userId"] ?: ""
     //  뉴스 검색
     private val _selectedCategory = MutableStateFlow("건강")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
@@ -58,7 +61,8 @@ class NewsViewModel @Inject constructor(
             val favorite = Favorite(
                 keyword = keyword,
                 timestamp = System.currentTimeMillis(),
-                lastUsed = System.currentTimeMillis()
+                lastUsed = System.currentTimeMillis(),
+                userId = userId
             )
             favoriteRepository.insertFavorite(favorite)
         }
@@ -66,7 +70,7 @@ class NewsViewModel @Inject constructor(
 
     fun removeFavorite(keyword: String) {
         viewModelScope.launch {
-            favoriteRepository.deleteFavorite(keyword)
+            favoriteRepository.deleteFavorite(keyword,userId)
         }
     }
 

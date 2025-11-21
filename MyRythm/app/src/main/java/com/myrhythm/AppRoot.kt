@@ -128,7 +128,7 @@ fun AppRoot() {
                 authNavGraph(nav)
                 mainNavGraph(nav, userId)
                 mapNavGraph()
-                newsNavGraph(nav)
+                newsNavGraph(nav,userId)
                 schedulerNavGraph(nav, userId) // userId 전달
                 // 뷰모델을 NavGraph 내부에서 쓰지 않음. 람다만 전달.
                 mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
