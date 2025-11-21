@@ -7,6 +7,7 @@ import com.data.network.api.NewsApi
 import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
 import com.data.network.api.ChatbotApi
+import com.data.network.api.HealthApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -22,7 +23,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
-import com.data.network.api.HealthApi
+
 
 
 // ---- Qualifiers ----

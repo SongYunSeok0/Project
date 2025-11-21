@@ -13,7 +13,10 @@ class HeartRateViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # 로그인한 사용자 자신의 데이터만 조회
-        return HeartRate.objects.filter(user=self.request.user)
+        return HeartRate.objects\
+        .filter(user=self.request.user)\
+        .order_by("-collected_at", "-id")
+    
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

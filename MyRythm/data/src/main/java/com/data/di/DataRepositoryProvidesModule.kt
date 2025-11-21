@@ -39,9 +39,5 @@ object DataRepositoryProvidesModule {
     fun provideInquiryRepository(dao: InquiryDao): InquiryRepository =
         InquiryRepositoryImpl(dao)
 
-    @Provides
-    fun provideHealthRepository(
-        api: HealthApi
-    ): HealthRepository = HealthRepositoryImpl(api)
 
 }

@@ -4,12 +4,14 @@ package com.data.di
 import com.data.repository.AuthRepositoryImpl
 import com.data.repository.ChatbotRepositoryImpl
 import com.data.repository.FavoriteRepositoryImpl
+import com.data.repository.HealthRepositoryImpl
 import com.data.repository.PlanRepositoryImpl
 import com.data.repository.ProfileRepositoryImpl
 import com.data.repository.UserRepositoryImpl
 import com.domain.repository.AuthRepository
 import com.domain.repository.ChatbotRepository
 import com.domain.repository.FavoriteRepository
+import com.domain.repository.HealthRepository
 import com.domain.repository.PlanRepository
 import com.domain.repository.ProfileRepository
 import com.domain.repository.UserRepository
@@ -42,4 +44,7 @@ abstract class DataRepositoryBindsModule {
     @Binds
     @Singleton
     abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
+
+    @Binds
+    abstract fun bindHealthRepository(impl: HealthRepositoryImpl): HealthRepository
 }

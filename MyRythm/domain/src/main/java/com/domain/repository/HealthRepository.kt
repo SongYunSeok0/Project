@@ -1,6 +1,11 @@
-// domain/repository/HealthRepository.kt
+// domain/src/main/java/com/domain/repository/HealthRepository.kt
 package com.domain.repository
 
+import com.domain.model.HeartRateHistory
+
 interface HealthRepository {
-    suspend fun getLatestHeartRate(): Int?   // bpm만 쓰면 되니까 Int?로 리턴
+
+    suspend fun getLatestHeartRate(): Int?
+
+    suspend fun getHeartHistory(): List<HeartRateHistory>
 }

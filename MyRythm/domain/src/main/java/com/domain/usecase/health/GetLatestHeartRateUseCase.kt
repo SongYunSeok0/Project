@@ -1,4 +1,4 @@
-package com.domain.usecase
+package com.domain.usecase.health
 
 import com.domain.repository.HealthRepository
 import javax.inject.Inject

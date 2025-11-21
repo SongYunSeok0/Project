@@ -2,11 +2,14 @@ package com.myrhythm.di
 
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
+import com.domain.repository.HealthRepository
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.user.SignupUseCase
+import com.domain.usecase.health.GetHeartHistoryUseCase
+import com.domain.usecase.health.GetLatestHeartRateUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -44,4 +47,16 @@ object UseCaseModule {
     fun provideRegisterFcmTokenUseCase(
         userRepository: UserRepository
     ) = RegisterFcmTokenUseCase(userRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetLatestHeartRateUseCase(
+        healthRepository: HealthRepository
+    ) = GetLatestHeartRateUseCase(healthRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetHeartHistoryUseCase(
+        healthRepository: HealthRepository
+    ) = GetHeartHistoryUseCase(healthRepository)
 }
