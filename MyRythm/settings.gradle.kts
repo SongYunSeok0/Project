@@ -23,8 +23,6 @@ dependencyResolutionManagement {
 
 include(
     ":app",
-    ":common",
-    ":common:design",
     ":feature:auth",
     ":feature:main",
     ":feature:map",
