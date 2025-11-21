@@ -6,6 +6,7 @@ import com.domain.repository.InquiryRepository
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.model.UserProfile           // 🔥 프로필 모델
 import com.domain.repository.ProfileRepository
+import com.domain.usecase.GetLatestHeartRateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -20,7 +21,8 @@ import kotlinx.coroutines.launch
 class MyPageViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val inquiryRepository: InquiryRepository,
-    private val userRepository: ProfileRepository           // 🔥 프로필 호출하는 repository
+    private val userRepository: ProfileRepository,
+    private val getLatestHeartRateUseCase: GetLatestHeartRateUseCase,
 ) : ViewModel() {
 
     // -------------------------------
@@ -30,7 +32,7 @@ class MyPageViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     // -------------------------------
-    //  🔥 프로필 상태
+    //  프로필 상태
     // -------------------------------
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> = _profile
@@ -42,7 +44,7 @@ class MyPageViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // -------------------------------
-    //  🔥 프로필 불러오기
+    //  프로필 불러오기
     // -------------------------------
     fun loadProfile() = viewModelScope.launch {
         runCatching {
@@ -78,10 +80,27 @@ class MyPageViewModel @Inject constructor(
         }
     }
 
+    private val _latestHeartRate = MutableStateFlow<Int?>(null)
+    val latestHeartRate: StateFlow<Int?> = _latestHeartRate
+
+    fun loadLatestHeartRate() {
+        viewModelScope.launch {
+            runCatching {
+                getLatestHeartRateUseCase()
+            }.onSuccess { bpm ->
+                _latestHeartRate.value = bpm
+            }.onFailure {
+
+            }
+        }
+    }
+
+
     // -------------------------------
-    // 🔥 화면 열자마자 프로필 자동 로딩
+    // 화면 열자마자 프로필 자동 로딩
     // -------------------------------
     init {
         loadProfile()
+        loadLatestHeartRate()
     }
 }

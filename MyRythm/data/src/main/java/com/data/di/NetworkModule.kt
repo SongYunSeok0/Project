@@ -22,6 +22,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
+import com.data.network.api.HealthApi
 
 
 // ---- Qualifiers ----
@@ -156,5 +157,11 @@ object NetworkModule {
     @Singleton
     fun provideNewsApi(@NewsRetrofit retrofit: Retrofit): NewsApi =
         retrofit.create(NewsApi::class.java)
+
+    //건강
+    @Provides
+    fun provideHealthApi(@UserRetrofit retrofit: Retrofit): HealthApi =
+        retrofit.create(HealthApi::class.java)
+
 
 }

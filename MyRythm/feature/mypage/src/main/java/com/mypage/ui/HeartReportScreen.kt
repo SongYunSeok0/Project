@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -18,10 +19,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import com.shared.R
 
 @Composable
-fun HeartReportScreen(userId: String?) {
+fun HeartReportScreen(
+    userId: String?,
+    viewModel: com.mypage.viewmodel.MyPageViewModel = hiltViewModel()
+) {
     val heartDescription = stringResource(R.string.heart_description)
     val currentHeartRateText = stringResource(R.string.currentheartrate)
     val rateDescription = stringResource(R.string.rate_description)
@@ -32,14 +39,12 @@ fun HeartReportScreen(userId: String?) {
     val arrowDescription = stringResource(R.string.arrow_description)
     val measureHeartRateText = stringResource(R.string.measureheartrate)
     val recentMeasurementHeartRateText = stringResource(R.string.recent_measurement_heartrate)
+    val latestBpm by viewModel.latestHeartRate.collectAsState()
 
-    Scaffold { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+    LaunchedEffect(Unit) {
+        viewModel.loadLatestHeartRate()
+    }
 
-        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,7 +103,7 @@ fun HeartReportScreen(userId: String?) {
                             )
 
                             Text(
-                                text = "112",   // 하드코딩 심박수 데이터, 추후 실데이터 변수명 변경 필요
+                                text = latestBpm?.toString() ?: "--",   // 하드코딩 심박수 데이터, 추후 실데이터 변수명 변경 필요
                                 color = Color(0xff101828),
                                 fontSize = 60.sp
                             )
@@ -161,8 +166,8 @@ fun HeartReportScreen(userId: String?) {
                 // 여기에 기록 리스트 추가 가능
             }
         }
-    }
-}
+
+
 
 
 
