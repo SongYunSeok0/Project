@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlanDao {
-    @Query("SELECT * FROM 'plan' WHERE userId = :userId")
-    fun observePlans(userId: Long): Flow<List<PlanEntity>>
+    @Query("SELECT * FROM 'plan'")
+    fun observePlans(): Flow<List<PlanEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: PlanEntity)
@@ -18,11 +18,11 @@ interface PlanDao {
     @Query("DELETE FROM 'plan' WHERE id = :planId")
     suspend fun deleteById(planId: Long)
 
-    @Query("DELETE FROM 'plan' WHERE userId = :userId")
-    suspend fun deleteAllByUser(userId: Long)
+    @Query("DELETE FROM 'plan'")
+    suspend fun deleteAllByUser()
 
-    @Query("SELECT * FROM 'plan' WHERE userId = :userId")
-    suspend fun getAllOnce(userId: Long): List<PlanEntity>
+    @Query("SELECT * FROM 'plan'")
+    suspend fun getAllOnce(): List<PlanEntity>
 }
 
 
