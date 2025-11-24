@@ -14,4 +14,6 @@ interface AuthRepository {
     suspend fun signup(request: SignupRequest): Boolean
     suspend fun sendEmailCode(email: String): Boolean
     suspend fun verifyEmailCode(email: String, code: String): Boolean
+
+    suspend fun withdrawal(): Boolean
 }

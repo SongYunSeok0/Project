@@ -1,5 +1,6 @@
 package com.mypage.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,11 +10,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -21,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mypage.viewmodel.MyPageEvent
 import com.shared.R
 import com.mypage.viewmodel.MyPageViewModel
 
@@ -31,10 +35,24 @@ fun MyPageScreen(
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onFaqClick: () -> Unit = {},
-    onMediClick: () -> Unit = {}
+    onMediClick: () -> Unit = {},
+    onWithdrawalSuccess: () -> Unit = {}
 ) {
     // 🔥 프로필 상태 Flow → Compose State
     val profile = viewModel.profile.collectAsState().value
+
+    // ✅ [추가 2] 탈퇴 성공 감지 및 화면 이동 로직
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            if (event is MyPageEvent.WithdrawalSuccess) {
+                Toast.makeText(context, "회원 탈퇴가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                onWithdrawalSuccess() // -> 로그인 화면으로 이동!
+            } else if (event is MyPageEvent.WithdrawalFailed) {
+                Toast.makeText(context, "탈퇴 처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val bpmText = stringResource(R.string.bpm)
     val userText = stringResource(R.string.user)
@@ -93,6 +111,7 @@ fun MyPageScreen(
             MenuItem(medicationInsightText) { onMediClick }
             MenuItem(faqCategoryText, onFaqClick)
             MenuItem(logoutText, onLogoutClick)
+            MenuItem("회원 탈퇴") {viewModel.deleteAccount()}
         }
     }
 }
