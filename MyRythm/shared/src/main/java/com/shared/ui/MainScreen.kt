@@ -100,14 +100,16 @@ fun MainScreen(
                 bg = MaterialTheme.componentTheme.stepCard,
                 icon = stepIconResId,
                 onClick = onOpenSteps,
-                modifier = Modifier.weight(1f).height(140.dp)
+                modifier = Modifier.weight(1f).height(140.dp),
+                subtitle = "${todaySteps}걸음"
             )
             MainFeatureCard(
                 title = rateText,
                 bg = MaterialTheme.componentTheme.rateCard,
                 icon = rateIconResId,
                 onClick = onOpenHeart,
-                modifier = Modifier.weight(1f).height(140.dp)
+                modifier = Modifier.weight(1f).height(140.dp),
+
             )
         }
 

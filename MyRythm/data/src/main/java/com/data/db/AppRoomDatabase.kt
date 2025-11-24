@@ -26,7 +26,7 @@ import com.data.db.entity.UserEntity
         StepEntity::class,
         DailyStepEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {
