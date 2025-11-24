@@ -36,9 +36,7 @@ fun SignupScreen(
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = hiltViewModel(),
     onSignupComplete: () -> Unit = {},
-    onBackToLogin: () -> Unit = {},
-    socialId: String? = null,
-    provider: String? = null
+    onBackToLogin: () -> Unit = {}
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
@@ -403,7 +401,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 로그인으로 돌아가기 텍스트 링크
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,

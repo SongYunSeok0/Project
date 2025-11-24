@@ -7,16 +7,17 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.data.core.auth.TokenStore
 import com.data.core.push.PushManager
 import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
+import com.domain.repository.AuthRepository
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.auth.SocialLoginUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.user.SignupUseCase
-import com.domain.repository.AuthRepository   // ⭐ 추가 필요 (Email 인증용)
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -40,6 +41,7 @@ class AuthViewModel @Inject constructor(
     private val signupUseCase: SignupUseCase,
     private val socialLoginUseCase: SocialLoginUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
+    private val tokenStore: TokenStore,
     private val repo: AuthRepository     // ⭐ 이메일 인증/검증용 Repository 추가
 ) : ViewModel() {
 
@@ -83,7 +85,8 @@ class AuthViewModel @Inject constructor(
     val events: SharedFlow<String> = _events
 
     private fun emit(msg: String) = _events.tryEmit(msg)
-
+    //1124
+    fun emitInfo(msg: String) = emit(msg)
 
     private val _form = MutableStateFlow(FormState())
     val form: StateFlow<FormState> = _form
@@ -136,9 +139,7 @@ class AuthViewModel @Inject constructor(
             gender = f.gender,
             height = f.height,
             weight = f.weight,
-            password = f.password,
-            provider = null,
-            socialId = null
+            password = f.password
         )
 
         _state.update { it.copy(loading = true) }
@@ -447,34 +448,19 @@ class AuthViewModel @Inject constructor(
         onResult: (Boolean, String) -> Unit,
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
-        Log.e("AuthViewModel", "🔵 [0] ========== handleSocialLogin 시작 ==========")
-        Log.e("AuthViewModel", "🔵 [0] provider=$provider, socialId=$socialId")
-
         viewModelScope.launch {
-            Log.e("AuthViewModel", "🔵 [1] viewModelScope.launch 시작")
-
             try {
-                Log.e("AuthViewModel", "🔵 [2] socialLoginUseCase 호출")
                 val apiResult = socialLoginUseCase(
                     provider = provider,
                     socialId = socialId,
                     accessToken = accessToken,
                     idToken = idToken
                 )
-
-                Log.e("AuthViewModel", "🔵 [3] API 완료")
-                Log.e("AuthViewModel", "🔵 [4] apiResult 타입: ${apiResult.javaClass.simpleName}")
-
-                // ✅ Result unwrap
                 apiResult.onSuccess { result ->
-                    Log.e("AuthViewModel", "🔵 [5] Result.onSuccess - result 타입: ${result.javaClass.simpleName}")
-
                     withContext(Dispatchers.Main) {
                         when (result) {
                             is SocialLoginResult.Success -> {
-                                Log.e("AuthViewModel", "🔵 [6] Success 분기 진입")
-                                Log.e("AuthViewModel", "🔵 [7] 업데이트 전 state: ${_state.value}")
-
+                                // 기존 소셜로그인 회원 - 바로 로그인(메인홈 이동)
                                 _state.update {
                                     it.copy(
                                         isLoggedIn = true,
@@ -482,46 +468,47 @@ class AuthViewModel @Inject constructor(
                                         userId = socialId
                                     )
                                 }
-
-                                Log.e("AuthViewModel", "🔵 [8] 업데이트 후 state: ${_state.value}")
-
                                 PushManager.fcmToken?.let { token ->
                                     runCatching { registerFcmTokenUseCase(token) }
                                         .onFailure { emit("푸시 토큰 등록 실패") }
                                 }
-
-                                Log.e("AuthViewModel", "🔵 [9] onResult(true) 호출")
                                 onResult(true, "$provider 로그인 성공")
-                                Log.e("AuthViewModel", "🔵 [10] onResult(true) 호출 완료")
                             }
 
                             is SocialLoginResult.NeedAdditionalInfo -> {
-                                Log.e("AuthViewModel", "🔵 [6] NeedAdditionalInfo 분기")
-                                onNeedAdditionalInfo(socialId, provider)
+                                //onNeedAdditionalInfo(socialId, provider)
+                                // 신규 소셜로그인 회원 - 바로 로그인(메인홈 이동, 추가정보는 팝업->에딧스크린)
+                                _state.update {
+                                    it.copy(
+                                        isLoggedIn = true,
+                                        loading = false,
+                                        userId = socialId
+                                    )
+                                }
+                                PushManager.fcmToken?.let { token ->
+                                    runCatching { registerFcmTokenUseCase(token) }
+                                }
+                                onResult(true, "$provider 신규 회원 등록 성공")
                             }
 
                             is SocialLoginResult.Error -> {
-                                Log.e("AuthViewModel", "🔵 [6] Error 분기: ${result.message}")
                                 onResult(false, result.message ?: "서버 오류")
                             }
                         }
                     }
                 }.onFailure { e ->
-                    Log.e("AuthViewModel", "🔵 [5] Result.onFailure: ${e.message}")
                     withContext(Dispatchers.Main) {
                         onResult(false, parseError(e) ?: "네트워크 오류")
                     }
                 }
 
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "🔵 [3-ERROR] 예외 발생: ${e.message}")
                 withContext(Dispatchers.Main) {
                     onResult(false, parseError(e) ?: "네트워크 오류")
                 }
             }
         }
-
-
+    }
 
 
     // ⭐ [수정] 반환 타입을 String? -> String으로 변경
