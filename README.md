@@ -11,62 +11,66 @@
 
 ---
 
-전체 시스템 아키텍처
+<h2>🏗️ 전체 시스템 아키텍처</h2>
 
+<pre>
 [스마트 약통 (Arduino/ESP32 + HX711)]
-└─ LoRa / Wi-Fi
-↓
+ └─ LoRa / Wi-Fi
+      ↓
 [라즈베리파이 or IoT Gateway]
-├─ 무게 수집
-├─ EWMA 필터링
-└─ 서버 전송 (HTTP/MQTT)
-↓
+ ├─ 무게 수집
+ ├─ EWMA 필터링
+ └─ 서버 전송 (HTTP/MQTT)
+      ↓
 [Django Backend + PostgreSQL]
-├─ 무게 기반 복용 판별 AI
-├─ OTC-QA (RAG 임베딩 검색)
-├─ OCR 처방 파싱 → 스케줄 생성
-└─ FCM 알림 트리거
-↓
+ ├─ 무게 기반 복용 판별 AI
+ ├─ OTC-QA (RAG 임베딩 검색)
+ ├─ OCR 처방 파싱 → 스케줄 생성
+ └─ FCM 알림 트리거
+      ↓
 [Android 앱 (Kotlin + Compose)]
-├─ 복약 현황 / 스케줄 UI
-├─ OTC-QA 챗봇
-├─ 프로필 / FCM / 설정
-└─ 클라우드 동기화
+ ├─ 복약 현황 / 스케줄 UI
+ ├─ OTC-QA 챗봇
+ ├─ 프로필 / FCM / 설정
+ └─ 클라우드 동기화
+</pre>
 
-Android 멀티모듈 구조
 
+<h2>🧩 Android 멀티모듈 구조</h2>
+
+<pre>
 app/
-├─ presentation (NavHost)
-├─ di
-└─ remote (api)
+ ├─ presentation (NavHost)
+ ├─ di
+ └─ remote (api)
 
 feature/
-├─ main
-├─ map
-├─ news
-├─ scheduler (OCR 플로우)
-├─ camera
-└─ mypage (프로필 / FAQ / 문의)
+ ├─ main
+ ├─ map
+ ├─ news
+ ├─ scheduler (OCR 플로우)
+ ├─ camera
+ └─ mypage (프로필 / FAQ / 문의)
 
 domain/
-├─ model
-├─ repository
-└─ usecase
+ ├─ model
+ ├─ repository
+ └─ usecase
 
 data/
-├─ repository
-├─ retrofit dto
-├─ mapper
-└─ room (Inquiry 등)
+ ├─ repository
+ ├─ retrofit dto
+ ├─ mapper
+ └─ room (Inquiry 등)
 
 core/
-├─ auth (TokenStore)
-├─ push (FCM)
-└─ util
+ ├─ auth (TokenStore)
+ ├─ push (FCM)
+ └─ util
 
 common/design/
-└─ UI 컴포넌트 (TopBar / BottomBar)
-
+ └─ UI 컴포넌트 (TopBar / BottomBar)
+</pre>
 
 
 ---
