@@ -235,3 +235,10 @@ class SignupView(APIView):
             {"message": "회원가입 성공", "user_id": user.id},
             status=201
         )
+class WithdrawalView(APIView):
+    permission_classes = [IsAuthenticated] # 로그인한 사람만 가능
+
+    def delete(self, request):
+        user = request.user
+        user.delete() # DB에서 CASCADE로 연쇄 삭제됨
+        return Response({"message": "회원 탈퇴 완료"}, status=status.HTTP_200_OK)
