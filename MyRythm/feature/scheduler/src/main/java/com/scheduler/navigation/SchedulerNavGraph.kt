@@ -10,7 +10,7 @@ import com.scheduler.ui.CameraScreen
 import com.scheduler.ui.OcrScreen
 import com.scheduler.ui.RegiScreen
 import com.scheduler.ui.SchedulerScreen
-
+import com.shared.navigation.MainRoute
 
 
 fun NavGraphBuilder.schedulerNavGraph(
@@ -25,30 +25,20 @@ fun NavGraphBuilder.schedulerNavGraph(
         SchedulerScreen(userId = uid.toLong())
     }
 
-
-    // 🟢 수동 등록 화면
     composable<RegiRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<RegiRoute>()
+        val uid = route.userId
 
-        // 원본 값(디버깅용)
-        val rawId = route.userId
-
-        // 비어있으면 fallbackUserId("1")로 대체
-        val effectiveId = rawId.ifBlank { fallbackUserId }
-
-        val uidLong = effectiveId.toLongOrNull()
-        if (uidLong != null && uidLong > 0L) {
-            RegiScreen(
-                userId = uidLong,
-                regiHistoryId = route.regiHistoryId,
-                onCompleted = { nav.popBackStack() }
-            )
-        } else {
-            Log.e(
-                "SchedulerNavGraph",
-                "❌ RegiRoute userId 변환 실패: raw='$rawId', effective='$effectiveId'"
-            )
-        }
+        RegiScreen(
+            userId = uid.toLong(),
+            regiHistoryId = route.regiHistoryId,
+            onCompleted = {
+                nav.navigate(SchedulerRoute(uid)) {
+                    popUpTo(MainRoute(uid)) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+        )
     }
 
     // 🟢 OCR 화면

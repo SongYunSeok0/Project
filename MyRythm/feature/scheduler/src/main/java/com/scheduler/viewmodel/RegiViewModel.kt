@@ -10,6 +10,7 @@ import com.scheduler.ui.MedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,10 @@ class RegiViewModel @Inject constructor(
     private val repository: RegiRepository
 ) : ViewModel() {
 
+    // ---------------- 이벤트(등록 완료/실패) 송신용 ----------------
+    private val _events = MutableSharedFlow<String>()
+    val events = _events
+
     data class UiState(
         val loading: Boolean = false,
         val plans: List<Plan> = emptyList(),
@@ -38,10 +43,10 @@ class RegiViewModel @Inject constructor(
     val itemsByDate: StateFlow<Map<LocalDate, List<MedItem>>> = _itemsByDate.asStateFlow()
 
     // ---------------- Plan 목록 조회 ----------------
-
     fun loadPlans(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.observeAllPlans(userId)
+                .catch { e -> _uiState.update { it.copy(error = e.message) } }
                 .collect { list ->
                     _uiState.update { it.copy(plans = list) }
                     _itemsByDate.value = makeItemsByDate(list)
@@ -49,14 +54,12 @@ class RegiViewModel @Inject constructor(
         }
     }
 
-    // ---------------- RegiHistory + Plans 생성 한 번에 ----------------
-
+    // ---------------- RegiHistory + Plans 생성 ----------------
     fun createRegiAndPlans(
         regiType: String,
         label: String?,
         issuedDate: String?,
-        plans: List<Plan>,
-        onDone: () -> Unit
+        plans: List<Plan>
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -68,24 +71,25 @@ class RegiViewModel @Inject constructor(
                     label = label,
                     issuedDate = issuedDate
                 )
-                Log.d("RegiViewModel", "✅ RegiHistory 생성 완료: id=$regiId")
+                Log.d("RegiViewModel", "RegiHistory 생성 완료: id=$regiId")
 
-                // 2) 해당 RegiHistory 밑으로 Plan들 생성
+                // 2) Plan 생성
                 repository.createPlans(regiId, plans)
-                Log.d("RegiViewModel", "✅ Plans ${plans.size}개 생성 완료 (regiId=$regiId)")
+                Log.d("RegiViewModel", "Plans ${plans.size}개 생성 완료")
 
-                onDone()
+                // 🔥 성공 이벤트
+                _events.emit("등록 완료")
+
             } catch (e: Exception) {
-                Log.e("RegiViewModel", "❌ createRegiAndPlans 실패", e)
-                _uiState.update { it.copy(error = e.message) }
+                Log.e("RegiViewModel", "createRegiAndPlans 실패", e)
+                _events.emit("등록 실패")
             } finally {
                 _uiState.update { it.copy(loading = false) }
             }
         }
     }
 
-    // ---------------- 날짜별 UI 변환 ----------------
-
+    // ---------------- 날짜별 MedItem 변환 ----------------
     private fun makeItemsByDate(plans: List<Plan>): Map<LocalDate, List<MedItem>> {
         val zone = ZoneId.systemDefault()
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
