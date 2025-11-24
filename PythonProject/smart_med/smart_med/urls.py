@@ -5,15 +5,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from medications.views import (PlanListView
 )
 
-from health.views import HeartRateViewSet, StepCountViewSet, DailyStepViewSet
-
 
 router = DefaultRouter()
-
-# ✅ health (심박수 / 걸음수)
-# router.register(r'health/heart', HeartRateViewSet, basename='heart')
-# router.register(r'stepcount', StepCountViewSet, basename='stepcount')
-# router.register(r'dailystep', DailyStepViewSet, basename='dailystep')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

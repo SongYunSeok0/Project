@@ -1,10 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import HeartRateViewSet, StepCountViewSet, DailyStepViewSet
+from .views import HeartRateViewSet, DailyStepViewSet
 
 router = DefaultRouter()
 router.register(r'heart', HeartRateViewSet)
-router.register(r'stepcount', StepCountViewSet)
 router.register(r'dailystep', DailyStepViewSet)
 
 urlpatterns = [
