@@ -32,7 +32,6 @@ class RegiHistory(models.Model):
         null=True,
         verbose_name="병명"
     )
-
     # 발행 날짜
     issued_date = models.CharField(
         max_length=20,
@@ -40,9 +39,8 @@ class RegiHistory(models.Model):
         null=True,
         verbose_name="발행 날짜"
     )
-
     class Meta:
-        db_table = "regiHistory"
+        db_table = "regihistory"
         verbose_name = "등록 이력"
         verbose_name_plural = "등록 이력 목록"
 
