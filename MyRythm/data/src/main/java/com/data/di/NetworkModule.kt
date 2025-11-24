@@ -23,7 +23,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
-
+import com.data.network.api.StepApi
 
 
 // ---- Qualifiers ----
@@ -165,4 +165,8 @@ object NetworkModule {
         retrofit.create(HealthApi::class.java)
 
 
+    @Provides
+    @Singleton
+    fun provideStepApi(@UserRetrofit retrofit: Retrofit): StepApi =
+        retrofit.create(StepApi::class.java)
 }

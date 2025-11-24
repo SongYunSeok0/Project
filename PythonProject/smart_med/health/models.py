@@ -45,3 +45,25 @@ class StepCount(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.steps} steps ({self.collected_at:%Y-%m-%d %H:%M:%S})"
+
+class DailyStep(models.Model):
+    """하루 총 걸음 수 데이터"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="daily_steps",
+        verbose_name="사용자"
+    )
+    date = models.DateField("날짜")
+    steps = models.PositiveIntegerField("하루 총 걸음 수")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="서버 저장 시각")
+
+    class Meta:
+        db_table = "health_dailystep"
+        ordering = ["-date"]
+        verbose_name = "일일 걸음 수 데이터"
+        verbose_name_plural = "일일 걸음 수 데이터"
+        unique_together = ("user", "date")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}: {self.steps} steps"

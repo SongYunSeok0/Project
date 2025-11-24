@@ -6,8 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import com.google.firebase.messaging.FirebaseMessaging
 import com.data.core.push.FcmTokenStore
 import com.data.core.push.PushManager
@@ -17,19 +15,60 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     private val tag = "MainActivity"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        initFcmToken()
-        askNotificationPermission()
-        setContent { AppRoot() }
 
+        // FCM 토큰 초기화
+        initFcmToken()
+
+        // 알림 권한 요청
+        askNotificationPermission()
+
+        // 걸음수 센서 권한 요청
+        askActivityRecognitionPermission()
+
+        // Compose 앱 시작
+        setContent {
+            MyRhythmTheme {
+                AppRoot()
+            }
+        }
     }
 
+    /**
+     * ACTIVITY_RECOGNITION 권한 요청
+     */
+    private fun askActivityRecognitionPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val perm = android.Manifest.permission.ACTIVITY_RECOGNITION
+            if (checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(perm), 2001)
+            }
+        }
+    }
+
+    /**
+     * 알림 권한 요청 (Android 13 이상)
+     */
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val perm = android.Manifest.permission.POST_NOTIFICATIONS
+            if (checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(perm), 1001)
+            }
+        }
+    }
+
+    /**
+     * FCM Token 초기화
+     */
     private fun initFcmToken() {
         val store = FcmTokenStore(this)
 
-        // 1) 로컬에 저장된 토큰 먼저 확인
+        // 로컬에 저장된 토큰 우선 사용
         val localToken = store.getToken()
         if (localToken != null) {
             Log.i(tag, "FCM local token = $localToken")
@@ -37,7 +76,7 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        //토큰없을경우 Firebase에서 가져오기
+        // Firebase에서 신규 토큰 발급
         FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task ->
                 if (!task.isSuccessful) {
@@ -48,28 +87,8 @@ class MainActivity : ComponentActivity() {
                 val token = task.result
                 Log.i(tag, "FCM firebase token = $token")
 
-                // 메모리 + SharedPreferences 모두 저장
                 PushManager.fcmToken = token
                 store.saveToken(token)
             }
     }
-    private fun askNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val perm = android.Manifest.permission.POST_NOTIFICATIONS
-            if (checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(perm), 1001)
-            }
-        }
-    }
 }
-
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewApp() {
-    MyRhythmTheme { AppRoot() }
-}
-
-
