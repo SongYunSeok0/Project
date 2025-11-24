@@ -22,6 +22,7 @@ import com.shared.R
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shared.ui.theme.componentTheme
 
 @Composable
@@ -32,7 +33,7 @@ fun MainScreen(
     onOpenHeart:     () -> Unit = {},
     onOpenMap:       () -> Unit = {},
     onOpenNews:      () -> Unit = {},
-    onFabCamera:     () -> Unit = {} // 현재 화면에서는 미사용
+    onFabCamera:     () -> Unit = {}, // 현재 화면에서는 미사용
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -52,6 +53,7 @@ fun MainScreen(
     val healthinsightText = stringResource(R.string.healthinsight)
     val remainderMessage = stringResource(R.string.main_message_remainder)
     val healthinsightMessage = stringResource(R.string.main_message_healthinsight)
+
 
     Column(
         modifier = Modifier

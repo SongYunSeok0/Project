@@ -14,32 +14,24 @@ fun NavGraphBuilder.mypageNavGraph(
     onLogoutClick: () -> Unit
 ) {
     composable<MyPageRoute> { backStackEntry ->
-
-        // MyPageRoute 에 userId가 들어옴
-        val args = backStackEntry.toRoute<MyPageRoute>()
-        val uid = args.userId ?: ""
-
         MyPageScreen(
-            onEditClick = { nav.navigate(EditProfileRoute(uid)) },
-            onHeartClick = { nav.navigate(HeartReportRoute(uid)) },
-            onFaqClick   = { nav.navigate(FAQRoute(uid)) },
+            onEditClick = { nav.navigate(EditProfileRoute) },
+            onHeartClick = { nav.navigate(HeartReportRoute) },
+            onFaqClick   = { nav.navigate(FAQRoute) },
             onLogoutClick = onLogoutClick
         )
     }
 
     composable<EditProfileRoute> { backStackEntry ->
-        val args = backStackEntry.toRoute<EditProfileRoute>()
         EditScreen(onDone = { nav.navigateUp() })
     }
 
     composable<HeartReportRoute> { backStackEntry ->
-        val args = backStackEntry.toRoute<HeartReportRoute>()
-        HeartReportScreen(userId = args.userId)
+        HeartReportScreen()
     }
 
     composable<FAQRoute> { backStackEntry ->
-        val args = backStackEntry.toRoute<FAQRoute>()
-        FAQScreenWrapper(userId = args.userId)
+        FAQScreenWrapper()
     }
 }
 

@@ -32,7 +32,6 @@ import com.shared.R
 
 @Composable
 fun HeartReportScreen(
-    userId: String?,
     viewModel: com.mypage.viewmodel.MyPageViewModel = hiltViewModel()
 ) {
     val heartDescription = stringResource(R.string.heart_description)
@@ -310,5 +309,5 @@ private fun bpmStatus(bpm: Int): Pair<String, Color> {
 @Composable
 private fun HeartReportScreenPreview() {
     // Preview용 더미 ViewModel 쓰지 않아서 여기선 그냥 null 넘겨도 됨
-    HeartReportScreen(userId = null)
+    HeartReportScreen()
 }

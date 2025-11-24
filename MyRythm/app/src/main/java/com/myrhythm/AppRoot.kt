@@ -81,7 +81,7 @@ fun AppRoot() {
         launchSingleTop = true
         restoreState = true
     }
-    fun goMyPage() = nav.navigate(MyPageRoute(userId)) {
+    fun goMyPage() = nav.navigate(MyPageRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
