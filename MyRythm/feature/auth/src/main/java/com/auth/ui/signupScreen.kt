@@ -354,8 +354,60 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // 소셜로그인 관련 추가 없이 기존 코드 로직 그대로 두고 컴포넌트화만 진행
+            //1124수정
             AuthPrimaryButton(
+                text = if (ui.loading) signupLoading else signupText,
+                onClick = {
+                    val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
+                    val heightOk = validNumber(height)
+                    val weightOk = validNumber(weight)
+
+                    // 🔥 [1] 소셜 여부 체크 (provider != null 이면 소셜)
+                    val isSocial = provider != null
+
+                    // 🔥 [2] 로컬 회원가입 → 기존 필수 검증 그대로
+                    if (!isSocial) {
+                        if (
+                            email.isBlank() || username.isBlank() || password.isBlank() ||
+                            birthYear.length != 4 || birthMonth.isBlank() || birthDay.isBlank() ||
+                            !heightOk || !weightOk || phone.isBlank()
+                        ) {
+                            viewModel.emitInfo(errorBlank)
+                            return@AuthPrimaryButton
+                        }
+
+                        if (!isVerificationCompleted) {
+                            viewModel.emitInfo(errorVerificationIncompleted)
+                            return@AuthPrimaryButton
+                        }
+                    }
+
+                    // 🔥 [3] 소셜 회원가입 → email / password / username = null 허용
+                    val req = SignupRequest(
+                        email = if (isSocial) null else email,
+                        username = if (isSocial) null else username,
+                        password = if (isSocial) null else password,
+                        phone = phone,
+                        birthDate = birthDate,
+                        gender = gender,
+                        height = height.toDouble(),
+                        weight = weight.toDouble(),
+                        provider = provider,
+                        socialId = socialId
+                    )
+
+                    viewModel.signup(req)
+                },
+                enabled = !ui.loading,
+                useLoginTheme = false,
+                useClickEffect = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(62.dp)
+            )
+
+            // 소셜로그인 관련 추가 없이 기존 코드 로직 그대로 두고 컴포넌트화만 진행
+            /*1124 주석AuthPrimaryButton(
                 text = if (ui.loading) signupLoading else signupText,
                 onClick = {
                     val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
@@ -405,7 +457,7 @@ fun SignupScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-            )
+            )*/
 
             Spacer(Modifier.height(16.dp))
 
