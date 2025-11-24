@@ -2,10 +2,13 @@ package com.mypage.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.HeartRateHistory
 import com.domain.repository.InquiryRepository
 import com.domain.usecase.auth.LogoutUseCase
-import com.domain.model.UserProfile           // 🔥 프로필 모델
+import com.domain.model.UserProfile
 import com.domain.repository.ProfileRepository
+import com.domain.usecase.health.GetLatestHeartRateUseCase
+import com.domain.usecase.health.GetHeartHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -20,7 +23,9 @@ import kotlinx.coroutines.launch
 class MyPageViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val inquiryRepository: InquiryRepository,
-    private val userRepository: ProfileRepository           // 🔥 프로필 호출하는 repository
+    private val userRepository: ProfileRepository,
+    private val getLatestHeartRateUseCase: GetLatestHeartRateUseCase,
+    private val getHeartHistoryUseCase: GetHeartHistoryUseCase,
 ) : ViewModel() {
 
     // -------------------------------
@@ -30,7 +35,7 @@ class MyPageViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     // -------------------------------
-    //  🔥 프로필 상태
+    //  프로필 상태
     // -------------------------------
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> = _profile
@@ -42,7 +47,7 @@ class MyPageViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // -------------------------------
-    //  🔥 프로필 불러오기
+    //  프로필 불러오기
     // -------------------------------
     fun loadProfile() = viewModelScope.launch {
         runCatching {
@@ -79,9 +84,49 @@ class MyPageViewModel @Inject constructor(
     }
 
     // -------------------------------
-    // 🔥 화면 열자마자 프로필 자동 로딩
+    //  심박수 - 최신 1개
     // -------------------------------
+    private val _latestHeartRate = MutableStateFlow<Int?>(null)
+    val latestHeartRate: StateFlow<Int?> = _latestHeartRate
+
+    fun loadLatestHeartRate() {
+        viewModelScope.launch {
+            runCatching {
+                getLatestHeartRateUseCase()      // suspend operator fun invoke(): Int?
+            }.onSuccess { bpm ->
+                _latestHeartRate.value = bpm
+            }.onFailure {
+                // TODO: 에러 처리 필요하면 이벤트 보내기
+            }
+        }
+    }
+
+    // -------------------------------
+    //  심박수 - 최근 측정 기록 리스트
+    // -------------------------------
+    private val _heartHistory = MutableStateFlow<List<HeartRateHistory>>(emptyList())
+    val heartHistory: StateFlow<List<HeartRateHistory>> = _heartHistory
+
+    fun loadHeartHistory() {
+        viewModelScope.launch {
+            runCatching {
+                getHeartHistoryUseCase()
+            }.onSuccess { list ->
+                _heartHistory.value = list
+            }.onFailure {
+                // TODO: 로그 찍어도 좋음
+            }
+        }
+    }
+
+    fun refreshHeartData() {
+        loadLatestHeartRate()
+        loadHeartHistory()
+    }
+
     init {
         loadProfile()
+        refreshHeartData()
     }
+
 }

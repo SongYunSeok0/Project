@@ -15,9 +15,9 @@ import androidx.room.*
     indices = [Index(value = ["regiHistoryId"])]
 )
 data class PlanEntity(
-    @PrimaryKey(autoGenerate = false) // 🔥 서버 ID 사용
+    @PrimaryKey(autoGenerate = false)
     val id: Long,
-    val regiHistoryId: Long?, // 🔥 nullable
+    val regiHistoryId: Long?,
     val medName: String,
     val takenAt: Long?,
     val mealTime: String?,

@@ -34,3 +34,4 @@ include(
 include(":data")
 include(":domain")
 include(":shared")
+include(":feature:healthinsight")

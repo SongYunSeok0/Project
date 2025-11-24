@@ -12,3 +12,5 @@ data class PlanCreateRequest(
     @Json(name = "note") val note: String?,
     @Json(name = "taken") val taken: Long?
 )
+
+

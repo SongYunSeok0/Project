@@ -10,11 +10,14 @@ import com.data.db.dao.FavoriteDao
 import com.data.db.dao.InquiryDao
 import com.data.db.dao.PlanDao
 import com.data.db.dao.RegiHistoryDao
+import com.data.db.dao.StepDao
 import com.data.db.dao.UserDao
+import com.data.db.entity.DailyStepEntity
 import com.data.db.entity.FavoriteEntity
 import com.data.db.entity.InquiryEntity
 import com.data.db.entity.PlanEntity
 import com.data.db.entity.RegiHistoryEntity
+import com.data.db.entity.StepEntity
 import com.data.db.entity.UserEntity
 
 @Database(
@@ -23,9 +26,11 @@ import com.data.db.entity.UserEntity
         RegiHistoryEntity::class,
         PlanEntity::class,
         FavoriteEntity::class,
-        InquiryEntity::class
+        InquiryEntity::class,
+        StepEntity::class,
+        DailyStepEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {
@@ -34,6 +39,8 @@ abstract class AppRoomDatabase : RoomDatabase() {
     abstract fun planDao(): PlanDao
     abstract fun regiHistoryDao(): RegiHistoryDao
     abstract fun inquiryDao(): InquiryDao
+    abstract fun stepDao(): StepDao
+
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
