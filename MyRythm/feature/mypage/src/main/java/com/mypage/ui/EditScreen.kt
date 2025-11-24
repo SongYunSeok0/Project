@@ -38,8 +38,15 @@ fun EditScreen(
     var age by remember(profile) { mutableStateOf(profile?.age?.toString() ?: "") }
     var phone by remember(profile) { mutableStateOf(profile?.phone?.toString() ?: "") }
     var prot_phone by remember(profile) { mutableStateOf(profile?.prot_phone?.toString() ?: "") }
-    var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
 
+    // 1124 수정
+    //var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
+    var email by remember { mutableStateOf("") }
+    LaunchedEffect(profile) {
+        profile?.let {
+            email = it.email ?: ""
+        }
+    }
     //문자열 리소스화
     val editprofilephoto = stringResource(R.string.editprofilephoto)
     val editText = stringResource(R.string.edit)
@@ -56,7 +63,8 @@ fun EditScreen(
     val context = LocalContext.current
 
     // 저장 이벤트 처리
-    LaunchedEffect(Unit) {
+    // 1124 Unit -> true 수정
+    LaunchedEffect(true) {
         viewModel.events.collect { event ->
             when (event) {
                 EditProfileEvent.SaveSuccess -> {
