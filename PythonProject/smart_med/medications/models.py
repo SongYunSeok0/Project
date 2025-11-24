@@ -42,7 +42,7 @@ class RegiHistory(models.Model):
     )
 
     class Meta:
-        db_table = "regiHistory"
+        db_table = "regihistory"
         verbose_name = "등록 이력"
         verbose_name_plural = "등록 이력 목록"
 
@@ -54,12 +54,10 @@ class RegiHistory(models.Model):
 #복용 스케줄
 class Plan(models.Model):
     #PK id자동생성
-
-    #유저FK삭제
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     regihistory = models.ForeignKey(
         RegiHistory,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,  # ← 필수!!
         blank=True  # ← 필수!!
     )
