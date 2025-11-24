@@ -14,7 +14,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {"fields": ("email","password")}),
         ("Personal info", {
             "fields": ("username","phone","birth_date","gender",
-                       "height","weight","preferences","prot_phone","relation","uuid")
+                       "height","weight","preferences","prot_email","relation","uuid")
         }),
         ("Permissions", {"fields": ("is_active","is_staff","is_superuser","groups","user_permissions")}),
         ("Important dates", {"fields": ("last_login","created_at","updated_at")}),
