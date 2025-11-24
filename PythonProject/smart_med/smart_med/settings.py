@@ -97,7 +97,7 @@ WSGI_APPLICATION = "smart_med.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", default="RNB"),
+        "NAME": env("POSTGRES_DB", default="RNB2"),
         "USER": env("POSTGRES_USER", default="postgres"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="0000"),
         "HOST": env("POSTGRES_HOST", default="127.0.0.1"),
@@ -106,6 +106,23 @@ DATABASES = {
             "options": "-c client_encoding=UTF8",
             "application_name": "django",
         },
+    }
+}
+
+# ========== Email 설정 ==========
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# =================================
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "email-verification",
     }
 }
 

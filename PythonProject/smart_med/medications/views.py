@@ -32,7 +32,7 @@ class PlanListView(APIView):
     def get(self, request):
         # ✅ Plan.user 없음 → RegiHistory.user 기준으로 필터
         plans = Plan.objects.filter(
-            RegiHistory__user=request.user.id   # RegiHistory.user 가 IntegerField이니까 id 비교
+            regihistory__user=request.user.id
         ).order_by("-created_at")
 
         data = []
@@ -78,13 +78,22 @@ class PlanListView(APIView):
                 user=request.user.id,
             ).first()
 
+        # 만약 안드로이드에서 regiHistoryId를 안 보내면 (또는 그런 기능 아직 없음)
+        # 여기서 자동 생성해 줄 수 있음
+        if regi_history is None:
+            regi_history = RegiHistory.objects.create(
+                user=request.user,
+                regi_type="직접등록",  # 네가 쓸 타입 문자열
+                label=v.get("medName") or "직접등록",  # 예: 약 이름
+                issued_date=timezone.now().date().isoformat(),
+            )
+
         med_name = v.get("medName")
         taken_at = to_dt(v.get("takenAt"))
         meal_time = v.get("mealTime") or "before"  # 기본값 하나 정해두기
         note = v.get("note")
         taken = to_dt(v.get("taken"))
 
-        # ✅ Plan 에 user / prescription 필드 없음
         plan = Plan.objects.create(
             RegiHistory=regi_history,
             med_name=med_name,
