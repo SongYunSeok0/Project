@@ -10,7 +10,10 @@ class FcmTokenStore(private val context: Context) {
     }
 
     fun saveToken(token: String) {
-        prefs.edit { putString("fcm_token", token) }
+        prefs.edit {
+            putString("fcm_token", token)
+            apply()
+        }
     }
 
     fun getToken(): String? = prefs.getString("fcm_token", null)
