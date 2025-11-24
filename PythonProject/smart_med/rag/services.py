@@ -21,7 +21,6 @@ from .intents import (
     build_warning_answer,
 )
 
-
 # ───────────────────────────────
 # Intent 정의
 # ───────────────────────────────
@@ -33,14 +32,26 @@ INTENT_WARNING = "warning"
 INTENT_SYMPTOM = "symptom"
 INTENT_COMPARE = "compare"
 INTENT_GENERAL = "general"
+INTENT_HF_MORE = "hf_more"  # 건강기능식품 이어서 보기
 
 SIDE_EFFECT_KEYS = ["부작용", "이상반응"]
 EFFICACY_KEYS = ["효능", "효과", "어디에좋아", "무엇에좋아", "어디에 좋", "무엇에 좋"]
 
 DOSAGE_KEYS = [
-    "용법", "용량", "복용법", "먹는법",
-    "하루몇번", "하루 몇 번", "몇번", "몇 번", "몇회", "몇 회",
-    "언제먹", "언제 먹", "언제 먹어", "언제 복용",
+    "용법",
+    "용량",
+    "복용법",
+    "먹는법",
+    "하루몇번",
+    "하루 몇 번",
+    "몇번",
+    "몇 번",
+    "몇회",
+    "몇 회",
+    "언제먹",
+    "언제 먹",
+    "언제 먹어",
+    "언제 복용",
 ]
 
 INTERACTION_KEYS = ["상호작용", "같이먹어도", "같이 먹어도", "병용", "함께복용", "함께 복용"]
@@ -49,16 +60,43 @@ WARNING_KEYS = ["주의사항", "주의", "경고", "사용상 주의사항"]
 MED_NAME_HINT = ["정", "캡슐", "액", "시럽", "산", "펜", "콜", "타이레놀", "판콜", "콜드"]
 
 FOLLOWUP_INCLUDE_KEYS = [
-    "포함돼", "포함되", "포함안돼", "포함안되",
-    "해당돼", "해당되",
-    "들어가", "들어있", "들어가있",
+    "포함돼",
+    "포함되",
+    "포함안돼",
+    "포함안되",
+    "해당돼",
+    "해당되",
+    "들어가",
+    "들어있",
+    "들어가있",
 ]
 
 # 건강기능식품/영양제 관련 키워드
 HEALTH_FOOD_KEYS = [
-    "영양제", "건강기능식품", "건기식",
-    "비타민", "오메가3", "유산균", "프로바이오틱스",
+    "영양제",
+    "건강기능식품",
+    "건기식",
+    "비타민",
+    "오메가3",
+    "유산균",
+    "프로바이오틱스",
 ]
+
+# 건강기능식품 주요 타겟 증상 키워드 및 동의어
+HF_MAIN_KEYWORDS = ["피로", "관절", "눈", "시력", "혈행", "간", "위", "장", "면역", "뼈"]
+
+HF_KEYWORD_SYNONYMS = {
+    "피로": ["피로", "피곤", "피로감", "피로 회복", "피로회복"],
+    "관절": ["관절", "뼈", "연골", "골다공증", "골관절", "골관절염"],
+    "뼈": ["뼈", "골다공증", "골밀도"],
+    "눈": ["눈", "시력", "눈의 피로", "안구 건조", "황반", "망막", "루테인", "지아잔틴"],
+    "시력": ["눈", "시력", "눈의 피로", "루테인"],
+    "혈행": ["혈행", "혈액순환"],
+    "간": ["간", "간기능", "간 건강"],
+    "위": ["위", "소화", "속쓰림"],
+    "장": ["장", "유산균", "프로바이오틱스", "배변"],
+    "면역": ["면역", "면역력"],
+}
 
 DISEASE_SUB_SYMPTOM = "symptom"
 DISEASE_SUB_CAUSE = "cause"
@@ -67,12 +105,29 @@ DISEASE_SUB_PREVENTION = "prevention"
 DISEASE_SUB_TREATMENT = "treatment"
 DISEASE_SUB_GENERAL = "general"
 
+# ───────────────────────────────
+# HF 이어보기 상태 (간단 전역 캐시)
+# ───────────────────────────────
+HF_STATE = {
+    "ordered": [],  # [(name, info dict)]
+    "cursor": 0,
+    "main_kw": None,
+}
+
 
 # ───────────────────────────────
 # 유틸
 # ───────────────────────────────
 def _normalize(s: str) -> str:
     return s.replace(" ", "").strip()
+
+
+def detect_hf_main_keyword(question: str) -> Optional[str]:
+    q = _normalize(question)
+    for kw in HF_MAIN_KEYWORDS:
+        if kw in q:
+            return kw
+    return None
 
 
 def dedupe_sentences(text: str) -> str:
@@ -197,6 +252,10 @@ def detect_compare_intent(question: str) -> Optional[List[str]]:
 def detect_intent(question: str) -> str:
     q = _normalize(question)
 
+    # HF 이어서 보여달라는 말
+    if q in ["더알려줘", "더알려", "더보여줘", "더추천해줘", "계속알려줘"]:
+        return INTENT_HF_MORE
+
     if detect_compare_intent(question):
         return INTENT_COMPARE
 
@@ -232,7 +291,7 @@ def detect_intent(question: str) -> str:
 def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> List[Chunk]:
     intent = detect_intent(query)
 
-    if intent == INTENT_GENERAL:
+    if intent in [INTENT_GENERAL, INTENT_HF_MORE]:
         return []
 
     q_emb = get_embedding(query)
@@ -307,22 +366,35 @@ def _prioritize_base_brand(med: str, chunks: List[Chunk]) -> List[Chunk]:
 def search_health_food_chunks(query: str, k: int = 5, max_distance: float = 0.6) -> List[Chunk]:
     """
     건강기능식품(hf_*) 전용 Chunk 검색
+    - 질문에 '피로', '관절', '눈' 같은 키워드가 있으면
+      먼저 hf_function에서 해당 키워드(동의어 포함)가 들어간 것만 대상으로 삼는다.
+    - 그 안에서 임베딩 거리로 상위 k개를 고른다.
     """
     q_emb = get_embedding(query)
 
-    qs = (
-        Chunk.objects
-        .filter(section__startswith="hf_")
-        .annotate(distance=CosineDistance("embedding", q_emb))
-        .order_by("distance")[:k]
-    )
+    main_kw = detect_hf_main_keyword(query)
+
+    if main_kw:
+        synonym_list = HF_KEYWORD_SYNONYMS.get(main_kw, [main_kw])
+        text_q = Q()
+        for kw in synonym_list:
+            text_q |= Q(text__icontains=kw)
+
+        base_qs = Chunk.objects.filter(section__startswith="hf_function").filter(text_q)
+
+        if not base_qs.exists():
+            base_qs = Chunk.objects.filter(section__startswith="hf_")
+    else:
+        base_qs = Chunk.objects.filter(section__startswith="hf_")
+
+    qs = base_qs.annotate(distance=CosineDistance("embedding", q_emb)).order_by("distance")[:k]
 
     chunks = list(qs)
     if not chunks:
         return []
 
     first_dist = float(chunks[0].distance) if chunks[0].distance is not None else None
-    print(f"[HF-RAG] top_k={len(chunks)}, first_dist={first_dist}")
+    print(f"[HF-RAG] top_k={len(chunks)}, first_dist={first_dist}, main_kw={main_kw}")
 
     if first_dist is not None and first_dist > max_distance:
         print(f"[HF-RAG] distance too far ({first_dist} > {max_distance}) → 사용 안 함")
@@ -331,104 +403,100 @@ def search_health_food_chunks(query: str, k: int = 5, max_distance: float = 0.6)
     return chunks
 
 
-def build_health_food_answer(question: str, chunks: List[Chunk]) -> str:
+def _collect_hf_products(chunks: List[Chunk]) -> "dict[str, dict]":
     """
-    건강기능식품 / 영양제 추천·설명용 답변 생성
-    (hf_usage / hf_caution / hf_function 섹션 사용)
-    - 기능성이 없는 제품은 제외
-    - 질문 키워드(피로, 관절, 눈 등)가 있으면, 관련 단어가 기능성 텍스트에 들어간 제품만 추천
+    Chunk 리스트 → 제품별 function/usage/caution 묶기
     """
-    if not chunks:
-        return "해당 질문과 관련된 기능성 정보가 포함된 건강기능식품 데이터를 찾지 못했습니다."
-
     from collections import OrderedDict
 
     products: "OrderedDict[str, dict]" = OrderedDict()
 
-    # 1) item_name 기준으로 기능성/섭취법/주의사항 합치기
     for c in chunks:
         name = (c.item_name or "제품명 미상").strip()
-        info = products.setdefault(
-            name,
-            {"function": "", "usage": "", "caution": ""},
-        )
+        info = products.setdefault(name, {"function": "", "usage": "", "caution": ""})
 
         raw = (c.text or "").strip()
         sec = (c.section or "").strip()
 
         if sec.startswith("hf_function") and not info["function"]:
-            cleaned = _extract_after_label(
-                raw,
-                ["기능성", "주요 기능성", "영양·기능정보", "영양기능정보"],
-            )
-            info["function"] = (cleaned or raw).strip()
-
+            info["function"] = raw
         elif sec.startswith("hf_usage") and not info["usage"]:
-            cleaned = _extract_after_label(
-                raw,
-                ["섭취방법", "섭취 방법", "섭취량 및 섭취방법", "섭취량·섭취방법"],
-            )
-            info["usage"] = (cleaned or raw).strip()
-
+            info["usage"] = raw
         elif sec.startswith("hf_caution") and not info["caution"]:
-            cleaned = _extract_after_label(
-                raw,
-                ["주의사항", "섭취 시 주의사항", "섭취시 주의사항", "보관방법 및 섭취 시 주의사항"],
-            )
-            info["caution"] = (cleaned or raw).strip()
+            info["caution"] = raw
 
-    # 2) 기능성 비어 있는 제품은 DB에서 한 번 더 기능성 찾기
-    no_func_names = [name for name, info in products.items() if not info["function"]]
-    if no_func_names:
-        extra_funcs = Chunk.objects.filter(
-            item_name__in=no_func_names,
-            section__startswith="hf_function",
-        )
-        for c in extra_funcs:
+    # 기능성 없는 제품은 DB에서 다시 시도
+    missing = [n for n, d in products.items() if not d["function"]]
+    if missing:
+        extra = Chunk.objects.filter(item_name__in=missing, section__startswith="hf_function")
+        for c in extra:
             name = (c.item_name or "").strip()
-            info = products.get(name)
-            if info and not info["function"]:
-                raw = (c.text or "").strip()
-                cleaned = _extract_after_label(
-                    raw,
-                    ["기능성", "주요 기능성", "영양·기능정보", "영양기능정보"],
-                )
-                info["function"] = (cleaned or raw).strip()
+            if products[name]["function"]:
+                continue
+            products[name]["function"] = (c.text or "").strip()
 
-    # 3) 질문 키워드 + 동의어 집합 정의
-    def _detect_main_kw(q: str) -> Optional[str]:
-        q = _normalize(q)
-        cands = ["피로", "관절", "눈", "시력", "혈행", "간", "위", "장", "면역", "뼈"]
-        for kw in cands:
-            if kw in q:
-                return kw
-        return None
+    return products
 
-    KEYWORD_SYNONYMS = {
-        "피로": ["피로", "피곤", "피로감", "피로 회복", "피로회복"],
-        "관절": ["관절", "뼈", "연골", "골다공증", "골관절", "골관절염"],
-        "뼈": ["뼈", "골다공증", "골밀도"],
-        "눈": ["눈", "시력", "눈의 피로", "안구 건조", "황반", "망막"],
-        "시력": ["눈", "시력", "눈의 피로"],
-        "혈행": ["혈행", "혈액순환"],
-        "간": ["간", "간기능", "간 건강"],
-        "위": ["위", "소화", "속쓰림"],
-        "장": ["장", "유산균", "프로바이오틱스", "배변"],
-        "면역": ["면역", "면역력"],
-    }
 
-    main_kw = _detect_main_kw(question)
-    if main_kw:
-        synonym_list = KEYWORD_SYNONYMS.get(main_kw, [main_kw])
+def _short(s: str, n: int = 200) -> str:
+    s = (s or "").replace("\n", " ").strip()
+    return s[:n] + ("…" if len(s) > n else "") if s else ""
+
+
+def _format_hf_answer(items: List[tuple[str, dict]], first: bool) -> str:
+    if not items:
+        return "해당 질문과 관련된 기능성 정보가 포함된 건강기능식품 데이터를 찾지 못했습니다."
+
+    lines: List[str] = []
+    if first:
+        lines.append("질문과 관련해 도움이 될 수 있는 건강기능식품/영양제 예시는 다음과 같습니다.\n")
     else:
-        synonym_list = []
+        lines.append("이어서 도움이 될 수 있는 건강기능식품/영양제 예시는 다음과 같습니다.\n")
 
-    def _short(s: str, n: int = 200) -> str:
-        s = (s or "").replace("\n", " ").strip()
-        return s[:n] + ("…" if len(s) > n else "") if s else ""
+    lines.append("※ 아래 내용은 일반 정보로, 실제 복용 전에는 반드시 의사 또는 약사와 상담해야 합니다.\n")
 
-    # 4) 키워드 매칭된 제품만 primary에 담기
-    primary: list[tuple[str, dict]] = []
+    for idx, (name, info) in enumerate(items, start=1):
+        lines.append(f"{idx}. {name}")
+        lines.append("- 기능성")
+        lines.append(f"  {_short(info.get('function', '')) or '정보 없음'}")
+        # 섭취 방법/주의사항은 내용 있을 때만 출력
+        if info.get("usage"):
+            lines.append("- 섭취 방법")
+            lines.append(f"  {_short(info['usage'])}")
+        if info.get("caution"):
+            lines.append("- 주의사항")
+            lines.append(f"  {_short(info['caution'])}")
+        lines.append("")
+
+    return "\n".join(lines).strip()
+
+
+def build_health_food_answer(question: str, chunks: List[Chunk]) -> str:
+    """
+    건강기능식품 / 영양제 추천·설명용 답변 생성
+    (hf_usage / hf_caution / hf_function 섹션 사용)
+    - 기능성이 없는 제품은 제외
+    - 질문 키워드(피로, 관절, 눈 등)가 있으면 관련 기능성만 strong 매칭
+    - HF_STATE에 ordered/cursor 저장 → '더 알려줘'로 이어서 보기
+    """
+    if not chunks:
+        return "해당 질문과 관련된 기능성 정보가 포함된 건강기능식품 데이터를 찾지 못했습니다."
+
+    products = _collect_hf_products(chunks)
+
+    # 질문에서 주제 키워드 추출
+    q_norm = _normalize(question)
+    main_kw = None
+    for kw in HF_KEYWORD_SYNONYMS.keys():
+        if kw in q_norm:
+            main_kw = kw
+            break
+
+    synonym_list = HF_KEYWORD_SYNONYMS.get(main_kw, []) if main_kw else []
+
+    # strong / weak 구분
+    strong: List[tuple[str, dict]] = []
+    weak: List[tuple[str, dict]] = []
 
     for name, info in products.items():
         func = info["function"]
@@ -436,42 +504,56 @@ def build_health_food_answer(question: str, chunks: List[Chunk]) -> str:
             continue
 
         if synonym_list:
-            # 질문 키워드가 있으면 동의어 중 하나라도 기능성에 포함된 경우만 채택
-            if any(kw in func for kw in synonym_list):
-                primary.append((name, info))
+            if any(k in func for k in synonym_list):
+                strong.append((name, info))
+            else:
+                weak.append((name, info))
         else:
-            # 질문 키워드가 없으면 기능성 있는 제품은 전부 허용
-            primary.append((name, info))
+            strong.append((name, info))
 
-    # 관련 제품이 하나도 없으면 바로 종료
-    if not primary:
+    candidates: List[tuple[str, dict]] = []
+    candidates.extend(strong)
+    candidates.extend(weak)
+
+    # 아무것도 없으면 기능성 있는 아무 제품이나
+    if not candidates:
+        for name, info in products.items():
+            if info["function"]:
+                candidates.append((name, info))
+
+    if not candidates:
         return "해당 질문과 관련된 기능성 정보가 포함된 건강기능식품 데이터를 찾지 못했습니다."
 
-    # 5) 출력 포맷 구성
-    lines: List[str] = []
-    lines.append("질문과 관련해 도움이 될 수 있는 건강기능식품/영양제 예시는 다음과 같습니다.\n")
-    lines.append("※ 아래 내용은 일반 정보로, 실제 복용 전에는 반드시 의사 또는 약사와 상담해야 합니다.\n")
+    primary = candidates[:3]
 
-    idx = 1
-    for name, info in primary:
-        if idx > 3:
-            break
+    # HF_STATE 업데이트 (이어보기용)
+    HF_STATE["ordered"] = candidates
+    HF_STATE["cursor"] = len(primary)
+    HF_STATE["main_kw"] = main_kw
 
-        lines.append(f"{idx}. {name}")
+    return _format_hf_answer(primary, first=True)
 
-        lines.append("   - 기능성")
-        lines.append(f"     {_short(info['function']) or '정보 없음'}")
 
-        lines.append("   - 섭취 방법")
-        lines.append(f"     {_short(info['usage']) or '정보 없음'}")
+def build_health_food_more_answer() -> str:
+    """
+    직전에 선택된 HF_STATE 기준으로 이어서 3개 더 보여주기
+    """
+    ordered: List[tuple[str, dict]] = HF_STATE.get("ordered") or []
+    cursor: int = HF_STATE.get("cursor", 0)
 
-        lines.append("   - 주의사항")
-        lines.append(f"     {_short(info['caution']) or '정보 없음'}")
+    if not ordered:
+        return (
+            "이전에 추천한 건강기능식품 목록이 없어, 추가로 이어서 안내할 수 없습니다.\n"
+            "먼저 '피로에 좋은 영양제 추천해줘'처럼 증상이나 목적을 적어 질문해 주세요."
+        )
 
-        lines.append("")
-        idx += 1
+    if cursor >= len(ordered):
+        return "이미 안내해 드린 제품들 외에, 현재 데이터에서 추가로 추천할 만한 건강기능식품/영양제가 더 없습니다."
 
-    return "\n".join(lines).strip()
+    next_slice = ordered[cursor : cursor + 3]
+    HF_STATE["cursor"] = cursor + len(next_slice)
+
+    return _format_hf_answer(next_slice, first=False)
 
 
 # ───────────────────────────────
@@ -498,8 +580,8 @@ def _extract_after_label(text: str, labels: List[str]) -> str:
         if idx != -1:
             colon_idx = text.find(":", idx)
             if colon_idx != -1:
-                return text[colon_idx + 1:].strip()
-            return text[idx + len(label):].strip()
+                return text[colon_idx + 1 :].strip()
+            return text[idx + len(label) :].strip()
     return text.strip()
 
 
@@ -530,9 +612,11 @@ def build_compare_answer(question: str, meds: List[str]) -> str:
     eff_a = _extract_after_label(c_a_eff.text, ["효능효과", "효능"]) if c_a_eff else ""
     se_a = _extract_after_label(c_a_se.text, ["부작용", "이상반응"]) if c_a_se else ""
     dos_a = _extract_after_label(c_a_dos.text, ["용법용량"]) if c_a_dos else ""
-    war_a = _extract_after_label(
-        c_a_war.text, ["주의사항", "주의", "경고", "사용상 주의사항"]
-    ) if c_a_war else ""
+    war_a = (
+        _extract_after_label(c_a_war.text, ["주의사항", "주의", "경고", "사용상 주의사항"])
+        if c_a_war
+        else ""
+    )
 
     c_b_eff = _select_chunk_for_med(med_b, ["효능효과", "효능"])
     c_b_se = _select_chunk_for_med(med_b, ["부작용", "이상반응"])
@@ -542,35 +626,37 @@ def build_compare_answer(question: str, meds: List[str]) -> str:
     eff_b = _extract_after_label(c_b_eff.text, ["효능효과", "효능"]) if c_b_eff else ""
     se_b = _extract_after_label(c_b_se.text, ["부작용", "이상반응"]) if c_b_se else ""
     dos_b = _extract_after_label(c_b_dos.text, ["용법용량"]) if c_b_dos else ""
-    war_b = _extract_after_label(
-        c_b_war.text, ["주의사항", "주의", "경고", "사용상 주의사항"]
-    ) if c_b_war else ""
+    war_b = (
+        _extract_after_label(c_b_war.text, ["주의사항", "주의", "경고", "사용상 주의사항"])
+        if c_b_war
+        else ""
+    )
 
-    def _short(s: str, n: int = 80) -> str:
+    def _short2(s: str, n: int = 80) -> str:
         s = (s or "").replace("\n", " ").strip()
         return s[:n] + ("…" if len(s) > n else "") if s else "문서에 정보 없음"
 
     lines: List[str] = []
 
     lines.append("1. 기본 정보")
-    lines.append(f"- 약 A({med_a}): {_short(eff_a, 60)}")
-    lines.append(f"- 약 B({med_b}): {_short(eff_b, 60)}")
+    lines.append(f"- 약 A({med_a}): {_short2(eff_a, 60)}")
+    lines.append(f"- 약 B({med_b}): {_short2(eff_b, 60)}")
     lines.append("")
     lines.append("2. 효능·효과 비교")
-    lines.append(f"- 약 A({med_a}): {_short(eff_a)}")
-    lines.append(f"- 약 B({med_b}): {_short(eff_b)}")
+    lines.append(f"- 약 A({med_a}): {_short2(eff_a)}")
+    lines.append(f"- 약 B({med_b}): {_short2(eff_b)}")
     lines.append("")
     lines.append("3. 부작용 비교")
-    lines.append(f"- 약 A({med_a}): {_short(se_a)}")
-    lines.append(f"- 약 B({med_b}): {_short(se_b)}")
+    lines.append(f"- 약 A({med_a}): {_short2(se_a)}")
+    lines.append(f"- 약 B({med_b}): {_short2(se_b)}")
     lines.append("")
     lines.append("4. 용법·용량 비교")
-    lines.append(f"- 약 A({med_a}): {_short(dos_a)}")
-    lines.append(f"- 약 B({med_b}): {_short(dos_b)}")
+    lines.append(f"- 약 A({med_a}): {_short2(dos_a)}")
+    lines.append(f"- 약 B({med_b}): {_short2(dos_b)}")
     lines.append("")
     lines.append("5. 주의사항 비교")
-    lines.append(f"- 약 A({med_a}): {_short(war_a)}")
-    lines.append(f"- 약 B({med_b}): {_short(war_b)}")
+    lines.append(f"- 약 A({med_a}): {_short2(war_a)}")
+    lines.append(f"- 약 B({med_b}): {_short2(war_b)}")
     lines.append("")
     lines.append("6. 한 줄 요약")
     lines.append(
@@ -585,9 +671,8 @@ def build_general_answer(question: str, chunks: List[Chunk]) -> str:
     if not chunks:
         q = question.replace(" ", "")
 
-        is_search_hospital = (
-            any(k in q for k in ["병원", "클리닉", "의원"])
-            and any(k in q for k in ["검색", "찾아", "찾는법", "찾는방법", "어디서", "어디에서"])
+        is_search_hospital = any(k in q for k in ["병원", "클리닉", "의원"]) and any(
+            k in q for k in ["검색", "찾아", "찾는법", "찾는방법", "어디서", "어디에서"]
         )
 
         if is_search_hospital:
@@ -651,6 +736,10 @@ def build_general_answer(question: str, chunks: List[Chunk]) -> str:
 def build_answer(question: str, chunks: List[Chunk]) -> str:
     intent = detect_intent(question)
     print("[INTENT]", intent, "/ q =", question)
+
+    if intent == INTENT_HF_MORE:
+        # 건강기능식품 이어보기
+        return build_health_food_more_answer()
 
     if intent == INTENT_GENERAL:
         disease_kw = extract_disease_keyword(question)
@@ -803,23 +892,19 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
         q_norm = _normalize(question)
         is_health_food_q = any(h in q_norm for h in HEALTH_FOOD_KEYS)
 
-        # ✅ 건강기능식품/영양제 질문이면 HF RAG만 사용하고,
-        #    clean_output()을 태우지 않는다 (포맷 유지).
+        # 건강기능식품/영양제 질문이면 HF RAG 사용
         if is_health_food_q:
-            hf_chunks = search_health_food_chunks(question, k=5)
+            hf_chunks = search_health_food_chunks(question, k=10)
             if hf_chunks:
                 return build_health_food_answer(question, hf_chunks)
-            # HF 문서도 없으면 일반 답변으로 폴백
             return clean_output(build_general_answer(question, []))
 
-        # ✅ 의약품 효능/효과 질문
+        # 의약품 효능/효과 질문
         if chunks:
             return clean_output(build_efficacy_answer(question, chunks))
 
-        # chunks는 없지만 HF 문서가 있을 수 있는 경우
-        hf_chunks = search_health_food_chunks(question, k=5)
+        hf_chunks = search_health_food_chunks(question, k=10)
         if hf_chunks:
-            # 여기서도 포맷 살리려고 clean_output() 안 씀
             return build_health_food_answer(question, hf_chunks)
 
         return clean_output(build_general_answer(question, []))

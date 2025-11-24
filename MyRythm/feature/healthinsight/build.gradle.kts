@@ -2,16 +2,16 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hiltAndroid)
+    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "com.main"
+    namespace = "com.healthinsight"
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 26
-
+        minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -25,37 +25,38 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+
     kotlinOptions {
         jvmTarget = "21"
     }
 
     buildFeatures {
-        compose = true                       // ← 추가
+        compose = true
     }
 }
 
 dependencies {
-    implementation(project(":feature"))
-    implementation(project(":shared"))
-    implementation(project(":feature:mypage"))
-    implementation(project(":feature:scheduler"))
-    implementation(project(":feature:map"))
-    implementation(project(":feature:news"))
-    implementation(project(":feature:chatbot"))
-    implementation(project(":domain"))
-
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.compose.library)
+    implementation(libs.compose.animation)
+    implementation(libs.androidx.navigation.compose)
+
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.core)
+
+    implementation(project(":domain"))
+    implementation(project(":shared"))
+
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    ksp(libs.hilt.compiler)
+
     implementation(libs.bundles.test)
 
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation(libs.androidx.material3)
 }

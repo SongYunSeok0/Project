@@ -29,4 +29,5 @@ dependencies {
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
+    implementation(libs.androidx.material3)
 }

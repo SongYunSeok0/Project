@@ -7,6 +7,7 @@ import com.data.network.api.NewsApi
 import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
 import com.data.network.api.ChatbotApi
+import com.data.network.api.HealthApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -22,6 +23,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
+import com.data.network.api.StepApi
 
 
 // ---- Qualifiers ----
@@ -157,4 +159,14 @@ object NetworkModule {
     fun provideNewsApi(@NewsRetrofit retrofit: Retrofit): NewsApi =
         retrofit.create(NewsApi::class.java)
 
+    //건강
+    @Provides
+    fun provideHealthApi(@UserRetrofit retrofit: Retrofit): HealthApi =
+        retrofit.create(HealthApi::class.java)
+
+
+    @Provides
+    @Singleton
+    fun provideStepApi(@UserRetrofit retrofit: Retrofit): StepApi =
+        retrofit.create(StepApi::class.java)
 }

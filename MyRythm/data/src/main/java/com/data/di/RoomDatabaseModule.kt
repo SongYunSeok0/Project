@@ -7,6 +7,7 @@ import com.data.db.dao.FavoriteDao
 import com.data.db.dao.InquiryDao
 import com.data.db.dao.PlanDao
 import com.data.db.dao.UserDao
+import com.data.db.dao.StepDao
 import com.data.db.dao.*
 import dagger.Module
 import dagger.Provides
@@ -23,7 +24,6 @@ object RoomDatabaseModule {
     @Singleton
     fun provideDb(@ApplicationContext ctx: Context): AppRoomDatabase =
         Room.databaseBuilder(ctx, AppRoomDatabase::class.java, "app.db")
-            .fallbackToDestructiveMigration()   // ← 버전 초기화 시 데이터 삭제 후 재생성
             .build()
 
     @Provides fun provideUserDao(db: AppRoomDatabase): UserDao = db.userDao()
@@ -31,4 +31,5 @@ object RoomDatabaseModule {
     @Provides fun providePlanDao(db: AppRoomDatabase): PlanDao = db.planDao()
     @Provides fun provideInquiryDao(db: AppRoomDatabase): InquiryDao = db.inquiryDao()
     @Provides fun providePrescriptionDao(db: AppRoomDatabase): RegihistoryDao = db.prescriptionDao()
+    @Provides fun provideStepDao(db: AppRoomDatabase): StepDao = db.stepDao()
 }
