@@ -80,7 +80,7 @@ class MeView(APIView):
                 "height": getattr(user, "height", ""),
                 "weight": getattr(user, "weight", ""),
                 "preferences": getattr(user, "preferences", {}),
-                "prot_phone": getattr(user, "prot_phone", ""),
+                "prot_email": getattr(user, "prot_email", ""),
                 "relation": getattr(user, "relation", ""),
                 "is_active": user.is_active,
                 "is_staff": user.is_staff,
@@ -101,7 +101,7 @@ class MeView(APIView):
             "height",
             "weight",
             "preferences",
-            "prot_phone",
+            "prot_email",
             "relation",
         }
         data = request.data

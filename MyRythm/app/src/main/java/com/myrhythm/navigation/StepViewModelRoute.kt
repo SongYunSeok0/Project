@@ -6,6 +6,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mypage.viewmodel.StepViewModel
 import com.shared.ui.MainScreen
 import androidx.compose.runtime.getValue
+import com.myrhythm.viewmodel.MainViewModel
 
 @Composable
 fun StepViewModelRoute(
@@ -15,10 +16,14 @@ fun StepViewModelRoute(
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
-    onFabCamera: () -> Unit = {},
-    stepViewModel: StepViewModel = hiltViewModel()
+    onFabCamera: () -> Unit = {}
 ) {
+    val stepViewModel: StepViewModel = hiltViewModel()
+    val mainViewModel: MainViewModel = hiltViewModel()
+
     val steps by stepViewModel.steps.collectAsStateWithLifecycle()
+    val nextTime by mainViewModel.nextTime.collectAsStateWithLifecycle()
+    val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
 
     MainScreen(
         onOpenChatBot = onOpenChatBot,
@@ -29,5 +34,7 @@ fun StepViewModelRoute(
         onOpenNews = onOpenNews,
         onFabCamera = onFabCamera,
         todaySteps = steps,
+        nextTime = nextTime,
+        remainText = remainText,
     )
 }

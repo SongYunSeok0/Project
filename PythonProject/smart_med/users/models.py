@@ -82,7 +82,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[MinValueValidator(0)]
     )
     preferences = models.JSONField(default=dict, blank=True)
-    prot_phone = models.CharField(max_length=20, blank=True, null=True)
+    prot_email = models.CharField(max_length=30, blank=True, null=True)
     relation = models.CharField(max_length=30, blank=True, null=True)
 
     # 자동 기록

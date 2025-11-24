@@ -42,7 +42,7 @@ class RegiHistory(models.Model):
     )
 
     class Meta:
-        db_table = "regiHistory"
+        db_table = "regihistory"
         verbose_name = "등록 이력"
         verbose_name_plural = "등록 이력 목록"
 

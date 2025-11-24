@@ -11,7 +11,7 @@ data class UserDto(
     val height: Double?,
     val weight: Double?,
     val preferences: Map<String, Any>?,
-    val prot_phone: String?,
+    val prot_email: String?,
     val relation: String?,
     val is_active: Boolean,
     val is_staff: Boolean,

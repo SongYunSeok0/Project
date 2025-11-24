@@ -41,13 +41,8 @@ class NewsViewModel @Inject constructor(
             .cachedIn(viewModelScope)
 
     // Room에서 flow로 가져온 즐겨찾기 리스트
-    val favorites: StateFlow<List<Favorite>> =
-        favoriteRepository.getFavorites()
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5000),
-                emptyList()
-            )
+    val favorites = favoriteRepository.getFavorites()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     //  즐겨찾기 관련 함수
 

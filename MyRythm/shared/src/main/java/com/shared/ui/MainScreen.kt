@@ -39,7 +39,9 @@ fun MainScreen(
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
     onFabCamera: () -> Unit = {},
-    todaySteps: Int = 0
+    todaySteps: Int = 0,
+    nextTime: String? = null,
+    remainText: String? = null,
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -140,12 +142,13 @@ fun MainScreen(
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "2:30", // 현재 시간 하드코딩, 추후 데이터 입력 필요
+                    nextTime ?: "--:--",
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
                 Text(
-                    "10분 $remainderMessage",    // 현재 시간 하드코딩, 추후 데이터 입력 필요
+                    remainText ?: "복용 일정 없음",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
