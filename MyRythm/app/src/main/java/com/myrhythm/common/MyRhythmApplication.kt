@@ -22,15 +22,5 @@ class MyRhythmApplication : Application() {
         // Kakao SDK 초기화
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
 
-        FirebaseMessaging.getInstance().token
-            .addOnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Log.w("FCM", "getToken 실패", task.exception)
-                    return@addOnCompleteListener
-                }
-                val token = task.result
-                Log.i("FCM", "current token = $token")
-                PushManager.fcmToken = token
-            }
     }
 }

@@ -7,7 +7,9 @@ import com.data.mapper.auth.toDomainTokens
 import com.data.mapper.auth.toDto
 import com.data.mapper.user.toDto
 import com.data.network.api.UserApi
+import com.data.network.dto.user.SendCodeRequest
 import com.data.network.dto.user.UserLoginRequest
+import com.data.network.dto.user.VerifyCodeRequest
 import com.domain.model.AuthTokens
 import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
@@ -24,6 +26,17 @@ class AuthRepositoryImpl @Inject constructor(
     private val tokenStore: TokenStore,
     private val io: CoroutineDispatcher = Dispatchers.IO
 ) : AuthRepository {
+
+    override suspend fun sendEmailCode(email: String): Boolean {
+        val res = api.sendEmailCode(SendCodeRequest(email))
+        return res.isSuccessful
+    }
+
+    override suspend fun verifyEmailCode(email: String, code: String): Boolean {
+        val res = api.verifyEmailCode(VerifyCodeRequest(email, code))
+        return res.isSuccessful
+    }
+
 
     override suspend fun login(id: String, pw: String): Result<AuthTokens> =
         withContext(io) {

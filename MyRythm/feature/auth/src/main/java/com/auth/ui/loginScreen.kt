@@ -111,7 +111,7 @@ fun LoginScreen(
 
                     AuthInputField(
                         value = form.email,
-                        onValueChange = { viewModel.updateEmail(it) },
+                        onValueChange = { viewModel.updateLoginEmail(it) },
                         hint = idText,
                         modifier = Modifier.fillMaxWidth(),
                         imeAction = ImeAction.Next
@@ -121,7 +121,7 @@ fun LoginScreen(
 
                     AuthInputField(
                         value = form.password,
-                        onValueChange = { viewModel.updatePW(it) },
+                        onValueChange = { viewModel.updateLoginPW(it) },
                         hint = passwordText,
                         isPassword = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -170,7 +170,7 @@ fun LoginScreen(
                         onClick = {
                             // 디버그 및 테스트 용도: 유효성 검사 없이 즉시 메인 화면으로 이동
                             onLogin(form.email, form.password)
-                            viewModel.emitInfo(testLoginMessage)
+//                            viewModel.emitInfo(testLoginMessage)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
                         modifier = Modifier
