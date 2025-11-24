@@ -6,22 +6,18 @@ import androidx.room.*
     tableName = "plan",
     foreignKeys = [
         ForeignKey(
-            entity = PrescriptionEntity::class,
-            parentColumns = ["prescriptionId"],
-            childColumns = ["prescriptionId"],
+            entity = RegiHistoryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["regiHistoryId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["prescriptionId"])]
+    indices = [Index(value = ["regiHistoryId"])]
 )
 data class PlanEntity(
     @PrimaryKey(autoGenerate = false) // 🔥 서버 ID 사용
     val id: Long,
-
-    val userId: Long, // 🔥 Long 으로 변경
-
-    val prescriptionId: Long?, // 🔥 nullable
-
+    val regiHistoryId: Long?, // 🔥 nullable
     val medName: String,
     val takenAt: Long?,
     val mealTime: String?,

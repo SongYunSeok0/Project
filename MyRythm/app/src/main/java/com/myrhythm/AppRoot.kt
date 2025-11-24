@@ -126,7 +126,7 @@ fun AppRoot() {
         Box(Modifier.padding(inner)) {
             NavHost(navController = nav, startDestination = AuthGraph) {
                 authNavGraph(nav)
-                mainNavGraph(nav, userId)
+                mainNavGraph(nav,userId )
                 mapNavGraph()
                 newsNavGraph(nav,userId)
                 schedulerNavGraph(nav, userId) // userId 전달

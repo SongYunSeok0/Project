@@ -12,7 +12,7 @@ interface PlanApi {
     suspend fun getPlans(): List<PlanResponse>
 
     @POST("plan/")
-    suspend fun createPlan(@Body body: PlanCreateRequest)
+    suspend fun createPlan(@Body body: PlanCreateRequest): PlanResponse
 
     @PATCH("plan/{id}/")
     suspend fun updatePlan(@Path("id") planId: Long, @Body body: PlanUpdateRequest)

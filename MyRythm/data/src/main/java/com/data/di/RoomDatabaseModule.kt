@@ -30,5 +30,5 @@ object RoomDatabaseModule {
     @Provides fun provideFavoriteDao(db: AppRoomDatabase): FavoriteDao = db.favoriteDao()
     @Provides fun providePlanDao(db: AppRoomDatabase): PlanDao = db.planDao()
     @Provides fun provideInquiryDao(db: AppRoomDatabase): InquiryDao = db.inquiryDao()
-    @Provides fun providePrescriptionDao(db: AppRoomDatabase): PrescriptionDao = db.prescriptionDao()
+    @Provides fun providePrescriptionDao(db: AppRoomDatabase): RegiHistoryDao = db.regiHistoryDao()
 }

@@ -25,7 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.scheduler.viewmodel.PlanViewModel
+import com.domain.model.Plan
+import com.scheduler.viewmodel.RegiViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,12 +48,12 @@ private fun presetTimes(n: Int): List<String> = when (n) {
 @Composable
 fun RegiScreen(
     userId: Long,
-    prescriptionId: Long,
+    regiHistoryId: Long,
     modifier: Modifier = Modifier,
     drugNames: List<String> = emptyList(),
     times: Int? = null,
     days: Int? = null,
-    viewModel: PlanViewModel = hiltViewModel(),
+    viewModel: RegiViewModel = hiltViewModel(),
     onCompleted: () -> Unit = {},
 ) {
     val addiconDescription = stringResource(R.string.addicon_description)
@@ -87,11 +88,9 @@ fun RegiScreen(
 
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
 
-    // 질병/영양제 이름
     var disease by remember { mutableStateOf("") }
     var supplement by remember { mutableStateOf("") }
 
-    // 약 이름 리스트
     val meds = remember {
         mutableStateListOf<String>().apply {
             if (drugNames.isNotEmpty()) addAll(drugNames)
@@ -99,18 +98,12 @@ fun RegiScreen(
         }
     }
 
-    // 하루 복용 횟수
     var dose by remember { mutableIntStateOf(3) }
-
-    // 식사 관계 (String)
     var mealRelation by remember { mutableStateOf("after") } // before / after / none
-
     var memo by remember { mutableStateOf("") }
 
-    // 시간 리스트
     val intakeTimes = remember { mutableStateListOf<String>() }
 
-    // 날짜 포맷터
     val dateFmt = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val dateTimeFmt = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
 
@@ -120,7 +113,6 @@ fun RegiScreen(
     var startDay by remember { mutableStateOf("") }
     var endDay by remember { mutableStateOf("") }
 
-    // 총 일수 계산
     val totalDaysLabel by remember(startDay, endDay) {
         mutableStateOf(
             run {
@@ -135,7 +127,6 @@ fun RegiScreen(
         )
     }
 
-    // 달력 다이얼로그
     var showStart by remember { mutableStateOf(false) }
     var showEnd by remember { mutableStateOf(false) }
 
@@ -256,12 +247,22 @@ fun RegiScreen(
                 Tab(
                     selected = tab == RegiTab.DISEASE,
                     onClick = { tab = RegiTab.DISEASE },
-                    text = { Text(diseaseText, color = if (tab == RegiTab.DISEASE) MaterialTheme.colorScheme.primary else SectionTitle) }
+                    text = {
+                        Text(
+                            diseaseText,
+                            color = if (tab == RegiTab.DISEASE) MaterialTheme.colorScheme.primary else SectionTitle
+                        )
+                    }
                 )
                 Tab(
                     selected = tab == RegiTab.SUPPLEMENT,
                     onClick = { tab = RegiTab.SUPPLEMENT },
-                    text = { Text(supplementText, color = if (tab == RegiTab.SUPPLEMENT) MaterialTheme.colorScheme.primary else SectionTitle) }
+                    text = {
+                        Text(
+                            supplementText,
+                            color = if (tab == RegiTab.SUPPLEMENT) MaterialTheme.colorScheme.primary else SectionTitle
+                        )
+                    }
                 )
             }
 
@@ -311,11 +312,18 @@ fun RegiScreen(
                             trailingIcon = {
                                 if (isLast) {
                                     IconButton(onClick = { meds.add("") }) {
-                                        Icon(Icons.Filled.Add, contentDescription = addiconDescription, tint = MaterialTheme.colorScheme.primary)
+                                        Icon(
+                                            Icons.Filled.Add,
+                                            contentDescription = addiconDescription,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     }
                                 } else if (meds.size > 1) {
                                     IconButton(onClick = { meds.removeAt(idx) }) {
-                                        Icon(Icons.Filled.Close, contentDescription = removeiconDescription)
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = removeiconDescription
+                                        )
                                     }
                                 }
                             },
@@ -331,13 +339,21 @@ fun RegiScreen(
                 Text(doseDailyCount, color = SectionTitle)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { dose = (dose - 1).coerceAtLeast(1) }) {
-                        Icon(Icons.Filled.Remove, contentDescription = minusiconDescription, tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Filled.Remove,
+                            contentDescription = minusiconDescription,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                     Spacer(Modifier.weight(1f))
                     Text("${dose}$countPerDay", color = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.weight(1f))
                     IconButton(onClick = { dose = (dose + 1).coerceAtMost(6) }) {
-                        Icon(Icons.Filled.Add, contentDescription = plusiconDescription, tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = plusiconDescription,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
@@ -371,17 +387,23 @@ fun RegiScreen(
                     Text(mealRelationText, color = SectionTitle)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                        SegChip(mealRelationBefore, selected = mealRelation == "before", modifier = Modifier.weight(1f)) {
-                            mealRelation = "before"
-                        }
+                        SegChip(
+                            mealRelationBefore,
+                            selected = mealRelation == "before",
+                            modifier = Modifier.weight(1f)
+                        ) { mealRelation = "before" }
 
-                        SegChip(mealRelationAfter, selected = mealRelation == "after", modifier = Modifier.weight(1f)) {
-                            mealRelation = "after"
-                        }
+                        SegChip(
+                            mealRelationAfter,
+                            selected = mealRelation == "after",
+                            modifier = Modifier.weight(1f)
+                        ) { mealRelation = "after" }
 
-                        SegChip(mealRelationIrrelevant, selected = mealRelation == "none", modifier = Modifier.weight(1f)) {
-                            mealRelation = "none"
-                        }
+                        SegChip(
+                            mealRelationIrrelevant,
+                            selected = mealRelation == "none",
+                            modifier = Modifier.weight(1f)
+                        ) { mealRelation = "none" }
                     }
                 }
             }
@@ -405,56 +427,73 @@ fun RegiScreen(
             // 등록 버튼
             Button(
                 onClick = {
-                    if (userId <= 0L) {
-                        onCompleted()
-                        return@Button
+                    // 1) label / regiType / issuedDate
+                    val regiType = if (tab == RegiTab.DISEASE) "disease" else "supplement"
+                    val label = when (tab) {
+                        RegiTab.DISEASE -> disease.trim().ifBlank { null }
+                        RegiTab.SUPPLEMENT -> supplement.trim().ifBlank { null }
                     }
+                    val issued = startDay.ifBlank { todayStr() }
 
-                    // 날짜 범위 계산
+                    // 2) 날짜 범위
                     val startMs = strToMillis(startDay) ?: System.currentTimeMillis()
                     val endMs = strToMillis(endDay) ?: startMs
-
                     val dayList = mutableListOf<Long>()
-                    var cur = startMs
                     val oneDay = 1000L * 60 * 60 * 24
+                    var cur = startMs
                     while (cur <= endMs) {
                         dayList.add(cur)
                         cur += oneDay
                     }
 
-                    // 사용할 약 목록
-                    val cleanMeds =
-                        meds.map { it.trim() }.filter { it.isNotEmpty() }
-                            .ifEmpty { listOf("약") }  // fallback
+                    // 3) 약 / 시간 정리
+                    // 약 이름 리스트
+                    val Meds =
+                        if (tab == RegiTab.SUPPLEMENT) {
+                            // 영양제 탭이면 supplement 1개만
+                            listOf(supplement.trim()).filter { it.isNotEmpty() }
+                        } else {
+                            // 질병 탭이면 입력된 약 리스트
+                            meds.map { it.trim() }.filter { it.isNotEmpty() }
+                                .ifEmpty { listOf("약") } // fallback
+                        }
 
-                    // 복용 시간 리스트
-                    val cleanTimes =
+
+                    val Times =
                         intakeTimes.map { it.trim() }.filter { it.isNotEmpty() }
 
-                    // 날짜/시간/약 조합별 Plan 생성
+                    // 4) Plan 리스트 생성
+                    val planList = mutableListOf<Plan>()
+
                     dayList.forEach { dayMs ->
                         val dayStr = dateFmt.format(Date(dayMs))
-
-                        cleanTimes.forEach { t ->
+                        Times.forEach { t ->
                             val takenAtMillis = runCatching {
                                 dateTimeFmt.parse("$dayStr $t")?.time
                             }.getOrNull() ?: dayMs
 
-                            cleanMeds.forEach { medName ->
-                                viewModel.createPlan(
-                                    userId = userId,
-                                    prescriptionId = null,
+                            Meds.forEach { medName ->
+                                planList += Plan(
+                                    id = 0L,                 // 서버에서 실제 id 할당
+                                    regiHistoryId = null,    // 서버 쪽에 regiHistoryId 따로 전달
                                     medName = medName,
                                     takenAt = takenAtMillis,
-                                    mealTime = mealRelation,          // before / after / none
+                                    mealTime = mealRelation, // before / after / none
                                     note = memo.takeIf { it.isNotBlank() },
-                                    taken = null                      // 실제 복용 시간(선택값)
+                                    taken = null
                                 )
                             }
                         }
                     }
 
-                    onCompleted()
+                    // 5) ViewModel에 생성 요청 (RegiHistory + Plans)
+                    viewModel.createRegiAndPlans(
+                        regiType = regiType,
+                        label = label,
+                        issuedDate = issued,
+                        plans = planList,
+                        onDone = onCompleted
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -539,16 +578,4 @@ private fun SegChip(
     ) {
         Text(text, color = if (selected) Color.White else Color(0xFF6F8BA4), fontSize = 14.sp)
     }
-}
-
-@Preview(widthDp = 392, heightDp = 1342, showBackground = true, backgroundColor = 0xFFFFFFFF)
-@Composable
-private fun RegiScreenPreview() {
-    RegiScreen(
-        userId = 1L,
-        prescriptionId = 101L,
-        drugNames = listOf("아세트아미노펜정", "세파클러캡슐"),
-        times = 3,
-        days = 7
-    )
 }

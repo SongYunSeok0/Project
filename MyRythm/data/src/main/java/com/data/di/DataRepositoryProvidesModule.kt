@@ -35,4 +35,5 @@ object DataRepositoryProvidesModule {
     @Provides
     fun provideInquiryRepository(dao: InquiryDao): InquiryRepository =
         InquiryRepositoryImpl(dao)
+
 }
