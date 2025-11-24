@@ -60,15 +60,17 @@
         <!-- 카카오 로그인 콜백용 Activity (SDK 제공) -->
         <activity
             android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
-            android:exported="true">
-            <intent-filter>
+            android:exported="true"
+            android:launchMode="singleTask">
+
+            <intent-filter android:label="kakao">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
                     android:host="oauth"
-                    android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" />
+                    android:scheme="kakaocc55afc291b3623100865916610483b7" />
             </intent-filter>
         </activity>
     </application>

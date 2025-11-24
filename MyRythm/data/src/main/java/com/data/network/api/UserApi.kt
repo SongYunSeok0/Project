@@ -24,7 +24,7 @@ interface UserApi {
     @GET("users/{uuid}")
     suspend fun getUser(@Path("uuid") uuid: String): UserDto
 
-    @POST("users/social-login")
+    @POST("users/social-login/")
     suspend fun socialLogin(@Body request: SocialLoginRequest): Response<SocialLoginResponse>
 
     @POST("users/signup/")

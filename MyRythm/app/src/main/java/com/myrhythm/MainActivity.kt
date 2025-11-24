@@ -11,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.google.firebase.messaging.FirebaseMessaging
 import com.data.core.push.FcmTokenStore
 import com.data.core.push.PushManager
+import com.kakao.sdk.common.util.Utility
 import com.myrhythm.ui.theme.MyRhythmTheme
 import com.myrythm.AppRoot
 import dagger.hilt.android.AndroidEntryPoint

@@ -123,35 +123,39 @@ fun SignupScreen(
             AuthLogoIcon()
             Spacer(Modifier.height(24.dp))
 
-            //이메일
-            AuthInputField(
-                value = email,
-                onValueChange = { email = it },
-                hint = emailText,
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Email
-            )
+            // 소셜로그인 정보창
+            if (provider == null) {
 
-            Spacer(Modifier.height(16.dp))
+                //이메일
+                AuthInputField(
+                    value = email,
+                    onValueChange = { email = it },
+                    hint = emailText,
+                    modifier = Modifier.fillMaxWidth(),
+                    imeAction = ImeAction.Next,
+                    keyboardType = KeyboardType.Email
+                )
 
-            AuthInputField(
-                value = username,
-                onValueChange = { username = it },
-                hint = nameText,
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next
-            )
+                Spacer(Modifier.height(16.dp))
 
-            AuthInputField(
-                value = password,
-                onValueChange = { password = it },
-                hint = passwordText,
-                isPassword = true,
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Password
-            )
+                AuthInputField(
+                    value = username,
+                    onValueChange = { username = it },
+                    hint = nameText,
+                    modifier = Modifier.fillMaxWidth(),
+                    imeAction = ImeAction.Next
+                )
+
+                AuthInputField(
+                    value = password,
+                    onValueChange = { password = it },
+                    hint = passwordText,
+                    isPassword = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    imeAction = ImeAction.Next,
+                    keyboardType = KeyboardType.Password
+                )
+            }
 
             Spacer(Modifier.height(24.dp))
 
@@ -371,10 +375,11 @@ fun SignupScreen(
                         return@AuthPrimaryButton
                     }
 
+                    // 1124수정
                     val req = SignupRequest(
-                        email = email,
-                        username = username,
-                        password = password,
+                        email = null,
+                        username = null,
+                        password = null,
                         phone = phone,
                         birthDate = birthDate,
                         gender = gender,
