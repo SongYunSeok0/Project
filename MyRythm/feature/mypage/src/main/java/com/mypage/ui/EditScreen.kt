@@ -38,11 +38,19 @@ fun EditScreen(
     var age by remember(profile) { mutableStateOf(profile?.age?.toString() ?: "") }
     var phone by remember(profile) { mutableStateOf(profile?.phone?.toString() ?: "") }
     var prot_phone by remember(profile) { mutableStateOf(profile?.prot_phone?.toString() ?: "") }
-    var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
 
+    // 1124 수정
+    //var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
+    var email by remember { mutableStateOf("") }
+    LaunchedEffect(profile) {
+        profile?.let {
+            email = it.email ?: ""
+        }
+    }
     //문자열 리소스화
     val editprofilephoto = stringResource(R.string.editprofilephoto)
     val editText = stringResource(R.string.edit)
+    val emailText = stringResource(R.string.email)
     val nameText = stringResource(R.string.name)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
@@ -55,7 +63,8 @@ fun EditScreen(
     val context = LocalContext.current
 
     // 저장 이벤트 처리
-    LaunchedEffect(Unit) {
+    // 1124 Unit -> true 수정
+    LaunchedEffect(true) {
         viewModel.events.collect { event ->
             when (event) {
                 EditProfileEvent.SaveSuccess -> {
@@ -86,7 +95,7 @@ fun EditScreen(
             EditableField(heightText, height) { height = it }
             EditableField(weightText, weight) { weight = it }
             EditableField(ageText, age) { age = it }
-            EditableField("이메일", email) { email = it }
+            EditableField(emailText, email) { email = it }
             EditableField(phoneNumberPlaceholderText, phone) { phone = it }
             EditableField("보호자 휴대폰 번호(01012345678)", prot_phone) { prot_phone = it }
 

@@ -62,6 +62,36 @@ class LoginView(APIView):
             status=status.HTTP_200_OK,
         )
 
+class SocialLoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        provider = request.data.get("provider")
+        social_id = request.data.get("socialId")
+
+        # 신규회원 여부 확인
+        try:
+            user = User.objects.get(provider=provider, social_id=social_id)
+
+            # JWT 발급
+            # 구글은 아이디 토큰 jwt 안에 정도가 들어있어서 토큰하나적어두면 알아서받아옴
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "needAdditionalInfo": False
+            }, status=200)
+
+        except User.DoesNotExist:
+            # 신규유저는 추가 정보 필요(프로바이더+소셜아이디)
+            return Response({
+                "needAdditionalInfo": True,
+                "provider": provider,
+                "socialId": social_id
+            }, status=200)
+
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
