@@ -1,11 +1,10 @@
 package com.data.repository
 
 import com.data.db.dao.StepDao
-import com.data.db.entity.DailyStepEntity
 import com.data.db.entity.StepEntity
+import com.data.db.entity.DailyStepEntity
 import com.data.network.api.StepApi
 import com.data.network.dto.step.DailyStepRequest
-import com.data.network.dto.step.StepCountRequest
 import com.domain.model.DailyStep
 import com.domain.repository.StepRepository
 import javax.inject.Inject
@@ -15,51 +14,55 @@ class StepRepositoryImpl @Inject constructor(
     private val api: StepApi
 ) : StepRepository {
 
-    override suspend fun saveSnapshot(steps: Int, collectedAt: Long) {
-        // 로컬 저장
+    // 🔥 실시간 steps 테이블 저장 (collectedAt 은 여기서 현재 시각 사용)
+    override suspend fun insertStep(steps: Int) {
         dao.insert(
             StepEntity(
-                steps = steps,
-                collectedAt = collectedAt
+                steps = steps
+            )
+        )
+    }
+
+    // 🔥 자정 이후 raw steps 정리용
+    override suspend fun clearSteps() {
+        dao.clearSteps()
+    }
+
+    // 🔥 daily_steps 저장 + 서버 업로드 (요약 데이터용)
+    override suspend fun saveDailyStep(daily: DailyStep) {
+        dao.insertDailyStep(
+            DailyStepEntity(
+                date = daily.date,
+                steps = daily.steps
             )
         )
 
-        // 서버 스냅샷 업로드 (실패해도 앱 죽지 않게)
         runCatching {
-            api.uploadStepCount(
-                StepCountRequest(
-                    steps = steps,
-                    collected_at = collectedAt
+            api.uploadDailyStep(
+                DailyStepRequest(
+                    date = daily.date,
+                    steps = daily.steps
                 )
             )
         }
     }
 
-    override suspend fun saveDailyStep(date: String, steps: Int) {
-        // 로컬 저장 (하루당 1개 덮어쓰기)
-        dao.insertDailyStep(
-            DailyStepEntity(
-                date = date,
-                steps = steps
-            )
-        )
-
-        // 서버 업로드 (실패해도 무시)
+    override suspend fun uploadDailyStep(daily: DailyStep) {
         runCatching {
             api.uploadDailyStep(
                 DailyStepRequest(
-                    date = date,
-                    steps = steps
+                    date = daily.date,
+                    steps = daily.steps
                 )
             )
         }
     }
 
     override suspend fun getWeeklySteps(): List<DailyStep> {
-        return dao.getLast7Days().map { entity ->
+        return dao.getLast7Days().map {
             DailyStep(
-                date = entity.date,
-                steps = entity.steps
+                date = it.date,
+                steps = it.steps
             )
         }
     }
