@@ -45,7 +45,7 @@ fun MainFeatureCard(
     title: String,
     bg: Color,
     icon: Int,
-    onClick: () -> Unit,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     subtitle: String? = null
 ) {
