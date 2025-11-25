@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -51,7 +50,6 @@ import com.shared.ui.theme.InquiryCardQuestion
 import com.shared.ui.theme.LoginTertiary
 import com.shared.ui.theme.OnlyColorTheme
 import com.shared.ui.theme.Primary
-import com.shared.ui.theme.Secondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +68,6 @@ fun ChatbotScreen(
     val botIconText = stringResource(R.string.chatbot_icon)
     val chatbotProfile = stringResource(R.string.chatbotprofile)
     val returnToOptionText = stringResource(R.string.return_to_option)
-    val sendEngText = stringResource(R.string.send)
     val errorText = stringResource(R.string.error)
     val exampleText = stringResource(R.string.example)
     val sideEffectReportedText = stringResource(R.string.sideeffectreported)
@@ -151,8 +148,7 @@ fun ChatbotScreen(
                             ),
                             selected = true,
                             onClick = {
-                                // 메시지 전체 초기화하고 싶으면 ViewModel에 clearMessages() 추가해서 같이 호출
-                                viewModel.onQuestionChange("")
+                                viewModel.clearAllMessages()
                             }
                         )
                     }
@@ -279,8 +275,6 @@ fun ChatbotScreen(
 
                     Spacer(Modifier.height(80.dp))
                 }
-
-                // 하단 입력창
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -295,43 +289,35 @@ fun ChatbotScreen(
                         value = state.input,
                         onValueChange = { viewModel.onQuestionChange(it) },
                         hint = contentMessage,
-                        modifier = Modifier.weight(1f),
                         imeAction = ImeAction.Send,
+                        shape = RoundedCornerShape(34.dp),
+                        modifier = Modifier.weight(1f),
                         keyboardActions = KeyboardActions(
                             onSend = {
-                                if (state.input.isNotBlank() && !state.loading) {
-                                    viewModel.send()
-                                }
+                                if (state.input.isNotBlank() && !state.loading) viewModel.send()
                             }
-                        )
-                    )
-
-                    // 전송 버튼
-                    Box(
-                        modifier = Modifier
-                            .width(68.dp)
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (state.loading || state.input.isBlank()) {
-                                    Secondary
-                                } else {
-                                    Primary
-                                }
-                            )
-                            .clickable(
-                                enabled = !state.loading && state.input.isNotBlank()
+                        ),
+                        trailingContent = {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(Primary)
+                                    .clickable(
+                                        enabled = !state.loading && state.input.isNotBlank()
+                                    ) {
+                                        viewModel.send()
+                                    },
+                                contentAlignment = Alignment.Center
                             ) {
-                                viewModel.send()
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.upload),
-                            contentDescription = sendEngText,
-                            modifier = Modifier.height(20.dp)
-                        )
-                    }
+                                Image(
+                                    painter = painterResource(id = R.drawable.arrow_up),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }

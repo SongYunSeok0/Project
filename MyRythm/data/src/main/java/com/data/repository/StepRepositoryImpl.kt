@@ -36,15 +36,6 @@ class StepRepositoryImpl @Inject constructor(
                 steps = daily.steps
             )
         )
-
-        runCatching {
-            api.uploadDailyStep(
-                DailyStepRequest(
-                    date = daily.date,
-                    steps = daily.steps
-                )
-            )
-        }
     }
 
     override suspend fun uploadDailyStep(daily: DailyStep) {

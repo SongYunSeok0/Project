@@ -1,5 +1,6 @@
 package com.myrhythm.health
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.DailyStep
@@ -27,53 +28,53 @@ class StepViewModel @Inject constructor(
     val todaySteps = _todaySteps.asStateFlow()
 
     private var autoJob: Job? = null
+    private var autoStarted = false
 
-    // 🔹 자정 체크용: 마지막으로 본 날짜
     private var lastDate: String = LocalDate.now().toString()
-
-    // 🔹 “어제 하루 총 걸음수”를 기억하기 위한 값
-    //   (루프 돌 때마다 최신 값으로 덮어씀)
     private var lastStepsOfDay: Int = 0
+
+    // 하루 업로드 잠금
+    private var dailyUploaded = false
+
 
     fun checkPermission() = viewModelScope.launch {
         _permissionGranted.value = hc.isGranted()
     }
 
-    fun loadTodaySteps() = viewModelScope.launch {
-        if (!_permissionGranted.value) return@launch
-        _todaySteps.value = hc.getTodaySteps().toInt()
-    }
 
-    /**
-     * 실시간 업데이트 (기본 1초마다)
-     * - todaySteps UI 갱신
-     * - steps 테이블 insert(시간까지 저장)
-     * - 날짜 변경 감지 → 어제 총 걸음수 daily_steps + 서버 업로드
-     */
-    fun startAutoUpdate(intervalMillis: Long = 1_000L) {
-        if (autoJob != null) return    // 이미 돌고 있으면 다시 시작 X
+    fun startAutoUpdateOnce(intervalMillis: Long = 1_000L) {
+        if (autoStarted) return
+        autoStarted = true
+        if (autoJob != null) return
 
         autoJob = viewModelScope.launch {
             while (isActive) {
                 if (_permissionGranted.value) {
 
-                    // 1) Health Connect 에서 오늘 걸음수 읽기
                     val v = hc.getTodaySteps().toInt()
                     _todaySteps.value = v
 
                     val nowDate = LocalDate.now().toString()
-                    // 2) steps 테이블에 실시간 저장
-                    //    (그래프용, 히스토리용)
-                    repo.insertStep(
-                        steps = v,
+
+                    Log.d(
+                        "StepVM",
+                        "today=$v, last=$lastStepsOfDay, lastDate=$lastDate, dailyUploaded=$dailyUploaded"
                     )
 
-                    // 3) 자정 넘어감 감지
-                    if (nowDate != lastDate) {
-                        val yesterday = lastDate
-                        val totalYesterday = lastStepsOfDay  // 어제 마지막 값
+                    // 그래프/히스토리용 raw steps 저장
+                    repo.insertStep(steps = v)
 
-                        // daily_steps 저장
+
+                    // 자정 넘어가는 순간 (하루 1회만)
+                    if (nowDate != lastDate && !dailyUploaded) {
+
+                        val yesterday = lastDate
+                        val totalYesterday = lastStepsOfDay
+
+                        Log.d("StepVM", "==== 자정 감지 ====")
+                        Log.d("StepVM", "기록: $yesterday = $totalYesterday steps")
+
+                        // 로컬 DB 저장
                         repo.saveDailyStep(
                             DailyStep(
                                 date = yesterday,
@@ -89,14 +90,22 @@ class StepViewModel @Inject constructor(
                             )
                         )
 
-                        // 원하면 히스토리 테이블 비우기
+                        // 히스토리 초기화
                         repo.clearSteps()
+
+                        // 하루 업로드 잠금
+                        dailyUploaded = true
 
                         // 기준 날짜 갱신
                         lastDate = nowDate
                     }
 
-                    // 4) “해당 날짜에서 현재까지 총 걸음수”를 계속 기억
+
+                    // 날짜가 바뀌면 잠금 해제
+                    if (nowDate != lastDate) {
+                        dailyUploaded = false
+                    }
+
                     lastStepsOfDay = v
                 }
 
@@ -105,7 +114,9 @@ class StepViewModel @Inject constructor(
         }
     }
 
+
     fun requestPermissions() = hc.permissions
+
 
     override fun onCleared() {
         super.onCleared()
