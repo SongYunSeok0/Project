@@ -24,9 +24,9 @@ class FavoriteRepositoryImpl @Inject constructor(
             dao.insertFavorite(favorite.toEntity())
         }
 
-    override suspend fun deleteFavorite(keyword: String) =
+    override suspend fun deleteFavorite(keyword: String,userId: String) =
         withContext(io) {
-            dao.deleteFavorite(keyword)
+            dao.deleteFavorite(keyword,userId)
         }
 
     override suspend fun isFavorite(keyword: String): Boolean =

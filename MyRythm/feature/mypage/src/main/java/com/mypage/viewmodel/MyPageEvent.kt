@@ -8,4 +8,9 @@ sealed interface MyPageEvent {
     data class InquirySubmitFailed(val message: String) : MyPageEvent
 
     data object LoadFailed : MyPageEvent
+
+    data object WithdrawalSuccess : MyPageEvent
+
+    data object WithdrawalFailed : MyPageEvent
+
 }

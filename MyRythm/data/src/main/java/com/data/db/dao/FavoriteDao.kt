@@ -13,10 +13,10 @@ interface FavoriteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavorite(entity: FavoriteEntity)
 
-    @Query("DELETE FROM favorites WHERE keyword = :keyword")
-    suspend fun deleteFavorite(keyword: String)
+    @Query("DELETE FROM favorites WHERE keyword = :keyword AND userId = :userId")
+    suspend fun deleteFavorite(keyword: String,userId: String)
 
-    @Query("SELECT * FROM favorites ORDER BY lastUsed DESC")
+    @Query("SELECT * FROM favorites WHERE userId = userId ORDER BY lastUsed DESC")
     fun getFavorites(): Flow<List<FavoriteEntity>>
 
     @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE keyword = :keyword)")

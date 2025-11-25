@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import com.myrhythm.health.StepViewModel
+import com.myrhythm.viewmodel.MainViewModel
 import com.shared.ui.MainScreen
 
 @Composable
@@ -21,9 +22,14 @@ fun StepViewModelRoute(
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
-    vm: StepViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val stepViewModel: StepViewModel = hiltViewModel()
+    val mainViewModel: MainViewModel = hiltViewModel()
+
+    val steps by stepViewModel.steps.collectAsStateWithLifecycle()
+    val nextTime by mainViewModel.nextTime.collectAsStateWithLifecycle()
+    val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         val status = HealthConnectClient.getSdkStatus(context)
@@ -47,26 +53,26 @@ fun StepViewModelRoute(
     val permissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        if (granted.containsAll(vm.requestPermissions())) {
-            vm.checkPermission()
+        if (granted.containsAll(stepViewModel.requestPermissions())) {
+            stepViewModel.checkPermission()
         } else {
             Toast.makeText(context, "걸음수 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
         }
     }
 
-    val granted by vm.permissionGranted.collectAsStateWithLifecycle()
-    val todaySteps by vm.todaySteps.collectAsStateWithLifecycle()
+    val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
+    val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        vm.checkPermission()
+        stepViewModel.checkPermission()
     }
 
     // 🔥 중복 실행 방지 버전
     LaunchedEffect(granted) {
         if (!granted) {
-            permissionLauncher.launch(vm.requestPermissions())
+            permissionLauncher.launch(stepViewModel.requestPermissions())
         } else {
-            vm.startAutoUpdateOnce(intervalMillis = 5_000L)
+            stepViewModel.startAutoUpdateOnce(intervalMillis = 5_000L)
         }
     }
 
@@ -76,6 +82,8 @@ fun StepViewModelRoute(
         onOpenHeart = onOpenHeart,
         onOpenMap = onOpenMap,
         onOpenNews = onOpenNews,
-        todaySteps = todaySteps
+        todaySteps = todaySteps,
+        nextTime = nextTime,
+        remainText = remainText,
     )
 }

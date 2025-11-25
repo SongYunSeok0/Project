@@ -50,7 +50,7 @@ class EditProfileViewModel @Inject constructor(
         ageText: String,
         gender: String? = null,
         phone: String?,
-        prot_phone: String?,
+        prot_email: String?,
         email: String,
     ) = viewModelScope.launch {
 
@@ -67,7 +67,7 @@ class EditProfileViewModel @Inject constructor(
             birth_date = profile.value?.birth_date,
             gender = gender,
             phone = phone,
-            prot_phone = prot_phone,
+            prot_email = prot_email,
             email = email,
         )
 

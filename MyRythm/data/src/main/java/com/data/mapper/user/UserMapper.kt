@@ -26,7 +26,7 @@ fun UserDto.asEntity(): UserEntity = UserEntity(
     height = height,
     weight = weight,
     preferences = mapAdapter.toJson(preferences ?: emptyMap()),
-    protPhone = prot_phone,
+    protPhone = prot_email,
     relation = relation,
     isActive = is_active,
     isStaff = is_staff,
@@ -75,7 +75,7 @@ fun UserDto.toProfile(): UserProfile {
         birth_date = birth_date,
         gender = gender,
         phone = phone,
-        prot_phone = prot_phone,
+        prot_email = prot_email,
         email = email,
     )
 }
@@ -88,7 +88,7 @@ fun UserProfile.toDto(): UserUpdateDto {
         gender = gender,
         birth_date =birth_date,
         phone = phone,
-        prot_phone = prot_phone,
+        prot_email = prot_email,
         email = email?: "",
     )
 }

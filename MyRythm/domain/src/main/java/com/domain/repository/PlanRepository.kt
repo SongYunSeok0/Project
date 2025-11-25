@@ -13,7 +13,7 @@ interface PlanRepository {
         mealTime: String?,
         note: String?,
         taken: Long?
-        )
+    )
 
     suspend fun update(userId: Long, plan: Plan)
     suspend fun delete(userId: Long, planId: Long)

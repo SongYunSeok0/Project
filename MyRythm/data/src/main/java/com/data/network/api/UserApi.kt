@@ -26,7 +26,7 @@ interface UserApi {
     @GET("users/{uuid}")
     suspend fun getUser(@Path("uuid") uuid: String): UserDto
 
-    @POST("users/social-login")
+    @POST("users/social-login/")
     suspend fun socialLogin(@Body request: SocialLoginRequest): Response<SocialLoginResponse>
 
     @POST("/api/auth/send-code/")
@@ -54,5 +54,8 @@ interface UserApi {
 
     @PATCH("users/me/")
     suspend fun updateProfile(@Body dto: UserUpdateDto): UserDto
+
+    @DELETE("users/withdrawal/")
+    suspend fun deleteAccount(): Response<Unit>
 
 }

@@ -7,8 +7,7 @@ import com.domain.model.Plan
 fun PlanEntity.toDomainLocal(): Plan =
     Plan(
         id = id,
-//        userId = userId,               // Long 그대로
-        regihistoryId = regihistoryId,
+        regiHistoryId = regiHistoryId,
         medName = medName,
         takenAt = takenAt,
         mealTime = mealTime,
@@ -20,8 +19,7 @@ fun PlanEntity.toDomainLocal(): Plan =
 fun Plan.toEntity(): PlanEntity =
     PlanEntity(
         id = id,
-//        userId = userId,               // Domain은 Long, Room도 Long → 그대로!
-        regihistoryId = regihistoryId,
+        regiHistoryId = regiHistoryId,
         medName = medName,
         takenAt = takenAt,
         mealTime = mealTime,

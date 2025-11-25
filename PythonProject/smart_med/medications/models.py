@@ -4,7 +4,7 @@ from django.conf import settings
 
 
 # 등록 이력(기존 Prescription)
-class RegiHistory(models.Model):
+class regihistory(models.Model):
     # 사용자 ID (ForeignKey로 User 테이블과 연결 가능)
 
     user = models.ForeignKey(
@@ -32,7 +32,6 @@ class RegiHistory(models.Model):
         null=True,
         verbose_name="병명"
     )
-
     # 발행 날짜
     issued_date = models.CharField(
         max_length=20,
@@ -40,14 +39,13 @@ class RegiHistory(models.Model):
         null=True,
         verbose_name="발행 날짜"
     )
-
     class Meta:
         db_table = "regihistory"
         verbose_name = "등록 이력"
         verbose_name_plural = "등록 이력 목록"
 
     def __str__(self):
-        return f"RegiHistory #{self.id} (user={self.user})"
+        return f"regihistory #{self.id} (user={self.user})"
 
 
 
@@ -56,7 +54,7 @@ class Plan(models.Model):
     #PK id자동생성
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     regihistory = models.ForeignKey(
-        RegiHistory,
+        regihistory,
         on_delete=models.CASCADE,
         null=True,  # ← 필수!!
         blank=True  # ← 필수!!

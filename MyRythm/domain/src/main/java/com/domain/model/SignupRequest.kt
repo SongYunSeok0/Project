@@ -8,7 +8,5 @@ data class SignupRequest(
     val gender: String,
     val height: Double,
     val weight: Double,
-    val password: String,
-    val provider: String? = null,
-    val socialId: String? = null
+    val password: String
 )

@@ -24,7 +24,7 @@ fun UserDto.toProfile(): UserProfile {
         birth_date = birth_date,
         gender = gender,
         phone = phone,
-        prot_phone = prot_phone,
+        prot_email = prot_email,
         email = email
     )
 }
@@ -36,7 +36,7 @@ fun UserProfile.toDto(): UserUpdateDto {
         gender = gender,
         birth_date = birth_date,
         phone = phone,
-        prot_phone = prot_phone,
+        prot_email = prot_email,
         email = email ?: ""
     )
 }

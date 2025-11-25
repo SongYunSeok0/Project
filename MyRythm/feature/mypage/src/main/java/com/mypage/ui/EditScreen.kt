@@ -37,25 +37,32 @@ fun EditScreen(
     var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
     var age by remember(profile) { mutableStateOf(profile?.age?.toString() ?: "") }
     var phone by remember(profile) { mutableStateOf(profile?.phone?.toString() ?: "") }
-    var prot_phone by remember(profile) { mutableStateOf(profile?.prot_phone?.toString() ?: "") }
-    var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
+    var prot_email by remember(profile) { mutableStateOf(profile?.prot_email?.toString() ?: "") }
 
+    // 1124 수정
+    //var email by remember(profile) { mutableStateOf(profile?.email?.toString() ?: "") }
+    var email by remember { mutableStateOf("") }
+    LaunchedEffect(profile) {
+        profile?.let {
+            email = it.email ?: ""
+        }
+    }
     //문자열 리소스화
     val editprofilephoto = stringResource(R.string.editprofilephoto)
     val editText = stringResource(R.string.edit)
+    val emailText = stringResource(R.string.email)
     val nameText = stringResource(R.string.name)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
     val ageText = stringResource(R.string.age)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
-    val genderText = stringResource(R.string.gender)
-    val bloodTypeText = stringResource(R.string.bloodtype)
     val editDone = stringResource(R.string.edit_done)
 
     val context = LocalContext.current
 
     // 저장 이벤트 처리
-    LaunchedEffect(Unit) {
+    // 1124 Unit -> true 수정
+    LaunchedEffect(true) {
         viewModel.events.collect { event ->
             when (event) {
                 EditProfileEvent.SaveSuccess -> {
@@ -82,13 +89,13 @@ fun EditScreen(
 
         // 🔹 입력 필드
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EditableField(nameText, name) { name = it }
+            ReadonlyField(nameText, name)
             EditableField(heightText, height) { height = it }
             EditableField(weightText, weight) { weight = it }
-            EditableField(ageText, age) { age = it }
-            EditableField("이메일", email) { email = it }
+            ReadonlyField(ageText, age)
+            ReadonlyField(emailText, email)
             EditableField(phoneNumberPlaceholderText, phone) { phone = it }
-            EditableField("보호자 휴대폰 번호(01012345678)", prot_phone) { prot_phone = it }
+            EditableField("보호자 이메일 주소", prot_email) { prot_email = it }
 
 
         }
@@ -110,7 +117,7 @@ fun EditScreen(
                         ageText = age,
                         email = email,
                         phone = phone,
-                        prot_phone = prot_phone,
+                        prot_email = prot_email,
                     )
                 },
             contentAlignment = Alignment.Center
@@ -154,36 +161,14 @@ fun EditableField(label: String, value: String, onValueChange: (String) -> Unit)
 }
 
 @Composable
-fun SelectableButtonGroup(
-    label: String,
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = label, fontSize = 14.sp, color = Color(0xff3b566e))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            options.forEach { option ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            if (option == selectedOption) MaterialTheme.colorScheme.primary
-                            else Color(0xffdddddd)
-                        )
-                        .clickable { onOptionSelected(option) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = option,
-                        color = if (option == selectedOption) MaterialTheme.colorScheme.surface
-                        else Color(0xff3b566e).copy(alpha = 0.7f),
-                        fontSize = 14.sp
-                    )
-                }
-            }
-        }
-    }
+fun ReadonlyField(label: String, value: String?) {
+    OutlinedTextField(
+        value = value ?: "",
+        onValueChange = {},
+        label = { Text(label) },
+        readOnly = true,
+        enabled = false,
+        modifier = Modifier
+            .fillMaxWidth()
+    )
 }

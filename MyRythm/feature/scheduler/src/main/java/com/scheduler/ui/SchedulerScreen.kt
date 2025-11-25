@@ -1,8 +1,10 @@
+// feature/scheduler/src/main/java/com/scheduler/ui/SchedulerScreen.kt
 @file:Suppress("UnusedImport")
 
 package com.scheduler.ui
 
 import android.util.Log
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,8 +27,6 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.scheduler.viewmodel.PlanViewModel
-import kotlinx.coroutines.launch
-import androidx.compose.ui.res.stringResource
 import com.shared.R
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -33,7 +34,7 @@ import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
 import androidx.compose.ui.platform.LocalContext
-import android.content.Context
+import kotlinx.coroutines.launch
 
 private val Mint = Color(0xFF6AE0D9)
 private val MintDark = Color(0xFF5DB0A8)
@@ -46,16 +47,16 @@ data class MedItem(val name: String, val time: String, val status: IntakeStatus)
 
 @Composable
 fun SchedulerScreen(
-    userId: String?,                // NavGraph에서 문자열로 전달
+    userId: Long,
     vm: PlanViewModel = hiltViewModel(),
-    onOpenRegi: () -> Unit = {}     // ✅ NavGraph에서 주입받아 아래로 내려줌
+    onOpenRegi: () -> Unit = {},
 ) {
     val ui by vm.uiState.collectAsState()
     val items by vm.itemsByDate.collectAsState(initial = emptyMap())
 
     LaunchedEffect(userId) {
-        if (!userId.isNullOrBlank()) {
-            vm.load(userId)         // ✅ PlanViewModel.load(String) 버전 사용
+        if (userId > 0L) {
+            vm.load(userId)
         } else {
             Log.e("SchedulerScreen", "❌ userId 누락: '$userId'")
         }
@@ -64,7 +65,7 @@ fun SchedulerScreen(
     SchedulerContent(
         itemsByDate = items,
         resetKey = ui.plans.hashCode(),
-        onOpenRegi = onOpenRegi     // ✅ 아래로 전달
+        onOpenRegi = onOpenRegi,
     )
 }
 
@@ -74,14 +75,13 @@ fun SchedulerContent(
     itemsByDate: Map<LocalDate, List<MedItem>> = emptyMap(),
     clock: Clock = Clock.systemDefaultZone(),
     resetKey: Any? = null,
-    onOpenRegi: () -> Unit = {}
+    onOpenRegi: () -> Unit = {},
 ) {
     val monthSuffixText = stringResource(R.string.month_suffix)
     val weekSuffixText = stringResource(R.string.week_suffix)
     val formatDateMonthDayText = stringResource(R.string.format_date_month_day)
     val statusUpcoming = stringResource(R.string.status_upcoming)
     val scheduleEmptyMessage = stringResource(R.string.scheduler_message_schedule_empty)
-    // getString()용
     val context = LocalContext.current
 
     val today = remember(clock) { LocalDate.now(clock) }
@@ -108,11 +108,14 @@ fun SchedulerContent(
     val dayItems by remember(selected, itemsByDate) {
         mutableStateOf(itemsByDate[selected].orEmpty())
     }
-    val banner = remember(dayItems) { bannerInfo(dayItems, context) }   //getString추가
+    val banner = remember(dayItems) { bannerInfo(dayItems, context) }
 
     Scaffold(containerColor = BG, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
         Column(
-            Modifier.fillMaxSize().padding(inner).background(BG)
+            Modifier
+                .fillMaxSize()
+                .padding(inner)
+                .background(BG)
         ) {
             val wf = WeekFields.of(Locale.KOREAN)
             val startOfWeek = weekRangeOf(weekAnchor).first()
@@ -120,7 +123,9 @@ fun SchedulerContent(
             val title = "${startOfWeek.monthValue}$monthSuffixText ${weekNum}$weekSuffixText"
 
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -128,7 +133,9 @@ fun SchedulerContent(
             }
 
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 listOf(
@@ -152,7 +159,9 @@ fun SchedulerContent(
                 val week = weekRangeOf(anchor)
 
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -168,7 +177,8 @@ fun SchedulerContent(
                         }
 
                         Box(
-                            Modifier.size(40.dp)
+                            Modifier
+                                .size(40.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(bgColor)
                                 .clickable {
@@ -194,7 +204,9 @@ fun SchedulerContent(
             }
 
             Card(
-                Modifier.padding(24.dp).fillMaxWidth(),
+                Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
@@ -226,7 +238,9 @@ fun SchedulerContent(
             }
 
             Box(
-                Modifier.padding(horizontal = 24.dp).fillMaxWidth()
+                Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
                     .background(if (banner.positive) Color(0xFFE8FBF9) else Color(0xFFFFF3F0))
                     .padding(vertical = 18.dp, horizontal = 16.dp),
@@ -268,7 +282,6 @@ private fun bannerInfo(items: List<MedItem>, context: Context): Banner {
     val doseAllCompletedMessageId = R.string.scheduler_message_dose_all_completed
     val doseGoodProgressMessageId = R.string.scheduler_message_dose_good_progress
     val doseLowProgressMessageId = R.string.scheduler_message_dose_low_progress
-    val status_upcomingId = R.string.status_upcoming
     val completionRateLabelId = R.string.completion_rate
     val percentSuffixId = R.string.percent_suffix
 
@@ -280,18 +293,17 @@ private fun bannerInfo(items: List<MedItem>, context: Context): Banner {
     val total = items.size
     val pct = (done * 100f / total).toInt()
 
-    // GETSTRING
     val label = context.getString(completionRateLabelId)
     val suffix = context.getString(percentSuffixId)
-    val subText = "$label $pct$suffix" // 예: "완료율 75%"
+    val subText = "$label $pct$suffix"
 
     return when {
-        // context.getString() 적용
         done == total -> Banner(context.getString(doseAllCompletedMessageId), subText, true)
         pct >= 60 -> Banner(context.getString(doseGoodProgressMessageId), subText, true)
         else -> Banner(context.getString(doseLowProgressMessageId), subText, false)
     }
 }
+
 @Composable
 private fun PillRow(dot: Color, title: String, time: String, trailing: @Composable () -> Unit) {
     Row(
@@ -300,7 +312,12 @@ private fun PillRow(dot: Color, title: String, time: String, trailing: @Composab
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(8.dp).clip(CircleShape).background(dot))
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(dot)
+            )
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(text = title, fontSize = 14.sp, color = Color(0xFF101828), lineHeight = 1.43.em)
@@ -310,6 +327,7 @@ private fun PillRow(dot: Color, title: String, time: String, trailing: @Composab
         trailing()
     }
 }
+
 @Composable
 private fun DoneText() {
     val doseCompleteText = stringResource(R.string.dose_complete)
