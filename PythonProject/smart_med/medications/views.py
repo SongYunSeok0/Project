@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from .models import RegiHistory, Plan
+from .models import regihistory, Plan
 from .serializers import PlanCreateIn
 import datetime
 
@@ -30,7 +30,7 @@ class PlanListView(APIView):
     #        GET (목록)
     # ==========================
     def get(self, request):
-        # ✅ Plan.user 없음 → RegiHistory.user 기준으로 필터
+        # ✅ Plan.user 없음 → regihistory.user 기준으로 필터
         plans = Plan.objects.filter(
             regihistory__user=request.user.id
         ).order_by("-created_at")
@@ -40,7 +40,7 @@ class PlanListView(APIView):
             data.append(
                 {
                     "id": p.id,
-                    "regiHistoryId": p.RegiHistory.id if p.RegiHistory else None,
+                    "regihistoryId": p.regihistory.id if p.regihistory else None,
                     "medName": p.med_name,
                     "takenAt": to_ms(p.taken_at),
                     "mealTime": p.meal_time,
@@ -68,20 +68,20 @@ class PlanListView(APIView):
                 ms / 1000, tz=timezone.get_current_timezone()
             )
 
-        # 🔁 이제는 regiHistoryId 로 받는다고 가정
-        regi_history_id = v.get("regiHistoryId")
+        # 🔁 이제는 regihistoryId 로 받는다고 가정
+        regi_history_id = v.get("regihistoryId")
         regi_history = None
         if regi_history_id is not None:
-            # 자신의 RegiHistory 것만 허용 (보안)
-            regi_history = RegiHistory.objects.filter(
+            # 자신의 regihistory 것만 허용 (보안)
+            regi_history = regihistory.objects.filter(
                 id=regi_history_id,
                 user=request.user.id,
             ).first()
 
-        # 만약 안드로이드에서 regiHistoryId를 안 보내면 (또는 그런 기능 아직 없음)
+        # 만약 안드로이드에서 regihistoryId를 안 보내면 (또는 그런 기능 아직 없음)
         # 여기서 자동 생성해 줄 수 있음
         if regi_history is None:
-            regi_history = RegiHistory.objects.create(
+            regi_history = regihistory.objects.create(
                 user=request.user,
                 regi_type="직접등록",  # 네가 쓸 타입 문자열
                 label=v.get("medName") or "직접등록",  # 예: 약 이름
@@ -95,7 +95,7 @@ class PlanListView(APIView):
         taken = to_dt(v.get("taken"))
 
         plan = Plan.objects.create(
-            RegiHistory=regi_history,
+            regihistory=regi_history,
             med_name=med_name,
             taken_at=taken_at,
             meal_time=meal_time,

@@ -7,10 +7,7 @@ from medications.views import (PlanListView
 
 from users.views import SendEmailCodeView, VerifyEmailCodeView
 
-
-
 router = DefaultRouter()
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),
