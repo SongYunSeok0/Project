@@ -34,6 +34,7 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
+    onOpenAlram: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
@@ -111,7 +112,7 @@ fun MainScreen(
 
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.timeRemainingCard,
-            onClick = onOpenScheduler
+            onClick = onOpenAlram
         ) {
             Column(
                 modifier = Modifier

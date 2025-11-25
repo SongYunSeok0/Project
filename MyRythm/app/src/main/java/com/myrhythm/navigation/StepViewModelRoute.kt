@@ -27,7 +27,6 @@ fun StepViewModelRoute(
     val stepViewModel: StepViewModel = hiltViewModel()
     val mainViewModel: MainViewModel = hiltViewModel()
 
-    val steps by stepViewModel.steps.collectAsStateWithLifecycle()
     val nextTime by mainViewModel.nextTime.collectAsStateWithLifecycle()
     val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
 

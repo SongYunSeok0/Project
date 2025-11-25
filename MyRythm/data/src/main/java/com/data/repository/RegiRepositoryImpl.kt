@@ -1,4 +1,3 @@
-// data/src/main/java/com/data/repository/RegiRepositoryImpl.kt
 package com.data.repository
 
 import com.data.db.AppRoomDatabase
@@ -24,34 +23,37 @@ class RegiRepositoryImpl @Inject constructor(
     private val regiHistoryDao = db.regiHistoryDao()
     private val planDao = db.planDao()
 
-    // ---------------- RegiHistory ----------------
+    // ---------------- Create ----------------
 
     override suspend fun createRegiHistory(
         regiType: String,
         label: String?,
-        issuedDate: String?
+        issuedDate: String?,
+        useAlarm: Boolean
     ): Long {
-        // domain → DTO
         val req = RegiHistoryRequest(
             regiType = regiType,
             label = label,
-            issuedDate = issuedDate
+            issuedDate = issuedDate,
+            useAlarm = useAlarm
         )
 
         val res = regiHistoryApi.createRegiHistory(req)
 
-        // 응답 → Room Entity
         val entity = RegiHistoryEntity(
             id = res.id,
             userId = res.userId,
             regiType = res.regiType,
             label = res.label,
-            issuedDate = res.issuedDate
+            issuedDate = res.issuedDate,
+            useAlarm = res.useAlarm
         )
         regiHistoryDao.insert(entity)
 
         return res.id
     }
+
+    // ---------------- Read ----------------
 
     override fun observeRegiHistories(): Flow<List<RegiHistory>> =
         regiHistoryDao.getAll().map { list ->
@@ -61,41 +63,78 @@ class RegiRepositoryImpl @Inject constructor(
                     userId = row.userId,
                     regiType = row.regiType,
                     label = row.label,
-                    issuedDate = row.issuedDate
+                    issuedDate = row.issuedDate,
+                    useAlarm = row.useAlarm
                 )
             }
         }
 
+    // ---------------- Update ----------------
+
+    override suspend fun updateRegiHistory(regi: RegiHistory) {
+        val req = RegiHistoryRequest(
+            regiType = regi.regiType,
+            label = regi.label,
+            issuedDate = regi.issuedDate,
+            useAlarm = regi.useAlarm
+        )
+
+        // 서버 PATCH
+        regiHistoryApi.updateRegiHistory(regi.id, req)
+
+        // 로컬 업데이트
+        val entity = RegiHistoryEntity(
+            id = regi.id,
+            userId = regi.userId,
+            regiType = regi.regiType,
+            label = regi.label,
+            issuedDate = regi.issuedDate,
+            useAlarm = regi.useAlarm
+        )
+        regiHistoryDao.insert(entity)
+    }
+
+    // ---------------- Delete ----------------
+
+    override suspend fun deleteRegiHistory(id: Long) {
+        // 서버 DELETE
+        regiHistoryApi.deleteRegiHistory(id)
+
+        // 로컬 삭제
+        // Room: CASCADE 걸려 있으면 Plan 도 같이 삭제됨
+        regiHistoryDao.deleteById(id)
+    }
+
     // ---------------- Plans ----------------
 
     override suspend fun createPlans(
-        regiHistoryId: Long,
+        regihistoryId: Long,
         list: List<Plan>
     ) {
         val entities = mutableListOf<PlanEntity>()
 
         for (plan in list) {
-            // domain → DTO
             val req = PlanCreateRequest(
-                regiHistoryId = regiHistoryId,
+                regihistoryId = regihistoryId,
                 medName = plan.medName,
                 takenAt = plan.takenAt,
                 mealTime = plan.mealTime,
                 note = plan.note,
-                taken = plan.taken
+                taken = plan.taken,
+                useAlarm = plan.useAlarm
             )
 
             val res = planApi.createPlan(req)
 
-            // 응답 → Room Entity
             entities += PlanEntity(
                 id = res.id,
-                regiHistoryId = res.regiHistoryId,
+                regihistoryId = res.regihistoryId,
                 medName = res.medName,
                 takenAt = res.takenAt,
                 mealTime = res.mealTime,
                 note = res.note,
-                taken = res.taken
+                taken = res.taken,
+                useAlarm = res.useAlarm
             )
         }
 
@@ -107,27 +146,29 @@ class RegiRepositoryImpl @Inject constructor(
             list.map { row ->
                 Plan(
                     id = row.id,
-                    regiHistoryId = row.regiHistoryId,
+                    regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     mealTime = row.mealTime,
                     note = row.note,
-                    taken = row.taken
+                    taken = row.taken,
+                    useAlarm = row.useAlarm
                 )
             }
         }
 
-    override fun observePlans(regiHistoryId: Long): Flow<List<Plan>> =
-        planDao.getByRegiHistory(regiHistoryId).map { list ->
+    override fun observePlans(regihistoryId: Long): Flow<List<Plan>> =
+        planDao.getByRegiHistory(regihistoryId).map { list ->
             list.map { row ->
                 Plan(
                     id = row.id,
-                    regiHistoryId = row.regiHistoryId,
+                    regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     mealTime = row.mealTime,
                     note = row.note,
-                    taken = row.taken
+                    taken = row.taken,
+                    useAlarm = row.useAlarm
                 )
             }
         }

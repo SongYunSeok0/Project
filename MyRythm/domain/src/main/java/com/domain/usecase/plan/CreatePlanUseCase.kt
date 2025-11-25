@@ -12,7 +12,8 @@ class CreatePlanUseCase @Inject constructor(
         takenAt: Long,
         mealTime: String?,
         note: String?,
-        taken: Long?
+        taken: Long?,
+        useAlarm: Boolean
     ) {
         repository.create(
             prescriptionId = prescriptionId,
@@ -20,7 +21,8 @@ class CreatePlanUseCase @Inject constructor(
             takenAt = takenAt,
             mealTime = mealTime,
             note = note,
-            taken = taken
+            taken = taken,
+            useAlarm = useAlarm
         )
     }
 }

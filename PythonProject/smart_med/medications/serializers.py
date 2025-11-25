@@ -2,12 +2,9 @@ from rest_framework import serializers
 from django.utils import timezone
 import datetime
 
-from .models import regihistory, Plan
+from .models import RegiHistory, Plan
 
-
-# ----------------------------
 #  공통 함수: timestamp <-> datetime 변환
-# ----------------------------
 def to_ms(dt):
     """datetime → ms"""
     if dt is None:
@@ -34,9 +31,7 @@ def from_ms(ms):
     )
 
 
-# ============================================================
 #   Plan 조회용 Serializer
-# ============================================================
 class PlanSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     regihistoryId = serializers.SerializerMethodField()
@@ -44,6 +39,9 @@ class PlanSerializer(serializers.ModelSerializer):
     takenAt = serializers.SerializerMethodField()
     mealTime = serializers.CharField(source="meal_time")
     taken = serializers.SerializerMethodField()
+
+    # 개별 알람 여부 추가
+    useAlarm = serializers.BooleanField(source="use_alarm")
 
     class Meta:
         model = Plan
@@ -55,6 +53,7 @@ class PlanSerializer(serializers.ModelSerializer):
             "mealTime",
             "note",
             "taken",
+            "useAlarm",   # ← 추가됨
         ]
 
     def get_regihistoryId(self, obj):
@@ -66,9 +65,8 @@ class PlanSerializer(serializers.ModelSerializer):
     def get_taken(self, obj):
         return to_ms(obj.taken)
 
-# ============================================================
+
 #   Plan 생성용 입력 Serializer
-# ============================================================
 class PlanCreateIn(serializers.Serializer):
 
     regihistoryId = serializers.IntegerField(required=False, allow_null=True)
@@ -79,33 +77,44 @@ class PlanCreateIn(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     taken = serializers.IntegerField(required=False, allow_null=True)
 
+    # 개별 알람 여부 추가
+    useAlarm = serializers.BooleanField(required=False, default=True)
 
-# ============================================================
-#   regihistory 조회 / 생성
-# ============================================================
-class regihistorySerializer(serializers.ModelSerializer):
+
+#   RegiHistory 조회 Serializer
+class RegiHistorySerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="user.id", read_only=True)
 
+    # 전체 알람 여부 추가
+    useAlarm = serializers.BooleanField(source="use_alarm")
+
     class Meta:
-        model = regihistory
+        model = RegiHistory
         fields = [
             "id",
             "userId",
             "regi_type",
             "label",
             "issued_date",
+            "useAlarm",
         ]
 
 
-class regihistoryCreateSerializer(serializers.ModelSerializer):
+#   RegiHistory 생성 Serializer
+class RegiHistoryCreateSerializer(serializers.ModelSerializer):
+
+    # 전체 알람 여부 생성 시도 가능
+    useAlarm = serializers.BooleanField(source="use_alarm", required=False, default=True)
+
     class Meta:
-        model = regihistory
+        model = RegiHistory
         fields = [
             "regi_type",
             "label",
             "issued_date",
+            "useAlarm",
         ]
 
     def create(self, validated_data):
         user = self.context["request"].user
-        return regihistory.objects.create(user=user, **validated_data)
+        return RegiHistory.objects.create(user=user, **validated_data)

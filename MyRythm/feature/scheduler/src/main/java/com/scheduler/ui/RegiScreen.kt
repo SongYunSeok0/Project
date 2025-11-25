@@ -48,18 +48,13 @@ private fun presetTimes(n: Int): List<String> = when (n) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegiScreen(
-    userId: Long,
-    regiHistoryId: Long,
     modifier: Modifier = Modifier,
     drugNames: List<String> = emptyList(),
-    times: Int? = null,
-    days: Int? = null,
     viewModel: RegiViewModel = hiltViewModel(),
     onCompleted: () -> Unit = {},
 ) {
     val context = LocalContext.current
 
-    // 🔔 등록 완료 이벤트 수신
     LaunchedEffect(Unit) {
         viewModel.events.collect { msg ->
             when (msg) {
@@ -67,28 +62,20 @@ fun RegiScreen(
                     Toast.makeText(context, "등록이 완료되었습니다!", Toast.LENGTH_SHORT).show()
                     onCompleted()
                 }
-                "등록 실패" ->
+                "등록 실패" -> {
                     Toast.makeText(context, "등록에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    val addiconDescription = stringResource(R.string.addicon_description)
-    val removeiconDescription = stringResource(R.string.removeicon_description)
-    val minusiconDescription = stringResource(R.string.minusicon_description)
-    val plusiconDescription = stringResource(R.string.plusicon_description)
-    val daySuffixText = stringResource(R.string.day_suffix)
-    val cancelText = stringResource(R.string.cancel)
-    val confirmText = stringResource(R.string.confirm)
     val diseaseText = stringResource(R.string.disease)
     val supplementText = stringResource(R.string.supplement)
     val diseaseNameText = stringResource(R.string.disease_name)
     val supplementNameText = stringResource(R.string.supplement_name)
     val medicationNameText = stringResource(R.string.medication_name)
     val doseDailyCount = stringResource(R.string.dose_daily_count)
-    val countPerDay = stringResource(R.string.count_per_day)
     val doseTime = stringResource(R.string.dose_time)
-    val timeSlot = stringResource(R.string.time_slot)
     val dosePeriod = stringResource(R.string.dose_period)
     val startDateText = stringResource(R.string.start_date)
     val endDateText = stringResource(R.string.end_date)
@@ -98,10 +85,8 @@ fun RegiScreen(
     val mealRelationIrrelevant = stringResource(R.string.meal_relation_irrelevant)
     val memoNotesText = stringResource(R.string.memo_notes)
     val registrationComplete = stringResource(R.string.registration_complete)
-    val diseaseNameMessage = stringResource(R.string.scheduler_message_disease_name)
-    val supplementNameMessage = stringResource(R.string.scheduler_message_supplement_name)
-    val medicationNameMessage = stringResource(R.string.scheduler_message_medication_name)
-    val doseNotesMessage = stringResource(R.string.scheduler_message_dose_notes)
+    val cancelText = stringResource(R.string.cancel)
+    val confirmText = stringResource(R.string.confirm)
 
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
 
@@ -110,19 +95,18 @@ fun RegiScreen(
 
     val meds = remember {
         mutableStateListOf<String>().apply {
-            if (drugNames.isNotEmpty()) addAll(drugNames)
-            else add("")
+            if (drugNames.isNotEmpty()) addAll(drugNames) else add("")
         }
     }
 
     var dose by remember { mutableIntStateOf(3) }
     var mealRelation by remember { mutableStateOf("after") }
     var memo by remember { mutableStateOf("") }
+    var useAlarm by remember { mutableStateOf(true) }
 
     val intakeTimes = remember { mutableStateListOf<String>() }
 
     val dateFmt = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-    val dateTimeFmt = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
 
     fun todayStr() = dateFmt.format(Calendar.getInstance().time)
     fun strToMillis(s: String): Long? = runCatching { dateFmt.parse(s)?.time }.getOrNull()
@@ -133,7 +117,7 @@ fun RegiScreen(
     var showStart by remember { mutableStateOf(false) }
     var showEnd by remember { mutableStateOf(false) }
 
-    // ---------------- Date Picker --------------------
+    // -------------------- DatePicker --------------------
     if (showStart) {
         val state = rememberDatePickerState(
             initialSelectedDateMillis = strToMillis(startDay) ?: System.currentTimeMillis()
@@ -170,7 +154,7 @@ fun RegiScreen(
         ) { DatePicker(state = state) }
     }
 
-    // 초기 세팅
+    // -------------------- 초기 설정 --------------------
     LaunchedEffect(Unit) {
         dose = 3
         intakeTimes.clear()
@@ -193,13 +177,11 @@ fun RegiScreen(
 
     LaunchedEffect(dose, tab) {
         intakeTimes.clear()
-        if (tab == RegiTab.SUPPLEMENT)
-            repeat(dose) { intakeTimes.add("") }
-        else
-            intakeTimes.addAll(presetTimes(dose))
+        if (tab == RegiTab.SUPPLEMENT) repeat(dose) { intakeTimes.add("") }
+        else intakeTimes.addAll(presetTimes(dose))
     }
 
-    // ---------------- UI 전체 ------------------------
+    // -------------------- UI --------------------
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
         Column(
             modifier = modifier
@@ -211,7 +193,7 @@ fun RegiScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ---------------- 탭 ----------------
+            // -------------------- 탭 --------------------
             TabRow(
                 selectedTabIndex = if (tab == RegiTab.DISEASE) 0 else 1,
                 containerColor = Color.Transparent,
@@ -235,7 +217,7 @@ fun RegiScreen(
                 )
             }
 
-            // ---------------- 이름 입력 ----------------
+            // -------------------- 병명/영양제 입력 --------------------
             if (tab == RegiTab.DISEASE) {
                 Column {
                     Text(diseaseNameText, color = SectionTitle)
@@ -262,7 +244,7 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 약 이름 (질병만) ----------------
+            // -------------------- 약 목록 --------------------
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(medicationNameText, color = SectionTitle)
@@ -290,7 +272,7 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 복용 횟수 ----------------
+            // -------------------- 횟수 --------------------
             Column {
                 Text(doseDailyCount, color = SectionTitle)
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,16 +288,15 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 시간 입력 ----------------
+            // -------------------- 복용 시간 --------------------
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(doseTime, color = SectionTitle)
-
                 intakeTimes.forEachIndexed { i, t ->
                     RepeatTimeRow("${i + 1}회", t) { new -> intakeTimes[i] = new }
                 }
             }
 
-            // ---------------- 복용 기간 ----------------
+            // -------------------- 복용 기간 --------------------
             Column {
                 Text(dosePeriod, color = SectionTitle)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -324,7 +305,7 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 식사 관계 (질병만) ----------------
+            // -------------------- 식사 관계 --------------------
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(mealRelationText, color = SectionTitle)
@@ -342,7 +323,7 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 메모 ----------------
+            // -------------------- 메모 --------------------
             Column {
                 Text(memoNotesText, color = SectionTitle)
                 OutlinedTextField(
@@ -355,7 +336,25 @@ fun RegiScreen(
                 )
             }
 
-            // ---------------- 등록 버튼 ----------------
+            // -------------------- 알람 설정 --------------------
+            Column {
+                Text("알람 설정", color = SectionTitle)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Text(if (useAlarm) "알람 켜짐" else "알람 꺼짐")
+                    Switch(
+                        checked = useAlarm,
+                        onCheckedChange = { useAlarm = it }
+                    )
+                }
+            }
+
+            // -------------------- 등록 버튼 --------------------
             Button(
                 onClick = {
                     val regiType = if (tab == RegiTab.DISEASE) "disease" else "supplement"
@@ -364,15 +363,16 @@ fun RegiScreen(
                     else
                         supplement.ifBlank { null }
 
-                    val issued = startDay.ifBlank { todayStr() }
-
                     val sMs = strToMillis(startDay) ?: System.currentTimeMillis()
                     val eMs = strToMillis(endDay) ?: sMs
                     val oneDay = 86400000L
 
                     val daysList = buildList {
                         var cur = sMs
-                        while (cur <= eMs) { add(cur); cur += oneDay }
+                        while (cur <= eMs) {
+                            add(cur)
+                            cur += oneDay
+                        }
                     }
 
                     val realMeds =
@@ -384,6 +384,7 @@ fun RegiScreen(
                     val realTimes = intakeTimes.mapNotNull { it.ifBlank { null } }
 
                     val plans = mutableListOf<Plan>()
+
                     val df = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                     val dfDay = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -391,23 +392,34 @@ fun RegiScreen(
                         val ds = dfDay.format(Date(d))
 
                         realTimes.forEach { t ->
-                            val takenAt = df.parse("$ds $t")?.time ?: d
+                            val takenAt0 = df.parse("$ds $t")?.time ?: d
+
+                            val now = System.currentTimeMillis()
+                            val takenAt =
+                                if (takenAt0 < now) takenAt0 + 86400000L else takenAt0
 
                             realMeds.forEach { med ->
                                 plans += Plan(
                                     id = 0L,
-                                    regiHistoryId = null,
+                                    regihistoryId = null,
                                     medName = med,
                                     takenAt = takenAt,
                                     mealTime = mealRelation,
                                     note = memo.ifBlank { null },
-                                    taken = null
+                                    taken = null,
+                                    useAlarm = useAlarm
                                 )
                             }
                         }
                     }
 
-                    viewModel.createRegiAndPlans(regiType, label, issued, plans)
+                    viewModel.createRegiAndPlans(
+                        regiType = regiType,
+                        label = label,
+                        issuedDate = startDay,
+                        useAlarm = useAlarm,
+                        plans = plans
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -425,8 +437,6 @@ fun RegiScreen(
         }
     }
 }
-
-// ---------------- Components ------------------------
 
 @Composable
 private fun RepeatTimeRow(label: String, value: String, onChange: (String) -> Unit) {

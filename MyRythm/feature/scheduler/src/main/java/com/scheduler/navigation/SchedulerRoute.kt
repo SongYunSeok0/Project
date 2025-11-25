@@ -11,7 +11,7 @@ data class SchedulerRoute(
 @Serializable
 data class RegiRoute(
     val userId: String,
-    val regiHistoryId: Long
+    val regihistoryId: Long,
 )
 
 @Serializable
@@ -22,4 +22,3 @@ data class OcrRoute(
 
 @Serializable
 data class CameraRoute(val userId: String)
-

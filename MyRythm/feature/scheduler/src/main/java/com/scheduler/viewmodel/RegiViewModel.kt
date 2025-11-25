@@ -26,7 +26,7 @@ class RegiViewModel @Inject constructor(
     private val repository: RegiRepository
 ) : ViewModel() {
 
-    // ---------------- 이벤트(등록 완료/실패) 송신용 ----------------
+    // ---------------- 이벤트 송신 ----------------
     private val _events = MutableSharedFlow<String>()
     val events = _events
 
@@ -39,14 +39,18 @@ class RegiViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    private val _itemsByDate = MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
-    val itemsByDate: StateFlow<Map<LocalDate, List<MedItem>>> = _itemsByDate.asStateFlow()
+    private val _itemsByDate =
+        MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
+    val itemsByDate: StateFlow<Map<LocalDate, List<MedItem>>> =
+        _itemsByDate.asStateFlow()
 
-    // ---------------- Plan 목록 조회 ----------------
+    // ---------------- 전체 Plan 조회 ----------------
     fun loadPlans(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.observeAllPlans(userId)
-                .catch { e -> _uiState.update { it.copy(error = e.message) } }
+                .catch { e ->
+                    _uiState.update { it.copy(error = e.message) }
+                }
                 .collect { list ->
                     _uiState.update { it.copy(plans = list) }
                     _itemsByDate.value = makeItemsByDate(list)
@@ -59,6 +63,7 @@ class RegiViewModel @Inject constructor(
         regiType: String,
         label: String?,
         issuedDate: String?,
+        useAlarm: Boolean,           // 🔥 추가됨
         plans: List<Plan>
     ) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -69,7 +74,8 @@ class RegiViewModel @Inject constructor(
                 val regiId = repository.createRegiHistory(
                     regiType = regiType,
                     label = label,
-                    issuedDate = issuedDate
+                    issuedDate = issuedDate,
+                    useAlarm = useAlarm        // 🔥 서버로 전달됨
                 )
                 Log.d("RegiViewModel", "RegiHistory 생성 완료: id=$regiId")
 
@@ -77,7 +83,6 @@ class RegiViewModel @Inject constructor(
                 repository.createPlans(regiId, plans)
                 Log.d("RegiViewModel", "Plans ${plans.size}개 생성 완료")
 
-                // 🔥 성공 이벤트
                 _events.emit("등록 완료")
 
             } catch (e: Exception) {
@@ -89,24 +94,23 @@ class RegiViewModel @Inject constructor(
         }
     }
 
-    // ---------------- 날짜별 MedItem 변환 ----------------
+    // ---------------- 날짜별 정렬 ----------------
     private fun makeItemsByDate(plans: List<Plan>): Map<LocalDate, List<MedItem>> {
         val zone = ZoneId.systemDefault()
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
         plans.forEach { p ->
             val takenAt = p.takenAt ?: return@forEach
-            val instant = Instant.ofEpochMilli(takenAt)
-            val localDateTime = instant.atZone(zone)
-            val localDate = localDateTime.toLocalDate()
-            val localTime = localDateTime.toLocalTime().toString().substring(0, 5)
+            val local = Instant.ofEpochMilli(takenAt).atZone(zone)
+            val date = local.toLocalDate()
+            val time = local.toLocalTime().toString().substring(0, 5)
 
             val item = MedItem(
                 name = p.medName,
-                time = localTime,
+                time = time,
                 status = IntakeStatus.SCHEDULED
             )
-            out.getOrPut(localDate) { mutableListOf() }.add(item)
+            out.getOrPut(date) { mutableListOf() }.add(item)
         }
 
         return out.mapValues { (_, v) -> v.sortedBy { it.time } }
