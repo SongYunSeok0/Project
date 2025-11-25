@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.utils import timezone
 import datetime
 
-from .models import RegiHistory, Plan
+from .models import regihistory, Plan
 
 
 # ----------------------------
@@ -45,7 +45,7 @@ class PlanTimeSerializer(serializers.Serializer):
 # ----------------------------
 class PlanSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    regiHistoryId = serializers.SerializerMethodField()
+    regihistoryId = serializers.SerializerMethodField()
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.SerializerMethodField()
     mealTime = serializers.CharField(source="meal_time")
@@ -57,7 +57,7 @@ class PlanSerializer(serializers.ModelSerializer):
         model = Plan
         fields = [
             "id",
-            "regiHistoryId",
+            "regihistoryId",
             "medName",
             "takenAt",
             "mealTime",
@@ -67,8 +67,8 @@ class PlanSerializer(serializers.ModelSerializer):
             "updatedAt",
         ]
 
-    def get_regiHistoryId(self, obj):
-        return obj.RegiHistory.id if obj.RegiHistory else None
+    def get_regihistoryId(self, obj):
+        return obj.regihistory.id if obj.regihistory else None
 
     def get_takenAt(self, obj):
         return to_ms(obj.taken_at)
@@ -96,8 +96,8 @@ class PlanTimeIn(serializers.Serializer):
 
 
 class PlanCreateIn(serializers.Serializer):
-    # ✅ 이제 처방전이 아니라 RegiHistory FK 사용
-    regiHistoryId = serializers.IntegerField(required=False, allow_null=True)
+    # ✅ 이제 처방전이 아니라 regihistory FK 사용
+    regihistoryId = serializers.IntegerField(required=False, allow_null=True)
 
     medName = serializers.CharField()
     takenAt = serializers.IntegerField(required=False, allow_null=True)  # ms
