@@ -4,10 +4,10 @@ import androidx.room.Embedded
 import androidx.room.Relation
 
 data class RegiHistoryWithPlans(
-    @Embedded val regiHistory: RegiHistoryEntity,
+    @Embedded val regihistory: RegiHistoryEntity,
     @Relation(
         parentColumn = "id",
-        entityColumn = "regiHistoryId"
+        entityColumn = "regihistoryId"
     )
     val plans: List<PlanEntity>
 )

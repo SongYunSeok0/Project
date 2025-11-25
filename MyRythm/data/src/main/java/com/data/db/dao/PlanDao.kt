@@ -13,24 +13,24 @@ interface PlanDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(plans: List<PlanEntity>)
 
-    @Query("SELECT * FROM 'plan' WHERE regiHistoryId = :regiHistoryId")
-    fun getByRegiHistory(regiHistoryId: Long): Flow<List<PlanEntity>>
+    @Query("SELECT * FROM 'plan' WHERE regihistoryId = :regihistoryId")
+    fun getByRegiHistory(regihistoryId: Long): Flow<List<PlanEntity>>
 
     @Query(
         """
         SELECT `plan`.* 
         FROM `plan`
-        INNER JOIN `regiHistory`
-            ON `plan`.regiHistoryId = `regiHistory`.id
-        WHERE `regiHistory`.userId = :userId
+        INNER JOIN `regihistory`
+            ON `plan`.regihistoryId = `regihistory`.id
+        WHERE `regihistory`.userId = :userId
     """
     )
     fun getAllByUser(userId: Long): Flow<List<PlanEntity>>
 
     @Query("""
         DELETE FROM 'plan'
-        WHERE regiHistoryId IN (
-            SELECT id FROM regiHistory WHERE userId = :userId
+        WHERE regihistoryId IN (
+            SELECT id FROM regihistory WHERE userId = :userId
         )
     """)
     suspend fun deleteAllByUser(userId: Long)

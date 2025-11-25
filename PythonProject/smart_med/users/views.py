@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
 from django.db import IntegrityError
+import traceback
 
 User = get_user_model()
 
@@ -265,6 +266,9 @@ class SignupView(APIView):
                 return Response({"detail": "이미 존재하는 전화번호입니다."}, status=400)
             return Response({"detail": "회원가입 중 오류가 발생했습니다."}, status=400)
         except Exception as e:
+            print("===== SIGNUP ERROR TRACEBACK =====")
+            traceback.print_exc()
+            print("==================================")
             return Response({"detail": str(e)}, status=400)
 
         # 인증 완료 후 캐시 삭제

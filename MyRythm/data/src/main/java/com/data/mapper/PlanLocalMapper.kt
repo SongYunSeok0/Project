@@ -7,7 +7,7 @@ import com.domain.model.Plan
 fun PlanEntity.toDomainLocal(): Plan =
     Plan(
         id = id,
-        regiHistoryId = regiHistoryId,
+        regihistoryId = regihistoryId,
         medName = medName,
         takenAt = takenAt,
         mealTime = mealTime,
@@ -19,7 +19,7 @@ fun PlanEntity.toDomainLocal(): Plan =
 fun Plan.toEntity(): PlanEntity =
     PlanEntity(
         id = id,
-        regiHistoryId = regiHistoryId,
+        regihistoryId = regihistoryId,
         medName = medName,
         takenAt = takenAt,
         mealTime = mealTime,

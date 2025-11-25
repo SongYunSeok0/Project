@@ -90,7 +90,7 @@ class RegiRepositoryImpl @Inject constructor(
             // 응답 → Room Entity
             entities += PlanEntity(
                 id = res.id,
-                regiHistoryId = res.regiHistoryId,
+                regihistoryId = res.regihistoryId,
                 medName = res.medName,
                 takenAt = res.takenAt,
                 mealTime = res.mealTime,
@@ -107,7 +107,7 @@ class RegiRepositoryImpl @Inject constructor(
             list.map { row ->
                 Plan(
                     id = row.id,
-                    regiHistoryId = row.regiHistoryId,
+                    regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     mealTime = row.mealTime,
@@ -122,7 +122,7 @@ class RegiRepositoryImpl @Inject constructor(
             list.map { row ->
                 Plan(
                     id = row.id,
-                    regiHistoryId = row.regiHistoryId,
+                    regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     mealTime = row.mealTime,

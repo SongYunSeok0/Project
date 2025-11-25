@@ -8,16 +8,16 @@ import androidx.room.*
         ForeignKey(
             entity = RegiHistoryEntity::class,
             parentColumns = ["id"],
-            childColumns = ["regiHistoryId"],
+            childColumns = ["regihistoryId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["regiHistoryId"])]
+    indices = [Index(value = ["regihistoryId"])]
 )
 data class PlanEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Long,
-    val regiHistoryId: Long?,
+    val regihistoryId: Long?,
     val medName: String,
     val takenAt: Long?,
     val mealTime: String?,
