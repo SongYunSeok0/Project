@@ -81,13 +81,13 @@ class PlanCreateIn(serializers.Serializer):
 
 
 # ============================================================
-#   RegiHistory 조회 / 생성
+#   regihistory 조회 / 생성
 # ============================================================
-class RegiHistorySerializer(serializers.ModelSerializer):
+class regihistorySerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="user.id", read_only=True)
 
     class Meta:
-        model = RegiHistory
+        model = regihistory
         fields = [
             "id",
             "userId",
@@ -97,9 +97,9 @@ class RegiHistorySerializer(serializers.ModelSerializer):
         ]
 
 
-class RegiHistoryCreateSerializer(serializers.ModelSerializer):
+class regihistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RegiHistory
+        model = regihistory
         fields = [
             "regi_type",
             "label",
@@ -108,4 +108,4 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context["request"].user
-        return RegiHistory.objects.create(user=user, **validated_data)
+        return regihistory.objects.create(user=user, **validated_data)

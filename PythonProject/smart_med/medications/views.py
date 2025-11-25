@@ -6,10 +6,10 @@ from django.utils import timezone
 import datetime
 from .serializers import PlanSerializer
 
-from .models import Regihistory, Plan
+from .models import regihistory, Plan
 from .serializers import (
-    RegiHistorySerializer,
-    RegiHistoryCreateSerializer,
+    regihistorySerializer,
+    regihistoryCreateSerializer,
     PlanCreateIn,
 )
 
@@ -28,23 +28,23 @@ def to_ms(dt):
 
 
 # ============================================================
-#  RegiHistory GET + POST
+#  regihistory GET + POST
 # ============================================================
-class RegiHistoryListCreateView(APIView):
+class regihistoryListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # GET → 내 RegiHistory 목록
+    # GET → 내 regihistory 목록
     def get(self, request):
-        rows = RegiHistory.objects.filter(user=request.user).order_by("-id")
-        data = RegiHistorySerializer(rows, many=True).data
+        rows = regihistory.objects.filter(user=request.user).order_by("-id")
+        data = regihistorySerializer(rows, many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
-    # POST → 새 RegiHistory 생성
+    # POST → 새 regihistory 생성
     def post(self, request):
-        ser = RegiHistoryCreateSerializer(data=request.data, context={"request": request})
+        ser = regihistoryCreateSerializer(data=request.data, context={"request": request})
         ser.is_valid(raise_exception=True)
         regi = ser.save()  # user 자동 주입
-        return Response(RegiHistorySerializer(regi).data, status=status.HTTP_201_CREATED)
+        return Response(regihistorySerializer(regi).data, status=status.HTTP_201_CREATED)
 
 
 # ============================================================
@@ -57,7 +57,7 @@ class PlanListView(APIView):
     #        GET (목록)
     # ==========================
     def get(self, request):
-        # ✅ Plan.user 없음 → RegiHistory.user 기준으로 필터
+        # ✅ Plan.user 없음 → regihistory.user 기준으로 필터
         plans = Plan.objects.filter(
             regihistory__user=request.user
         )

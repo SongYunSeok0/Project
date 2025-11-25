@@ -20,14 +20,14 @@ fun NavGraphBuilder.schedulerNavGraph(
     // 🟢 일정 목록 화면
     composable<SchedulerRoute> {
         val route = it.toRoute<SchedulerRoute>()
-        val uid = route.userId
+        val uid = route.userId.ifBlank { fallbackUserId }
 
         SchedulerScreen(userId = uid.toLong())
     }
 
     composable<RegiRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<RegiRoute>()
-        val uid = route.userId
+        val uid = route.userId.ifBlank { fallbackUserId }
 
         RegiScreen(
             userId = uid.toLong(),
@@ -41,27 +41,20 @@ fun NavGraphBuilder.schedulerNavGraph(
         )
     }
 
-    // 🟢 OCR 화면
     composable<OcrRoute> {
         val route = it.toRoute<OcrRoute>()
-
-        // route.userId 는 CameraRoute → OcrRoute 에서 전달됨
-        val uid = route.userId
+        val uid = route.userId.ifBlank { fallbackUserId }
 
         OcrScreen(
             imagePath = route.path,
             onConfirm = { _, _, _ ->
-                val newregiHistoryId = System.currentTimeMillis()
-                nav.navigate(
-                    RegiRoute(
-                        userId = uid,  // ⬅⬅⬅ 여기 반드시!! route.userId 써야 함
-                        regiHistoryId = newregiHistoryId
-                    )
-                )
+                val newId = System.currentTimeMillis()
+                nav.navigate(RegiRoute(userId = uid, regiHistoryId = newId))
             },
             onRetake = { nav.popBackStack() }
         )
     }
+
 
 
     // 카메라

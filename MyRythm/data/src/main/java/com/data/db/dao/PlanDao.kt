@@ -27,6 +27,14 @@ interface PlanDao {
     )
     fun getAllByUser(userId: Long): Flow<List<PlanEntity>>
 
+    @Query("""
+        DELETE FROM 'plan'
+        WHERE regiHistoryId IN (
+            SELECT id FROM regiHistory WHERE userId = :userId
+        )
+    """)
+    suspend fun deleteAllByUser(userId: Long)
+
 
 }
 
