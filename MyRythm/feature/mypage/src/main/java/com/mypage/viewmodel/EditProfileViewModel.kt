@@ -47,7 +47,7 @@ class EditProfileViewModel @Inject constructor(
         username: String,
         heightText: String,
         weightText: String,
-        ageText: String,
+        ageText: String,   // 1125
         gender: String? = null,
         phone: String?,
         prot_email: String?,
@@ -63,8 +63,11 @@ class EditProfileViewModel @Inject constructor(
             username = username,
             height = height,
             weight = weight,
-            age = age,
-            birth_date = profile.value?.birth_date,
+            //age = age,
+            //birth_date = profile.value?.birth_date,
+            // 1125         // 🔥 ageText 를 나이(Int)가 아니라 "yyyy-mm-dd" 그대로 birth_date 로 사용
+            age = null,                    // 🔥 나이 사용 X (고정)
+            birth_date = ageText,          // 🔥 생년월일 저장 — 핵심 수정 부분
             gender = gender,
             phone = phone,
             prot_email = prot_email,
