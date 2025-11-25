@@ -67,7 +67,7 @@ class MainViewModel @Inject constructor(
             _remainText.value = String.format("%02d:%02d", hours, minutes)
         } else {
             _nextTime.value = null
-            _remainText.value = "복용 일정 없음"
+            _remainText.value = "-:-"
         }
     }
 
