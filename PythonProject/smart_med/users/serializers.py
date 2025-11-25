@@ -31,8 +31,90 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login",
         )
 
-# 1121 12:21 수정
+# 1124소셜로그인용수정중
 class UserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        min_length=8
+    )
+    email = serializers.EmailField(
+        required=False,
+        allow_blank=True
+    )
+    username = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+    provider = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    socialId = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "password",
+            "username",
+            "phone",
+            "birth_date",
+            "gender",
+            "preferences",
+            "height",
+            "weight",
+            "provider",
+            "socialId",
+        )
+
+    def validate(self, attrs):
+        provider = attrs.get("provider")
+        social_id = attrs.get("socialId")
+
+        # 소셜 회원가입일 경우 필수값 검사 생략
+        if provider and social_id:
+            return attrs
+
+        # 로컬 회원가입은 기존 필수 검증 실행
+        if not attrs.get("email"):
+            raise serializers.ValidationError({"email": "이메일은 필수입니다."})
+        if not attrs.get("password"):
+            raise serializers.ValidationError({"password": "비밀번호는 필수입니다."})
+        if not attrs.get("username"):
+            raise serializers.ValidationError({"username": "이름은 필수입니다."})
+
+        return attrs
+
+    def create(self, validated_data):
+        provider = validated_data.get("provider")
+        social_id = validated_data.get("socialId")
+
+        # 소셜 계정인 경우 create_user 호출 방식 변경 (이메일과 비번 필드X 프로바이더와 소셜아이디로 구분O)
+        if provider and social_id:
+            validated_data.pop("password", None)
+            email = validated_data.pop("email", "") or None
+            username = validated_data.pop("username", f"{provider}_{social_id}")
+
+            user = User.objects.create(
+                email=email,
+                username=username,
+                provider=provider,
+                social_id=social_id,
+                **validated_data
+            )
+            return user
+
+        # 로컬 유저 회원가입
+        email = validated_data.pop("email").lower()
+        pwd = validated_data.pop("password")
+        user = User.objects.create_user(
+            email=email,
+            password=pwd,
+            **validated_data
+        )
+        return user
+
+"""class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -92,7 +174,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             password=pwd,
             **validated_data
         )
-        return user
+        return user"""
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

@@ -16,7 +16,6 @@ User = get_user_model()
 
 
 
-
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -70,14 +69,12 @@ class SocialLoginView(APIView):
         provider = request.data.get("provider")
         social_id = request.data.get("socialId")
 
-        # 신규회원 여부 확인
+        # 신규회원 여부 확인 - 기존회원의 경우
         try:
             user = User.objects.get(provider=provider, social_id=social_id)
-
             # JWT 발급
             # 구글은 아이디 토큰 jwt 안에 정도가 들어있어서 토큰하나적어두면 알아서받아옴
             refresh = RefreshToken.for_user(user)
-
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
@@ -85,11 +82,20 @@ class SocialLoginView(APIView):
             }, status=200)
 
         except User.DoesNotExist:
-            # 신규유저는 추가 정보 필요(프로바이더+소셜아이디)
+            # 신규유저는 프로바이더+소셜아이디 데이터베이스에 저장
+            user = User.objects.create_user(
+                email=None,
+                password=None,
+                provider=provider,
+                social_id=social_id,
+            )
+
+            refresh = RefreshToken.for_user(user)
+
             return Response({
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
                 "needAdditionalInfo": True,
-                "provider": provider,
-                "socialId": social_id
             }, status=200)
 
 

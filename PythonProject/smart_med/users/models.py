@@ -8,17 +8,22 @@ from django.core.exceptions import ValidationError
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra):
-        # 1121 12:16 소셜로그인 적용으로 이메일/비번 필수 로직 수정, 메시지는 UserCreateSerializer로 이동
-        if email:
-            email = self.normalize_email(email).lower()
+    def create_user(self, email=None, password=None, **extra):
+        # 1124 소셜로그인 적용으로 이메일/비번 필수 로직 수정, 메시지는 UserCreateSerializer로 이동
+        # 소셜 유저는 이메일 없이 계정 생성 (프로바이더+소셜아이디로 구분)
+        if not email:
+            email = None
+        else:
+            email = self.normalize_email(email)
+
+        user = self.model(email=email, **extra)
+
         # 비번 있으면 로컬 유저 -> 비번 설정 루트, 비번 없으면 소셜 유저
         if password:
             user.set_password(password)
         else:
             user.set_unusable_password()
 
-        user = self.model(email=email, **extra)
         user.save(using=self._db)
         return user
 
