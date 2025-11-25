@@ -12,11 +12,11 @@ interface RegiHistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(regiHistory: RegiHistoryEntity)
 
-    @Query("SELECT * FROM regiHistory ORDER BY id DESC")
+    @Query("SELECT * FROM regihistory ORDER BY id DESC")
     fun getAll(): Flow<List<RegiHistoryEntity>>
 
     @Transaction
-    @Query("SELECT * FROM regiHistory WHERE id = :id")
+    @Query("SELECT * FROM regihistory WHERE id = :id")
     fun getWithPlans(id: Long): Flow<RegiHistoryWithPlans?>
 }
 

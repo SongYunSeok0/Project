@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Device, SensorData
+from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
 
 def _to_bool(v):
@@ -47,7 +47,17 @@ def ingest(request):
     # 4) 사용자 결정: 명시 user_id 없으면 디바이스 소유자
     user_id = p.get("user_id") or device.user_id
 
-    # 5) 저장 (원자적)
+    # 5) 복용 상태 판정 로직
+    if is_time and is_opened:
+        status_code = IntakeStatus.TAKEN
+    elif not is_time and is_opened:
+        status_code = IntakeStatus.WRONG
+    elif is_time and not is_opened:
+        status_code = IntakeStatus.MISSED
+    else:
+        status_code = IntakeStatus.NONE
+
+    # 6) 저장
     with transaction.atomic():
         SensorData.objects.create(
             device=device,
@@ -55,6 +65,7 @@ def ingest(request):
             is_opened=is_opened,
             is_time=is_time,
             collected_at=ts,
+            status=status_code
         )
 
         # 심박 별도 테이블 저장(유효 범위 검증)
@@ -66,7 +77,16 @@ def ingest(request):
             except (TypeError, ValueError):
                 pass
 
-    # 6) 디바이스 건강상태 갱신
+    # 7) 디바이스 건강상태 갱신
     Device.objects.filter(id=device.id).update(last_connected_at=timezone.now())
 
-    return Response({"ok": True}, status=status.HTTP_200_OK)
+    return Response({
+        "ok": True,
+        "status": status_code,
+        "raw": {
+            "is_opened": is_opened,
+            "is_time": is_time,
+            "bpm": bpm
+        },
+        "timestamp": ts,
+    })
