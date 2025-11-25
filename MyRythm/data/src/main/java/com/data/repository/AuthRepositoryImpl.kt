@@ -132,6 +132,20 @@ class AuthRepositoryImpl @Inject constructor(
             false
         }
     }
+
+    override suspend fun withdrawal(): Boolean {
+        return try {
+            val response = api.deleteAccount()
+            if (response.isSuccessful) {
+                tokenStore.clear() // ✅ 내 폰의 토큰 삭제 (로그아웃 처리)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
 }
 
 class HttpAuthException(val code: Int, message: String?) :

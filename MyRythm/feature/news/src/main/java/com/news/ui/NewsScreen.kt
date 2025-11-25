@@ -54,10 +54,6 @@ fun NewsScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-
-        // -----------------------------------------------------------
-        // 🔍 검색창 + ⭐ 즐겨찾기 버튼
-        // -----------------------------------------------------------
         AnimatedVisibility(visible = isSearchMode) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -129,6 +125,7 @@ fun NewsScreen(
                 FavoriteBannerCard(
                     keyword = fav.keyword,
                     onClick = { viewModel.onFavoriteClick(fav.keyword) },
+                    onDelete = { viewModel.removeFavorite(fav.keyword) },
                     modifier = Modifier
                         .size(120.dp)
                 )
@@ -199,6 +196,7 @@ fun NewsScreen(
 fun FavoriteBannerCard(
     keyword: String,
     onClick: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -226,6 +224,18 @@ fun FavoriteBannerCard(
                     )
                 )
         )
+        IconButton(
+            onClick = { onDelete() },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.bookmark_remove),
+                contentDescription = "remove favorite",
+                tint = Color.White
+            )
+        }
 
         Text(
             text = keyword,

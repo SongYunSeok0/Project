@@ -79,13 +79,7 @@ class Migration(migrations.Migration):
                 ("provider", models.CharField(blank=True, max_length=128, null=True)),
                 (
                     "email",
-                    models.EmailField(
-                        blank=True,
-                        db_index=True,
-                        max_length=254,
-                        null=True,
-                        unique=True,
-                    ),
+                    models.EmailField(db_index=True, max_length=254, unique=True),
                 ),
                 ("username", models.CharField(blank=True, max_length=100, null=True)),
                 (
@@ -138,7 +132,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("preferences", models.JSONField(blank=True, default=dict)),
-                ("prot_phone", models.CharField(blank=True, max_length=20, null=True)),
+                ("prot_email", models.CharField(blank=True, max_length=30, null=True)),
                 ("relation", models.CharField(blank=True, max_length=30, null=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),

@@ -55,4 +55,7 @@ interface UserApi {
     @PATCH("users/me/")
     suspend fun updateProfile(@Body dto: UserUpdateDto): UserDto
 
+    @DELETE("users/withdrawal/")
+    suspend fun deleteAccount(): Response<Unit>
+
 }

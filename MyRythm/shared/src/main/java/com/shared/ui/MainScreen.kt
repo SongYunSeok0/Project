@@ -34,10 +34,14 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
+    onOpenSteps: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
-    todaySteps: Int = 0
+    onFabCamera: () -> Unit = {},
+    todaySteps: Int = 0,
+    nextTime: String? = null,
+    remainText: String? = null,
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -49,6 +53,7 @@ fun MainScreen(
 
     val chatbotText = stringResource(R.string.chatbot)
     val schedulerText = stringResource(R.string.scheduler)
+    val stepText = stringResource(R.string.step)
     val rateText = stringResource(R.string.rate)
     val timeremainder = stringResource(R.string.timeremainder)
     val mapText = stringResource(R.string.map)
@@ -93,10 +98,12 @@ fun MainScreen(
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             MainFeatureCard(
-                title = "${todaySteps}걸음",
+                title = stepText,
                 bg = MaterialTheme.componentTheme.stepCard,
                 icon = stepIconResId,
+                onClick = onOpenSteps,
                 modifier = Modifier.weight(1f).height(140.dp),
+                subtitle = "${todaySteps}걸음"
             )
             MainFeatureCard(
                 title = rateText,
@@ -104,6 +111,7 @@ fun MainScreen(
                 icon = rateIconResId,
                 onClick = onOpenHeart,
                 modifier = Modifier.weight(1f).height(140.dp),
+
             )
         }
 
@@ -134,12 +142,13 @@ fun MainScreen(
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "2:30", // 현재 시간 하드코딩, 추후 데이터 입력 필요
+                    nextTime ?: "--:--",
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
                 Text(
-                    "10분 $remainderMessage",    // 현재 시간 하드코딩, 추후 데이터 입력 필요
+                    remainText ?: "복용 일정 없음",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )

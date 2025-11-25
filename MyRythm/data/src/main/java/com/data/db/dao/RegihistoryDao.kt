@@ -1,20 +1,23 @@
 package com.data.db.dao
 
 import androidx.room.*
-import com.data.db.entity.RegihistoryEntity
-import com.data.db.entity.RegihistoryWithPlans
+import com.data.db.entity.PlanEntity
+import com.data.db.entity.RegiHistoryEntity
+import com.data.db.entity.RegiHistoryWithPlans
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface RegihistoryDao {
-
-    @Transaction
-    @Query("SELECT * FROM regihistory WHERE userId = :userId ORDER BY regihistoryId DESC")
-    fun observePrescriptions(userId: Long): Flow<List<RegihistoryWithPlans>>
+interface RegiHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPrescription(prescription: RegihistoryEntity): Long
+    suspend fun insert(regiHistory: RegiHistoryEntity)
 
-    @Delete
-    suspend fun deletePrescription(prescription: RegihistoryEntity)
+    @Query("SELECT * FROM regihistory ORDER BY id DESC")
+    fun getAll(): Flow<List<RegiHistoryEntity>>
+
+    @Transaction
+    @Query("SELECT * FROM regihistory WHERE id = :id")
+    fun getWithPlans(id: Long): Flow<RegiHistoryWithPlans?>
 }
+
+

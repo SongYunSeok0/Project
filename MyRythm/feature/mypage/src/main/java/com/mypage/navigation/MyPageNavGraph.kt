@@ -18,7 +18,8 @@ fun NavGraphBuilder.mypageNavGraph(
             onEditClick = { nav.navigate(EditProfileRoute) },
             onHeartClick = { nav.navigate(HeartReportRoute) },
             onFaqClick   = { nav.navigate(FAQRoute) },
-            onLogoutClick = onLogoutClick
+            onLogoutClick = onLogoutClick,
+            onWithdrawalSuccess = onLogoutClick
         )
     }
 

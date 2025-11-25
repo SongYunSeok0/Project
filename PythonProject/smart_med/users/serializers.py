@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
             "height",
             "weight",
             "preferences",
-            "prot_phone",
+            "prot_email",
             "relation",
             "is_active",
             "is_staff",
@@ -152,7 +152,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return (v or "").strip().lower()
 
     def validate_phone(self, v: str) -> str:
-        return _normalize_phone(v)
+        if not v:
+            return None
+        return v
+
 
     def validate_gender(self, v: str) -> str | None:
         if v in (None, ""):
@@ -191,7 +194,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "gender",
             "height",
             "weight",
-            "prot_phone",
+            "prot_email",
         )
 
     def validate_phone(self, v: str) -> str:

@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="RegiHistory",
+            name="regihistory",
             fields=[
                 (
                     "id",

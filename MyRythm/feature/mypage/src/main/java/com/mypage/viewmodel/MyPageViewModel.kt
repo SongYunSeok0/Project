@@ -6,6 +6,7 @@ import com.domain.model.HeartRateHistory
 import com.domain.repository.InquiryRepository
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.model.UserProfile
+import com.domain.repository.AuthRepository
 import com.domain.repository.ProfileRepository
 import com.domain.usecase.health.GetLatestHeartRateUseCase
 import com.domain.usecase.health.GetHeartHistoryUseCase
@@ -24,9 +25,11 @@ class MyPageViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val inquiryRepository: InquiryRepository,
     private val userRepository: ProfileRepository,
+    private val authRepository: AuthRepository,
     private val getLatestHeartRateUseCase: GetLatestHeartRateUseCase,
     private val getHeartHistoryUseCase: GetHeartHistoryUseCase,
-) : ViewModel() {
+
+    ) : ViewModel() {
 
     // -------------------------------
     //  이벤트 채널
@@ -122,6 +125,21 @@ class MyPageViewModel @Inject constructor(
     fun refreshHeartData() {
         loadLatestHeartRate()
         loadHeartHistory()
+    }
+
+    fun deleteAccount() = viewModelScope.launch {
+        runCatching {
+            // 👇 userRepository가 아니라 authRepository를 호출해야 합니다!
+            authRepository.withdrawal()
+        }.onSuccess { isSuccess ->
+            if (isSuccess) {
+                _events.send(MyPageEvent.WithdrawalSuccess)
+            } else {
+                _events.send(MyPageEvent.WithdrawalFailed)
+            }
+        }.onFailure {
+            _events.send(MyPageEvent.WithdrawalFailed)
+        }
     }
 
     init {

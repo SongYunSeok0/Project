@@ -12,9 +12,10 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
+from django.db import IntegrityError
+import traceback
+
 User = get_user_model()
-
-
 
 class LoginView(APIView):
     authentication_classes = []
@@ -116,7 +117,7 @@ class MeView(APIView):
                 "height": getattr(user, "height", ""),
                 "weight": getattr(user, "weight", ""),
                 "preferences": getattr(user, "preferences", {}),
-                "prot_phone": getattr(user, "prot_phone", ""),
+                "prot_email": getattr(user, "prot_email", ""),
                 "relation": getattr(user, "relation", ""),
                 "is_active": user.is_active,
                 "is_staff": user.is_staff,
@@ -137,7 +138,7 @@ class MeView(APIView):
             "height",
             "weight",
             "preferences",
-            "prot_phone",
+            "prot_email",
             "relation",
         }
         data = request.data
@@ -261,7 +262,21 @@ class SignupView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        user = serializer.save()
+
+        try:
+            user = serializer.save()
+        except IntegrityError as e:
+            # 중복 이메일, 중복 전화번호 등
+            if "email" in str(e).lower():
+                return Response({"detail": "이미 존재하는 이메일입니다."}, status=400)
+            if "phone" in str(e).lower():
+                return Response({"detail": "이미 존재하는 전화번호입니다."}, status=400)
+            return Response({"detail": "회원가입 중 오류가 발생했습니다."}, status=400)
+        except Exception as e:
+            print("===== SIGNUP ERROR TRACEBACK =====")
+            traceback.print_exc()
+            print("==================================")
+            return Response({"detail": str(e)}, status=400)
 
         # 인증 완료 후 캐시 삭제
         cache.delete(f"email_verified:{email}")
@@ -271,3 +286,10 @@ class SignupView(APIView):
             {"message": "회원가입 성공", "user_id": user.id},
             status=201
         )
+class WithdrawalView(APIView):
+    permission_classes = [IsAuthenticated] # 로그인한 사람만 가능
+
+    def delete(self, request):
+        user = request.user
+        user.delete() # DB에서 CASCADE로 연쇄 삭제됨
+        return Response({"message": "회원 탈퇴 완료"}, status=status.HTTP_200_OK)

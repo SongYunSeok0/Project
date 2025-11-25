@@ -8,16 +8,21 @@ import androidx.navigation.toRoute
 import com.news.ui.NewsDetailScreen
 import com.news.ui.NewsMainScreen
 
-fun NavGraphBuilder.newsNavGraph(nav: NavController) {
-    composable<NewsRoute> {
+fun NavGraphBuilder.newsNavGraph(nav: NavController, userId: String) {
+    composable<NewsRoute> { backStackEntry ->
+
+        // 🔥 SavedStateHandle에 userId 저장
+        backStackEntry.savedStateHandle["userId"] = userId
+
+        // 🔥 ViewModel은 자동으로 savedStateHandle을 받아감
         NewsMainScreen(
             nav = nav,
             onOpenDetail = { url -> nav.navigate(NewsDetailRoute(url)) }
         )
     }
-    composable<NewsDetailRoute> { e ->
-        // ✅ 받을 때 디코딩
-        val r = e.toRoute<NewsDetailRoute>()
+
+    composable<NewsDetailRoute> { entry ->
+        val r = entry.toRoute<NewsDetailRoute>()
         val realUrl = Uri.decode(r.url)
         NewsDetailScreen(url = realUrl, onBack = { nav.navigateUp() })
     }

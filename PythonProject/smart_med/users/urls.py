@@ -8,4 +8,5 @@ urlpatterns = [
     path("social-login/", SocialLoginView.as_view(), name="social-login"),
     path("me/", MeView.as_view(), name="me"),
     path("fcm/", RegisterFcmTokenView.as_view()),
+    path('withdrawal/', WithdrawalView.as_view(), name='withdrawal'),
 ]

@@ -6,6 +6,8 @@ import androidx.navigation.compose.composable
 import kotlinx.serialization.ExperimentalSerializationApi
 import com.chatbot.navigation.ChatBotRoute
 import com.scheduler.navigation.SchedulerRoute
+import com.scheduler.navigation.CameraRoute
+import com.mypage.navigation.MyPageRoute
 import com.mypage.navigation.HeartReportRoute
 import com.map.navigation.MapRoute
 import com.news.navigation.NewsRoute
@@ -17,9 +19,11 @@ fun NavGraphBuilder.mainNavGraph(nav: NavController, userId: String) {
         StepViewModelRoute(
             onOpenChatBot   = { nav.navigate(ChatBotRoute()) },
             onOpenScheduler = { nav.navigate(SchedulerRoute(userId)) },
-            onOpenHeart     = { nav.navigate(HeartReportRoute) },
+            onOpenSteps     = { nav.navigate(MyPageRoute) },          // 임시: 걸음수 → 마이페이지
+            onOpenHeart     = { nav.navigate(HeartReportRoute) },   // 마이페이지 상세
             onOpenMap       = { nav.navigate(MapRoute) },
-            onOpenNews      = { nav.navigate(NewsRoute) }
+            onOpenNews      = { nav.navigate(NewsRoute(userId)) },
+            onFabCamera     = { nav.navigate(CameraRoute) }
         )
     }
 }

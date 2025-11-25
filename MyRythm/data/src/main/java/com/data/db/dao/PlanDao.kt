@@ -6,25 +6,36 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlanDao {
-    @Query("SELECT * FROM 'plan'")
-    fun observePlans(): Flow<List<PlanEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(entity: PlanEntity)
+    suspend fun insert(plan: PlanEntity)
 
-    @Update
-    suspend fun update(plan: PlanEntity)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(plans: List<PlanEntity>)
 
-    @Query("DELETE FROM 'plan' WHERE id = :planId")
-    suspend fun deleteById(planId: Long)
+    @Query("SELECT * FROM 'plan' WHERE regihistoryId = :regihistoryId")
+    fun getByRegiHistory(regihistoryId: Long): Flow<List<PlanEntity>>
 
-    @Query("DELETE FROM 'plan'")
-    suspend fun deleteAllByUser()
+    @Query(
+        """
+        SELECT `plan`.* 
+        FROM `plan`
+        INNER JOIN `regihistory`
+            ON `plan`.regihistoryId = `regihistory`.id
+        WHERE `regihistory`.userId = :userId
+    """
+    )
+    fun getAllByUser(userId: Long): Flow<List<PlanEntity>>
 
-    @Query("SELECT * FROM 'plan'")
-    suspend fun getAllOnce(): List<PlanEntity>
+    @Query("""
+        DELETE FROM 'plan'
+        WHERE regihistoryId IN (
+            SELECT id FROM regihistory WHERE userId = :userId
+        )
+    """)
+    suspend fun deleteAllByUser(userId: Long)
+
+
 }
-
-
 
 

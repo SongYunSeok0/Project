@@ -8,24 +8,24 @@ from django.core.exceptions import ValidationError
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email=None, password=None, **extra):
-        # 1124 소셜로그인 적용으로 이메일/비번 필수 로직 수정, 메시지는 UserCreateSerializer로 이동
-        # 소셜 유저는 이메일 없이 계정 생성 (프로바이더+소셜아이디로 구분)
-        if not email:
-            email = None
-        else:
-            email = self.normalize_email(email)
+    def create_user(self, email, password=None, **extra):
+        # 이메일 정규화
+        if email:
+            email = self.normalize_email(email).lower()
 
+        # ✔️ 1. 먼저 user 객체를 생성
         user = self.model(email=email, **extra)
 
-        # 비번 있으면 로컬 유저 -> 비번 설정 루트, 비번 없으면 소셜 유저
+        # ✔️ 2. 그 다음 패스워드를 설정
         if password:
             user.set_password(password)
         else:
             user.set_unusable_password()
 
+        # ✔️ 3. 저장
         user.save(using=self._db)
         return user
+
 
     def create_superuser(self, email, password=None, **extra):
         if not password:
@@ -104,7 +104,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[MinValueValidator(0)]
     )
     preferences = models.JSONField(default=dict, blank=True)
-    prot_phone = models.CharField(max_length=20, blank=True, null=True)
+    prot_email = models.CharField(max_length=30, blank=True, null=True)
     relation = models.CharField(max_length=30, blank=True, null=True)
 
     # 자동 기록

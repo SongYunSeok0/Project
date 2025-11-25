@@ -165,7 +165,7 @@
     <string name="chatbot_message_prompt_question">약, 부작용, 복용법, 증상, 병원 찾기 등에 대해 자유롭게 질문해보세요.</string>
     <string name="chatbot_message_content">메시지를 입력하세요.</string>
     <string name="chatbot_message_answer_loading">답변을 불러오는 중입니다...</string>
-    <string name="main_message_remainder">전 알림 예정</string>
+    <string name="main_message_remainder">분 전 알림 예정</string>
     <string name="main_message_healthinsight">오늘의 건강 데이터를 확인하세요</string>
     <string name="map_message_search">병원, 약국 등 검색어를 입력하세요</string>
     <string name="mypage_message_profile_greeting">안녕하세요</string>

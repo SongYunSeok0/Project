@@ -19,6 +19,7 @@ urlpatterns = [
      path("api/auth/send-code/", SendEmailCodeView.as_view()),
     path("api/auth/verify-code/", VerifyEmailCodeView.as_view()),
     path('api/plan/', PlanListView.as_view(), name='plan_list'),
+    path('api/', include('medications.urls')),
     path('api/rag/', include('rag.urls')),
     path('api/health/', include('health.urls')),
 ]
