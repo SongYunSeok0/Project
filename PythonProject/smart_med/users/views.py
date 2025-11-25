@@ -12,10 +12,9 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
+from django.db import IntegrityError
+
 User = get_user_model()
-
-
-
 
 class LoginView(APIView):
     authentication_classes = []
@@ -61,6 +60,36 @@ class LoginView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+class SocialLoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        provider = request.data.get("provider")
+        social_id = request.data.get("socialId")
+
+        # 신규회원 여부 확인
+        try:
+            user = User.objects.get(provider=provider, social_id=social_id)
+
+            # JWT 발급
+            # 구글은 아이디 토큰 jwt 안에 정도가 들어있어서 토큰하나적어두면 알아서받아옴
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "needAdditionalInfo": False
+            }, status=200)
+
+        except User.DoesNotExist:
+            # 신규유저는 추가 정보 필요(프로바이더+소셜아이디)
+            return Response({
+                "needAdditionalInfo": True,
+                "provider": provider,
+                "socialId": social_id
+            }, status=200)
 
 
 class MeView(APIView):
@@ -225,7 +254,18 @@ class SignupView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        user = serializer.save()
+
+        try:
+            user = serializer.save()
+        except IntegrityError as e:
+            # 중복 이메일, 중복 전화번호 등
+            if "email" in str(e).lower():
+                return Response({"detail": "이미 존재하는 이메일입니다."}, status=400)
+            if "phone" in str(e).lower():
+                return Response({"detail": "이미 존재하는 전화번호입니다."}, status=400)
+            return Response({"detail": "회원가입 중 오류가 발생했습니다."}, status=400)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=400)
 
         # 인증 완료 후 캐시 삭제
         cache.delete(f"email_verified:{email}")

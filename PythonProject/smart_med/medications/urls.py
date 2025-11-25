@@ -1,9 +1,8 @@
-# from rest_framework.routers import DefaultRouter
-# from .views import MedicationViewSet, MedicationScheduleViewSet, MedicationHistoryViewSet
-#
-# router = DefaultRouter()
-# router.register(r'medications', MedicationViewSet, basename='medication')
-# router.register(r'schedules', MedicationScheduleViewSet, basename='schedule')
-# router.register(r'history', MedicationHistoryViewSet, basename='history')
-#
-# urlpatterns = router.urls
+from django.urls import path
+from .views import PlanListView
+from .views import RegiHistoryListCreateView   # 🔥 방금 만든 RegiHistory View
+
+urlpatterns = [
+    path("regihistory/", RegiHistoryListCreateView.as_view(), name="regihistory"),
+    path("plan/", PlanListView.as_view(), name="plan_list"),
+]

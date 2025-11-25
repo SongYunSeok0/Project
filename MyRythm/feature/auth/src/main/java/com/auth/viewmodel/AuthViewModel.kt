@@ -7,16 +7,17 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.data.core.auth.TokenStore
 import com.data.core.push.PushManager
 import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
+import com.domain.repository.AuthRepository
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.auth.SocialLoginUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.user.SignupUseCase
-import com.domain.repository.AuthRepository   // ⭐ 추가 필요 (Email 인증용)
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -40,6 +41,7 @@ class AuthViewModel @Inject constructor(
     private val signupUseCase: SignupUseCase,
     private val socialLoginUseCase: SocialLoginUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
+    private val tokenStore: TokenStore,
     private val repo: AuthRepository     // ⭐ 이메일 인증/검증용 Repository 추가
 ) : ViewModel() {
 
@@ -67,7 +69,8 @@ class AuthViewModel @Inject constructor(
     // -----------------------------------------------------------
     data class UiState(
         val loading: Boolean = false,
-        val isLoggedIn: Boolean = false
+        val isLoggedIn: Boolean = false,
+        val userId: String? = null  // 1124 추가
     )
 
     data class FormState(
@@ -82,7 +85,8 @@ class AuthViewModel @Inject constructor(
     val events: SharedFlow<String> = _events
 
     private fun emit(msg: String) = _events.tryEmit(msg)
-
+    //1124
+    fun emitInfo(msg: String) = emit(msg)
 
     private val _form = MutableStateFlow(FormState())
     val form: StateFlow<FormState> = _form
@@ -135,9 +139,7 @@ class AuthViewModel @Inject constructor(
             gender = f.gender,
             height = f.height,
             weight = f.weight,
-            password = f.password,
-            provider = null,
-            socialId = null
+            password = f.password
         )
 
         _state.update { it.copy(loading = true) }
@@ -162,6 +164,64 @@ class AuthViewModel @Inject constructor(
     }
 
 
+    /*fun login() = viewModelScope.launch {
+        val email = form.value.email
+        val pw = form.value.password
+
+        Log.e("AuthViewModel", "⏳ [1] login() 호출됨")
+        Log.e("AuthViewModel", "📩 입력값 email=$email, pw=${"*".repeat(pw.length)}")
+
+        if (email.isBlank() || pw.isBlank()) {
+            Log.e("AuthViewModel", "❌ [2] email 또는 pw 비어있음")
+            emit("ID와 비번을 입력하세요")
+            return@launch
+        }
+
+        _state.update { it.copy(loading = true) }
+        Log.e("AuthViewModel", "⏳ [3] loginUseCase 실행 시작")
+
+        val result = loginUseCase(email, pw)
+
+        Log.e("AuthViewModel", "📡 [4] loginUseCase 결과: isSuccess=${result.isSuccess}, exception=${result.exceptionOrNull()}")
+
+        val ok = result.isSuccess
+
+        if (ok) {
+            Log.e("AuthViewModel", "로그인 성공 → FCM 토큰 등록 시도")
+
+            PushManager.fcmToken?.let { token ->
+                Log.e("AuthViewModel", "FCM token = $token")
+                runCatching { registerFcmTokenUseCase(token) }
+                    .onSuccess { Log.e("AuthViewModel", "FCM 토큰 등록 성공") }
+                    .onFailure { Log.e("AuthViewModel", "FCM 토큰 등록 실패: ${it.message}") }
+            }//1124추가 } 부터
+        }
+
+        // userId 추가
+        _state.update {
+            it.copy(
+                loading = false,
+                isLoggedIn = ok,
+                userId = if (ok) email else null  // 이메일을 userId로 사용
+            )
+        }
+
+        Log.e("AuthViewModel", "🏁 login() 종료: isLoggedIn=$ok, userId=${_state.value.userId}")
+
+        emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
+    }
+            *//*1124주석} ?: Log.e("AuthViewModel", "FCM token 없음")
+        } else {
+            Log.e("AuthViewModel", "로그인 실패")
+        }
+
+        _state.update { it.copy(loading = false, isLoggedIn = ok) }
+
+        Log.e("AuthViewModel", "🏁 [6] login() 종료 isLoggedIn=$ok")
+
+        emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
+    }*/
+
     // -----------------------------------------------------------
     // 이하 모든 기존 로그인, 카카오, 구글, FCM 유지
     // -----------------------------------------------------------
@@ -185,10 +245,18 @@ class AuthViewModel @Inject constructor(
             }
         }
 
+        /*
+         _state.update {
+            it.copy(
+                loading = false,
+                isLoggedIn = ok,
+                userId = if (ok) email else null
+            )
+        }
+         */
         _state.update { it.copy(loading = false, isLoggedIn = ok) }
         emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
     }
-
 
     fun tryRefresh() = viewModelScope.launch {
         val ok = runCatching { refreshUseCase() }.getOrDefault(false)
@@ -212,8 +280,9 @@ class AuthViewModel @Inject constructor(
         onNeedAdditionalInfo: (String, String) -> Unit
     ) {
         val callback: (OAuthToken?, Throwable?) -> Unit = { token, error ->
-            if (error != null) onResult(false, "카카오 로그인 실패")
-            else if (token != null) {
+            if (error != null) {
+                onResult(false, "카카오 로그인 실패")
+            } else if (token != null) {
                 UserApiClient.instance.me { user, _ ->
                     if (user != null) {
                         handleSocialLogin(
@@ -224,6 +293,8 @@ class AuthViewModel @Inject constructor(
                             onResult = onResult,
                             onNeedAdditionalInfo = onNeedAdditionalInfo
                         )
+                    } else {
+                        onResult(false, "사용자 정보 요청 실패")
                     }
                 }
             }
@@ -253,7 +324,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-
+    // -------------------------------------------------------------------------
+    // 구글 로그인 + FCM 등록
+    // -------------------------------------------------------------------------
     fun googleOAuth(
         context: Context,
         googleClientId: String,
@@ -286,15 +359,13 @@ class AuthViewModel @Inject constructor(
                 }
 
                 handleGoogleCredential(result, onResult, onNeedAdditionalInfo)
-
             } catch (e: GetCredentialCancellationException) {
                 onResult(false, "구글 로그인 취소")
             } catch (e: Exception) {
-                onResult(false, "구글 로그인 실패")
+                onResult(false, "구글 로그인 실패: ${e.localizedMessage}")
             }
         }
     }
-
 
     private fun handleGoogleCredential(
         result: GetCredentialResponse,
@@ -306,7 +377,7 @@ class AuthViewModel @Inject constructor(
             credential is CustomCredential &&
             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
         ) {
-            runCatching {
+            try {
                 val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data)
                 handleSocialLogin(
                     provider = "google",
@@ -316,13 +387,15 @@ class AuthViewModel @Inject constructor(
                     onResult = onResult,
                     onNeedAdditionalInfo = onNeedAdditionalInfo
                 )
-            }.onFailure {
+            } catch (e: GoogleIdTokenParsingException) {
                 onResult(false, "구글 토큰 파싱 실패")
             }
         }
     }
 
-
+    /*// -------------------------------------------------------------------------
+    // 공통 소셜 로그인 처리 + FCM 등록
+    // -------------------------------------------------------------------------
     private fun handleSocialLogin(
         provider: String,
         accessToken: String?,
@@ -361,6 +434,77 @@ class AuthViewModel @Inject constructor(
 
                     is SocialLoginResult.Error, null ->
                         onResult(false, r?.message ?: "서버 오류")
+                }
+            }
+        }
+    }*/
+    // AuthViewModel.kt에서 handleSocialLogin 함수만 이 버전으로 교체
+
+    private fun handleSocialLogin(
+        provider: String,
+        accessToken: String?,
+        idToken: String?,
+        socialId: String,
+        onResult: (Boolean, String) -> Unit,
+        onNeedAdditionalInfo: (String, String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val apiResult = socialLoginUseCase(
+                    provider = provider,
+                    socialId = socialId,
+                    accessToken = accessToken,
+                    idToken = idToken
+                )
+                apiResult.onSuccess { result ->
+                    withContext(Dispatchers.Main) {
+                        when (result) {
+                            is SocialLoginResult.Success -> {
+                                // 기존 소셜로그인 회원 - 바로 로그인(메인홈 이동)
+                                _state.update {
+                                    it.copy(
+                                        isLoggedIn = true,
+                                        loading = false,
+                                        userId = socialId
+                                    )
+                                }
+                                PushManager.fcmToken?.let { token ->
+                                    runCatching { registerFcmTokenUseCase(token) }
+                                        .onFailure { emit("푸시 토큰 등록 실패") }
+                                }
+                                onResult(true, "$provider 로그인 성공")
+                            }
+
+                            is SocialLoginResult.NeedAdditionalInfo -> {
+                                //onNeedAdditionalInfo(socialId, provider)
+                                // 신규 소셜로그인 회원 - 바로 로그인(메인홈 이동, 추가정보는 팝업->에딧스크린)
+                                _state.update {
+                                    it.copy(
+                                        isLoggedIn = true,
+                                        loading = false,
+                                        userId = socialId
+                                    )
+                                }
+                                PushManager.fcmToken?.let { token ->
+                                    runCatching { registerFcmTokenUseCase(token) }
+                                }
+                                onResult(true, "$provider 신규 회원 등록 성공")
+                            }
+
+                            is SocialLoginResult.Error -> {
+                                onResult(false, result.message ?: "서버 오류")
+                            }
+                        }
+                    }
+                }.onFailure { e ->
+                    withContext(Dispatchers.Main) {
+                        onResult(false, parseError(e) ?: "네트워크 오류")
+                    }
+                }
+
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onResult(false, parseError(e) ?: "네트워크 오류")
                 }
             }
         }

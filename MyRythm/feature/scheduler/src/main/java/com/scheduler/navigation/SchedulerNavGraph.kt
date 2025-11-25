@@ -5,52 +5,40 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.domain.model.RegiHistory
 import com.scheduler.ui.CameraScreen
 import com.scheduler.ui.OcrScreen
 import com.scheduler.ui.RegiScreen
 import com.scheduler.ui.SchedulerScreen
+import com.shared.navigation.MainRoute
+
 
 fun NavGraphBuilder.schedulerNavGraph(
     nav: NavHostController,
     fallbackUserId: String = "1"
 ) {
     // 🟢 일정 목록 화면
-    composable<SchedulerRoute> { backStackEntry ->
-        val route = backStackEntry.toRoute<SchedulerRoute>()
-        val uid = route.userId.ifBlank { fallbackUserId }
+    composable<SchedulerRoute> {
+        val route = it.toRoute<SchedulerRoute>()
+        val uid = route.userId
 
-        SchedulerScreen(
-            userId = uid,
-            onOpenRegi = {
-                val tempId = System.currentTimeMillis()
-                nav.navigate(RegiRoute(userId = uid, prescriptionId = tempId))
-            }
-        )
+        SchedulerScreen(userId = uid.toLong())
     }
 
-    // 🟢 수동 등록 화면
     composable<RegiRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<RegiRoute>()
+        val uid = route.userId
 
-        // 원본 값(디버깅용)
-        val rawId = route.userId
-
-        // 비어있으면 fallbackUserId("1")로 대체
-        val effectiveId = rawId.ifBlank { fallbackUserId }
-
-        val uidLong = effectiveId.toLongOrNull()
-        if (uidLong != null && uidLong > 0L) {
-            RegiScreen(
-                userId = uidLong,
-                prescriptionId = route.prescriptionId,
-                onCompleted = { nav.popBackStack() }
-            )
-        } else {
-            Log.e(
-                "SchedulerNavGraph",
-                "❌ RegiRoute userId 변환 실패: raw='$rawId', effective='$effectiveId'"
-            )
-        }
+        RegiScreen(
+            userId = uid.toLong(),
+            regiHistoryId = route.regiHistoryId,
+            onCompleted = {
+                nav.navigate(SchedulerRoute(uid)) {
+                    popUpTo(MainRoute(uid)) { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+        )
     }
 
     // 🟢 OCR 화면
@@ -63,11 +51,11 @@ fun NavGraphBuilder.schedulerNavGraph(
         OcrScreen(
             imagePath = route.path,
             onConfirm = { _, _, _ ->
-                val newPrescriptionId = System.currentTimeMillis()
+                val newregiHistoryId = System.currentTimeMillis()
                 nav.navigate(
                     RegiRoute(
                         userId = uid,  // ⬅⬅⬅ 여기 반드시!! route.userId 써야 함
-                        prescriptionId = newPrescriptionId
+                        regiHistoryId = newregiHistoryId
                     )
                 )
             },
@@ -93,7 +81,7 @@ fun NavGraphBuilder.schedulerNavGraph(
             },
             onOpenRegi = {
                 val tempId = System.currentTimeMillis()
-                nav.navigate(RegiRoute(userId = uid, prescriptionId = tempId))
+                nav.navigate(RegiRoute(userId = uid, regiHistoryId = tempId))
             }
         )
     }

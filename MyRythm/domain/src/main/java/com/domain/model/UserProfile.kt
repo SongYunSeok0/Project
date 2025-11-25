@@ -11,4 +11,3 @@ data class UserProfile(
     val prot_email: String?,
     val email: String?
 )
-

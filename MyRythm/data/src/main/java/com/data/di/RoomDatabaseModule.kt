@@ -24,12 +24,13 @@ object RoomDatabaseModule {
     @Singleton
     fun provideDb(@ApplicationContext ctx: Context): AppRoomDatabase =
         Room.databaseBuilder(ctx, AppRoomDatabase::class.java, "app.db")
+            .fallbackToDestructiveMigration()   // ← 버전 초기화 시 데이터 삭제 후 재생성
             .build()
 
     @Provides fun provideUserDao(db: AppRoomDatabase): UserDao = db.userDao()
     @Provides fun provideFavoriteDao(db: AppRoomDatabase): FavoriteDao = db.favoriteDao()
     @Provides fun providePlanDao(db: AppRoomDatabase): PlanDao = db.planDao()
     @Provides fun provideInquiryDao(db: AppRoomDatabase): InquiryDao = db.inquiryDao()
-    @Provides fun providePrescriptionDao(db: AppRoomDatabase): RegihistoryDao = db.prescriptionDao()
+    @Provides fun providePrescriptionDao(db: AppRoomDatabase): RegiHistoryDao = db.regiHistoryDao()
     @Provides fun provideStepDao(db: AppRoomDatabase): StepDao = db.stepDao()
 }

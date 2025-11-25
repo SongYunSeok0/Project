@@ -22,7 +22,7 @@ fun NavGraphBuilder.mainNavGraph(nav: NavController, userId: String) {
             onOpenSteps     = { nav.navigate(MyPageRoute) },          // 임시: 걸음수 → 마이페이지
             onOpenHeart     = { nav.navigate(HeartReportRoute) },   // 마이페이지 상세
             onOpenMap       = { nav.navigate(MapRoute) },
-            onOpenNews      = { nav.navigate(NewsRoute) },
+            onOpenNews      = { nav.navigate(NewsRoute(userId)) },
             onFabCamera     = { nav.navigate(CameraRoute) }
         )
     }

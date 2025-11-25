@@ -8,7 +8,8 @@ fun FavoriteEntity.toDomain(): Favorite =
         id = id,
         keyword = keyword,
         timestamp = timestamp,
-        lastUsed = lastUsed
+        lastUsed = lastUsed,
+        userId = userId
     )
 
 fun Favorite.toEntity(): FavoriteEntity =
@@ -16,5 +17,6 @@ fun Favorite.toEntity(): FavoriteEntity =
         id = id,
         keyword = keyword,
         timestamp = timestamp,
-        lastUsed = lastUsed
+        lastUsed = lastUsed,
+        userId = userId
     )

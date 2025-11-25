@@ -2,8 +2,8 @@ package com.data.network.dto.user
 
 data class UserDto(
     val id: Long,
-    val uuid: String,
-    val email: String,
+    val uuid: String?,
+    val email: String?,
     val username: String,
     val phone: String?,
     val birth_date: String?,
