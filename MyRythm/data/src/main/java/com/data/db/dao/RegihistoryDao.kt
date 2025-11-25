@@ -20,3 +20,4 @@ interface RegiHistoryDao {
     fun getWithPlans(id: Long): Flow<RegiHistoryWithPlans?>
 }
 
+
