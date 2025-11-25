@@ -46,25 +46,31 @@ class MainViewModel @Inject constructor(
     private fun updateNextPlan(plans: List<Plan>) {
         val now = System.currentTimeMillis()
 
-        // **takenAt null 제거 + 가장 가까운 일정 선택**
         val next = plans
             .filter { it.takenAt != null && it.takenAt!! >= now }
             .minByOrNull { it.takenAt!! }
 
         if (next != null) {
-            val nextAt = next.takenAt!!  // 이제 non-null 보장됨
-            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val nextAt = next.takenAt!!
 
+            // 🔹 다음 복용 시간 포맷
+            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault())
             _nextTime.value = formatter.format(Date(nextAt))
 
+            // 🔹 남은 시간 계산 → HH:mm 으로 바꾸기
             val diff = nextAt - now
-            val minutes = (diff / 1000 / 60).toInt()
-            _remainText.value = "${minutes}분 뒤 복용"
+            val totalMinutes = diff / 1000 / 60
+
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+
+            _remainText.value = String.format("%02d:%02d", hours, minutes)
         } else {
             _nextTime.value = null
             _remainText.value = "복용 일정 없음"
         }
     }
+
 }
 
 
