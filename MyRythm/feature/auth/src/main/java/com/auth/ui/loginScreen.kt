@@ -128,6 +128,12 @@ fun LoginScreen(
                     )
 
                     Spacer(Modifier.height(8.dp))
+                    
+                    /*// 1125 12:13 자동로그인 테스트
+                    Switch(
+                        checked = isAutoLoginEnabled,
+                        onCheckedChange = { viewModel.setAutoLogin(it) }
+                    )*/
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
