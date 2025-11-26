@@ -5,6 +5,8 @@
     <string name="auth_login">로그인</string>
     <string name="auth_login_loading">로그인 중...</string>
     <string name="auth_signup">회원가입</string>
+    <string name="auth_setautologin">자동 로그인</string>
+
     <string name="auth_testlogin">임시 테스트 로그인 (SKIP)</string>
     <string name="auth_oauth">SNS 연동 로그인 하기</string>
     <string name="auth_kakaologin_description">카카오톡 로그인</string>
@@ -157,7 +159,7 @@
     <string name="dose_complete">복용 완료</string>
 
     <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
-    <string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>
+    <!--<string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>-->
     <string name="auth_message_code_sent">인증번호가 전송되었습니다. 테스트 코드는 0000 입니다</string>
     <string name="auth_message_verification_completed">전화번호 인증이 완료되었습니다</string>
     <string name="auth_message_backtologin">이미 계정이 있으신가요?</string>

@@ -41,7 +41,65 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+/*1125 기존의스플래시코드 복붙만
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()    // 스플래시 api + 의존성 추가
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
+        setContent {
+            FigmatestTheme {
+                var showSplash by remember { mutableStateOf(true) }
+
+                // 3초 뒤 AppNavigation으로 전환
+                LaunchedEffect(Unit) {
+                    delay(3000)
+                    showSplash = false
+                }
+
+                if (showSplash) {
+                    SplashScreenContent()
+                } else {
+                    AppNavigation()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SplashScreenContent() {
+    var imageIndex by remember { mutableStateOf(0) }
+
+    // 1초 간격으로 이미지 변경
+    LaunchedEffect(Unit) {
+        repeat(3) { i ->
+            imageIndex = i
+            delay(1000)
+        }
+    }
+
+    val images = listOf(
+        R.drawable.splashlogo1,
+        R.drawable.splashlogo2,
+        R.drawable.splashlogo3
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF6ae0d9)),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = images[imageIndex]),
+            contentDescription = "스플래시 이미지",
+            modifier = Modifier.size(300.dp)
+        )
+    }
+}
+ */
 
 
 

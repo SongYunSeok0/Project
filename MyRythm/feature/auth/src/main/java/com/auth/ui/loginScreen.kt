@@ -32,8 +32,6 @@ import com.shared.ui.components.AuthInputField
 import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
-import com.shared.ui.theme.Primary
-import com.shared.ui.theme.defaultFontFamily
 import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,9 +47,9 @@ fun LoginScreen(
     val passwordText = stringResource(R.string.auth_password)
     val pwMissingMessage = stringResource(R.string.auth_message_password_missing)
     val loginText = stringResource(R.string.auth_login)
+    val setAutologinText = stringResource(R.string.auth_setautologin)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val testLoginMessage = stringResource(R.string.auth_message_testlogin)
     val testLogin = stringResource(R.string.auth_testlogin)
     val oauthText = stringResource(R.string.auth_oauth)
     val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
@@ -61,6 +59,9 @@ fun LoginScreen(
     val ui by viewModel.state.collectAsStateWithLifecycle()
 
     Log.e("LoginScreen", "🎨 State 수집: isLoggedIn=${ui.isLoggedIn}, userId=${ui.userId}, loading=${ui.loading}")
+
+    // 1125 자동로그인 진행중
+    val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -126,6 +127,37 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         imeAction = ImeAction.Done
                     )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // 1125 자동 로그인 진행중 - 토글 디자인만 추가
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = setAutologinText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.loginTheme.loginTertiary,
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Switch(
+                            checked = autoLoginEnabled,
+                            onCheckedChange = { viewModel.setAutoLogin(it) },
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = MaterialTheme.loginTheme.loginTertiary,
+                                uncheckedTrackColor = MaterialTheme.loginTheme.loginTertiary.copy(alpha = 0.5f),
+                                uncheckedBorderColor = MaterialTheme.loginTheme.loginTertiary,
+
+                                checkedThumbColor = MaterialTheme.loginTheme.loginAppName,
+                                checkedTrackColor = MaterialTheme.loginTheme.loginAppName.copy(alpha = 0.7f),
+                                checkedBorderColor = MaterialTheme.loginTheme.loginTertiary
+                            )
+                        )
+                    }
 
                     Spacer(Modifier.height(8.dp))
 
@@ -262,6 +294,7 @@ fun LoginScreen(
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 private fun PreviewLogin() {
@@ -293,4 +326,4 @@ private fun PreviewLogin() {
     ) {
         LoginScreen()
     }
-}
+}*/
