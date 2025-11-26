@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import com.domain.usecase.auth.SendEmailCodeUseCase
+import com.domain.usecase.auth.VerifyEmailCodeUseCase
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -42,7 +44,8 @@ class AuthViewModel @Inject constructor(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
     private val tokenStore: TokenStore,
-    private val repo: AuthRepository     // ⭐ 이메일 인증/검증용 Repository 추가
+    private val sendEmailCodeUseCase: SendEmailCodeUseCase,
+    private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase
 ) : ViewModel() {
 
     // -----------------------------------------------------------
@@ -114,13 +117,21 @@ class AuthViewModel @Inject constructor(
     // 4) 이메일 인증
     // -----------------------------------------------------------
     fun sendCode() = viewModelScope.launch {
-        val ok = repo.sendEmailCode(signupForm.value.email)
+        // runCatching을 사용하여 예외 발생 시 false 처리 (안전하게 호출)
+        val ok = runCatching {
+            sendEmailCodeUseCase(signupForm.value.email)
+        }.getOrDefault(false)
+
         emit(if (ok) "인증코드 전송" else "전송 실패")
     }
 
     fun verifyCode() = viewModelScope.launch {
         val f = signupForm.value
-        val ok = repo.verifyEmailCode(f.email, f.code)
+        // runCatching을 사용하여 예외 발생 시 false 처리 (안전하게 호출)
+        val ok = runCatching {
+            verifyEmailCodeUseCase(f.email, f.code)
+        }.getOrDefault(false)
+
         emit(if (ok) "인증 성공" else "인증 실패")
     }
 

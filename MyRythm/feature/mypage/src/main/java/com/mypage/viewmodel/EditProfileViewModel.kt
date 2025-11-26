@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.UserProfile
 import com.domain.repository.ProfileRepository
-import com.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -12,10 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import com.domain.usecase.auth.SendEmailCodeUseCase
+import com.domain.usecase.auth.VerifyEmailCodeUseCase
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val userRepository: ProfileRepository
+    private val userRepository: ProfileRepository,
+    private val sendEmailCodeUseCase: SendEmailCodeUseCase,
+    private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase
 ) : ViewModel() {
 
     // 서버에서 가져온 프로필 (도메인 모델 그대로)
@@ -39,6 +42,24 @@ class EditProfileViewModel @Inject constructor(
                 _events.send(EditProfileEvent.LoadFailed)
             }
     }
+
+    fun sendEmailCode(email: String) = viewModelScope.launch {
+        // UseCase 실행 (operator invoke 덕분에 함수처럼 호출 가능)
+        runCatching {
+            sendEmailCodeUseCase(email)
+        }
+    }
+
+    // 2. 인증 코드 검증 (결과를 UI로 전달하기 위해 콜백 사용)
+    fun verifyEmailCode(email: String, code: String, onResult: (Boolean) -> Unit) = viewModelScope.launch {
+        val isSuccess = runCatching {
+            verifyEmailCodeUseCase(email, code)
+        }.getOrDefault(false)
+
+        onResult(isSuccess)
+    }
+
+
 
     /**
      * UI에서 문자열로 받은 값들을 도메인 UserProfile로 변환해서 저장
