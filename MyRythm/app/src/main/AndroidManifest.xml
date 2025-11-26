@@ -48,7 +48,7 @@
 
         <!-- FCM 서비스 -->
         <service
-            android:name="com.data.core.push.AppFcmService"
+            android:name="com.myrhythm.push.AppFcmService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

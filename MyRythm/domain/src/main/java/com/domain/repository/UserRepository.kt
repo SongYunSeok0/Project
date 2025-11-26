@@ -11,6 +11,5 @@ interface UserRepository {
     suspend fun updateUser(user: User): Boolean
     suspend fun getUser(userId: String): User = refreshMe()
     suspend fun refreshUser(userId: String): User = refreshMe()
-    suspend fun registerFcmToken(token: String)
 
 }

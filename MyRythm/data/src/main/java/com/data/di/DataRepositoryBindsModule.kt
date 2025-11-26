@@ -7,6 +7,7 @@ import com.data.repository.FavoriteRepositoryImpl
 import com.data.repository.HealthRepositoryImpl
 import com.data.repository.PlanRepositoryImpl
 import com.data.repository.ProfileRepositoryImpl
+import com.data.repository.PushRepositoryImpl
 import com.data.repository.RegiRepositoryImpl
 import com.data.repository.StepRepositoryImpl
 import com.data.repository.UserRepositoryImpl
@@ -18,6 +19,7 @@ import com.domain.repository.PlanRepository
 import com.domain.repository.ProfileRepository
 import com.domain.repository.RegiRepository
 import com.domain.repository.StepRepository
+import com.domain.repository.PushRepository
 import com.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -59,4 +61,8 @@ abstract class DataRepositoryBindsModule {
     @Binds
     @Singleton
     abstract fun bindPlanRepository(impl: PlanRepositoryImpl): PlanRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPushRepository(impl: PushRepositoryImpl): PushRepository
 }
