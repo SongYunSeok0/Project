@@ -5,12 +5,11 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class PlanCreateRequest(
-    @Json(name = "regihistoryId") val regiHistoryId: Long?,
+    @Json(name = "regihistoryId") val regihistoryId: Long?,
     @Json(name = "medName") val medName: String,
     @Json(name = "takenAt") val takenAt: Long?,
     @Json(name = "mealTime") val mealTime: String?,
     @Json(name = "note") val note: String?,
-    @Json(name = "taken") val taken: Long?
+    @Json(name = "taken") val taken: Long?,
+    @Json(name = "useAlarm") val useAlarm: Boolean
 )
-
-

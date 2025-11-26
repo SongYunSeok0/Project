@@ -5,7 +5,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.domain.model.RegiHistory
 import com.scheduler.ui.CameraScreen
 import com.scheduler.ui.OcrScreen
 import com.scheduler.ui.RegiScreen
@@ -30,8 +29,6 @@ fun NavGraphBuilder.schedulerNavGraph(
         val uid = route.userId.ifBlank { fallbackUserId }
 
         RegiScreen(
-            userId = uid.toLong(),
-            regiHistoryId = route.regihistoryId,
             onCompleted = {
                 nav.navigate(SchedulerRoute(uid)) {
                     popUpTo(MainRoute(uid)) { inclusive = false }

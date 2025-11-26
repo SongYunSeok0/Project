@@ -70,10 +70,11 @@ fun AppRoot() {
     val isAuth = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class)
     val isMain = isRoute(MainRoute::class)
     val isNews = isRoute(NewsRoute::class)
+    val isChat = isRoute(ChatBotRoute::class)
 
 
     val hideTopBar = isAuth || isMain
-    val hideBottomBar = isAuth
+    val hideBottomBar = isAuth || isChat
 
     // 탭 이동 함수
     fun goHome() = nav.navigate(MainRoute(userId)) {

@@ -116,17 +116,30 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signup(request: SignupRequest): Boolean {
         return try {
-            val res = api.signup(request.toDto())
+
+            // 🔥 서버로 보낼 실제 JSON(DTO) 확인
+            val dto = request.toDto()
+            Log.e("SIGNUP_DTO", "보내는 JSON = $dto")
+
+            val res = api.signup(dto)
+
+            // 🔥 서버 응답 상태 확인
+            Log.e(
+                "SIGNUP_RESPONSE",
+                "code=${res.code()}, body=${res.errorBody()?.string()}"
+            )
+
             if (!res.isSuccessful) {
                 Log.e(
                     "Signup",
-                    "HTTP ${res.code()} ${res.message()}\n${res.errorBody()?.string()}"
+                    "HTTP ${res.code()} ${res.message()}"
                 )
                 false
             } else {
                 Log.d("Signup", "회원가입 성공: ${res.body()}")
                 true
             }
+
         } catch (e: Exception) {
             Log.e("Signup", "네트워크 예외", e)
             false

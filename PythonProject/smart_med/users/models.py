@@ -13,10 +13,8 @@ class UserManager(BaseUserManager):
         if email:
             email = self.normalize_email(email).lower()
 
-        # ✔️ 1. 먼저 user 객체를 생성
         user = self.model(email=email, **extra)
 
-        # ✔️ 2. 그 다음 패스워드를 설정
         if password:
             user.set_password(password)
         else:

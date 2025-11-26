@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,7 +43,9 @@ fun AuthInputField(
     imeAction: ImeAction = ImeAction.Next,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardType: KeyboardType = KeyboardType.Text,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    shape: Shape = MaterialTheme.shapes.extraSmall,
+    trailingContent: @Composable (() -> Unit)? = null
 ) {
     // 비밀번호 표시/숨김 상태
     var passwordVisible by remember { mutableStateOf(false) }
@@ -57,7 +60,6 @@ fun AuthInputField(
 
     // Shape와 Typography는 공통 (Theme.kt에서 MaterialTheme에 제공됨)
     // extraSmall은 Shape.kt에서 AuthFieldShape(10.dp)로 매핑되어 있습니다.
-    val fieldShape = MaterialTheme.shapes.extraSmall
     val textStyle = MaterialTheme.typography.bodyLarge
 
     val passwordShow = stringResource(R.string.auth_password_show)
@@ -74,28 +76,36 @@ fun AuthInputField(
             )
         },
         singleLine = true,
-        shape = fieldShape,
+        shape = shape,
         modifier = modifier
             .height(AuthFieldHeight) // Dimension.kt의 AuthFieldHeight 사용
-            .shadow(elevation = ShadowElevationDefault, shape = fieldShape),
+            .shadow(elevation = ShadowElevationDefault, shape = shape),
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation()
         else
             VisualTransformation.None,
-        trailingIcon = if (isPassword) {
-            {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible)
-                            Icons.Filled.VisibilityOff
-                        else
-                            Icons.Filled.Visibility,
-                        contentDescription = if (passwordVisible) passwordHide else passwordShow,
-                        tint = accentColor
-                    )
+        trailingIcon = {
+            when {
+                isPassword -> {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible)
+                                Icons.Filled.VisibilityOff
+                            else
+                                Icons.Filled.Visibility,
+                            contentDescription = if (passwordVisible) passwordHide else passwordShow,
+                            tint = accentColor
+                        )
+                    }
                 }
+
+                trailingContent != null -> {
+                    trailingContent()
+                }
+
+                else -> {}
             }
-        } else null,
+        },
         keyboardOptions = KeyboardOptions(imeAction = imeAction,keyboardType = keyboardType),
         keyboardActions = keyboardActions,
         enabled = enabled,

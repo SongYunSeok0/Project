@@ -1,13 +1,19 @@
 package com.domain.repository
 
-import com.domain.model.DailyStep   // ★ 이거 추가
+import com.domain.model.DailyStep
 
 interface StepRepository {
-    suspend fun saveSnapshot(steps: Int, collectedAt: Long)
 
-    // 하루 총 걸음수 저장
-    suspend fun saveDailyStep(date: String, steps: Int)
+    // 🔹 Raw steps: 실시간 기록 저장용
+    suspend fun insertStep(steps: Int)
 
-    // 최근 7일 걸음수
+    // 🔹 Raw steps 비우기 (자정 이후 정리용)
+    suspend fun clearSteps()
+
+    // 🔹 Daily Step (서버/로컬 요약)
+    suspend fun saveDailyStep(daily: DailyStep)
+
+    suspend fun uploadDailyStep(daily: DailyStep)
+
     suspend fun getWeeklySteps(): List<DailyStep>
 }

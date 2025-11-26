@@ -33,6 +33,7 @@ serialization = "1.7.3"
 jetbrainsKotlinJvm = "2.0.21"
 materialIconsExtended = "1.7.8"
 
+health-connect = "1.1.0-alpha12"
 naver-map = "3.23.0"
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
@@ -157,6 +158,8 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version =
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+
+androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "health-connect" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

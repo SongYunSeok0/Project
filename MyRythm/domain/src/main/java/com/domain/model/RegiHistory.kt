@@ -5,5 +5,6 @@ data class RegiHistory(
     val userId: Long,
     val regiType: String,
     val label: String?,
-    val issuedDate: String?
+    val issuedDate: String?,
+    val useAlarm: Boolean
 )

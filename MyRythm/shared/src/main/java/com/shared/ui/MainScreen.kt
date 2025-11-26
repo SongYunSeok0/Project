@@ -25,13 +25,12 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
-    onOpenSteps: () -> Unit = {},
+    onOpenAlram: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
-    onFabCamera: () -> Unit = {},
-    todaySteps: Int = 0,
     remainText: String? = null,
+    todaySteps: Int = 0
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -43,7 +42,6 @@ fun MainScreen(
 
     val chatbotText = stringResource(R.string.chatbot)
     val schedulerText = stringResource(R.string.scheduler)
-    val stepText = stringResource(R.string.step)
     val rateText = stringResource(R.string.rate)
     val timeremainder = stringResource(R.string.timeremainder)
     val mapText = stringResource(R.string.map)
@@ -87,25 +85,24 @@ fun MainScreen(
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             MainFeatureCard(
-                title = stepText,
+                title = "${todaySteps}걸음",
                 bg = MaterialTheme.componentTheme.stepCard,
                 icon = stepIconResId,
-                onClick = onOpenSteps,
                 modifier = Modifier.weight(1f).height(140.dp),
-                subtitle = "${todaySteps}걸음"
             )
             MainFeatureCard(
                 title = rateText,
                 bg = MaterialTheme.componentTheme.rateCard,
                 icon = rateIconResId,
                 onClick = onOpenHeart,
-                modifier = Modifier.weight(1f).height(140.dp)
+                modifier = Modifier.weight(1f).height(140.dp),
+
             )
         }
 
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.timeRemainingCard,
-            onClick = onOpenScheduler
+            onClick = onOpenAlram
         ) {
             Column(
                 modifier = Modifier

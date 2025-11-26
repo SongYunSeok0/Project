@@ -13,6 +13,7 @@ fun PlanEntity.toDomainLocal(): Plan =
         mealTime = mealTime,
         note = note,
         taken = taken,
+        useAlarm = useAlarm
     )
 
 // ---------- Domain → DB ----------
@@ -25,4 +26,5 @@ fun Plan.toEntity(): PlanEntity =
         mealTime = mealTime,
         note = note,
         taken = taken,
+        useAlarm = useAlarm
     )
