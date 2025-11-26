@@ -3,11 +3,13 @@ package com.scheduler.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.Plan
+import com.domain.model.RegiHistory
 import com.domain.usecase.plan.CreatePlanUseCase
 import com.domain.usecase.plan.DeletePlanUseCase
 import com.domain.usecase.plan.GetPlansUseCase
 import com.domain.usecase.plan.RefreshPlansUseCase
 import com.domain.usecase.plan.UpdatePlanUseCase
+import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,12 +26,14 @@ class PlanViewModel @Inject constructor(
     private val createPlanUseCase: CreatePlanUseCase,
     private val updatePlanUseCase: UpdatePlanUseCase,
     private val deletePlanUseCase: DeletePlanUseCase,
-    private val refreshPlansUseCase: RefreshPlansUseCase
+    private val refreshPlansUseCase: RefreshPlansUseCase,
+    private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase
 ) : ViewModel() {
 
     data class UiState(
         val loading: Boolean = false,
         val plans: List<Plan> = emptyList(),
+        val histories: List<RegiHistory> = emptyList(),
         val error: String? = null
     )
 
@@ -39,25 +43,31 @@ class PlanViewModel @Inject constructor(
     private val _itemsByDate = MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
     val itemsByDate = _itemsByDate.asStateFlow()
 
-    // ----------------------------------------------------
-    // 🔥 전체 Plan 로드
-    // ----------------------------------------------------
     fun load(userId: Long) {
         viewModelScope.launch {
-            getPlansUseCase(userId)
+
+            getRegiHistoriesUseCase()
                 .catch { e ->
                     _uiState.update { it.copy(error = e.message) }
                 }
-                .collect { list ->
-                    _uiState.update { it.copy(plans = list) }
-                    _itemsByDate.value = makeItemsByDate(list)
+                .collect { histories ->
+
+                    _uiState.update { it.copy(histories = histories) }
+
+                    getPlansUseCase(userId)
+                        .catch { e ->
+                            _uiState.update { it.copy(error = e.message) }
+                        }
+                        .collect { plans ->
+
+                            _uiState.update { it.copy(plans = plans) }
+
+                            _itemsByDate.value = makeItemsByDate(plans, histories)
+                        }
                 }
         }
     }
 
-    // ----------------------------------------------------
-    // 🔥 Plan 생성
-    // ----------------------------------------------------
     fun createPlan(
         regihistoryId: Long?,
         medName: String,
@@ -80,45 +90,58 @@ class PlanViewModel @Inject constructor(
         }
     }
 
-    // ----------------------------------------------------
-    // 🔥 Plan 수정
-    // ----------------------------------------------------
     fun updatePlan(userId: Long, plan: Plan) {
         viewModelScope.launch {
             updatePlanUseCase(userId, plan)
         }
     }
 
-    // ----------------------------------------------------
-    // 🔥 Plan 삭제
-    // ----------------------------------------------------
     fun deletePlan(userId: Long, planId: Long) {
         viewModelScope.launch {
             deletePlanUseCase(userId, planId)
         }
     }
 
-    // ----------------------------------------------------
-    // 🔄 날짜별 변환
-    // ----------------------------------------------------
-    private fun makeItemsByDate(plans: List<Plan>): Map<LocalDate, List<MedItem>> {
+    private fun makeItemsByDate(
+        plans: List<Plan>,
+        histories: List<RegiHistory>
+    ): Map<LocalDate, List<MedItem>> {
+
         val zone = ZoneId.systemDefault()
+
+        val labelMap = histories.associateBy(
+            { it.id },
+            { it.label ?: "" }
+        )
+
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
-        plans.forEach { p ->
-            val takenAt = p.takenAt ?: return@forEach
-            val instant = Instant.ofEpochMilli(takenAt)
-            val local = instant.atZone(zone)
-            val date = local.toLocalDate()
-            val time = local.toLocalTime().toString().substring(0, 5)
+        plans
+            .filter { it.takenAt != null }
+            .groupBy { p ->
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+                val rhId = p.regihistoryId
+                Triple(date, rhId, time)
+            }
+            .forEach { (_, group) ->
+                val p = group.first()
 
-            val item = MedItem(
-                name = p.medName,
-                time = time,
-                status = IntakeStatus.SCHEDULED
-            )
-            out.getOrPut(date) { mutableListOf() }.add(item)
-        }
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+
+                val label = labelMap[p.regihistoryId] ?: p.medName
+
+                val item = MedItem(
+                    label = label,
+                    time = time,
+                    status = IntakeStatus.SCHEDULED
+                )
+
+                out.getOrPut(date) { mutableListOf() }.add(item)
+            }
 
         return out.mapValues { (_, v) -> v.sortedBy { it.time } }
     }
