@@ -137,7 +137,7 @@ fun AppRoot() {
                 mainNavGraph(nav)              // ← userId는 Route 내부에서 decode
                 mapNavGraph()
                 newsNavGraph(nav, userId)
-                schedulerNavGraph(nav, userId)
+                schedulerNavGraph(nav)
                 mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
                 chatbotNavGraph()
             }

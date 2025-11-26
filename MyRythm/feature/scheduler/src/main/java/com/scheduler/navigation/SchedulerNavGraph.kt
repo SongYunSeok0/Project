@@ -11,25 +11,25 @@ import com.scheduler.ui.RegiScreen
 import com.scheduler.ui.SchedulerScreen
 import com.shared.navigation.MainRoute
 
+fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
 
-fun NavGraphBuilder.schedulerNavGraph(
-    nav: NavHostController,
-    fallbackUserId: String = "1"
-) {
-    // 🟢 일정 목록 화면
+    // 스케줄러
     composable<SchedulerRoute> {
         val route = it.toRoute<SchedulerRoute>()
-        val uid = route.userId.ifBlank { fallbackUserId }
+        val uid = route.userId
+        Log.e("SchedulerRoute", "uid = $uid")
 
         SchedulerScreen(userId = uid.toLong())
     }
 
+    // 등록 화면
     composable<RegiRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<RegiRoute>()
-        val uid = route.userId.ifBlank { fallbackUserId }
+        val uid = route.userId
+        Log.e("RegiRoute", "uid = $uid")
 
         RegiScreen(
-            regihistoryId = route.regihistoryId,   // ← 반드시 전달해야 함
+            regihistoryId = route.regihistoryId,
             onCompleted = {
                 nav.navigate(SchedulerRoute(uid)) {
                     popUpTo(MainRoute(uid)) { inclusive = false }
@@ -39,40 +39,33 @@ fun NavGraphBuilder.schedulerNavGraph(
         )
     }
 
+    // OCR 화면
     composable<OcrRoute> {
         val route = it.toRoute<OcrRoute>()
-        val uid = route.userId.ifBlank { fallbackUserId }
+        val uid = route.userId
+        Log.e("OcrRoute", "uid = $uid")
 
         OcrScreen(
             imagePath = route.path,
             onConfirm = { _, _, _ ->
-                val newId = System.currentTimeMillis()
-                nav.navigate(RegiRoute(userId = uid, regihistoryId = newId))
+                nav.navigate(RegiRoute(userId = uid, regihistoryId = null))
             },
             onRetake = { nav.popBackStack() }
         )
     }
 
-
-
-    // 카메라
+    // 카메라 화면
     composable<CameraRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<CameraRoute>()
-        val uid = route.userId.ifBlank { fallbackUserId }
+        val uid = route.userId
+        Log.e("CameraRoute", "uid = $uid")
 
         CameraScreen(
             onOpenOcr = { path ->
-                // 🔥 반드시 path -> userId 순으로 넣기
-                nav.navigate(
-                    OcrRoute(
-                        path = path,
-                        userId = uid
-                    )
-                )
+                nav.navigate(OcrRoute(path = path, userId = uid))
             },
             onOpenRegi = {
-                val tempId = System.currentTimeMillis()
-                nav.navigate(RegiRoute(userId = uid, regihistoryId = tempId))
+                nav.navigate(RegiRoute(userId = uid, regihistoryId = null))
             }
         )
     }

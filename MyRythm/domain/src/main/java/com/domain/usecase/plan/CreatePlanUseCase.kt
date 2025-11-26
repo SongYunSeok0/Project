@@ -7,7 +7,7 @@ class CreatePlanUseCase @Inject constructor(
     private val repository: PlanRepository
 ) {
     suspend operator fun invoke(
-        prescriptionId: Long?,
+        regihistoryId: Long?,
         medName: String,
         takenAt: Long,
         mealTime: String?,
@@ -16,7 +16,7 @@ class CreatePlanUseCase @Inject constructor(
         useAlarm: Boolean
     ) {
         repository.create(
-            prescriptionId = prescriptionId,
+            regihistoryId = regihistoryId,
             medName = medName,
             takenAt = takenAt,
             mealTime = mealTime,

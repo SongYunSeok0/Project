@@ -10,7 +10,7 @@ interface PlanRepository {
     suspend fun refresh(userId: Long)
 
     suspend fun create(
-        prescriptionId: Long?,
+        regihistoryId: Long?,
         medName: String,
         takenAt: Long,
         mealTime: String?,

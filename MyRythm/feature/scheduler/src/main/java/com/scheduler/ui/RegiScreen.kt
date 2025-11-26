@@ -410,7 +410,7 @@ fun RegiScreen(
                             realMeds.forEach { med ->
                                 plans += Plan(
                                     id = 0L,
-                                    regihistoryId = regihistoryId,   // 🔥 여기 핵심 수정
+                                    regihistoryId = regihistoryId,
                                     medName = med,
                                     takenAt = takenAt,
                                     mealTime = mealRelation,
