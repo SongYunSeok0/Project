@@ -41,16 +41,16 @@ fun StepViewModelRoute(
     val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
     val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
 
-    // 🔥 이미 팝업을 띄운 적 있는지 확인
+    // 이미 팝업을 띄운 적 있는지 확인
     var hasShownGuardianDialog by rememberSaveable { mutableStateOf(false) }
 
-    // 🔥 실제로 화면에 보여줄 팝업 상태
+    // 실제로 화면에 보여줄 팝업 상태
     var showGuardianDialog by rememberSaveable { mutableStateOf(false) }
 
-    // 🔥 profile이 서버에서 로딩된 것을 의미 (null → 값)
+    // profile이 서버에서 로딩된 것을 의미 (null → 값)
     val isProfileReady = profile != null
 
-    // 🧠 팝업 표시 로직 (안정 버전)
+    // 팝업 표시 로직 (안정 버전)
     LaunchedEffect(profile) {
         val p = profile
 
@@ -68,7 +68,7 @@ fun StepViewModelRoute(
         }
     }
 
-    // 🧠 팝업 UI (profile이 null이 아님 + 팝업 ON 인 경우만)
+    // 팝업 UI (profile이 null이 아님 + 팝업 ON 인 경우만)
     if (isProfileReady && showGuardianDialog) {
         AlertDialog(
             onDismissRequest = { /* 뒤로가기 막기 */ },
