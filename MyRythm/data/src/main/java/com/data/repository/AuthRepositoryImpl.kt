@@ -1,6 +1,7 @@
 package com.data.repository
 
 import android.util.Log
+import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.data.mapper.auth.asAuthTokens
 import com.data.mapper.auth.toDomainTokens
@@ -159,6 +160,18 @@ class AuthRepositoryImpl @Inject constructor(
             false
         }
     }
+
+    override fun getUserId(): Long {
+        val access = tokenStore.current().access
+            ?: throw IllegalStateException("No access token stored!")
+
+        val idStr = JwtUtils.extractUserId(access)
+            ?: throw IllegalStateException("User ID not found in JWT!")
+
+        return idStr.toLong()
+    }
+
+
 }
 
 class HttpAuthException(val code: Int, message: String?) :
