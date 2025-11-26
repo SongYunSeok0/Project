@@ -30,7 +30,6 @@ fun EditScreen(
     onDone: () -> Unit = {},
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
-    val myPageViewModel: MyPageViewModel = hiltViewModel()
     val profile by viewModel.profile.collectAsState()
 
     // ⚡ 서버에서 받은 값으로 초기값 설정 · 서버에서 값 오기 전 null이면 "" 처리
@@ -69,7 +68,6 @@ fun EditScreen(
             when (event) {
                 EditProfileEvent.SaveSuccess -> {
                     Toast.makeText(context, "저장되었습니다!", Toast.LENGTH_SHORT).show()
-                    myPageViewModel.loadProfile()
                     onDone()
                 }
                 EditProfileEvent.SaveFailed -> {
