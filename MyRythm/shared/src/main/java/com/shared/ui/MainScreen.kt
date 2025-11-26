@@ -25,7 +25,7 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
-    onOpenAlram: () -> Unit = {},
+    onOpenAlram: () -> Unit = {}, // ✅ 알람 카드 클릭 시 호출될 콜백
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
@@ -100,9 +100,10 @@ fun MainScreen(
             )
         }
 
+        // ⭐ 복용 알림 카드 (클릭 연결)
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.timeRemainingCard,
-            onClick = onOpenAlram
+            onClick = onOpenAlram // ✅ Route에서 전달받은 TimePicker 열기 함수 연결
         ) {
             Column(
                 modifier = Modifier
@@ -126,6 +127,8 @@ fun MainScreen(
                     )
                 }
                 Spacer(Modifier.height(12.dp))
+
+                // 남은 시간 표시
                 Text(
                     remainText ?: "--:--",
                     style = MaterialTheme.typography.displaySmall,
