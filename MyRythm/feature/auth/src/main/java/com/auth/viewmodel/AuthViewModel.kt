@@ -45,7 +45,6 @@ class AuthViewModel @Inject constructor(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
     private val tokenStore: TokenStore,
-    private val repo: AuthRepository     // ⭐ 이메일 인증/검증용 Repository 추가
     private val sendEmailCodeUseCase: SendEmailCodeUseCase,
     private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase
 ) : ViewModel() {
