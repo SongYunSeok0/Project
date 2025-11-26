@@ -1,3 +1,4 @@
+import secrets
 from django.db import models
 from django.conf import settings
 
@@ -8,10 +9,26 @@ class IntakeStatus(models.TextChoices):
     NONE = "none", "이벤트 아님"
 
 
+def generate_device_token():
+    """64글자짜리 안전한 랜덤 토큰 생성"""
+    return secrets.token_hex(32)  # 32바이트 → 64 hex 문자열
+
+
+def generate_device_uuid():
+    """디바이스 고유 UUID 생성"""
+    return secrets.token_hex(8)  # 16 hex 문자열 (간단한 UUID)
+
+
 class Device(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="iot_devices"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="iot_devices",
     )
+
+    device_uuid = models.CharField(max_length=64, unique=True, default=generate_device_uuid)
+    device_token = models.CharField(max_length=128, default=generate_device_token)
+
     is_active = models.BooleanField(default=True)
     last_connected_at = models.DateTimeField(null=True, blank=True)
 
@@ -19,8 +36,7 @@ class Device(models.Model):
         db_table = "iot_device"
 
     def __str__(self):
-        return f"Device {self.id} for {self.user.email}"
-
+        return f"Device {self.device_uuid} for {self.user.email}"
 
 class SensorData(models.Model):
     device = models.ForeignKey(

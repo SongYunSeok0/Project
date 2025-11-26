@@ -1,12 +1,11 @@
 import os
 from pathlib import Path
-import environ
 from datetime import timedelta
-
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# .env 로드 (django-environ만 사용, dotenv 중복 제거)
+# === ENV 로드 ===
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -15,36 +14,39 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# === FIREBASE 인증 파일 경로 ===
+# Docker: /run/secrets/smart_med_firebase_admin.json
+# Local:  C:\Users\user\Desktop\secret\smart_med_firebase_admin.json
 FIREBASE_CREDENTIAL_PATH = env(
     "FIREBASE_CREDENTIAL_PATH",
-    default=str(BASE_DIR / "smart_med_firebase_admin.json"),
+    default="/run/secrets/smart_med_firebase_admin.json"
 )
 
-# 와일드카드(*)는 CSRF_TRUSTED_ORIGINS에 허용되지 않아요.
-# 실제 접근 도메인/포트로 명시해 주세요 (개발 기본 예시)
+# 파일 존재 확인 (로그로만 체크)
+if not os.path.exists(FIREBASE_CREDENTIAL_PATH):
+    print(f"[WARN] Firebase credential NOT FOUND at: {FIREBASE_CREDENTIAL_PATH}")
+
+# === CSRF ===
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),      # access token 7일 유지
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),    # refresh token 30일 유지
-    "ROTATE_REFRESH_TOKENS": True,                  # refresh 시 새 refresh로 갱신
-    "BLACKLIST_AFTER_ROTATION": True,
 
+# === Simple JWT ===
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
-
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-
-    # Serializer Override 가능 (기본값 사용)
 }
 
-
+# === INSTALLED_APPS ===
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -58,15 +60,20 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_extensions",
 
-    "users", "medications", "iot", "health","rag.apps.RagConfig"
+    "users",
+    "medications",
+    "iot",
+    "health",
+    "rag.apps.RagConfig",
 ]
 
+# === MIDDLEWARE ===
 MIDDLEWARE = [
+    "utils.middleware.APITimingMiddleware",  # 맨 위
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
 
-    # CORS는 최대한 위쪽, CommonMiddleware보다 먼저
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # CommonMiddleware보다 위
 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -94,13 +101,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "smart_med.wsgi.application"
 
+# === PostgreSQL 설정 ===
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", default="RNB2"),
+        "NAME": env("POSTGRES_DB", default="RNB"),
         "USER": env("POSTGRES_USER", default="postgres"),
-        "PASSWORD": env("POSTGRES_PASSWORD", default="1111"),
-        "HOST": env("POSTGRES_HOST", default="127.0.0.1"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="1234"),
+        "HOST": env("POSTGRES_HOST", default="host.docker.internal"),
         "PORT": env("POSTGRES_PORT", default="5432"),
         "OPTIONS": {
             "options": "-c client_encoding=UTF8",
@@ -109,16 +117,16 @@ DATABASES = {
     }
 }
 
-# ========== Email 설정 ==========
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+# === Email ===
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-# =================================
 
+# === Cache ===
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -126,6 +134,7 @@ CACHES = {
     }
 }
 
+# === REST Framework ===
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -135,7 +144,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-# i18n
+# === i18n ===
 LANGUAGE_CODE = "ko-kr"
 TIME_ZONE = "Asia/Seoul"
 USE_I18N = True
@@ -144,8 +153,5 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 AUTH_USER_MODEL = "users.User"

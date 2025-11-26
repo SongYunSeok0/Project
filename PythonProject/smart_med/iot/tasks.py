@@ -1,26 +1,23 @@
 from celery import shared_task
-from medications.models import MedicationHistory
-
-from firebase_admin import messaging
+from django.utils import timezone
+from datetime import timedelta
+from medications.models import Plan   # ← 복용 스케줄(예정시각) 모델
+from .utils import push_is_time
 
 @shared_task
-def check_missed_doses():
-    # 최근 3회 연속 미복용 사용자 탐색
-    from datetime import timedelta
-    from django.utils import timezone
-
+def check_schedule_and_push_is_time():
     now = timezone.now()
-    recent = now - timedelta(days=3)
-    missed_users = (
-        MedicationHistory.objects
-        .filter(status='missed', taken_time__gte=recent)
-        .values('medication__user')
-        .distinct()
-    )
+    start = now - timedelta(minutes=30)
+    end = now + timedelta(minutes=30)
 
-    # for item in missed_users:
-    #     user_id = item['medication__user']
-    #     protectors = Protector.objects.filter(user_id=user_id)
-    #     for protector in protectors:
-    #         # 보호자에게 알림 전송
-    #         send_notification.delay(protector.phone, "3회 이상 복용 누락 발생")
+    due_plans = Plan.objects.filter(
+        taken_at__gte=start,
+        taken_at__lte=end
+    ).select_related("regihistory__user")
+
+    for plan in due_plans:
+        user = plan.regihistory.user
+        device = user.iot_devices.first()
+        if device:
+            push_is_time(device, True)
+

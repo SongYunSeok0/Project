@@ -1,16 +1,11 @@
 package com.auth.viewmodel
 
-import android.content.Context
 import android.util.Log
-import androidx.credentials.*
-import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.data.core.push.PushManager
-import com.domain.model.SocialLoginResult
 import com.domain.model.SignupRequest
 import com.domain.repository.AuthRepository
 import com.domain.usecase.auth.LoginUseCase
@@ -19,19 +14,10 @@ import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.auth.SocialLoginUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.user.SignupUseCase
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.kakao.sdk.auth.model.OAuthToken
-import com.kakao.sdk.common.model.ClientError
-import com.kakao.sdk.common.model.ClientErrorCause
-import com.kakao.sdk.user.UserApiClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
 @HiltViewModel
@@ -63,8 +49,7 @@ class AuthViewModel @Inject constructor(
 
     private val _signupForm = MutableStateFlow(SignupForm())
     val signupForm: StateFlow<SignupForm> = _signupForm
-
-    // ⭐ 반드시 있어야 하는 함수들 (오류 원인 해결)
+    
     fun updateSignupEmail(v: String) =
         _signupForm.update { it.copy(email = v) }
 
