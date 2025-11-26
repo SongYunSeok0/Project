@@ -12,16 +12,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import com.myrhythm.health.StepViewModel
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.mypage.viewmodel.MyPageViewModel
 import com.myrhythm.viewmodel.MainViewModel
 import com.shared.ui.MainScreen
 
 @Composable
 fun StepViewModelRoute(
+    myPageViewModel: MyPageViewModel,
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
+    onOpenEditScreen: () -> Unit = {},   // ⭐ EditScreen 이동 콜백
 ) {
     val context = LocalContext.current
     val stepViewModel: StepViewModel = hiltViewModel()
@@ -29,6 +38,48 @@ fun StepViewModelRoute(
 
     val nextTime by mainViewModel.nextTime.collectAsStateWithLifecycle()
     val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
+    val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
+    var showGuardianDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(profile) {
+        val p = profile
+
+        if (p == null) return@LaunchedEffect
+
+        if (p.prot_email.isNullOrBlank()) {
+            showGuardianDialog = true
+        } else {
+            showGuardianDialog = false
+        }
+    }
+
+
+
+    if (showGuardianDialog) {
+        AlertDialog(
+            onDismissRequest = { /* 뒤로가기 막기 */ },
+
+            title = {
+                Text("추가 정보가 필요해요 😊")
+            },
+
+            text = {
+                Text("원활한 사용을 위해 보호자 이메일을 입력해 주세요!")
+            },
+
+            confirmButton = {
+                Text(
+                    text = "정보 입력하기",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable {
+                            showGuardianDialog = false
+                            onOpenEditScreen()
+                        }
+                )
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         val status = HealthConnectClient.getSdkStatus(context)

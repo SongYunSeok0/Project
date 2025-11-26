@@ -7,11 +7,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,10 +44,13 @@ fun MyPageScreen(
     onWithdrawalSuccess: () -> Unit = {}
 ) {
     //프로필 상태 Flow → Compose State
-    val profile = viewModel.profile.collectAsState().value
+    val profile by viewModel.profile.collectAsState()
 
     //탈퇴 성공 감지 및 화면 이동 로직
     val context = LocalContext.current
+
+    //탈퇴 확인
+    var showDeleteDialog by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             if (event is MyPageEvent.WithdrawalSuccess) {
@@ -106,8 +114,46 @@ fun MyPageScreen(
             MenuItem(medicationInsightText) { onMediClick }
             MenuItem(faqCategoryText, onFaqClick)
             MenuItem(logoutText, onLogoutClick)
-            MenuItem("회원 탈퇴") {viewModel.deleteAccount()}
+            MenuItem("회원 탈퇴") {showDeleteDialog = true}
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+
+            title = {
+                Text("정말 탈퇴하시겠습니까?")
+            },
+
+            text = {
+                Text("회원 탈퇴 시 모든 데이터가 삭제되며\n복구가 불가능합니다.")
+            },
+
+            confirmButton = {
+                Text(
+                    text = "탈퇴하기",
+                    color = Color.Red,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable {
+                            showDeleteDialog = false
+                            viewModel.deleteAccount()
+                        }
+                )
+            },
+
+            dismissButton = {
+                Text(
+                    text = "취소",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable {
+                            showDeleteDialog = false
+                        }
+                )
+            }
+        )
     }
 }
 

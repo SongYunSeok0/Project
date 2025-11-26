@@ -70,10 +70,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return (v or "").strip().lower()
 
     def validate_phone(self, v: str) -> str:
-        n = _normalize_phone(v)
-        if n == "":
+        if not v:
             return None
-        return n
+        return v
+
 
     def validate_gender(self, v: str) -> str | None:
         if v in (None, ""):
