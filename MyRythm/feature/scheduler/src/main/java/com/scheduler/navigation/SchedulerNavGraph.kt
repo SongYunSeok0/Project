@@ -29,6 +29,7 @@ fun NavGraphBuilder.schedulerNavGraph(
         val uid = route.userId.ifBlank { fallbackUserId }
 
         RegiScreen(
+            regihistoryId = route.regihistoryId,   // ← 반드시 전달해야 함
             onCompleted = {
                 nav.navigate(SchedulerRoute(uid)) {
                     popUpTo(MainRoute(uid)) { inclusive = false }

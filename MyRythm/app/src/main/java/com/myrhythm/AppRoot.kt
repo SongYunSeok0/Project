@@ -29,6 +29,7 @@ import com.myrhythm.navigation.mainNavGraph
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.KClass
+import com.myrhythm.health.StepViewModel
 
 @Composable
 fun AppRoot() {
@@ -36,7 +37,7 @@ fun AppRoot() {
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // TokenStore 주입 → JWT에서 userId 추출
+    // TokenStore → JWT userId 추출
     val ctx = LocalContext.current
     val tokenStore = remember {
         EntryPointAccessors.fromApplication(ctx, CoreEntryPoint::class.java).tokenStore()
@@ -45,10 +46,19 @@ fun AppRoot() {
         JwtUtils.extractUserId(tokenStore.current().access) ?: ""
     }
 
-    // AuthViewModel은 상위(AppRoot)에서 소유
+    // AuthViewModel
     val authVm: AuthViewModel = hiltViewModel()
 
-    // 로그아웃 완료 이벤트 수신 → 로그인 화면으로 이동
+    // 🔥 StepViewModel을 AppRoot에서 단 1개 생성
+    val stepVm: StepViewModel = hiltViewModel()
+
+    // 🔥 앱 시작 시 단 1회만 실행
+    LaunchedEffect(Unit) {
+        stepVm.checkPermission()
+        stepVm.startAutoUpdateOnce()
+    }
+
+    // 로그아웃 수신
     LaunchedEffect(Unit) {
         authVm.events.collectLatest { ev ->
             if (ev == "로그아웃 완료") {
@@ -63,20 +73,17 @@ fun AppRoot() {
     fun isRoute(k: KClass<*>) =
         routeName.startsWith(k.qualifiedName.orEmpty())
 
-
     fun isOf(vararg ks: KClass<*>) = ks.any { isRoute(it) }
-
 
     val isAuth = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class)
     val isMain = isRoute(MainRoute::class)
     val isNews = isRoute(NewsRoute::class)
     val isChat = isRoute(ChatBotRoute::class)
 
-
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth || isChat
 
-    // 탭 이동 함수
+    // 탭 이동
     fun goHome() = nav.navigate(MainRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
@@ -125,13 +132,12 @@ fun AppRoot() {
         }
     ) { inner ->
         Box(Modifier.padding(inner)) {
-            NavHost(navController = nav, startDestination = AuthGraph) {
+            NavHost(nav, startDestination = AuthGraph) {
                 authNavGraph(nav)
-                mainNavGraph(nav,userId )
+                mainNavGraph(nav)              // ← userId는 Route 내부에서 decode
                 mapNavGraph()
-                newsNavGraph(nav,userId)
-                schedulerNavGraph(nav, userId) // userId 전달
-                // 뷰모델을 NavGraph 내부에서 쓰지 않음. 람다만 전달.
+                newsNavGraph(nav, userId)
+                schedulerNavGraph(nav, userId)
                 mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
                 chatbotNavGraph()
             }

@@ -7,6 +7,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.data.core.push.PushManager
 import com.domain.model.SocialLoginResult
@@ -236,31 +237,39 @@ class AuthViewModel @Inject constructor(
         }
 
         _state.update { it.copy(loading = true) }
+
         val result = loginUseCase(email, pw)
         val ok = result.isSuccess
 
         if (ok) {
+
+//            // 자동로그인 상태일 경우 토큰 저장 가능
+//            if (_autoLoginEnabled.value) {
+//                Log.d("AuthViewModel", "자동로그인 ON: 토큰 저장 예정")
+//            }
+
+            // FCM 업로드
             PushManager.fcmToken?.let { token ->
                 runCatching { registerFcmTokenUseCase(token) }
             }
-        }
 
-        /*
-         _state.update {
-            it.copy(
-                loading = false,
-                isLoggedIn = ok,
-                userId = if (ok) email else null
-            )
-        }
-         */
-        _state.update { it.copy(loading = false, isLoggedIn = ok) }
-        emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
-    }
+            // ⭐⭐⭐ 로그인한 userId를 반드시 state에 주입해줘야 한다
+            val uid = JwtUtils.extractUserId(tokenStore.current().access)
 
-    fun tryRefresh() = viewModelScope.launch {
-        val ok = runCatching { refreshUseCase() }.getOrDefault(false)
-        if (ok) emit("토큰 갱신")
+            _state.update {
+                it.copy(
+                    loading = false,
+                    isLoggedIn = true,
+                    userId = uid            // ← 이 부분이 반드시 필요
+                )
+            }
+
+            emit("로그인 성공")
+
+        } else {
+            _state.update { it.copy(loading = false, isLoggedIn = false) }
+            emit("이메일 또는 비밀번호가 올바르지 않습니다.")
+        }
     }
 
     fun logout() = viewModelScope.launch {
