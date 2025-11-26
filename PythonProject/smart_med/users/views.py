@@ -11,9 +11,9 @@ from rest_framework import status
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
-from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
 from django.db import IntegrityError
 import traceback
+from notifications.services import send_fcm_to_token
 
 User = get_user_model()
 

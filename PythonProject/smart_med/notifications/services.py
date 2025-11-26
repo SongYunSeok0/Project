@@ -1,4 +1,3 @@
-# smart_med/firebase.py
 import os
 from django.conf import settings
 
