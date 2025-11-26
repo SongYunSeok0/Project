@@ -6,8 +6,9 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class GetRegiHistoriesUseCase @Inject constructor(
-    private val repository: RegiRepository
+    private val repo: RegiRepository
 ) {
-    operator fun invoke(): Flow<List<RegiHistory>> =
-        repository.observeRegiHistories()
+    operator fun invoke(): Flow<List<RegiHistory>> {
+        return repo.getRegiHistories()
+    }
 }

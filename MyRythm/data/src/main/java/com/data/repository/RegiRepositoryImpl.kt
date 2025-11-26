@@ -23,8 +23,6 @@ class RegiRepositoryImpl @Inject constructor(
     private val regiHistoryDao = db.regiHistoryDao()
     private val planDao = db.planDao()
 
-    // ---------------- Create ----------------
-
     override suspend fun createRegiHistory(
         regiType: String,
         label: String?,
@@ -53,9 +51,8 @@ class RegiRepositoryImpl @Inject constructor(
         return res.id
     }
 
-    // ---------------- Read ----------------
-
-    override fun observeRegiHistories(): Flow<List<RegiHistory>> =
+    // 전체 조회
+    override fun getRegiHistories(): Flow<List<RegiHistory>> =
         regiHistoryDao.getAll().map { list ->
             list.map { row ->
                 RegiHistory(
@@ -69,8 +66,6 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    // ---------------- Update ----------------
-
     override suspend fun updateRegiHistory(regi: RegiHistory) {
         val req = RegiHistoryRequest(
             regiType = regi.regiType,
@@ -79,10 +74,8 @@ class RegiRepositoryImpl @Inject constructor(
             useAlarm = regi.useAlarm
         )
 
-        // 서버 PATCH
         regiHistoryApi.updateRegiHistory(regi.id, req)
 
-        // 로컬 업데이트
         val entity = RegiHistoryEntity(
             id = regi.id,
             userId = regi.userId,
@@ -94,23 +87,12 @@ class RegiRepositoryImpl @Inject constructor(
         regiHistoryDao.insert(entity)
     }
 
-    // ---------------- Delete ----------------
-
     override suspend fun deleteRegiHistory(id: Long) {
-        // 서버 DELETE
         regiHistoryApi.deleteRegiHistory(id)
-
-        // 로컬 삭제
-        // Room: CASCADE 걸려 있으면 Plan 도 같이 삭제됨
         regiHistoryDao.deleteById(id)
     }
 
-    // ---------------- Plans ----------------
-
-    override suspend fun createPlans(
-        regihistoryId: Long,
-        list: List<Plan>
-    ) {
+    override suspend fun createPlans(regihistoryId: Long, list: List<Plan>) {
         val entities = mutableListOf<PlanEntity>()
 
         for (plan in list) {
