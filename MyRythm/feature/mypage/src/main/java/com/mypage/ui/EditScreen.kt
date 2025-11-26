@@ -54,6 +54,7 @@ fun EditScreen(
     val editprofilephoto = stringResource(R.string.editprofilephoto)
     val editText = stringResource(R.string.edit)
     val emailText = stringResource(R.string.email)
+    val guardianEmailText = stringResource(R.string.guardianemail)
     val nameText = stringResource(R.string.name)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
@@ -61,6 +62,7 @@ fun EditScreen(
     val genderText = stringResource(R.string.gender)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
     val editDone = stringResource(R.string.edit_done)
+    val birthExampleText = stringResource(R.string.birth_example)
 
     val context = LocalContext.current
 
@@ -107,7 +109,7 @@ fun EditScreen(
                 ReadonlyField(birthText, birthDate)
             } else {
                 EditableField(
-                    label = "${birthText} (예: 2000-10-10)",
+                    label = "${birthText} $birthExampleText",
                     value = birthDate,
                     onValueChange = { input ->
                         birthDate = input
@@ -129,7 +131,7 @@ fun EditScreen(
                 ReadonlyField(emailText, email)
             }
             EditableField(phoneNumberPlaceholderText, phone) { phone = it }
-            EditableField("보호자 이메일", protEmail) { protEmail = it }
+            EditableField(guardianEmailText, protEmail) { protEmail = it }
         }
 
         Spacer(Modifier.height(16.dp))
