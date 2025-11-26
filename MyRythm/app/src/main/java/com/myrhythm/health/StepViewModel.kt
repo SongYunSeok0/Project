@@ -31,9 +31,8 @@ class StepViewModel @Inject constructor(
     private var autoStarted = false
 
     private var lastDate: String = LocalDate.now().toString()
-    private var lastStepsOfDay: Int = 0
+    private var lastSteps: Int = 0
 
-    // 하루 업로드 잠금
     private var dailyUploaded = false
 
 
@@ -45,68 +44,34 @@ class StepViewModel @Inject constructor(
     fun startAutoUpdateOnce(intervalMillis: Long = 1_000L) {
         if (autoStarted) return
         autoStarted = true
-        if (autoJob != null) return
 
         autoJob = viewModelScope.launch {
             while (isActive) {
                 if (_permissionGranted.value) {
 
-                    val v = hc.getTodaySteps().toInt()
-                    _todaySteps.value = v
+                    val steps = hc.getTodaySteps().toInt()
+                    _todaySteps.value = steps
 
                     val nowDate = LocalDate.now().toString()
 
-                    Log.d(
-                        "StepVM",
-                        "today=$v, last=$lastStepsOfDay, lastDate=$lastDate, dailyUploaded=$dailyUploaded"
-                    )
+                    Log.d("StepVM", "today=$steps last=$lastSteps lastDate=$lastDate uploaded=$dailyUploaded")
 
-                    // 그래프/히스토리용 raw steps 저장
-                    repo.insertStep(steps = v)
+                    repo.insertStep(steps)
 
+                    // 날짜 변경 감지
+                    val dateChanged = nowDate != lastDate
 
-                    // 자정 넘어가는 순간 (하루 1회만)
-                    if (nowDate != lastDate && !dailyUploaded) {
-
-                        val yesterday = lastDate
-                        val totalYesterday = lastStepsOfDay
-
-                        Log.d("StepVM", "==== 자정 감지 ====")
-                        Log.d("StepVM", "기록: $yesterday = $totalYesterday steps")
-
-                        // 로컬 DB 저장
-                        repo.saveDailyStep(
-                            DailyStep(
-                                date = yesterday,
-                                steps = totalYesterday
-                            )
-                        )
-
-                        // 서버 업로드
-                        repo.uploadDailyStep(
-                            DailyStep(
-                                date = yesterday,
-                                steps = totalYesterday
-                            )
-                        )
-
-                        // 히스토리 초기화
-                        repo.clearSteps()
-
-                        // 하루 업로드 잠금
+                    // 새 날이 되었고 아직 업로드 안 한 경우
+                    if (dateChanged && !dailyUploaded) {
+                        uploadYesterdaySteps()
                         dailyUploaded = true
-
-                        // 기준 날짜 갱신
                         lastDate = nowDate
                     }
 
+                    // 날짜가 바뀌었으면 잠금 해제
+                    if (dateChanged) dailyUploaded = false
 
-                    // 날짜가 바뀌면 잠금 해제
-                    if (nowDate != lastDate) {
-                        dailyUploaded = false
-                    }
-
-                    lastStepsOfDay = v
+                    lastSteps = steps
                 }
 
                 delay(intervalMillis)
@@ -115,11 +80,25 @@ class StepViewModel @Inject constructor(
     }
 
 
+    private suspend fun uploadYesterdaySteps() {
+        val yesterday = lastDate
+        val steps = lastSteps
+
+        Log.d("StepVM", "==== 자정 처리 ====")
+        Log.d("StepVM", "기록: $yesterday = $steps steps")
+
+        val d = DailyStep(date = yesterday, steps = steps)
+
+        repo.saveDailyStep(d)
+        repo.uploadDailyStep(d)
+        repo.clearSteps()
+    }
+
+
     fun requestPermissions() = hc.permissions
 
 
     override fun onCleared() {
-        super.onCleared()
         autoJob?.cancel()
     }
 }

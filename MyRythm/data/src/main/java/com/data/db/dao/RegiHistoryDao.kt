@@ -1,7 +1,6 @@
 package com.data.db.dao
 
 import androidx.room.*
-import com.data.db.entity.PlanEntity
 import com.data.db.entity.RegiHistoryEntity
 import com.data.db.entity.RegiHistoryWithPlans
 import kotlinx.coroutines.flow.Flow

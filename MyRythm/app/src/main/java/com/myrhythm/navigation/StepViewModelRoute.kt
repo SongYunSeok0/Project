@@ -1,25 +1,24 @@
 package com.myrhythm.navigation
 
-import androidx.compose.runtime.*
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
+import com.myrhythm.health.StepViewModel
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mypage.viewmodel.MyPageViewModel
-import androidx.health.connect.client.HealthConnectClient
-import androidx.health.connect.client.PermissionController
-import com.myrhythm.health.StepViewModel
 import com.myrhythm.viewmodel.MainViewModel
 import com.shared.ui.MainScreen
 
@@ -31,36 +30,22 @@ fun StepViewModelRoute(
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
-    onOpenEditScreen: () -> Unit = {},
+    onOpenEditScreen: () -> Unit = {},   // ⭐ EditScreen 이동 콜백
 ) {
     val context = LocalContext.current
-
     val stepViewModel: StepViewModel = hiltViewModel()
     val mainViewModel: MainViewModel = hiltViewModel()
 
+    val nextTime by mainViewModel.nextTime.collectAsStateWithLifecycle()
     val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
     val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
+    var showGuardianDialog by remember { mutableStateOf(false) }
 
-    // 🔥 이미 팝업을 띄운 적 있는지 확인
-    var hasShownGuardianDialog by rememberSaveable { mutableStateOf(false) }
-
-    // 🔥 실제로 화면에 보여줄 팝업 상태
-    var showGuardianDialog by rememberSaveable { mutableStateOf(false) }
-
-    // 🔥 profile이 서버에서 로딩된 것을 의미 (null → 값)
-    val isProfileReady = profile != null
-
-    // 🧠 팝업 표시 로직 (안정 버전)
     LaunchedEffect(profile) {
         val p = profile
 
-        // 아직 서버에서 로딩되지 않았으면 아무것도 하지 않음
         if (p == null) return@LaunchedEffect
 
-        // 이미 한번 팝업 뜬 적 있으면 다시 뜨지 않음
-        if (hasShownGuardianDialog) return@LaunchedEffect
-
-        // prot_email 비어있으면 팝업 ON
         if (p.prot_email.isNullOrBlank()) {
             showGuardianDialog = true
         } else {
@@ -68,8 +53,9 @@ fun StepViewModelRoute(
         }
     }
 
-    // 🧠 팝업 UI (profile이 null이 아님 + 팝업 ON 인 경우만)
-    if (isProfileReady && showGuardianDialog) {
+
+
+    if (showGuardianDialog) {
         AlertDialog(
             onDismissRequest = { /* 뒤로가기 막기 */ },
 
@@ -87,7 +73,6 @@ fun StepViewModelRoute(
                     modifier = Modifier
                         .padding(8.dp)
                         .clickable {
-                            hasShownGuardianDialog = true     // 이제 다시 안 뜸
                             showGuardianDialog = false
                             onOpenEditScreen()
                         }
@@ -96,7 +81,6 @@ fun StepViewModelRoute(
         )
     }
 
-    // --- Health Connect 부분 동일 ---
     LaunchedEffect(Unit) {
         val status = HealthConnectClient.getSdkStatus(context)
         Log.e("HC", "SDK STATUS = $status")
@@ -110,7 +94,9 @@ fun StepViewModelRoute(
 
         val url =
             "https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata"
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        val installIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        context.startActivity(installIntent)
+
         return
     }
 
@@ -131,6 +117,7 @@ fun StepViewModelRoute(
         stepViewModel.checkPermission()
     }
 
+    // 🔥 중복 실행 방지 버전
     LaunchedEffect(granted) {
         if (!granted) {
             permissionLauncher.launch(stepViewModel.requestPermissions())
@@ -146,6 +133,7 @@ fun StepViewModelRoute(
         onOpenMap = onOpenMap,
         onOpenNews = onOpenNews,
         todaySteps = todaySteps,
-        remainText = remainText
+        nextTime = nextTime,
+        remainText = remainText,
     )
 }

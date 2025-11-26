@@ -4,6 +4,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import kotlinx.serialization.ExperimentalSerializationApi
 import com.chatbot.navigation.ChatBotRoute
 import com.scheduler.navigation.SchedulerRoute
@@ -15,16 +16,21 @@ import com.news.navigation.NewsRoute
 import com.shared.navigation.MainRoute
 
 @OptIn(ExperimentalSerializationApi::class)
-fun NavGraphBuilder.mainNavGraph(nav: NavController, userId: String) {
-    composable<MainRoute> {
+fun NavGraphBuilder.mainNavGraph(nav: NavController) {
+
+    composable<MainRoute> { backStackEntry ->
+        val route = backStackEntry.toRoute<MainRoute>()
+        val uid = route.userId     // 🔥 절대 빈값 아님
+
         val myPageViewModel: MyPageViewModel = hiltViewModel()
+
         StepViewModelRoute(
             myPageViewModel = myPageViewModel,
             onOpenChatBot   = { nav.navigate(ChatBotRoute()) },
-            onOpenScheduler = { nav.navigate(SchedulerRoute(userId)) },
+            onOpenScheduler = { nav.navigate(SchedulerRoute(uid)) },
             onOpenHeart     = { nav.navigate(HeartReportRoute) },
             onOpenMap       = { nav.navigate(MapRoute) },
-            onOpenNews      = { nav.navigate(NewsRoute(userId)) },
+            onOpenNews      = { nav.navigate(NewsRoute(uid)) },
             onOpenEditScreen = { nav.navigate(EditProfileRoute) },
         )
     }

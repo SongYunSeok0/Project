@@ -11,7 +11,7 @@ data class SchedulerRoute(
 @Serializable
 data class RegiRoute(
     val userId: String,
-    val regihistoryId: Long,
+    val regihistoryId: Long? = null
 )
 
 @Serializable

@@ -1,3 +1,5 @@
+@file:Suppress("UnusedImport")
+
 package com.scheduler.ui
 
 import android.widget.Toast
@@ -52,9 +54,16 @@ fun RegiScreen(
     drugNames: List<String> = emptyList(),
     viewModel: RegiViewModel = hiltViewModel(),
     onCompleted: () -> Unit = {},
+    regihistoryId: Long? = null,    // ← navGraph에서 전달됨
 ) {
     val context = LocalContext.current
 
+    // 🔥 1) RegiHistoryId ViewModel로 전달 (신규/수정 구분)
+    LaunchedEffect(regihistoryId) {
+        viewModel.initRegi(regihistoryId)
+    }
+
+    // 이벤트 수신
     LaunchedEffect(Unit) {
         viewModel.events.collect { msg ->
             when (msg) {
@@ -192,6 +201,7 @@ fun RegiScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
+            // 탭 UI
             TabRow(
                 selectedTabIndex = if (tab == RegiTab.DISEASE) 0 else 1,
                 containerColor = Color.Transparent,
@@ -344,7 +354,7 @@ fun RegiScreen(
                 }
             }
 
-            // ★★★ 등록 버튼, 핵심 수정 완료 ★★★
+            // 🔥 2) Plan 생성 시 regihistoryId 포함
             Button(
                 onClick = {
                     val regiType = if (tab == RegiTab.DISEASE) "disease" else "supplement"
@@ -379,13 +389,13 @@ fun RegiScreen(
                     val df = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                     val dfDay = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-                    // ★ 오늘 00:00 기준 ms (중복 보정 방지)
+                    // 오늘 00:00 기준
                     val cal = Calendar.getInstance()
                     cal.set(Calendar.HOUR_OF_DAY, 0)
                     cal.set(Calendar.MINUTE, 0)
                     cal.set(Calendar.SECOND, 0)
                     cal.set(Calendar.MILLISECOND, 0)
-                    val todayStartMs = cal.timeInMillis     // ★ 수정됨
+                    val todayStartMs = cal.timeInMillis
 
                     daysList.forEach { d ->
                         val ds = dfDay.format(Date(d))
@@ -393,7 +403,6 @@ fun RegiScreen(
                         realTimes.forEach { t ->
                             val takenAt0 = df.parse("$ds $t")?.time ?: d
 
-                            // ★ 수정된 보정 로직
                             val takenAt =
                                 if (takenAt0 < todayStartMs) takenAt0 + oneDay
                                 else takenAt0
@@ -401,7 +410,7 @@ fun RegiScreen(
                             realMeds.forEach { med ->
                                 plans += Plan(
                                     id = 0L,
-                                    regihistoryId = null,
+                                    regihistoryId = regihistoryId,
                                     medName = med,
                                     takenAt = takenAt,
                                     mealTime = mealRelation,

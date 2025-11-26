@@ -58,7 +58,7 @@ fun SchedulerScreen(
         if (userId > 0L) {
             vm.load(userId)
         } else {
-            Log.e("SchedulerScreen", "❌ userId 누락: '$userId'")
+            Log.e("SchedulerScreen", " userId 누락: '$userId'")
         }
     }
 

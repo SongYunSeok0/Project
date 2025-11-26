@@ -29,8 +29,9 @@ fun MainScreen(
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
+    nextTime: String? = null,
+    todaySteps: Int = 0,
     remainText: String? = null,
-    todaySteps: Int = 0
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -96,7 +97,6 @@ fun MainScreen(
                 icon = rateIconResId,
                 onClick = onOpenHeart,
                 modifier = Modifier.weight(1f).height(140.dp),
-
             )
         }
 
