@@ -43,13 +43,20 @@ fun EditScreen(
     var phone by remember(profile) { mutableStateOf(profile?.phone ?: "") }
     var protEmail by remember(profile) { mutableStateOf(profile?.prot_email ?: "") }
     var gender by remember(profile) { mutableStateOf(profile?.gender ?: "") }
-    var email by remember(profile) { mutableStateOf(profile?.email ?: "") }
+    //var email by remember(profile) { mutableStateOf(profile?.email ?: "") }
 
     // 🔥 값 존재 여부에 따라 1회 입력/수정불가 결정
     val hasName = name.isNotBlank()
     val hasBirth = birthDate.isNotBlank()
     val hasGender = gender.isNotBlank()
 
+    //1124 수정
+    var email by remember { mutableStateOf("") }
+    LaunchedEffect(profile) {
+        profile?.let {
+            email = it.email ?: ""
+        }
+    }
     // 문자열 리소스화
     val editprofilephoto = stringResource(R.string.editprofilephoto)
     val editText = stringResource(R.string.edit)

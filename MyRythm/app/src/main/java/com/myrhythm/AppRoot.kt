@@ -30,8 +30,9 @@ import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.KClass
 
+// 1126 수정 전 fun AppRoot() {
 @Composable
-fun AppRoot() {
+fun AppRoot(startFromLogin: Boolean = false) {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()

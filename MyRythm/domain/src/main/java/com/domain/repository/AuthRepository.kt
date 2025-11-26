@@ -6,7 +6,8 @@ import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
 
 interface AuthRepository {
-    suspend fun login(id: String, pw: String): Result<AuthTokens>
+    // 1126 자동로그인 autoLogin: Boolean = false 추가
+    suspend fun login(id: String, pw: String, autoLogin: Boolean = false): Result<AuthTokens>
     suspend fun refresh(refreshToken: String): Result<AuthTokens>
     suspend fun socialLogin(param: SocialLoginParam): Result<SocialLoginResult>
     suspend fun tryRefreshFromLocal(): Result<Boolean>
@@ -16,4 +17,10 @@ interface AuthRepository {
     suspend fun verifyEmailCode(email: String, code: String): Boolean
 
     suspend fun withdrawal(): Boolean
+
+
+    //1126 자동로그인관련
+    suspend fun saveAutoLoginEnabled(enabled: Boolean)
+    suspend fun isAutoLoginEnabled(): Boolean
+
 }

@@ -19,7 +19,7 @@ fun NavGraphBuilder.mainNavGraph(nav: NavController, userId: String) {
             onOpenScheduler = { nav.navigate(SchedulerRoute(userId)) },
             onOpenHeart     = { nav.navigate(HeartReportRoute) },
             onOpenMap       = { nav.navigate(MapRoute) },
-            onOpenNews      = { nav.navigate(NewsRoute) }
+            onOpenNews      = { nav.navigate(NewsRoute) },
         )
     }
 }

@@ -1,6 +1,7 @@
 package com.data.repository
 
 import android.util.Log
+import com.data.core.auth.AuthPreferencesDataSource
 import com.data.core.auth.TokenStore
 import com.data.mapper.auth.asAuthTokens
 import com.data.mapper.auth.toDomainTokens
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val api: UserApi,
     private val tokenStore: TokenStore,
-    private val io: CoroutineDispatcher = Dispatchers.IO
+    private val io: CoroutineDispatcher = Dispatchers.IO,
+    private val prefs: AuthPreferencesDataSource    //1126
 ) : AuthRepository {
 
     override suspend fun sendEmailCode(email: String): Boolean {
@@ -37,8 +39,8 @@ class AuthRepositoryImpl @Inject constructor(
         return res.isSuccessful
     }
 
-
-    override suspend fun login(id: String, pw: String): Result<AuthTokens> =
+// 1126
+    override suspend fun login(id: String, pw: String, autoLogin: Boolean): Result<AuthTokens> =
         withContext(io) {
             runCatching {
                 val res = api.login(UserLoginRequest(id, pw))
@@ -48,12 +50,22 @@ class AuthRepositoryImpl @Inject constructor(
                 }
 
                 val body = res.body() ?: throw IOException("Empty login body")
-
                 val tokens = body.asAuthTokens()
                 tokenStore.set(tokens.access, tokens.refresh)
+
+                //1126 1줄추가 - prefs.setAutoLoginEnabled(autoLogin)
+                prefs.setAutoLoginEnabled(autoLogin)
                 tokens
+
             }
         }
+
+    // 1126
+    override suspend fun saveAutoLoginEnabled(enabled: Boolean) =
+        prefs.setAutoLoginEnabled(enabled)
+    override suspend fun isAutoLoginEnabled(): Boolean =
+        prefs.isAutoLoginEnabled()
+
 
     override suspend fun socialLogin(param: SocialLoginParam): Result<SocialLoginResult> =
         withContext(io) {

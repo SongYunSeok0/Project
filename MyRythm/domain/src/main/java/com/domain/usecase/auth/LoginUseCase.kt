@@ -8,9 +8,10 @@ class LoginUseCase @Inject constructor(
     private val authRepo: AuthRepository,
     private val userRepo: UserRepository
 ) {
-    suspend operator fun invoke(id: String, pw: String): Result<Unit> {
+    // 1126 autoLogin 자동로그인설정추가
+    suspend operator fun invoke(id: String, pw: String, autoLogin: Boolean): Result<Unit> {
         // 1) 로그인 시도 (Result<AuthTokens>)
-        val loginResult = authRepo.login(id, pw)
+        val loginResult = authRepo.login(id, pw, autoLogin)
 
         if (loginResult.isFailure) {
             // 로그인 실패 → 그대로 실패 반환
