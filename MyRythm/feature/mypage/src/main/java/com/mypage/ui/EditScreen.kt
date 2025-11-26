@@ -31,9 +31,7 @@ fun EditScreen(
     onDone: () -> Unit = {},
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
-
     val profile by viewModel.profile.collectAsState()
-
     // 1125 로컬/소셜 구분 (이메일 유무 기준)
     val isLocal = !profile?.email.isNullOrEmpty()
 
@@ -59,7 +57,7 @@ fun EditScreen(
     val nameText = stringResource(R.string.name)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
-    val birthText = stringResource(R.string.birth)      // 🔥 "생년월일"
+    val birthText = stringResource(R.string.birth)
     val genderText = stringResource(R.string.gender)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
     val editDone = stringResource(R.string.edit_done)
@@ -90,62 +88,33 @@ fun EditScreen(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        // TODO: 프로필 사진 영역 (기존 코드 유지)
-        // Text(editprofilephoto) 등…
-
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-            // ============================
-            // 🔵 이름(username)
-            // - 값 있으면 수정불가
-            // - 값 없으면 1회 입력 가능
-            // ============================
+            // 1125 유저네임 username 데이터값 없을 경우 입력 가능(입력 후 수정 불가)
             if (hasName) {
                 ReadonlyField(nameText, name)
             } else {
                 EditableField(nameText, name) { name = it }
             }
-
-            // 🔵 키/몸무게 (항상 수정 가능)
             EditableField(heightText, height) { height = it }
             EditableField(weightText, weight) { weight = it }
-
-            /// ============================
-// 🔵 생년월일(birth_date)
-// - 정상 날짜("yyyy-mm-dd")면 Readonly
-// - 그 외는 무조건 Editable
-// ============================
-
-            // 🔥 yyyy-mm-dd 날짜 형식 검증 함수
+            // 1125 생년월일 birthDate 데이터값 없을 경우 입력 가능(입력 후 수정 불가)
+            // yyyy-mm-dd 형식이 아닐 경우 저장되지 않음 ex) 2000만 입력 시 저장x 2000-10-10 입력 시 데이터베이스 유저생년월일로 저장o&수정불가
             fun isValidBirthFormat(value: String): Boolean {
                 return Regex("""^\d{4}-\d{2}-\d{2}$""").matches(value)
             }
-
-// 🔥 정상 날짜 형식일 때만 필드 닫기
             val hasValidBirth = isValidBirthFormat(birthDate)
-
             if (hasValidBirth) {
-                // 값 있고 형식까지 맞으면 → Readonly
                 ReadonlyField(birthText, birthDate)
             } else {
-                // 값이 없거나, 입력 중(2,20,200 등), 형식 미완성 → Editable
                 EditableField(
                     label = "${birthText} (예: 2000-10-10)",
                     value = birthDate,
                     onValueChange = { input ->
-                        birthDate = input   // 🔥 그대로 저장 → 절대 자동 닫힘 없음
+                        birthDate = input
                     }
                 )
             }
-
-
-
-            // ============================
-            // 🔵 성별(gender)
-            // - 값 있으면 수정불가
-            // - 값 없으면 드롭다운으로 선택 1회
-            // ============================
+            // 1125 성별 gender 데이터값 없을 경우 드롭다운으로 선택 가능(입력 후 수정 불가)
             if (hasGender) {
                 ReadonlyField(genderText, gender)
             } else {
@@ -155,17 +124,10 @@ fun EditScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-
-            // ============================
-            // 🔵 이메일(email)
-            // - 로컬유저만 표시, 항상 수정불가
-            // - 소셜유저는 이메일 필드 자체를 숨김
-            // ============================
+            // 1125 이메일 email 로컬유저는 수정 불가, 소셜로그인 사용자는 필드x
             if (isLocal) {
                 ReadonlyField(emailText, email)
             }
-
-            // 🔵 전화번호 / 보호자 이메일 (항상 수정 가능)
             EditableField(phoneNumberPlaceholderText, phone) { phone = it }
             EditableField("보호자 이메일", protEmail) { protEmail = it }
         }
@@ -180,12 +142,12 @@ fun EditScreen(
                 .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable {
-                    // 🔥 생년월일은 한 필드 그대로 전달 (이름처럼)
+                    // 1125 생년월일은 한 필드 그대로 전달 (signup의 yyyy/mm/dd 나눠서 조립 안하고 yyyy-mm-dd 자체로 전달)
                     viewModel.saveProfile(
                         username = name,
                         heightText = height,
                         weightText = weight,
-                        ageText = birthDate,   // <- 백엔드에서 birth_date 로 매핑되는 기존 파라미터 이름 유지
+                        ageText = birthDate,   // 1125 백엔드에서 birth_date 로 매핑되는 기존 파라미터 이름 유지
                         email = email,
                         phone = phone,
                         prot_email = protEmail,
@@ -215,7 +177,10 @@ fun EditScreen(
 @Composable
 fun EditableField(label: String, value: String, onValueChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = label, fontSize = 14.sp, color = Color(0xff3b566e))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface)
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
