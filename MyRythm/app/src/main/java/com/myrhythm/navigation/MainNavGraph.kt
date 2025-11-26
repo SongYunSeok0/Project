@@ -20,7 +20,7 @@ fun NavGraphBuilder.mainNavGraph(nav: NavController) {
 
     composable<MainRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<MainRoute>()
-        val uid = route.userId     // ← 여기서 가져와야 한다
+        val uid = route.userId     // 🔥 절대 빈값 아님
 
         val myPageViewModel: MyPageViewModel = hiltViewModel()
 

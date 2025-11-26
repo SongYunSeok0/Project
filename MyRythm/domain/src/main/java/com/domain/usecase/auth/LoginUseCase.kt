@@ -1,5 +1,6 @@
 package com.domain.usecase.auth
 
+import com.domain.model.AuthTokens
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
 import javax.inject.Inject
@@ -8,19 +9,19 @@ class LoginUseCase @Inject constructor(
     private val authRepo: AuthRepository,
     private val userRepo: UserRepository
 ) {
-    suspend operator fun invoke(id: String, pw: String): Result<Unit> {
-        // 1) 로그인 시도 (Result<AuthTokens>)
-        val loginResult = authRepo.login(id, pw)
+    suspend operator fun invoke(id: String, pw: String): Result<AuthTokens> {
+        // 1) 로그인 실행
+        val loginResult = authRepo.login(id, pw) // Result<AuthTokens>
+        if (loginResult.isFailure) return Result.failure(loginResult.exceptionOrNull()!!)
 
-        if (loginResult.isFailure) {
-            // 로그인 실패 → 그대로 실패 반환
-            return Result.failure(loginResult.exceptionOrNull()!!)
-        }
+        val tokens = loginResult.getOrNull()!!
 
-        // 2) 유저 정보 최신화 필요 → refreshMe()
-        return runCatching {
-            userRepo.refreshMe()  // suspend
-        }
+        // 2) 프로필 최신화
+        // refreshMe 실행 실패해도 로그인 자체는 성공이므로 감싸줌
+        runCatching { userRepo.refreshMe() }
+
+        // 3) AuthTokens 반환
+        return Result.success(tokens)
     }
 }
 

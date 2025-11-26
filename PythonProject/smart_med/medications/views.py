@@ -18,16 +18,15 @@ def to_ms(dt):
     if dt is None:
         return None
     if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
-        dt = datetime.datetime.combine(dt, datetime.time.min, tzinfo=timezone.get_current_timezone())
+        dt = datetime.datetime.combine(dt, datetime.time.min)
     if timezone.is_naive(dt):
-        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+        dt = timezone.make_aware(dt, datetime.timezone.utc)
     return int(dt.timestamp() * 1000)
-
 
 def to_dt(ms):
     if not ms:
         return None
-    return datetime.datetime.fromtimestamp(ms / 1000, tz=timezone.get_current_timezone())
+    return datetime.datetime.fromtimestamp(ms / 1000, tz=datetime.timezone.utc)
 
 
 # RegiHistory GET + POST
