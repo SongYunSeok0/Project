@@ -72,6 +72,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val res = api.socialLogin(param.toDto())
 
                 if (!res.isSuccessful) {
+                    // 409 / 428 → 추가정보 필요
                     return@runCatching when (res.code()) {
                         409, 428 -> SocialLoginResult.NeedAdditionalInfo(
                             socialId = param.socialId,
@@ -84,6 +85,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val body = res.body()
                     ?: return@runCatching SocialLoginResult.Error("empty body")
 
+                // 서버에서 "추가정보 필요" 신호를 줬을 때
                 if (body.needAdditionalInfo == true) {
                     return@runCatching SocialLoginResult.NeedAdditionalInfo(
                         socialId = param.socialId,
@@ -99,7 +101,18 @@ class AuthRepositoryImpl @Inject constructor(
                 val tokens = body.toDomainTokens()
                 tokenStore.set(tokens.access, tokens.refresh)
 
-                SocialLoginResult.Success(tokens)
+                val access = tokens.access
+                    ?: throw IllegalStateException("No access token stored!")
+
+                val idStr = JwtUtils.extractUserId(access)
+                    ?: throw IllegalStateException("User ID not found in JWT!")
+
+                val userId = idStr.toLong()
+
+                SocialLoginResult.Success(
+                    userId = userId,
+                    tokens = tokens
+                )
             }
         }
 

@@ -7,8 +7,8 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.data.core.auth.JwtUtils
 import com.data.core.auth.AuthPreferencesDataSource
+import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.data.core.push.PushManager
 import com.domain.model.SocialLoginResult
@@ -34,8 +34,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import com.domain.usecase.auth.SendEmailCodeUseCase
-import com.domain.usecase.auth.VerifyEmailCodeUseCase
+
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -46,23 +45,18 @@ class AuthViewModel @Inject constructor(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
     private val tokenStore: TokenStore,
-    private val sendEmailCodeUseCase: SendEmailCodeUseCase,
-    private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase,
     private val repo: AuthRepository,
     private val authPrefs: AuthPreferencesDataSource
 ) : ViewModel() {
 
-    // 1127 자동로그인
+    // 자동 로그인 저장
     private val _autoLoginEnabled = MutableStateFlow(false)
     val autoLoginEnabled: StateFlow<Boolean> = _autoLoginEnabled
     fun setAutoLogin(enabled: Boolean) {
         _autoLoginEnabled.value = enabled
-        Log.d("AuthViewModel", "자동 로그인 설정 변경: $enabled (로그인 시 저장됨)")
     }
 
-    // -----------------------------------------------------------
-    // 1) SignupForm (UI 입력 상태)
-    // -----------------------------------------------------------
+    // 회원가입 입력 폼
     data class SignupForm(
         val email: String = "",
         val code: String = "",
@@ -78,20 +72,6 @@ class AuthViewModel @Inject constructor(
     private val _signupForm = MutableStateFlow(SignupForm())
     val signupForm: StateFlow<SignupForm> = _signupForm
 
-    fun updateSignupEmail(v: String) = _signupForm.update { it.copy(email = v) }
-    fun updateCode(v: String) = _signupForm.update { it.copy(code = v) }
-//    fun updateSignupPassword(v: String) = _signupForm.update { it.copy(password = v) }
-//    fun updateUsername(v: String) = _signupForm.update { it.copy(username = v) }
-//    fun updatePhone(v: String) = _signupForm.update { it.copy(phone = v) }
-//    fun updateBirth(v: String) = _signupForm.update { it.copy(birthDate = v) }
-//    fun updateGender(v: String) = _signupForm.update { it.copy(gender = v) }
-//    fun updateHeight(v: Double) = _signupForm.update { it.copy(height = v) }
-//    fun updateWeight(v: Double) = _signupForm.update { it.copy(weight = v) }
-//    fun updatePassword(v: String) = _signupForm.update { it.copy(password = v) }
-
-    // -----------------------------------------------------------
-    // 로그인 / 상태 관리
-    // -----------------------------------------------------------
     data class UiState(
         val loading: Boolean = false,
         val isLoggedIn: Boolean = false,
@@ -108,9 +88,7 @@ class AuthViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val events: SharedFlow<String> = _events
-
     private fun emit(msg: String) = _events.tryEmit(msg)
-    fun emitInfo(msg: String) = emit(msg)
 
     private val _form = MutableStateFlow(FormState())
     val form: StateFlow<FormState> = _form
@@ -118,23 +96,46 @@ class AuthViewModel @Inject constructor(
     fun updateLoginEmail(v: String) = _form.update { it.copy(email = v) }
     fun updateLoginPW(v: String) = _form.update { it.copy(password = v) }
 
-    // 4) 이메일 인증
+    fun updateSignupEmail(v: String) = _signupForm.update { it.copy(email = v) }
+    fun updateCode(v: String) = _signupForm.update { it.copy(code = v) }
+    fun updateUsername(v: String) = _signupForm.update { it.copy(username = v) }
+    fun updatePhone(v: String) = _signupForm.update { it.copy(phone = v) }
+    fun updateBirth(v: String) = _signupForm.update { it.copy(birthDate = v) }
+    fun updateGender(v: String) = _signupForm.update { it.copy(gender = v) }
+    fun updateHeight(v: Double) = _signupForm.update { it.copy(height = v) }
+    fun updateWeight(v: Double) = _signupForm.update { it.copy(weight = v) }
+    fun updatePassword(v: String) = _signupForm.update { it.copy(password = v) }
+
     fun sendCode() = viewModelScope.launch {
-        val ok = runCatching {
-            sendEmailCodeUseCase(signupForm.value.email)
-        }.getOrDefault(false)
+        val ok = repo.sendEmailCode(signupForm.value.email)
         emit(if (ok) "인증코드 전송" else "전송 실패")
     }
 
     fun verifyCode() = viewModelScope.launch {
         val f = signupForm.value
-        val ok = runCatching {
-            verifyEmailCodeUseCase(f.email, f.code)
-        }.getOrDefault(false)
+        val ok = repo.verifyEmailCode(f.email, f.code)
         emit(if (ok) "인증 성공" else "인증 실패")
     }
 
-    // 6) 기존 signup(req) (소셜로그인용)
+    fun signup() = viewModelScope.launch {
+        val f = signupForm.value
+        val body = SignupRequest(
+            email = f.email,
+            username = f.username,
+            phone = f.phone,
+            birthDate = f.birthDate,
+            gender = f.gender,
+            height = f.height,
+            weight = f.weight,
+            password = f.password
+        )
+
+        _state.update { it.copy(loading = true) }
+        val ok = runCatching { signupUseCase(body) }.getOrDefault(false)
+        _state.update { it.copy(loading = false) }
+        emit(if (ok) "회원가입 성공" else "회원가입 실패")
+    }
+
     fun signup(req: SignupRequest) = viewModelScope.launch {
         _state.update { it.copy(loading = true) }
         val ok = runCatching { signupUseCase(req) }.getOrDefault(false)
@@ -142,9 +143,7 @@ class AuthViewModel @Inject constructor(
         emit(if (ok) "회원가입 성공" else "회원가입 실패")
     }
 
-    // -----------------------------------------------------------
-    // 로그인
-    // -----------------------------------------------------------
+    // 로그인 ---------------------------------------------------------
     fun login() = viewModelScope.launch {
         val email = form.value.email
         val pw = form.value.password
@@ -156,21 +155,13 @@ class AuthViewModel @Inject constructor(
 
         _state.update { it.copy(loading = true) }
 
-        // 자동로그인 적용
         val result = loginUseCase(email, pw, _autoLoginEnabled.value)
-        val tokens = result.getOrNull() // 결과에서 토큰 추출
         val ok = result.isSuccess
 
-        if (ok && tokens != null) {
-            Log.d("AuthViewModel", "✅ 로그인 성공 - 자동로그인: ${_autoLoginEnabled.value}")
+        if (ok) {
             authPrefs.setAutoLoginEnabled(_autoLoginEnabled.value)
 
-            PushManager.fcmToken?.let { token ->
-                runCatching { registerFcmTokenUseCase(token) }
-            }
-
-            // 토큰에서 userId 추출
-            val uid = tokens.access?.let { JwtUtils.extractUserId(it) }
+            val uid = JwtUtils.extractUserId(tokenStore.current().access) ?: ""
 
             _state.update {
                 it.copy(
@@ -179,28 +170,28 @@ class AuthViewModel @Inject constructor(
                     userId = uid
                 )
             }
-            emit("로그인 성공")
+
+            PushManager.fcmToken?.let { token ->
+                runCatching { registerFcmTokenUseCase(token) }
+            }
         } else {
             _state.update { it.copy(loading = false, isLoggedIn = false) }
-            emit("이메일 또는 비밀번호가 올바르지 않습니다.")
         }
-    } // ⭐ login 함수 종료
 
-    // 👇 이제 login 함수 밖으로 나왔으므로 LoginScreen에서 참조 가능합니다.
-
-    fun tryRefresh() = viewModelScope.launch {
-        val ok = runCatching { refreshUseCase() }.getOrDefault(false)
-        if (ok) emit("토큰 갱신")
+        emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
     }
 
+    // 로그아웃 ---------------------------------------------------------
     fun logout() = viewModelScope.launch {
         runCatching { logoutUseCase() }
-        _state.update { it.copy(isLoggedIn = false) }
-        _autoLoginEnabled.value = false // 로그아웃 시 로컬/소셜 모두 자동로그인 해제
+        _state.update { it.copy(isLoggedIn = false, userId = null) }
+        _autoLoginEnabled.value = false
         emit("로그아웃 완료")
     }
 
-    // 카카오 로그인
+    // --------------------------------------------------------------------
+    // ✔✔✔ 카카오 로그인 함수 추가
+    // --------------------------------------------------------------------
     fun kakaoOAuth(
         context: Context,
         onResult: (Boolean, String) -> Unit,
@@ -251,7 +242,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // 구글 로그인
+    // --------------------------------------------------------------------
+    // ✔✔✔ 구글 로그인 함수 추가
+    // --------------------------------------------------------------------
     fun googleOAuth(
         context: Context,
         googleClientId: String,
@@ -292,6 +285,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // --------------------------------------------------------------------
+    // 구글 Credential 처리
+    // --------------------------------------------------------------------
     private fun handleGoogleCredential(
         result: GetCredentialResponse,
         onResult: (Boolean, String) -> Unit,
@@ -318,9 +314,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // -----------------------------------------------------------
-    // 소셜 로그인
-    // -----------------------------------------------------------
+    // --------------------------------------------------------------------
+    // 공통 소셜 로그인 처리
+    // --------------------------------------------------------------------
     private fun handleSocialLogin(
         provider: String,
         accessToken: String?,
@@ -337,24 +333,25 @@ class AuthViewModel @Inject constructor(
                     accessToken = accessToken,
                     idToken = idToken
                 )
+
                 apiResult.onSuccess { result ->
                     withContext(Dispatchers.Main) {
                         when (result) {
                             is SocialLoginResult.Success -> {
-                                // 소셜로그인은 로그인 성공 시 언제나 자동 로그인 저장
                                 authPrefs.setAutoLoginEnabled(true)
 
                                 _state.update {
                                     it.copy(
                                         isLoggedIn = true,
                                         loading = false,
-                                        userId = socialId
+                                        userId = result.userId.toString()
                                     )
                                 }
+
                                 PushManager.fcmToken?.let { token ->
                                     runCatching { registerFcmTokenUseCase(token) }
-                                        .onFailure { emit("푸시 토큰 등록 실패") }
                                 }
+
                                 onResult(true, "$provider 로그인 성공")
                             }
 
@@ -362,14 +359,11 @@ class AuthViewModel @Inject constructor(
                                 _state.update {
                                     it.copy(
                                         isLoggedIn = true,
-                                        loading = false,
-                                        userId = socialId
+                                        loading = false
                                     )
                                 }
-                                PushManager.fcmToken?.let { token ->
-                                    runCatching { registerFcmTokenUseCase(token) }
-                                }
-                                onResult(true, "$provider 신규 회원 등록 성공")
+
+                                onNeedAdditionalInfo(result.socialId, result.provider)
                             }
 
                             is SocialLoginResult.Error -> {
@@ -379,13 +373,12 @@ class AuthViewModel @Inject constructor(
                     }
                 }.onFailure { e ->
                     withContext(Dispatchers.Main) {
-                        onResult(false, parseError(e))
+                        onResult(false, parseError(e) ?: "네트워크 오류")
                     }
                 }
-
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    onResult(false, parseError(e))
+                    onResult(false, parseError(e) ?: "네트워크 오류")
                 }
             }
         }
