@@ -4,7 +4,7 @@ from django.conf import settings
 
 
 # 등록 이력(기존 Prescription)
-class regihistory(models.Model):
+class RegiHistory(models.Model):
     # 사용자 ID (ForeignKey로 User 테이블과 연결 가능)
 
     user = models.ForeignKey(
@@ -12,12 +12,6 @@ class regihistory(models.Model):
         on_delete=models.CASCADE,
         verbose_name="사용자 ID"
     )
-
-    # 고유 ID 자동 생성
-    # id = models.BigAutoField(
-    #     primary_key=True,
-    #     verbose_name="등록 이력 ID"
-    # )
 
     # 등록 유형 (영양제 / 병원약 등)
     regi_type = models.CharField(
@@ -39,6 +33,9 @@ class regihistory(models.Model):
         null=True,
         verbose_name="발행 날짜"
     )
+    # 알람 여부
+    use_alarm = models.BooleanField(default=True)
+
     class Meta:
         db_table = "regihistory"
         verbose_name = "등록 이력"
@@ -54,13 +51,13 @@ class Plan(models.Model):
     #PK id자동생성
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     regihistory = models.ForeignKey(
-        regihistory,
+        RegiHistory,
         on_delete=models.CASCADE,
         null=True,  # ← 필수!!
         blank=True  # ← 필수!!
     )
 
-    med_name = models.CharField(max_length=120)
+    med_name = models.CharField(null=True, max_length=120)
     taken_at = models.DateTimeField(null=True, blank=True)
     meal_time = models.CharField(
         max_length=20,
@@ -72,6 +69,7 @@ class Plan(models.Model):
     )
     note = models.TextField(blank=True, null=True)
     taken = models.DateTimeField(null=True, blank=True)
+    use_alarm = models.BooleanField(default=True)
     #관리용
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

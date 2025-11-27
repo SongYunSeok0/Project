@@ -1,35 +1,40 @@
-// feature/scheduler/src/main/java/com/scheduler/viewmodel/PlanViewModel.kt
 package com.scheduler.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.Plan
-import com.domain.repository.RegiRepository
+import com.domain.model.RegiHistory
+import com.domain.usecase.plan.CreatePlanUseCase
+import com.domain.usecase.plan.DeletePlanUseCase
+import com.domain.usecase.plan.GetPlansUseCase
+import com.domain.usecase.plan.RefreshPlansUseCase
+import com.domain.usecase.plan.UpdatePlanUseCase
+import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class PlanViewModel @Inject constructor(
-    private val repository: RegiRepository,
+    private val getPlansUseCase: GetPlansUseCase,
+    private val createPlanUseCase: CreatePlanUseCase,
+    private val updatePlanUseCase: UpdatePlanUseCase,
+    private val deletePlanUseCase: DeletePlanUseCase,
+    private val refreshPlansUseCase: RefreshPlansUseCase,
+    private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase
 ) : ViewModel() {
 
     data class UiState(
         val loading: Boolean = false,
         val plans: List<Plan> = emptyList(),
-        val error: String? = null,
+        val histories: List<RegiHistory> = emptyList(),
+        val error: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -38,46 +43,106 @@ class PlanViewModel @Inject constructor(
     private val _itemsByDate = MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
     val itemsByDate = _itemsByDate.asStateFlow()
 
-    // 🔥 userId 기반 전체 일정 로드
     fun load(userId: Long) {
-        if (userId <= 0L) {
-            _uiState.update { it.copy(error = "userId 미지정") }
-            return
-        }
-
         viewModelScope.launch {
-            repository.observeAllPlans(userId)
+
+            getRegiHistoriesUseCase()
                 .catch { e ->
                     _uiState.update { it.copy(error = e.message) }
                 }
-                .collect { list ->
-                    _uiState.update { it.copy(plans = list) }
-                    _itemsByDate.value = makeItemsByDate(list)
+                .collect { histories ->
+
+                    _uiState.update { it.copy(histories = histories) }
+
+                    getPlansUseCase(userId)
+                        .catch { e ->
+                            _uiState.update { it.copy(error = e.message) }
+                        }
+                        .collect { plans ->
+
+                            _uiState.update { it.copy(plans = plans) }
+
+                            _itemsByDate.value = makeItemsByDate(plans, histories)
+                        }
                 }
         }
     }
 
-    // 날짜별로 묶기
-    private fun makeItemsByDate(plans: List<Plan>): Map<LocalDate, List<MedItem>> {
+    fun createPlan(
+        regihistoryId: Long?,
+        medName: String,
+        takenAt: Long,
+        mealTime: String?,
+        note: String?,
+        taken: Long?,
+        useAlarm: Boolean
+    ) {
+        viewModelScope.launch {
+            createPlanUseCase(
+                regihistoryId,
+                medName,
+                takenAt,
+                mealTime,
+                note,
+                taken,
+                useAlarm
+            )
+        }
+    }
+
+    fun updatePlan(userId: Long, plan: Plan) {
+        viewModelScope.launch {
+            updatePlanUseCase(userId, plan)
+        }
+    }
+
+    fun deletePlan(userId: Long, planId: Long) {
+        viewModelScope.launch {
+            deletePlanUseCase(userId, planId)
+        }
+    }
+
+    private fun makeItemsByDate(
+        plans: List<Plan>,
+        histories: List<RegiHistory>
+    ): Map<LocalDate, List<MedItem>> {
+
         val zone = ZoneId.systemDefault()
+
+        val labelMap = histories.associateBy(
+            { it.id },
+            { it.label ?: "" }
+        )
+
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
-        plans.forEach { p ->
-            val takenAt = p.takenAt ?: return@forEach
-            val instant = Instant.ofEpochMilli(takenAt)
-            val local = instant.atZone(zone)
-            val date = local.toLocalDate()
-            val time = local.toLocalTime().toString().substring(0, 5)
+        plans
+            .filter { it.takenAt != null }
+            .groupBy { p ->
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+                val rhId = p.regihistoryId
+                Triple(date, rhId, time)
+            }
+            .forEach { (_, group) ->
+                val p = group.first()
 
-            val item = MedItem(
-                name = p.medName,
-                time = time,
-                status = IntakeStatus.SCHEDULED
-            )
-            out.getOrPut(date) { mutableListOf() }.add(item)
-        }
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+
+                val label = labelMap[p.regihistoryId] ?: p.medName
+
+                val item = MedItem(
+                    label = label,
+                    time = time,
+                    status = IntakeStatus.SCHEDULED
+                )
+
+                out.getOrPut(date) { mutableListOf() }.add(item)
+            }
 
         return out.mapValues { (_, v) -> v.sortedBy { it.time } }
     }
 }
-

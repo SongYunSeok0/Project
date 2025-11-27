@@ -1,3 +1,5 @@
+@file:Suppress("UnusedImport")
+
 package com.scheduler.ui
 
 import android.widget.Toast
@@ -29,6 +31,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.domain.model.Plan
 import com.scheduler.viewmodel.RegiViewModel
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 private val CardBg = Color(0xFFF9FAFB)
@@ -48,47 +56,44 @@ private fun presetTimes(n: Int): List<String> = when (n) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegiScreen(
-    userId: Long,
-    regiHistoryId: Long,
     modifier: Modifier = Modifier,
     drugNames: List<String> = emptyList(),
     times: Int? = null,
     days: Int? = null,
     viewModel: RegiViewModel = hiltViewModel(),
     onCompleted: () -> Unit = {},
+    regihistoryId: Long? = null,
 ) {
+
     val context = LocalContext.current
 
-    // 🔔 등록 완료 이벤트 수신
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.events.collect { msg ->
             when (msg) {
                 "등록 완료" -> {
                     Toast.makeText(context, "등록이 완료되었습니다!", Toast.LENGTH_SHORT).show()
                     onCompleted()
                 }
-                "등록 실패" ->
+                "등록 실패" -> {
                     Toast.makeText(context, "등록에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    val addiconDescription = stringResource(R.string.addicon_description)
-    val removeiconDescription = stringResource(R.string.removeicon_description)
-    val minusiconDescription = stringResource(R.string.minusicon_description)
-    val plusiconDescription = stringResource(R.string.plusicon_description)
-    val daySuffixText = stringResource(R.string.day_suffix)
-    val cancelText = stringResource(R.string.cancel)
-    val confirmText = stringResource(R.string.confirm)
+    LaunchedEffect(regihistoryId) {
+        viewModel.initRegi(regihistoryId)
+    }
+
+    // -------- 문자열 리소스 ---------
+
     val diseaseText = stringResource(R.string.disease)
     val supplementText = stringResource(R.string.supplement)
     val diseaseNameText = stringResource(R.string.disease_name)
     val supplementNameText = stringResource(R.string.supplement_name)
     val medicationNameText = stringResource(R.string.medication_name)
     val doseDailyCount = stringResource(R.string.dose_daily_count)
-    val countPerDay = stringResource(R.string.count_per_day)
     val doseTime = stringResource(R.string.dose_time)
-    val timeSlot = stringResource(R.string.time_slot)
     val dosePeriod = stringResource(R.string.dose_period)
     val startDateText = stringResource(R.string.start_date)
     val endDateText = stringResource(R.string.end_date)
@@ -98,10 +103,10 @@ fun RegiScreen(
     val mealRelationIrrelevant = stringResource(R.string.meal_relation_irrelevant)
     val memoNotesText = stringResource(R.string.memo_notes)
     val registrationComplete = stringResource(R.string.registration_complete)
-    val diseaseNameMessage = stringResource(R.string.scheduler_message_disease_name)
-    val supplementNameMessage = stringResource(R.string.scheduler_message_supplement_name)
-    val medicationNameMessage = stringResource(R.string.scheduler_message_medication_name)
-    val doseNotesMessage = stringResource(R.string.scheduler_message_dose_notes)
+    val cancelText = stringResource(R.string.cancel)
+    val confirmText = stringResource(R.string.confirm)
+
+    // -------- 상태 ---------
 
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
 
@@ -118,12 +123,11 @@ fun RegiScreen(
     var dose by remember { mutableIntStateOf(3) }
     var mealRelation by remember { mutableStateOf("after") }
     var memo by remember { mutableStateOf("") }
+    var useAlarm by remember { mutableStateOf(true) }
 
     val intakeTimes = remember { mutableStateListOf<String>() }
 
     val dateFmt = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-    val dateTimeFmt = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
-
     fun todayStr() = dateFmt.format(Calendar.getInstance().time)
     fun strToMillis(s: String): Long? = runCatching { dateFmt.parse(s)?.time }.getOrNull()
 
@@ -133,7 +137,8 @@ fun RegiScreen(
     var showStart by remember { mutableStateOf(false) }
     var showEnd by remember { mutableStateOf(false) }
 
-    // ---------------- Date Picker --------------------
+    // -------- 날짜 선택 ---------
+
     if (showStart) {
         val state = rememberDatePickerState(
             initialSelectedDateMillis = strToMillis(startDay) ?: System.currentTimeMillis()
@@ -147,9 +152,13 @@ fun RegiScreen(
                 }) { Text(confirmText, color = Color.White) }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showStart = false }) { Text(cancelText) }
+                OutlinedButton(onClick = { showStart = false }) {
+                    Text(cancelText)
+                }
             }
-        ) { DatePicker(state = state) }
+        ) {
+            DatePicker(state = state)
+        }
     }
 
     if (showEnd) {
@@ -165,12 +174,17 @@ fun RegiScreen(
                 }) { Text(confirmText, color = Color.White) }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showEnd = false }) { Text(cancelText) }
+                OutlinedButton(onClick = { showEnd = false }) {
+                    Text(cancelText)
+                }
             }
-        ) { DatePicker(state = state) }
+        ) {
+            DatePicker(state = state)
+        }
     }
 
-    // 초기 세팅
+    // -------- 초기값 ---------
+
     LaunchedEffect(Unit) {
         dose = 3
         intakeTimes.clear()
@@ -193,14 +207,38 @@ fun RegiScreen(
 
     LaunchedEffect(dose, tab) {
         intakeTimes.clear()
-        if (tab == RegiTab.SUPPLEMENT)
+        if (tab == RegiTab.SUPPLEMENT) {
             repeat(dose) { intakeTimes.add("") }
-        else
+        } else {
             intakeTimes.addAll(presetTimes(dose))
+        }
     }
 
-    // ---------------- UI 전체 ------------------------
+    LaunchedEffect(times) {
+        if (times != null) {
+            dose = times.coerceIn(1, 6)
+            intakeTimes.clear()
+            intakeTimes.addAll(presetTimes(dose))
+        }
+    }
+
+    LaunchedEffect(days) {
+        if (days != null) {
+            val end = Calendar.getInstance()
+            end.add(Calendar.DAY_OF_YEAR, days - 1)
+            startDay = todayStr()
+            endDay = dateFmt.format(end.time)
+        }
+    }
+
+    LaunchedEffect(drugNames) {
+        if (drugNames.isNotEmpty()) tab = RegiTab.DISEASE
+    }
+
+    // -------- UI ---------
+
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
+
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -211,7 +249,8 @@ fun RegiScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ---------------- 탭 ----------------
+            // -------- 탭 ---------
+
             TabRow(
                 selectedTabIndex = if (tab == RegiTab.DISEASE) 0 else 1,
                 containerColor = Color.Transparent,
@@ -235,7 +274,8 @@ fun RegiScreen(
                 )
             }
 
-            // ---------------- 이름 입력 ----------------
+            // -------- 병명 / 영양제 ---------
+
             if (tab == RegiTab.DISEASE) {
                 Column {
                     Text(diseaseNameText, color = SectionTitle)
@@ -262,7 +302,8 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 약 이름 (질병만) ----------------
+            // -------- 약 이름 목록 ---------
+
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(medicationNameText, color = SectionTitle)
@@ -290,41 +331,52 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 복용 횟수 ----------------
+            // -------- 횟수 ---------
+
             Column {
                 Text(doseDailyCount, color = SectionTitle)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { dose = (dose - 1).coerceAtLeast(1) }) {
+                    IconButton(onClick = {
+                        dose = (dose - 1).coerceAtLeast(1)
+                    }) {
                         Icon(Icons.Default.Remove, contentDescription = null)
                     }
                     Spacer(Modifier.weight(1f))
                     Text("${dose}회")
                     Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { dose = (dose + 1).coerceAtMost(6) }) {
+                    IconButton(onClick = {
+                        dose = (dose + 1).coerceAtMost(6)
+                    }) {
                         Icon(Icons.Default.Add, contentDescription = null)
                     }
                 }
             }
 
-            // ---------------- 시간 입력 ----------------
+            // -------- 복용 시간 ---------
+
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(doseTime, color = SectionTitle)
-
                 intakeTimes.forEachIndexed { i, t ->
-                    RepeatTimeRow("${i + 1}회", t) { new -> intakeTimes[i] = new }
+                    TimeInputRow("${i + 1}회", t) { new -> intakeTimes[i] = new }
                 }
             }
 
-            // ---------------- 복용 기간 ----------------
+            // -------- 기간 ---------
+
             Column {
                 Text(dosePeriod, color = SectionTitle)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DateBox(startDateText, startDay, Modifier.weight(1f)) { showStart = true }
-                    DateBox(endDateText, endDay, Modifier.weight(1f)) { showEnd = true }
+                    DateBox(startDateText, startDay, Modifier.weight(1f)) {
+                        showStart = true
+                    }
+                    DateBox(endDateText, endDay, Modifier.weight(1f)) {
+                        showEnd = true
+                    }
                 }
             }
 
-            // ---------------- 식사 관계 (질병만) ----------------
+            // -------- 식사 관계 ---------
+
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(mealRelationText, color = SectionTitle)
@@ -342,7 +394,8 @@ fun RegiScreen(
                 }
             }
 
-            // ---------------- 메모 ----------------
+            // -------- 메모 ---------
+
             Column {
                 Text(memoNotesText, color = SectionTitle)
                 OutlinedTextField(
@@ -355,59 +408,110 @@ fun RegiScreen(
                 )
             }
 
-            // ---------------- 등록 버튼 ----------------
+            // -------- 알람 ---------
+
+            Column {
+                Text("알람 설정", color = SectionTitle)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Text(if (useAlarm) "알람 켜짐" else "알람 꺼짐")
+                    Switch(checked = useAlarm, onCheckedChange = { useAlarm = it })
+                }
+            }
+
+            // -------- 등록 ---------
+
             Button(
                 onClick = {
-                    val regiType = if (tab == RegiTab.DISEASE) "disease" else "supplement"
-                    val label = if (tab == RegiTab.DISEASE)
-                        disease.ifBlank { null }
-                    else
-                        supplement.ifBlank { null }
 
-                    val issued = startDay.ifBlank { todayStr() }
+                    val regiType = if (tab == RegiTab.DISEASE) "disease" else "supplement"
+                    val label =
+                        if (tab == RegiTab.DISEASE) disease.ifBlank { null }
+                        else supplement.ifBlank { null }
 
                     val sMs = strToMillis(startDay) ?: System.currentTimeMillis()
-                    val eMs = strToMillis(endDay) ?: sMs
+                    var eMs = strToMillis(endDay) ?: sMs
                     val oneDay = 86400000L
 
-                    val daysList = buildList {
-                        var cur = sMs
-                        while (cur <= eMs) { add(cur); cur += oneDay }
-                    }
+                    val dfDay = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
                     val realMeds =
                         if (tab == RegiTab.SUPPLEMENT)
                             listOfNotNull(supplement.ifBlank { null })
-                        else
-                            meds.mapNotNull { it.ifBlank { null } }
+                        else meds.mapNotNull { it.ifBlank { null } }
 
                     val realTimes = intakeTimes.mapNotNull { it.ifBlank { null } }
 
+                    // 종료일 자동 확장
+                    run {
+                        val lastDayStr = dfDay.format(Date(eMs))
+                        val lastTimesMs = realTimes.map { t ->
+                            LocalDateTime.parse("$lastDayStr $t", formatter)
+                                .atZone(ZoneId.of("Asia/Seoul"))
+                                .toInstant()
+                                .toEpochMilli()
+                        }
+                        val nowMs = System.currentTimeMillis()
+                        if (lastTimesMs.all { it < nowMs }) {
+                            eMs += oneDay
+                        }
+                    }
+
+                    // 날짜 목록 생성
+                    val daysList = buildList {
+                        var cur = sMs
+                        while (cur <= eMs) {
+                            add(cur)
+                            cur += oneDay
+                        }
+                    }
+
                     val plans = mutableListOf<Plan>()
-                    val df = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                    val dfDay = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
                     daysList.forEach { d ->
                         val ds = dfDay.format(Date(d))
-
                         realTimes.forEach { t ->
-                            val takenAt = df.parse("$ds $t")?.time ?: d
+
+                            val date = LocalDate.parse(ds)
+                            val time = LocalTime.parse(t)
+
+                            val base = ZonedDateTime.of(date, time, ZoneId.of("Asia/Seoul"))
+                                .toInstant()
+                                .toEpochMilli()
+
+                            val now = System.currentTimeMillis()
+
+                            val takenAt =
+                                if (base < now) base + oneDay else base
 
                             realMeds.forEach { med ->
                                 plans += Plan(
                                     id = 0L,
-                                    regihistoryId = null,
+                                    regihistoryId = regihistoryId,
                                     medName = med,
                                     takenAt = takenAt,
                                     mealTime = mealRelation,
                                     note = memo.ifBlank { null },
-                                    taken = null
+                                    taken = null,
+                                    useAlarm = useAlarm
                                 )
                             }
                         }
                     }
 
-                    viewModel.createRegiAndPlans(regiType, label, issued, plans)
+                    viewModel.createRegiAndPlans(
+                        regiType = regiType,
+                        label = label,
+                        issuedDate = startDay,
+                        useAlarm = useAlarm,
+                        plans = plans
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -426,27 +530,55 @@ fun RegiScreen(
     }
 }
 
-// ---------------- Components ------------------------
-
 @Composable
-private fun RepeatTimeRow(label: String, value: String, onChange: (String) -> Unit) {
-    val timeExampleText = stringResource(R.string.time_example)
+fun TimeInputRow(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit
+) {
+    var showPicker by remember { mutableStateOf(false) }
+
+    val initialHour = value.split(":").getOrNull(0)?.toIntOrNull() ?: 12
+    val initialMin = value.split(":").getOrNull(1)?.toIntOrNull() ?: 0
+
+    if (showPicker) {
+        WheelTimePickerDialog(
+            hour = initialHour,
+            minute = initialMin,
+            onDismiss = { showPicker = false },
+            onConfirm = {
+                onChange(it)
+                showPicker = false
+            }
+        )
+    }
+
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(label, modifier = Modifier.width(48.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            placeholder = { Text(timeExampleText, color = Hint) },
-            singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
-        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color.White)
+                .clickable { showPicker = true }
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = if (value.isBlank()) "예: 08:00" else value,
+                color = if (value.isBlank()) Hint else Color.Black,
+                fontSize = 16.sp
+            )
+        }
     }
 }
+
 
 @Composable
 private fun DateBox(
@@ -486,6 +618,9 @@ private fun SegChip(text: String, selected: Boolean, modifier: Modifier, onClick
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Text(text, color = if (selected) Color.White else Color(0xFF6F8BA4))
+        Text(
+            text,
+            color = if (selected) Color.White else Color(0xFF6F8BA4)
+        )
     }
 }

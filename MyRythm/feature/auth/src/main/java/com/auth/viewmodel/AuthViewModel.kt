@@ -44,7 +44,7 @@ class AuthViewModel @Inject constructor(
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
     private val tokenStore: TokenStore,
     private val repo: AuthRepository,
-    private val authPrefs: AuthPreferencesDataSource
+    private val authPrefs: AuthPreferencesDataSource    // 1127
 ) : ViewModel() {
 
     // 1127 자동로그인
@@ -104,9 +104,7 @@ class AuthViewModel @Inject constructor(
     fun updateLoginPW(v: String) = _form.update { it.copy(password = v) }
 
 
-    // -----------------------------------------------------------
     // 3) 회원가입 입력 업데이트
-    // -----------------------------------------------------------
     fun updateSignupEmail(v: String) = _signupForm.update { it.copy(email = v) }
     fun updateCode(v: String) = _signupForm.update { it.copy(code = v) }
     fun updateUsername(v: String) = _signupForm.update { it.copy(username = v) }
@@ -118,9 +116,7 @@ class AuthViewModel @Inject constructor(
     fun updatePassword(v: String) = _signupForm.update { it.copy(password = v) }
 
 
-    // -----------------------------------------------------------
     // 4) 이메일 인증
-    // -----------------------------------------------------------
     fun sendCode() = viewModelScope.launch {
         val ok = repo.sendEmailCode(signupForm.value.email)
         emit(if (ok) "인증코드 전송" else "전송 실패")
@@ -133,9 +129,7 @@ class AuthViewModel @Inject constructor(
     }
 
 
-    // -----------------------------------------------------------
     // 5) 이메일 회원가입 (SignupForm → SignupRequest)
-    // -----------------------------------------------------------
     fun signup() = viewModelScope.launch {
         val f = signupForm.value
 
@@ -159,9 +153,7 @@ class AuthViewModel @Inject constructor(
     }
 
 
-    // -----------------------------------------------------------
     // 6) 기존 signup(req) (소셜로그인용)
-    // -----------------------------------------------------------
     fun signup(req: SignupRequest) = viewModelScope.launch {
         _state.update { it.copy(loading = true) }
 
@@ -172,9 +164,7 @@ class AuthViewModel @Inject constructor(
     }
 
 
-    // -----------------------------------------------------------
     // 로그인
-    // -----------------------------------------------------------
     fun login() = viewModelScope.launch {
         val email = form.value.email
         val pw = form.value.password
@@ -217,6 +207,7 @@ class AuthViewModel @Inject constructor(
     }
 
 
+    // 카카오 로그인
     fun kakaoOAuth(
         context: Context,
         onResult: (Boolean, String) -> Unit,
@@ -267,6 +258,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // 구글 로그인
     fun googleOAuth(
         context: Context,
         googleClientId: String,
@@ -333,6 +325,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // -----------------------------------------------------------
+    // 공통 소셜 로그인 처리
+    // -----------------------------------------------------------
     private fun handleSocialLogin(
         provider: String,
         accessToken: String?,

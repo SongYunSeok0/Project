@@ -1,6 +1,5 @@
 package com.auth.ui
 
-import com.auth.BuildConfig
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -32,6 +30,8 @@ import com.shared.ui.components.AuthInputField
 import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
+import com.shared.ui.theme.Primary
+import com.shared.ui.theme.defaultFontFamily
 import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +50,6 @@ fun LoginScreen(
     val setAutologinText = stringResource(R.string.auth_setautologin)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val testLogin = stringResource(R.string.auth_testlogin)
     val oauthText = stringResource(R.string.auth_oauth)
     val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
     val googleLoginText = stringResource(R.string.auth_googlelogin_description)
@@ -64,7 +63,6 @@ fun LoginScreen(
     val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
     val snackbar = remember { SnackbarHostState() }
-    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         Log.e("LoginScreen", "📡 Event 수집 시작")
@@ -80,12 +78,13 @@ fun LoginScreen(
         Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
         Log.e("LoginScreen", "🚀 form.email = ${form.email}")
         if (ui.isLoggedIn) {
-            val userId = ui.userId ?: form.email
-            Log.e("LoginScreen", "✅ 네비게이션 실행: userId=$userId, password=${form.password}")
-            onLogin(userId, form.password)
-            Log.e("LoginScreen", "✅ onLogin 호출 완료")
-        } else {
-            Log.e("LoginScreen", "⏸️ 네비게이션 대기 중")
+            val uid = ui.userId
+            if (uid != null) {
+                Log.e("LoginScreen", "➡ 로그인 성공 → MainRoute 이동 userId=$uid")
+                onLogin(uid, form.password)
+            } else {
+                Log.e("LoginScreen", "❌ 로그인 성공했지만 userId=null → 이동 차단")
+            }
         }
     }
 
@@ -190,25 +189,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    Button(
-                        onClick = {
-                            onLogin(form.email, form.password)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            testLogin,
-                            color = MaterialTheme.colorScheme.onTertiary,
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-
                     AuthSecondaryButton(
                         text = signupText,
                         onClick = onSignUp,
@@ -249,17 +229,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    Log.e("LoginScreen", "🟡 ========== 카카오 버튼 클릭 ==========")
-                                    viewModel.kakaoOAuth(
-                                        context,
-                                        onResult = { success, message ->
-                                            Log.e("LoginScreen", "🟡 카카오 onResult: success=$success, message=$message")
-                                        },
-                                        onNeedAdditionalInfo = { _, _ -> }
-                                    )
-                                },
+                                .clip(RoundedCornerShape(12.dp)),
                             contentScale = ContentScale.FillBounds
                         )
 
@@ -271,18 +241,7 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    Log.e("LoginScreen", "🔵 ========== 구글 버튼 클릭 ==========")
-                                    viewModel.googleOAuth(
-                                        context,
-                                        googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
-                                        onResult = { success, message ->
-                                            Log.e("LoginScreen", "🔵 구글 onResult: success=$success, message=$message")
-                                        },
-                                        onNeedAdditionalInfo = { _, _ -> }
-                                    )
-                                },
+                                .clip(RoundedCornerShape(12.dp)),
                             contentScale = ContentScale.FillBounds
                         )
 
@@ -294,7 +253,6 @@ fun LoginScreen(
     }
 }
 
-/*
 @Preview(showBackground = true)
 @Composable
 private fun PreviewLogin() {
@@ -304,26 +262,10 @@ private fun PreviewLogin() {
             labelLarge = TextStyle(
                 fontFamily = defaultFontFamily,
                 fontWeight = FontWeight.Medium,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            bodyLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            bodySmall = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.25.sp
+                fontSize = 20.sp
             )
         )
     ) {
         LoginScreen()
     }
-}*/
+}

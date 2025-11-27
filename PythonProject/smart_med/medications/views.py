@@ -4,113 +4,93 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 import datetime
-from .serializers import PlanSerializer
 
-from .models import regihistory, Plan
+from .models import RegiHistory, Plan
 from .serializers import (
-    regihistorySerializer,
-    regihistoryCreateSerializer,
+    RegiHistorySerializer,
+    RegiHistoryCreateSerializer,
+    PlanSerializer,
     PlanCreateIn,
 )
+
 
 def to_ms(dt):
     if dt is None:
         return None
     if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
-        dt = datetime.datetime.combine(
-            dt,
-            datetime.time.min,
-            tzinfo=timezone.get_current_timezone()
-        )
+        dt = datetime.datetime.combine(dt, datetime.time.min)
     if timezone.is_naive(dt):
-        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+        dt = timezone.make_aware(dt, datetime.timezone.utc)
     return int(dt.timestamp() * 1000)
 
+def to_dt(ms):
+    if not ms:
+        return None
+    return datetime.datetime.fromtimestamp(ms / 1000, tz=datetime.timezone.utc)
 
-# ============================================================
-#  regihistory GET + POST
-# ============================================================
-class regihistoryListCreateView(APIView):
+
+# RegiHistory GET + POST
+class RegiHistoryListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # GET → 내 regihistory 목록
     def get(self, request):
-        rows = regihistory.objects.filter(user=request.user).order_by("-id")
-        data = regihistorySerializer(rows, many=True).data
-        return Response(data, status=status.HTTP_200_OK)
+        rows = RegiHistory.objects.filter(user=request.user).order_by("-id")
+        return Response(RegiHistorySerializer(rows, many=True).data, status=status.HTTP_200_OK)
 
-    # POST → 새 regihistory 생성
     def post(self, request):
-        ser = regihistoryCreateSerializer(data=request.data, context={"request": request})
+        ser = RegiHistoryCreateSerializer(data=request.data, context={"request": request})
         ser.is_valid(raise_exception=True)
-        regi = ser.save()  # user 자동 주입
-        return Response(regihistorySerializer(regi).data, status=status.HTTP_201_CREATED)
+        regi = ser.save()
+        return Response(RegiHistorySerializer(regi).data, status=status.HTTP_201_CREATED)
 
 
-# ============================================================
-#  Plan GET + POST
-# ============================================================
+# RegiHistory PATCH
+class RegiHistoryUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        regi = RegiHistory.objects.filter(id=pk, user=request.user).first()
+        if regi is None:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        ser = RegiHistoryCreateSerializer(regi, data=request.data, partial=True, context={"request": request})
+        ser.is_valid(raise_exception=True)
+        ser.save()
+        return Response(RegiHistorySerializer(regi).data, status=status.HTTP_200_OK)
+
+
+# RegiHistory DELETE
+class RegiHistoryDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        row = RegiHistory.objects.filter(id=pk, user=request.user).first()
+        if row is None:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        row.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# Plan GET + POST
 class PlanListView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # ==========================
-    #        GET (목록)
-    # ==========================
     def get(self, request):
-        # ✅ Plan.user 없음 → regihistory.user 기준으로 필터
-        plans = Plan.objects.filter(
-            regihistory__user=request.user
-        )
+        plans = Plan.objects.filter(regihistory__user=request.user)
+        return Response(PlanSerializer(plans, many=True).data, status=status.HTTP_200_OK)
 
-        data = []
-        for p in plans:
-            data.append(
-                {
-                    "id": p.id,
-                    "regihistoryId": p.regihistory.id if p.regihistory else None,
-                    "medName": p.med_name,
-                    "takenAt": to_ms(p.taken_at),
-                    "mealTime": p.meal_time,
-                    "note": p.note,
-                    "taken": to_ms(p.taken),
-                }
-            )
-
-        return Response(data, status=status.HTTP_200_OK)
-
-    # ==========================
-    #        POST (등록)
-    # ==========================
     def post(self, request):
         ser = PlanCreateIn(data=request.data)
         ser.is_valid(raise_exception=True)
         v = ser.validated_data
 
-        def to_dt(ms):
-            if not ms:
-                return None
-            return datetime.datetime.fromtimestamp(
-                ms / 1000,
-                tz=timezone.get_current_timezone(),
-            )
-
-        # 🔁 이제는 regihistoryId 로 받는다고 가정
-        regi_history_id = v.get("regihistoryId")
         regi_history = None
-        if regi_history_id is not None:
-            # 자신의 regihistory 것만 허용 (보안)
-            regi_history = regihistory.objects.filter(
-                id=regi_history_id,
-                user=request.user
-            ).first()
-
+        rid = v.get("regihistoryId")
+        if rid is not None:
+            regi_history = RegiHistory.objects.filter(id=rid, user=request.user).first()
             if regi_history is None:
-                return Response(
-                    {"error": "등록 이력이 존재하지 않거나 권한이 없습니다."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                return Response({"error": "no permission"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Plan 생성
         plan = Plan.objects.create(
             regihistory=regi_history,
             med_name=v.get("medName"),
@@ -118,6 +98,78 @@ class PlanListView(APIView):
             meal_time=v.get("mealTime") or "before",
             note=v.get("note"),
             taken=to_dt(v.get("taken")),
+            use_alarm=v.get("useAlarm", True),
         )
 
         return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
+
+
+# Plan PATCH
+class PlanUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+        if plan is None:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data
+
+        if "medName" in data:
+            plan.med_name = data["medName"]
+        if "takenAt" in data:
+            plan.taken_at = to_dt(data["takenAt"])
+        if "mealTime" in data:
+            plan.meal_time = data["mealTime"]
+        if "note" in data:
+            plan.note = data["note"]
+        if "taken" in data:
+            plan.taken = to_dt(data["taken"])
+        if "useAlarm" in data:
+            plan.use_alarm = data["useAlarm"]
+
+        plan.save()
+        return Response(PlanSerializer(plan).data, status=status.HTTP_200_OK)
+
+
+# Plan DELETE
+class PlanDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+        if plan is None:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        plan.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# Today plans
+class TodayPlansView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + datetime.timedelta(days=1)
+
+        plans = Plan.objects.filter(
+            regihistory__user=request.user,
+            taken_at__gte=start,
+            taken_at__lt=end
+        ).order_by("taken_at")
+
+        result = []
+        for p in plans:
+            if p.taken is not None:
+                status_str = "taken"
+            elif now > p.taken_at + datetime.timedelta(hours=1):
+                status_str = "missed"
+            else:
+                status_str = "pending"
+
+            item = PlanSerializer(p).data
+            item["status"] = status_str
+            result.append(item)
+
+        return Response(result, status=status.HTTP_200_OK)

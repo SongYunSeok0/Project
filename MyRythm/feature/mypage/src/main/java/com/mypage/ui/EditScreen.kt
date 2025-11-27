@@ -23,6 +23,7 @@ import com.shared.R
 import com.mypage.viewmodel.EditProfileEvent
 import com.mypage.viewmodel.EditProfileViewModel
 import com.shared.ui.components.AuthGenderDropdown
+import com.mypage.viewmodel.MyPageViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

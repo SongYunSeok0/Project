@@ -9,23 +9,18 @@ from django.core.exceptions import ValidationError
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra):
-        # 이메일 정규화
         if email:
             email = self.normalize_email(email).lower()
 
-        # ✔️ 1. 먼저 user 객체를 생성
         user = self.model(email=email, **extra)
 
-        # ✔️ 2. 그 다음 패스워드를 설정
         if password:
             user.set_password(password)
         else:
             user.set_unusable_password()
 
-        # ✔️ 3. 저장
         user.save(using=self._db)
         return user
-
 
     def create_superuser(self, email, password=None, **extra):
         if not password:

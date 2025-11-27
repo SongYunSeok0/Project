@@ -2,6 +2,7 @@ package com.data.repository
 
 import android.util.Log
 import com.data.core.auth.AuthPreferencesDataSource
+import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.data.mapper.auth.asAuthTokens
 import com.data.mapper.auth.toDomainTokens
@@ -56,7 +57,6 @@ class AuthRepositoryImpl @Inject constructor(
                 //1127 1줄추가 - prefs.setAutoLoginEnabled(autoLogin)
                 prefs.setAutoLoginEnabled(autoLogin)
                 tokens
-
             }
         }
 
@@ -125,6 +125,7 @@ class AuthRepositoryImpl @Inject constructor(
             runCatching { tokenStore.clear() }
         }
 
+    /* // 1127 11:27 merge seok into yun 주석
     override suspend fun signup(request: SignupRequest): Boolean {
         return try {
             val res = api.signup(request.toDto())
@@ -138,6 +139,37 @@ class AuthRepositoryImpl @Inject constructor(
                 Log.d("Signup", "회원가입 성공: ${res.body()}")
                 true
             }
+        } catch (e: Exception) {
+            Log.e("Signup", "네트워크 예외", e)
+            false
+        }
+    }*/
+    override suspend fun signup(request: SignupRequest): Boolean {
+        return try {
+
+            // 🔥 서버로 보낼 실제 JSON(DTO) 확인
+            val dto = request.toDto()
+            Log.e("SIGNUP_DTO", "보내는 JSON = $dto")
+
+            val res = api.signup(dto)
+
+            // 🔥 서버 응답 상태 확인
+            Log.e(
+                "SIGNUP_RESPONSE",
+                "code=${res.code()}, body=${res.errorBody()?.string()}"
+            )
+
+            if (!res.isSuccessful) {
+                Log.e(
+                    "Signup",
+                    "HTTP ${res.code()} ${res.message()}"
+                )
+                false
+            } else {
+                Log.d("Signup", "회원가입 성공: ${res.body()}")
+                true
+            }
+
         } catch (e: Exception) {
             Log.e("Signup", "네트워크 예외", e)
             false
@@ -157,6 +189,18 @@ class AuthRepositoryImpl @Inject constructor(
             false
         }
     }
+// 1127 11:27 merge seok into yun
+    override fun getUserId(): Long {
+        val access = tokenStore.current().access
+            ?: throw IllegalStateException("No access token stored!")
+
+        val idStr = JwtUtils.extractUserId(access)
+            ?: throw IllegalStateException("User ID not found in JWT!")
+
+        return idStr.toLong()
+    }
+
+
 }
 
 class HttpAuthException(val code: Int, message: String?) :

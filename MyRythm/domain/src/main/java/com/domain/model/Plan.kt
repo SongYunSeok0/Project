@@ -8,4 +8,5 @@ data class Plan(
     val mealTime: String?,
     val note: String?,
     val taken: Long?,
+    val useAlarm: Boolean
 )
