@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.auth.BuildConfig
 import com.auth.viewmodel.AuthViewModel
 import com.shared.R
 import com.shared.ui.components.AuthInputField
@@ -63,6 +65,7 @@ fun LoginScreen(
     val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         Log.e("LoginScreen", "📡 Event 수집 시작")
@@ -78,7 +81,7 @@ fun LoginScreen(
         Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
         Log.e("LoginScreen", "🚀 form.email = ${form.email}")
         if (ui.isLoggedIn) {
-            val uid = ui.userId
+            val uid = ui.userId //?: form.email // 1127 15:45 수정전val uid = ui.userId
             if (uid != null) {
                 Log.e("LoginScreen", "➡ 로그인 성공 → MainRoute 이동 userId=$uid")
                 onLogin(uid, form.password)
@@ -87,6 +90,22 @@ fun LoginScreen(
             }
         }
     }
+    /* 1127병합이전코드
+    LaunchedEffect(ui.isLoggedIn, ui.userId) {
+        Log.e("LoginScreen", "🚀 ========== LaunchedEffect 트리거 ==========")
+        Log.e("LoginScreen", "🚀 isLoggedIn = ${ui.isLoggedIn}")
+        Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
+        Log.e("LoginScreen", "🚀 form.email = ${form.email}")
+        if (ui.isLoggedIn) {
+            val userId = ui.userId ?: form.email
+            Log.e("LoginScreen", "✅ 네비게이션 실행: userId=$userId, password=${form.password}")
+            onLogin(userId, form.password)
+            Log.e("LoginScreen", "✅ onLogin 호출 완료")
+        } else {
+            Log.e("LoginScreen", "⏸️ 네비게이션 대기 중")
+        }
+    }
+     */
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         Box(
@@ -229,7 +248,17 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp)),
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    Log.e("LoginScreen", "🟡 ========== 카카오 버튼 클릭 ==========")
+                                    viewModel.kakaoOAuth(
+                                        context,
+                                        onResult = { success, message ->
+                                            Log.e("LoginScreen", "🟡 카카오 onResult: success=$success, message=$message")
+                                        },
+                                        onNeedAdditionalInfo = { _, _ -> }
+                                    )
+                                },
                             contentScale = ContentScale.FillBounds
                         )
 
@@ -241,7 +270,18 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp)),
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    Log.e("LoginScreen", "🔵 ========== 구글 버튼 클릭 ==========")
+                                    viewModel.googleOAuth(
+                                        context,
+                                        googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
+                                        onResult = { success, message ->
+                                            Log.e("LoginScreen", "🔵 구글 onResult: success=$success, message=$message")
+                                        },
+                                        onNeedAdditionalInfo = { _, _ -> }
+                                    )
+                                },
                             contentScale = ContentScale.FillBounds
                         )
 
