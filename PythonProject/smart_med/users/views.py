@@ -47,49 +47,49 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-class LoginView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        print("[LoginView] POST request received")  # 로그 추가
-        identifier = (
-                request.data.get("email")
-                or request.data.get("username")
-                or request.data.get("id")
-        )
-        password = request.data.get("password") or request.data.get("pw")
-
-        if not identifier or not password:
-            print("[LoginView] Missing identifier or password")  # 로그 추가
-            return Response({"detail": "아이디/비밀번호 누락"}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = authenticate(request, username=identifier, password=password)
-        if user is None:
-            print(f"[LoginView] Authentication failed for: {identifier}")  # 로그 추가
-            return Response({"detail": "인증 실패"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        print(f"[LoginView] Login successful for user: {user.id} ({user.username})")  # 로그 추가
-        refresh = RefreshToken.for_user(user)
-
-        # ✅ [핵심 1] 여기서 직접 보내지 않고, "방금 로그인함" 표식만 남깁니다. (유효시간 60초)
-        cache_key = f"just_logged_in:{user.id}"
-        cache.set(cache_key, True, timeout=60)
-        print(f"[LoginView] Cache set: key='{cache_key}', value=True (timeout=60s)")  # 로그 추가
-
-        return Response(
-            {
-                "message": "로그인 성공",
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": {
-                    "id": user.id,
-                    "email": getattr(user, "email", None),
-                    "username": user.get_username(),
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
+# class LoginView(APIView):
+#     authentication_classes = []
+#     permission_classes = [AllowAny]
+#
+#     def post(self, request):
+#         print("[LoginView] POST request received")  # 로그 추가
+#         identifier = (
+#                 request.data.get("email")
+#                 or request.data.get("username")
+#                 or request.data.get("id")
+#         )
+#         password = request.data.get("password") or request.data.get("pw")
+#
+#         if not identifier or not password:
+#             print("[LoginView] Missing identifier or password")  # 로그 추가
+#             return Response({"detail": "아이디/비밀번호 누락"}, status=status.HTTP_400_BAD_REQUEST)
+#
+#         user = authenticate(request, username=identifier, password=password)
+#         if user is None:
+#             print(f"[LoginView] Authentication failed for: {identifier}")  # 로그 추가
+#             return Response({"detail": "인증 실패"}, status=status.HTTP_401_UNAUTHORIZED)
+#
+#         print(f"[LoginView] Login successful for user: {user.id} ({user.username})")  # 로그 추가
+#         refresh = RefreshToken.for_user(user)
+#
+#         # ✅ [핵심 1] 여기서 직접 보내지 않고, "방금 로그인함" 표식만 남깁니다. (유효시간 60초)
+#         cache_key = f"just_logged_in:{user.id}"
+#         cache.set(cache_key, True, timeout=60)
+#         print(f"[LoginView] Cache set: key='{cache_key}', value=True (timeout=60s)")  # 로그 추가
+#
+#         return Response(
+#             {
+#                 "message": "로그인 성공",
+#                 "access": str(refresh.access_token),
+#                 "refresh": str(refresh),
+#                 "user": {
+#                     "id": user.id,
+#                     "email": getattr(user, "email", None),
+#                     "username": user.get_username(),
+#                 },
+#             },
+#             status=status.HTTP_200_OK,
+#         )
 
 
 class SocialLoginView(APIView):
