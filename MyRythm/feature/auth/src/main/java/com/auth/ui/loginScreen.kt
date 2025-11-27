@@ -1,6 +1,5 @@
 package com.auth.ui
 
-import com.auth.BuildConfig
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -35,7 +33,6 @@ import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.theme.Primary
 import com.shared.ui.theme.defaultFontFamily
 import com.shared.ui.theme.loginTheme
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,8 +50,6 @@ fun LoginScreen(
     val setAutologinText = stringResource(R.string.auth_setautologin)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val testLoginMessage = stringResource(R.string.auth_message_testlogin)
-    val testLogin = stringResource(R.string.auth_testlogin)
     val oauthText = stringResource(R.string.auth_oauth)
     val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
     val googleLoginText = stringResource(R.string.auth_googlelogin_description)
@@ -68,7 +63,6 @@ fun LoginScreen(
     val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
     val snackbar = remember { SnackbarHostState() }
-    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         Log.e("LoginScreen", "📡 Event 수집 시작")
