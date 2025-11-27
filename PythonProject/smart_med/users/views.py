@@ -53,6 +53,7 @@ class LoginView(APIView):
                 "message": "로그인 성공",
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "user_id": user.id,  # 1127 17:47
                 "user": {
                     "id": user.id,
                     "email": getattr(user, "email", None),
@@ -79,6 +80,7 @@ class SocialLoginView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "user_id": user.id,  # 1127 17:47
                 "needAdditionalInfo": False
             }, status=200)
 
@@ -96,6 +98,7 @@ class SocialLoginView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "user_id": user.id,  # 1127 17:47
                 "needAdditionalInfo": True,
             }, status=200)
 
