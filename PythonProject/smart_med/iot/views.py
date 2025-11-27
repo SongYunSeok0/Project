@@ -125,7 +125,7 @@ class RegisterDeviceView(APIView):
     def post(self, request):
         user = request.user
 
-        device_uuid = secrets.token_hex(8)   # 간단한 UUID
+        device_uuid = secrets.token_hex(8)
         device_token = secrets.token_hex(32)
 
         device = Device.objects.create(

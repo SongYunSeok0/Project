@@ -1,5 +1,6 @@
 # users/views.py
 import secrets
+import logging
 
 from django.core.mail import send_mail
 from django.core.cache import cache
@@ -10,57 +11,86 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
 from django.db import IntegrityError
 import traceback
 
+
+logger = logging.getLogger(__name__)
+
 User = get_user_model()
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        # 1. 기본 로직 실행 (토큰 발급)
+        response = super().post(request, *args, **kwargs)
 
-class LoginView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
+        # 2. 로그인 성공(200) 했다면 -> "방금 로그인함" 표식 남기기
+        if response.status_code == 200:
+            try:
+                # 요청 데이터에서 아이디(username 또는 email) 꺼내기
+                login_id = request.data.get("username") or request.data.get("email") or request.data.get("id")
 
-    def post(self, request):
-        identifier = (
-            request.data.get("email")
-            or request.data.get("username")
-            or request.data.get("id")
-        )
-        password = request.data.get("password") or request.data.get("pw")
+                if login_id:
+                    # DB에서 유저 찾기 (username 필드나 email 필드로 조회)
+                    user = User.objects.filter(username=login_id).first()
+                    if not user:
+                        user = User.objects.filter(email=login_id).first()
 
-        if not identifier or not password:
-            return Response({"detail": "아이디/비밀번호 누락"}, status=status.HTTP_400_BAD_REQUEST)
+                    if user:
+                        print(f"[CustomLogin] User {user.id} logged in via /api/token/. Setting cache.")
+                        cache.set(f"just_logged_in:{user.id}", True, timeout=60)
+            except Exception as e:
+                print(f"[CustomLogin] Error setting cache: {e}")
 
-        user = authenticate(request, username=identifier, password=password)
-        if user is None:
-            return Response({"detail": "인증 실패"}, status=status.HTTP_401_UNAUTHORIZED)
+        return response
 
-        refresh = RefreshToken.for_user(user)
 
-        # 여기 추가
-        print("LOGIN user fcm_token =", getattr(user, "fcm_token", None))
-
-        # ✅ 로그인 성공 시, fcm_token 있으면 푸시
-        if getattr(user, "fcm_token", None):
-            send_fcm_to_token(
-                token=user.fcm_token,
-                title="로그인 알림",
-                body=f"{user.username} 님이 로그인했습니다.",
-            )
-        return Response(
-            {
-                "message": "로그인 성공",
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": {
-                    "id": user.id,
-                    "email": getattr(user, "email", None),
-                    "username": user.get_username(),
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
+# class LoginView(APIView):
+#     authentication_classes = []
+#     permission_classes = [AllowAny]
+#
+#     def post(self, request):
+#         print("[LoginView] POST request received")  # 로그 추가
+#         identifier = (
+#                 request.data.get("email")
+#                 or request.data.get("username")
+#                 or request.data.get("id")
+#         )
+#         password = request.data.get("password") or request.data.get("pw")
+#
+#         if not identifier or not password:
+#             print("[LoginView] Missing identifier or password")  # 로그 추가
+#             return Response({"detail": "아이디/비밀번호 누락"}, status=status.HTTP_400_BAD_REQUEST)
+#
+#         user = authenticate(request, username=identifier, password=password)
+#         if user is None:
+#             print(f"[LoginView] Authentication failed for: {identifier}")  # 로그 추가
+#             return Response({"detail": "인증 실패"}, status=status.HTTP_401_UNAUTHORIZED)
+#
+#         print(f"[LoginView] Login successful for user: {user.id} ({user.username})")  # 로그 추가
+#         refresh = RefreshToken.for_user(user)
+#
+#         # ✅ [핵심 1] 여기서 직접 보내지 않고, "방금 로그인함" 표식만 남깁니다. (유효시간 60초)
+#         cache_key = f"just_logged_in:{user.id}"
+#         cache.set(cache_key, True, timeout=60)
+#         print(f"[LoginView] Cache set: key='{cache_key}', value=True (timeout=60s)")  # 로그 추가
+#
+#         return Response(
+#             {
+#                 "message": "로그인 성공",
+#                 "access": str(refresh.access_token),
+#                 "refresh": str(refresh),
+#                 "user": {
+#                     "id": user.id,
+#                     "email": getattr(user, "email", None),
+#                     "username": user.get_username(),
+#                 },
+#             },
+#             status=status.HTTP_200_OK,
+#         )
 
 class SocialLoginView(APIView):
     permission_classes = [AllowAny]
@@ -98,6 +128,9 @@ class MeView(APIView):
 
     def get(self, request):
         user = request.user
+        logger.info(f"[MeView][GET] user={user} (id={user.id}, email={user.email})")
+        logger.info(f"[MeView][GET] headers={request.headers}")
+
         return Response(
             {
                 "id": user.id,
@@ -121,40 +154,24 @@ class MeView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-    def patch(self, request):
-        user = request.user
-        allowed_fields = {
-            "username",
-            "phone",
-            "birth_date",
-            "gender",
-            "height",
-            "weight",
-            "preferences",
-            "prot_email",
-            "relation",
-        }
-        data = request.data
-        updated = False
-        for field, value in data.items():
-            if field in allowed_fields:
-                setattr(user, field, value)
-                updated = True
-        if updated:
-            user.save()
-            return Response({"detail": "updated"}, status=status.HTTP_200_OK)
-        else:
-            return Response({"detail": "업데이트 가능한 필드 없음"}, status=status.HTTP_400_BAD_REQUEST)
-
 
     def patch(self, request):
         user = request.user
+
+        logger.info(f"[MeView][PATCH] user={user} (id={user.id})")
+        logger.info(f"[MeView][PATCH] request.data = {request.data}")
+        logger.info(f"[MeView][PATCH] headers={request.headers}")
 
         serializer = UserUpdateSerializer(user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
+
+        if not serializer.is_valid():
+            logger.error(f"[MeView][PATCH] serializer errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save()
 
-        # 여기서 UserSerializer로 전체 데이터 반환!
+        logger.info(f"[MeView][PATCH] Update Success for user_id={user.id}")
+
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
