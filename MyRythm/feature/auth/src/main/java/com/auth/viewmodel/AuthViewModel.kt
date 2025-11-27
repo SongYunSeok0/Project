@@ -7,6 +7,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.data.core.auth.AuthPreferencesDataSource
 import com.data.core.auth.TokenStore
 import com.data.core.push.PushManager
 import com.domain.model.SocialLoginResult
@@ -42,23 +43,16 @@ class AuthViewModel @Inject constructor(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
     private val tokenStore: TokenStore,
-    private val repo: AuthRepository
+    private val repo: AuthRepository,
+    private val authPrefs: AuthPreferencesDataSource    // 1127
 ) : ViewModel() {
 
-    // -----------------------------------------------------------
-    // ⭐ 자동 로그인 상태 추가
-    // -----------------------------------------------------------
+    // 1127 자동로그인
     private val _autoLoginEnabled = MutableStateFlow(false)
     val autoLoginEnabled: StateFlow<Boolean> = _autoLoginEnabled
-
     fun setAutoLogin(enabled: Boolean) {
-        viewModelScope.launch {
-            _autoLoginEnabled.value = enabled
-            // TODO: 실제 저장 로직 (SharedPreferences or DataStore)
-            // authRepository.saveAutoLoginEnabled(enabled)
-            Log.d("AuthViewModel", "자동 로그인 설정: $enabled")
-            emit(if (enabled) "자동 로그인이 활성화되었습니다" else "자동 로그인이 비활성화되었습니다")
-        }
+        _autoLoginEnabled.value = enabled
+        Log.d("AuthViewModel", "자동 로그인 설정 변경: $enabled (로그인 시 저장됨)")
     }
 
     // -----------------------------------------------------------
@@ -181,16 +175,15 @@ class AuthViewModel @Inject constructor(
         }
 
         _state.update { it.copy(loading = true) }
-        val result = loginUseCase(email, pw)
+
+        // 1127 자동로그인 적용 - 수정 전 val result = loginUseCase(email, pw)
+        // 로컬유저는 자동로그인 토글 설정 시 자동로그인 적용됨
+        val result = loginUseCase(email, pw, _autoLoginEnabled.value)
         val ok = result.isSuccess
 
         if (ok) {
-            // ⭐ 로그인 성공 시 자동로그인 설정 저장
-            if (_autoLoginEnabled.value) {
-                // TODO: 토큰 저장 로직
-                // tokenStore.saveTokens(...)
-                Log.d("AuthViewModel", "✅ 자동로그인 활성화 상태로 토큰 저장")
-            }
+            Log.d("AuthViewModel", "✅ 로그인 성공 - 자동로그인: ${_autoLoginEnabled.value}")
+            authPrefs.setAutoLoginEnabled(_autoLoginEnabled.value)
 
             PushManager.fcmToken?.let { token ->
                 runCatching { registerFcmTokenUseCase(token) }
@@ -209,7 +202,7 @@ class AuthViewModel @Inject constructor(
     fun logout() = viewModelScope.launch {
         runCatching { logoutUseCase() }
         _state.update { it.copy(isLoggedIn = false) }
-        _autoLoginEnabled.value = false // 로그아웃 시 자동로그인 해제
+        _autoLoginEnabled.value = false // 1127 로그아웃 시 로컬/소셜 모두 자동로그인 해제
         emit("로그아웃 완료")
     }
 
@@ -355,11 +348,8 @@ class AuthViewModel @Inject constructor(
                     withContext(Dispatchers.Main) {
                         when (result) {
                             is SocialLoginResult.Success -> {
-                                // ⭐ 소셜 로그인 성공 시에도 자동로그인 설정 저장
-                                if (_autoLoginEnabled.value) {
-                                    // TODO: 소셜 토큰 저장
-                                    Log.d("AuthViewModel", "✅ 소셜 로그인 - 자동로그인 활성화 상태로 토큰 저장")
-                                }
+                                // 1127 소셜로그인은 로그인 성공 시 언제나 자동 로그인 저장
+                                authPrefs.setAutoLoginEnabled(true)
 
                                 _state.update {
                                     it.copy(
