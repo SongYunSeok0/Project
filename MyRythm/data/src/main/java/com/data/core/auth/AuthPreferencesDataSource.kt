@@ -37,7 +37,7 @@ class AuthPreferencesDataSource @Inject constructor(
         }
     }
 
-    // 동로그인 스위치 상태 불러오기
+    // 자동로그인 스위치 상태 불러오기
     suspend fun isAutoLoginEnabled(): Boolean {
         return dataStore.data
             .map { prefs -> prefs[AUTO_LOGIN_KEY] ?: false }
