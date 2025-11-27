@@ -1,5 +1,6 @@
-package com.myrythm
+package com.myrhythm
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -29,21 +30,29 @@ import com.myrhythm.navigation.mainNavGraph
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.KClass
-import com.myrhythm.health.StepViewModel
 
 @Composable
-fun AppRoot() {
+fun AppRoot(startFromLogin: Boolean = false) {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // TokenStore → JWT userId 추출
+    // TokenStore 주입 → JWT에서 userId 추출
     val ctx = LocalContext.current
     val tokenStore = remember {
         EntryPointAccessors.fromApplication(ctx, CoreEntryPoint::class.java).tokenStore()
     }
     val userId = remember {
         JwtUtils.extractUserId(tokenStore.current().access) ?: ""
+    }
+
+    // 1127 startFromLogin에 따라 시작 화면 결정
+    val startDestination = if (startFromLogin) {
+        Log.d("AppRoot", "시작 화면: LoginRoute")
+        AuthGraph
+    } else {
+        Log.d("AppRoot", "시작 화면: MainRoute (자동로그인)")
+        MainRoute(userId)
     }
 
     // AuthViewModel
@@ -83,7 +92,7 @@ fun AppRoot() {
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth || isChat
 
-    // 탭 이동
+    // 탭 이동 함수
     fun goHome() = nav.navigate(MainRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
@@ -132,7 +141,7 @@ fun AppRoot() {
         }
     ) { inner ->
         Box(Modifier.padding(inner)) {
-            NavHost(nav, startDestination = AuthGraph) {
+            NavHost(navController = nav,startDestination = startDestination ) {
                 authNavGraph(nav)
                 mainNavGraph(nav)              // ← userId는 Route 내부에서 decode
                 mapNavGraph()
