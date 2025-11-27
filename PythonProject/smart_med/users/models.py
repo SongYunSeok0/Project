@@ -24,7 +24,6 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-
     def create_superuser(self, email, password=None, **extra):
         if not password:
             raise ValueError("superuser는 비밀번호가 필요합니다.")

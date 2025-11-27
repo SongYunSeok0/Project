@@ -22,11 +22,6 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
                 },
                 onForgotPassword = { nav.navigate(PwdRoute) },
                 onSignUp = { nav.navigate(SignupRoute) },
-                /*1124
-                onSocialSignUp = { socialId, provider ->
-                    Log.e("AuthNavGraph", "👤 onSocialSignUp: $socialId, $provider")
-                    nav.navigate(SignupRoute(socialId = socialId, provider = provider))
-                }*/
             )
         }
 
@@ -42,11 +37,9 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
             )
         }
 
-        // 1124 로컬 회원가입만 처리 (socialId, provider 제거)
         composable<SignupRoute> {
             SignupScreen(
                 onSignupComplete = {
-                    // 로컬 회원가입 완료 → 로그인 화면으로
                     nav.navigate(LoginRoute) {
                         popUpTo<AuthGraph> { inclusive = true }
                         launchSingleTop = true

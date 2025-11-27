@@ -19,10 +19,9 @@ android {
     defaultConfig {
         minSdk = 26
 
-//        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.219.111:8000/api/\"")
-//        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.0.148:8000/api/\"")
-//        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.0.135:8000/api/\"")
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8000/api/\"")
+        //buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.219.111:8000/api/\"")
+        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.0.148:8000/api/\"")
+       // buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8000/api/\"")
         buildConfigField("String", "NAVER_NEWS_BASE_URL", "\"https://openapi.naver.com/\"")
         buildConfigField("String", "NAVER_MAP_BASE_URL", "\"https://naveropenapi.apigw.ntruss.com/\"")
 
@@ -76,4 +75,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    // 1126 자동로그인 관련 데이터스토어 의존성
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }

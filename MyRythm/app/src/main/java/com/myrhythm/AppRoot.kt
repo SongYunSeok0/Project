@@ -1,5 +1,6 @@
 package com.myrythm
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -31,13 +32,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.KClass
 import com.myrhythm.health.StepViewModel
 
+// 1127 자동로그인 적용 - 수정 전 fun AppRoot() {
 @Composable
-fun AppRoot() {
+fun AppRoot(startFromLogin: Boolean = false) {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // TokenStore → JWT userId 추출
+    // TokenStore 주입 → JWT에서 userId 추출
     val ctx = LocalContext.current
     val tokenStore = remember {
         EntryPointAccessors.fromApplication(ctx, CoreEntryPoint::class.java).tokenStore()
@@ -46,7 +48,16 @@ fun AppRoot() {
         JwtUtils.extractUserId(tokenStore.current().access) ?: ""
     }
 
-    // AuthViewModel
+    // 1127 startFromLogin에 따라 시작 화면 결정
+    val startDestination = if (startFromLogin) {
+        Log.d("AppRoot", "시작 화면: LoginRoute")
+        AuthGraph
+    } else {
+        Log.d("AppRoot", "시작 화면: MainRoute (자동로그인)")
+        MainRoute(userId)
+    }
+
+    // AuthViewModel은 상위(AppRoot)에서 소유
     val authVm: AuthViewModel = hiltViewModel()
 
     // 🔥 StepViewModel을 AppRoot에서 단 1개 생성
@@ -132,7 +143,8 @@ fun AppRoot() {
         }
     ) { inner ->
         Box(Modifier.padding(inner)) {
-            NavHost(nav, startDestination = AuthGraph) {
+            // 1127 수정전 startDestination = AuthGraph
+            NavHost(navController = nav,startDestination = startDestination ) {
                 authNavGraph(nav)
                 mainNavGraph(nav)              // ← userId는 Route 내부에서 decode
                 mapNavGraph()

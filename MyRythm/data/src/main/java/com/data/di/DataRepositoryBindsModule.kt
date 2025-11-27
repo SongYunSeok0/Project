@@ -5,6 +5,7 @@ import com.data.repository.AuthRepositoryImpl
 import com.data.repository.ChatbotRepositoryImpl
 import com.data.repository.FavoriteRepositoryImpl
 import com.data.repository.HealthRepositoryImpl
+import com.data.repository.MediRecordRepositoryImpl
 import com.data.repository.PlanRepositoryImpl
 import com.data.repository.ProfileRepositoryImpl
 import com.data.repository.PushRepositoryImpl
@@ -15,6 +16,7 @@ import com.domain.repository.AuthRepository
 import com.domain.repository.ChatbotRepository
 import com.domain.repository.FavoriteRepository
 import com.domain.repository.HealthRepository
+import com.domain.repository.MediRecordRepository
 import com.domain.repository.PlanRepository
 import com.domain.repository.ProfileRepository
 import com.domain.repository.RegiRepository
@@ -61,6 +63,10 @@ abstract class DataRepositoryBindsModule {
     @Binds
     @Singleton
     abstract fun bindPlanRepository(impl: PlanRepositoryImpl): PlanRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMediRecordRepository(impl: MediRecordRepositoryImpl): MediRecordRepository
 
     @Binds
     @Singleton

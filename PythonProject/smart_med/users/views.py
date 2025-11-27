@@ -101,9 +101,12 @@ class SocialLoginView(APIView):
         provider = request.data.get("provider")
         social_id = request.data.get("socialId")
 
+        # 신규회원 여부 확인 - 기존회원의 경우
         try:
             user = User.objects.get(provider=provider, social_id=social_id)
             print(f"[SocialLoginView] Existing user found: {user.id}")  # 로그 추가
+            # JWT 발급
+            # 구글은 아이디 토큰 jwt 안에 정도가 들어있어서 토큰하나적어두면 알아서받아옴
             refresh = RefreshToken.for_user(user)
 
             # ✅ [핵심 1-1] 소셜 로그인도 마찬가지로 표식을 남깁니다.
@@ -119,10 +122,20 @@ class SocialLoginView(APIView):
 
         except User.DoesNotExist:
             print("[SocialLoginView] User does not exist (New User)")  # 로그 추가
+            # 신규유저는 프로바이더+소셜아이디 데이터베이스에 저장
+            user = User.objects.create_user(
+                email=None,
+                password=None,
+                provider=provider,
+                social_id=social_id,
+            )
+
+            refresh = RefreshToken.for_user(user)
+
             return Response({
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
                 "needAdditionalInfo": True,
-                "provider": provider,
-                "socialId": social_id
             }, status=200)
 
 

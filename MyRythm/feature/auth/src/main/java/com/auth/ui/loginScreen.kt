@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.auth.BuildConfig
 import com.auth.viewmodel.AuthViewModel
 import com.shared.R
 import com.shared.ui.components.AuthInputField
@@ -34,7 +35,6 @@ import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.theme.Primary
 import com.shared.ui.theme.defaultFontFamily
 import com.shared.ui.theme.loginTheme
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,9 +49,9 @@ fun LoginScreen(
     val passwordText = stringResource(R.string.auth_password)
     val pwMissingMessage = stringResource(R.string.auth_message_password_missing)
     val loginText = stringResource(R.string.auth_login)
+    val setAutologinText = stringResource(R.string.auth_setautologin)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
-    val testLogin = stringResource(R.string.auth_testlogin)
     val oauthText = stringResource(R.string.auth_oauth)
     val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
     val googleLoginText = stringResource(R.string.auth_googlelogin_description)
@@ -59,21 +59,29 @@ fun LoginScreen(
     val form by viewModel.form.collectAsStateWithLifecycle()
     val ui by viewModel.state.collectAsStateWithLifecycle()
 
+    Log.e("LoginScreen", "🎨 State 수집: isLoggedIn=${ui.isLoggedIn}, userId=${ui.userId}, loading=${ui.loading}")
+
+    // 1125 자동로그인 진행중
+    val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
+
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
-    // 이벤트 메시지 수신 → Snackbar 표시
     LaunchedEffect(Unit) {
+        Log.e("LoginScreen", "📡 Event 수집 시작")
         viewModel.events.collect { msg ->
+            Log.e("LoginScreen", "📡 Event 받음: $msg")
             snackbar.showSnackbar(msg)
         }
     }
 
-    // 로그인 성공 시 네비게이션
     LaunchedEffect(ui.isLoggedIn, ui.userId) {
+        Log.e("LoginScreen", "🚀 ========== LaunchedEffect 트리거 ==========")
+        Log.e("LoginScreen", "🚀 isLoggedIn = ${ui.isLoggedIn}")
+        Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
+        Log.e("LoginScreen", "🚀 form.email = ${form.email}")
         if (ui.isLoggedIn) {
-            val uid = ui.userId
+            val uid = ui.userId //?: form.email // 1127 15:45 수정전val uid = ui.userId
             if (uid != null) {
                 Log.e("LoginScreen", "➡ 로그인 성공 → MainRoute 이동 userId=$uid")
                 onLogin(uid, form.password)
@@ -82,6 +90,22 @@ fun LoginScreen(
             }
         }
     }
+    /* 1127병합이전코드
+    LaunchedEffect(ui.isLoggedIn, ui.userId) {
+        Log.e("LoginScreen", "🚀 ========== LaunchedEffect 트리거 ==========")
+        Log.e("LoginScreen", "🚀 isLoggedIn = ${ui.isLoggedIn}")
+        Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
+        Log.e("LoginScreen", "🚀 form.email = ${form.email}")
+        if (ui.isLoggedIn) {
+            val userId = ui.userId ?: form.email
+            Log.e("LoginScreen", "✅ 네비게이션 실행: userId=$userId, password=${form.password}")
+            onLogin(userId, form.password)
+            Log.e("LoginScreen", "✅ onLogin 호출 완료")
+        } else {
+            Log.e("LoginScreen", "⏸️ 네비게이션 대기 중")
+        }
+    }
+     */
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         Box(
@@ -96,7 +120,6 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-
                 item { Spacer(Modifier.height(50.dp)) }
 
                 item { AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm) }
@@ -123,6 +146,37 @@ fun LoginScreen(
                         imeAction = ImeAction.Done
                     )
 
+                    Spacer(Modifier.height(12.dp))
+
+                    // 1125 자동 로그인 진행중 - 토글 디자인만 추가
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = setAutologinText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.loginTheme.loginTertiary,
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Switch(
+                            checked = autoLoginEnabled,
+                            onCheckedChange = { viewModel.setAutoLogin(it) },
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = MaterialTheme.loginTheme.loginTertiary,
+                                uncheckedTrackColor = MaterialTheme.loginTheme.loginTertiary.copy(alpha = 0.5f),
+                                uncheckedBorderColor = MaterialTheme.loginTheme.loginTertiary,
+
+                                checkedThumbColor = MaterialTheme.loginTheme.loginAppName,
+                                checkedTrackColor = MaterialTheme.loginTheme.loginAppName.copy(alpha = 0.7f),
+                                checkedBorderColor = MaterialTheme.loginTheme.loginTertiary
+                            )
+                        )
+                    }
+
                     Spacer(Modifier.height(8.dp))
 
                     Row(
@@ -141,7 +195,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(18.dp))
 
-                    // 로그인 버튼
                     AuthPrimaryButton(
                         text = if (ui.loading) loginLoading else loginText,
                         onClick = { viewModel.login() },
@@ -155,34 +208,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // 테스트 로그인 버튼
-                    Button(
-                        onClick = {
-                            val uid = ui.userId
-                            if (uid != null) {
-                                onLogin(uid, form.password)
-                            } else {
-                                scope.launch {
-                                    snackbar.showSnackbar("로그인 후 이용해주세요")
-                                }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            testLogin,
-                            color = MaterialTheme.colorScheme.onTertiary,
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-
-                    // 회원가입 버튼
                     AuthSecondaryButton(
                         text = signupText,
                         onClick = onSignUp,
@@ -195,7 +220,6 @@ fun LoginScreen(
                     Spacer(Modifier.height(30.dp))
                 }
 
-                // SNS 로그인
                 item {
                     var expandedSns by remember { mutableStateOf(false) }
 
@@ -224,7 +248,17 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp)),
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    Log.e("LoginScreen", "🟡 ========== 카카오 버튼 클릭 ==========")
+                                    viewModel.kakaoOAuth(
+                                        context,
+                                        onResult = { success, message ->
+                                            Log.e("LoginScreen", "🟡 카카오 onResult: success=$success, message=$message")
+                                        },
+                                        onNeedAdditionalInfo = { _, _ -> }
+                                    )
+                                },
                             contentScale = ContentScale.FillBounds
                         )
 
@@ -236,7 +270,18 @@ fun LoginScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp)),
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    Log.e("LoginScreen", "🔵 ========== 구글 버튼 클릭 ==========")
+                                    viewModel.googleOAuth(
+                                        context,
+                                        googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
+                                        onResult = { success, message ->
+                                            Log.e("LoginScreen", "🔵 구글 onResult: success=$success, message=$message")
+                                        },
+                                        onNeedAdditionalInfo = { _, _ -> }
+                                    )
+                                },
                             contentScale = ContentScale.FillBounds
                         )
 

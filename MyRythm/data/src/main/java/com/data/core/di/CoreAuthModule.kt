@@ -1,6 +1,7 @@
 package com.data.core.di
 
 import android.content.Context
+import com.data.core.auth.AuthPreferencesDataSource
 import com.data.core.auth.EncryptedPrefsTokenStore
 import com.data.core.auth.TokenStore
 import com.data.core.net.AuthHeaderInterceptor
@@ -32,4 +33,11 @@ object CoreAuthModule {
     fun provideAuthHeaderInterceptor(
         tokenStore: TokenStore
     ): AuthHeaderInterceptor = AuthHeaderInterceptor(tokenStore)
+
+    // 1127 자동로그인 적용
+    @Provides
+    @Singleton
+    fun provideAuthPreferencesDataSource(
+        @ApplicationContext ctx: Context
+    ): AuthPreferencesDataSource = AuthPreferencesDataSource(ctx)
 }
