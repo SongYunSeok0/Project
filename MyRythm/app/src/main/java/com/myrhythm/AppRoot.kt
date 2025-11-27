@@ -1,22 +1,24 @@
 package com.myrythm
 
-import android.util.Log
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.auth.navigation.*
 import com.auth.viewmodel.AuthViewModel
 import com.chatbot.navigation.*
+import com.data.core.auth.JwtUtils
+import com.data.core.di.CoreEntryPoint
 import com.shared.bar.AppBottomBar
 import com.shared.bar.AppTopBar
 import com.shared.navigation.*
@@ -24,52 +26,49 @@ import com.map.navigation.*
 import com.mypage.navigation.*
 import com.news.navigation.*
 import com.scheduler.navigation.*
-import com.data.core.auth.JwtUtils
-import com.data.core.di.CoreEntryPoint
-import com.myrhythm.navigation.mainNavGraph
-import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.KClass
 import com.myrhythm.health.StepViewModel
+import com.myrhythm.navigation.mainNavGraph
+import dagger.hilt.android.EntryPointAccessors
 
-// 1127 자동로그인 적용 - 수정 전 fun AppRoot() {
 @Composable
 fun AppRoot(startFromLogin: Boolean = false) {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // TokenStore 주입 → JWT에서 userId 추출
-    val ctx = LocalContext.current
-    val tokenStore = remember {
-        EntryPointAccessors.fromApplication(ctx, CoreEntryPoint::class.java).tokenStore()
-    }
-    val userId = remember {
-        JwtUtils.extractUserId(tokenStore.current().access) ?: ""
-    }
-
-    // 1127 startFromLogin에 따라 시작 화면 결정
-    val startDestination = if (startFromLogin) {
-        Log.d("AppRoot", "시작 화면: LoginRoute")
-        AuthGraph
-    } else {
-        Log.d("AppRoot", "시작 화면: MainRoute (자동로그인)")
-        MainRoute(userId)
-    }
-
-    // AuthViewModel은 상위(AppRoot)에서 소유
     val authVm: AuthViewModel = hiltViewModel()
-
-    // 🔥 StepViewModel을 AppRoot에서 단 1개 생성
     val stepVm: StepViewModel = hiltViewModel()
 
-    // 🔥 앱 시작 시 단 1회만 실행
+    // 최신 AuthViewModel 상태
+    val ui by authVm.state.collectAsStateWithLifecycle()
+
+    // TokenStore
+    val ctx = LocalContext.current
+    val tokenStore = EntryPointAccessors
+        .fromApplication(ctx, CoreEntryPoint::class.java)
+        .tokenStore()
+
+    // 항상 최신 토큰 기반 userId 계산
+    val access = tokenStore.current().access
+    val jwtUserId = JwtUtils.extractUserId(access) ?: ""
+
+    // 🔥 ViewModel userId가 있으면 그것을 우선 사용
+    val userId = ui.userId ?: jwtUserId
+
+    // 최초 스타트만 remember (userId는 나중에 적용됨)
+    val startDestination = remember {
+        if (startFromLogin) AuthGraph else MainRoute(jwtUserId)
+    }
+
+    // Health Connect
     LaunchedEffect(Unit) {
         stepVm.checkPermission()
         stepVm.startAutoUpdateOnce()
     }
 
-    // 로그아웃 수신
+    // 로그아웃 처리
     LaunchedEffect(Unit) {
         authVm.events.collectLatest { ev ->
             if (ev == "로그아웃 완료") {
@@ -94,17 +93,19 @@ fun AppRoot(startFromLogin: Boolean = false) {
     val hideTopBar = isAuth || isMain
     val hideBottomBar = isAuth || isChat
 
-    // 탭 이동
+    // 항상 최신 userId 사용
     fun goHome() = nav.navigate(MainRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
+
     fun goMyPage() = nav.navigate(MyPageRoute) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
+
     fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
         popUpTo(nav.graph.startDestinationId) { saveState = true }
         launchSingleTop = true
@@ -118,11 +119,15 @@ fun AppRoot(startFromLogin: Boolean = false) {
                     title = titleFor(routeName),
                     showBack = true,
                     onBackClick = {
-                        if (nav.previousBackStackEntry != null) nav.popBackStack() else goHome()
+                        if (nav.previousBackStackEntry != null)
+                            nav.popBackStack()
+                        else goHome()
                     },
                     showSearch = isNews,
                     onSearchClick = {
-                        nav.currentBackStackEntry?.savedStateHandle?.set("openSearch", true)
+                        nav.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("openSearch", true)
                     }
                 )
             }
@@ -143,10 +148,9 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     ) { inner ->
         Box(Modifier.padding(inner)) {
-            // 1127 수정전 startDestination = AuthGraph
-            NavHost(navController = nav,startDestination = startDestination ) {
+            NavHost(navController = nav, startDestination = startDestination) {
                 authNavGraph(nav)
-                mainNavGraph(nav)              // ← userId는 Route 내부에서 decode
+                mainNavGraph(nav)
                 mapNavGraph()
                 newsNavGraph(nav, userId)
                 schedulerNavGraph(nav)
