@@ -19,9 +19,9 @@ android {
     defaultConfig {
         minSdk = 26
 
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.219.111:8000/api/\"")
+        //buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.219.111:8000/api/\"")
         //buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.0.148:8000/api/\"")
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8000/api/\"")
+        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2/api/\"")
         buildConfigField("String", "NAVER_NEWS_BASE_URL", "\"https://openapi.naver.com/\"")
         buildConfigField("String", "NAVER_MAP_BASE_URL", "\"https://naveropenapi.apigw.ntruss.com/\"")
 

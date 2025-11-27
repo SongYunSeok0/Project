@@ -20,8 +20,8 @@ interface UserApi {
 //    @POST("users/signup/")
 //    suspend fun signup(@Body user: UserSignupRequest): Response<Unit>
 //
-//    @POST("token/")
-//    suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>
+    @POST("token/")
+    suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>
 
     @GET("users/{uuid}")
     suspend fun getUser(@Path("uuid") uuid: String): UserDto
@@ -39,8 +39,6 @@ interface UserApi {
     @POST("users/signup/")
     suspend fun signup(@Body user: UserSignupRequest): Response<SignupResponse>
 
-    @POST("token/")
-    suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>
 
     @POST("token/refresh/")
     suspend fun refresh(@Body body: RefreshRequest): Response<RefreshResponse>
@@ -48,6 +46,9 @@ interface UserApi {
     // 본인 정보 조회
     @GET("users/me/")
     suspend fun getMe(): UserDto
+
+//    @POST("users/login/")
+//    suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>
 
     @POST("users/fcm/")
     suspend fun registerFcmToken(@Body body: FcmTokenRequestDto): Response<Unit>
