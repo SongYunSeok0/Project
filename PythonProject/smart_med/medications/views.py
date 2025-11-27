@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 import datetime
 
 from .models import RegiHistory, Plan
@@ -104,32 +105,32 @@ class PlanListView(APIView):
         return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
 
 
-# Plan PATCH
-class PlanUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, pk):
-        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
-        if plan is None:
-            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        data = request.data
-
-        if "medName" in data:
-            plan.med_name = data["medName"]
-        if "takenAt" in data:
-            plan.taken_at = to_dt(data["takenAt"])
-        if "mealTime" in data:
-            plan.meal_time = data["mealTime"]
-        if "note" in data:
-            plan.note = data["note"]
-        if "taken" in data:
-            plan.taken = to_dt(data["taken"])
-        if "useAlarm" in data:
-            plan.use_alarm = data["useAlarm"]
-
-        plan.save()
-        return Response(PlanSerializer(plan).data, status=status.HTTP_200_OK)
+# # Plan PATCH
+# class PlanUpdateView(APIView):
+#     permission_classes = [IsAuthenticated]
+#
+#     def patch(self, request, pk):
+#         plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+#         if plan is None:
+#             return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+#
+#         data = request.data
+#
+#         if "medName" in data:
+#             plan.med_name = data["medName"]
+#         if "takenAt" in data:
+#             plan.taken_at = to_dt(data["takenAt"])
+#         if "mealTime" in data:
+#             plan.meal_time = data["mealTime"]
+#         if "note" in data:
+#             plan.note = data["note"]
+#         if "taken" in data:
+#             plan.taken = to_dt(data["taken"])
+#         if "useAlarm" in data:
+#             plan.use_alarm = data["useAlarm"]
+#
+#         plan.save()
+#         return Response(PlanSerializer(plan).data, status=status.HTTP_200_OK)
 
 
 # Plan DELETE
@@ -173,3 +174,62 @@ class TodayPlansView(APIView):
             result.append(item)
 
         return Response(result, status=status.HTTP_200_OK)
+
+
+class PlanUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        target_plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+        if not target_plan:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data
+
+        # 2. 시간 변경 요청이 들어온 경우
+        if "takenAt" in data:
+            raw_taken_at = data["takenAt"]
+
+            if isinstance(raw_taken_at, (int, float)):
+                new_taken_at = datetime.datetime.fromtimestamp(raw_taken_at / 1000.0, tz=datetime.timezone.utc)
+            else:
+                new_taken_at = parse_datetime(raw_taken_at)
+
+            old_taken_at = target_plan.taken_at
+
+            # ⭐ [핵심] 그룹 식별용 '기존 수정 시간' 저장
+            # 이 시간이 같은 약들만 "같은 패밀리"로 인정합니다.
+            old_updated_at = target_plan.updated_at
+
+            # 1. 일단 타겟 플랜 먼저 업데이트 (나머지 필드 포함)
+            target_plan.taken_at = new_taken_at
+            if "medName" in data: target_plan.med_name = data["medName"]
+            if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
+
+            # 저장! -> 이때 target_plan.updated_at이 '현재 시간(NOW)'으로 갱신됩니다.
+            target_plan.save()
+
+            # 2. 같은 그룹(Family) 찾아서 동기화
+            if new_taken_at and old_taken_at and target_plan.regihistory:
+                # 조건: 같은 처방 + 같은 시간 + "같은 업데이트 타임(old_updated_at)"
+                siblings = Plan.objects.filter(
+                    regihistory=target_plan.regihistory,
+                    taken_at=old_taken_at,
+                    updated_at=old_updated_at  # ✅ 식사시간 대신 업데이트 시간으로 식별
+                ).exclude(id=target_plan.id)
+
+                # 형제 약들의 시간과 업데이트 타임을 target_plan과 똑같이 맞춤
+                # 이렇게 해야 다음번 이동 때도 같이 움직입니다.
+                updated_count = siblings.update(
+                    taken_at=new_taken_at,
+                    updated_at=target_plan.updated_at  # 타겟과 완벽 동기화
+                )
+                print(f"[Plan Update] 업데이트 시간({old_updated_at})이 같은 약 {updated_count}개를 함께 이동했습니다.")
+
+        else:
+            # 시간 변경이 없는 경우 그냥 저장
+            if "medName" in data: target_plan.med_name = data["medName"]
+            if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
+            target_plan.save()
+
+        return Response(PlanSerializer(target_plan).data, status=status.HTTP_200_OK)
