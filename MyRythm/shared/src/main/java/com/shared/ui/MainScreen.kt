@@ -32,6 +32,7 @@ fun MainScreen(
     nextTime: String? = null,
     todaySteps: Int = 0,
     remainText: String? = null,
+    nextLabel: String? = null,
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -102,10 +103,10 @@ fun MainScreen(
             )
         }
 
-        // ⭐ 복용 알림 카드 (클릭 연결)
+        // 복용 알림 카드 (클릭 연결)
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.timeRemainingCard,
-            onClick = onOpenAlram // ✅ Route에서 전달받은 TimePicker 열기 함수 연결
+            onClick = onOpenAlram
         ) {
             Column(
                 modifier = Modifier
@@ -128,14 +129,33 @@ fun MainScreen(
                         Modifier.size(48.dp)
                     )
                 }
+
                 Spacer(Modifier.height(12.dp))
 
-                // 남은 시간 표시
-                Text(
-                    remainText ?: "--:--",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                // ⭐ 여기를 "좌(label) - 우(시간)" 로 나누기
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp), // 카드 좌우에서 살짝 안쪽으로
+                    horizontalArrangement = Arrangement.SpaceEvenly, // 중앙 배치
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Label
+                    Text(
+                        text = nextLabel ?: "다음 복용",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(end = 8.dp) // 너무 붙지 않게 약간 간격
+                    )
+
+                    // Time
+                    Text(
+                        text = remainText ?: "--:--",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
         }
 

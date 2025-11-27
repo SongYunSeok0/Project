@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.domain.model.Plan
+import com.domain.model.RegiHistory
 import com.domain.usecase.plan.GetPlansUseCase
+import com.domain.usecase.plan.UpdatePlanUseCase
 import com.domain.usecase.push.GetFcmTokenUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
-import com.domain.usecase.plan.UpdatePlanUseCase
+import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,133 +21,142 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getPlansUseCase: GetPlansUseCase,
+    private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase,
     private val tokenStore: TokenStore,
-    private val getFcmTokenUseCase: GetFcmTokenUseCase,
     private val updatePlanUseCase: UpdatePlanUseCase,
+    private val getFcmTokenUseCase: GetFcmTokenUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase
 ) : ViewModel() {
 
     private val _nextTime = MutableStateFlow<String?>(null)
-    val nextTime = _nextTime
+    val nextTime = _nextTime.asStateFlow()
+
+    private val _nextLabel = MutableStateFlow<String?>(null)
+    val nextLabel = _nextLabel.asStateFlow()
 
     private val _remainText = MutableStateFlow<String?>(null)
-    val remainText = _remainText
+    val remainText = _remainText.asStateFlow()
 
     private val _nextPlan = MutableStateFlow<Plan?>(null)
     val nextPlan = _nextPlan.asStateFlow()
 
+    // 프리뷰용 증가 시간 (UI에서만 사용)
+    private val _previewExtendMinutes = MutableStateFlow(0)
+    val previewExtendMinutes = _previewExtendMinutes.asStateFlow()
+
+    fun previewExtend(minutes: Int) {
+        _previewExtendMinutes.value = minutes
+    }
+
+    fun clearPreview() {
+        _previewExtendMinutes.value = 0
+    }
+
     init {
-        val access = tokenStore.current().access
-        val userIdStr = JwtUtils.extractUserId(access)
-
-        val userId = userIdStr?.toLongOrNull()
+        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull()
         if (userId != null && userId > 0) {
-            observePlans(userId)
+            load(userId)
         }
-
-        // 앱 실행 시 자동으로 토큰 초기화 및 서버 등록 시도
         initFcmToken()
     }
 
-    // ✅ 통합된 FCM 초기화 함수
-    fun initFcmToken() {
-        viewModelScope.launch {
-            // 1. 토큰 가져오기 (로컬 캐시 확인 -> 없으면 Firebase SDK)
-            val token = getFcmTokenUseCase()
-
-            if (token != null) {
-                Log.i("MainViewModel", "FCM Token initialized: $token")
-
-                // 2. ⭐ 서버에 토큰 등록 (앱 켤 때마다 확실하게 동기화)
-                // (네트워크 오류 등으로 실패해도 앱 실행엔 지장 없도록 runCatching 사용)
-                runCatching {
-                    registerFcmTokenUseCase(token)
-                }.onFailure {
-                    Log.w("MainViewModel", "토큰 서버 등록 실패 (네트워크 이슈 등)", it)
-                }
-            } else {
-                Log.w("MainViewModel", "Failed to initialize FCM Token")
+    // RegiHistory 로딩
+    private fun load(userId: Long) {
+        getRegiHistoriesUseCase()
+            .onEach { histories ->
+                observePlans(userId, histories)
             }
-        }
-    }
-
-    private fun observePlans(userId: Long) {
-        getPlansUseCase(userId)
-            .onEach { plans -> updateNextPlan(plans) }
             .launchIn(viewModelScope)
     }
 
-    private fun updateNextPlan(plans: List<Plan>) {
+    // 실제 시간 연장 적용
+    fun extendPlanMinutes(minutes: Int) {
+        val plan = _nextPlan.value ?: return
+        val oldTime = plan.takenAt ?: return
+
+        val newTime = oldTime + minutes * 60_000L
+
+        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull() ?: return
+        val updated = plan.copy(takenAt = newTime)
+
+        viewModelScope.launch {
+            val ok = updatePlanUseCase(userId, updated)
+            if (ok) load(userId)
+        }
+    }
+
+    // 복용 완료 처리
+    fun finishPlan() {
+        val plan = _nextPlan.value ?: return
+        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull() ?: return
+
+        val now = System.currentTimeMillis()
+        val updated = plan.copy(taken = now)
+
+        viewModelScope.launch {
+            val ok = updatePlanUseCase(userId, updated)
+            if (ok) load(userId)
+        }
+    }
+
+    // RegiHistory + Plan 매핑 후 다음 일정 계산
+    private fun observePlans(userId: Long, histories: List<RegiHistory>) {
+        getPlansUseCase(userId)
+            .onEach { plans ->
+                updateNextPlan(plans, histories)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    // 다음 복용 일정 계산
+    private fun updateNextPlan(plans: List<Plan>, histories: List<RegiHistory>) {
         val now = System.currentTimeMillis()
 
-        // 현재 시간 이후의 플랜 중 가장 빠른 것 찾기
         val next = plans
-            .filter { it.takenAt != null && it.takenAt!! >= now }
+            .filter {
+                it.takenAt != null &&
+                        it.takenAt!! >= now &&
+                        it.taken == null
+            }
             .minByOrNull { it.takenAt!! }
 
-        // ✅ 찾은 Plan 객체를 StateFlow에 업데이트 (팝업용)
         _nextPlan.value = next
 
         if (next != null) {
-            val nextAt = next.takenAt!!
+            val labelMap = histories.associateBy({ it.id }, { it.label ?: "" })
+            val label = labelMap[next.regihistoryId] ?: next.medName ?: "약"
 
+            _nextLabel.value = label
+
+            val nextAt = next.takenAt!!
             val formatter = SimpleDateFormat("HH:mm", Locale.getDefault())
             _nextTime.value = formatter.format(Date(nextAt))
 
             val diff = nextAt - now
             val totalMinutes = diff / 1000 / 60
-
             val hours = totalMinutes / 60
-            val minutes = totalMinutes % 60
+            val mins = totalMinutes % 60
 
-            _remainText.value = String.format("%02d:%02d", hours, minutes)
+            _remainText.value = String.format("%02d:%02d", hours, mins)
         } else {
+            _nextLabel.value = null
             _nextTime.value = null
             _remainText.value = "-:-"
         }
     }
 
-    fun updatePlanTime(planId: Long, newHour: Int, newMinute: Int) {
-        val currentPlan = _nextPlan.value ?: return
-        val currentTakenAt = currentPlan.takenAt ?: return
-
-        // 기존 날짜(년/월/일)는 유지하고, 사용자가 선택한 시간/분만 변경
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = currentTakenAt
-        calendar.set(Calendar.HOUR_OF_DAY, newHour)
-        calendar.set(Calendar.MINUTE, newMinute)
-        calendar.set(Calendar.SECOND, 0)
-
-        val newTimeInMillis = calendar.timeInMillis
-
-        // ⭐ [수정] Plan 객체를 복사해서 시간을 변경
-        val updatedPlan = currentPlan.copy(takenAt = newTimeInMillis)
-
-        // ⭐ [수정] UserId 가져오기
-        val access = tokenStore.current().access
-        val userId = JwtUtils.extractUserId(access)?.toLongOrNull()
-
-        if (userId == null) {
-            Log.e("MainViewModel", "UserId가 없어 업데이트 불가")
-            return
-        }
-
+    // FCM 초기화
+    private fun initFcmToken() {
         viewModelScope.launch {
-            // ⭐ [수정] UseCase 호출 (userId와 Plan 객체 전달)
-            val success = updatePlanUseCase(userId, updatedPlan)
-
-            if (success) {
-                Log.i("MainViewModel", "시간 변경 성공: $newHour:$newMinute")
-                // 성공 시, 데이터 갱신 (화면 즉시 반영)
-                observePlans(userId)
-            } else {
-                Log.e("MainViewModel", "시간 변경 실패")
+            val token = getFcmTokenUseCase()
+            if (token != null) {
+                runCatching { registerFcmTokenUseCase(token) }
+                    .onFailure { Log.w("MainVM", "토큰 등록 실패", it) }
             }
         }
     }
