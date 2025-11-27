@@ -186,48 +186,36 @@ class PlanUpdateView(APIView):
 
         data = request.data
 
-        # 2. 시간 변경 요청이 들어온 경우
         if "takenAt" in data:
             raw_taken_at = data["takenAt"]
-
             if isinstance(raw_taken_at, (int, float)):
                 new_taken_at = datetime.datetime.fromtimestamp(raw_taken_at / 1000.0, tz=datetime.timezone.utc)
             else:
                 new_taken_at = parse_datetime(raw_taken_at)
 
             old_taken_at = target_plan.taken_at
+            old_created_at = target_plan.created_at   # ★ 그룹 기준 이것으로 변경
 
-            # ⭐ [핵심] 그룹 식별용 '기존 수정 시간' 저장
-            # 이 시간이 같은 약들만 "같은 패밀리"로 인정합니다.
-            old_updated_at = target_plan.updated_at
-
-            # 1. 일단 타겟 플랜 먼저 업데이트 (나머지 필드 포함)
+            # --- 타겟 시간 업데이트 ---
             target_plan.taken_at = new_taken_at
             if "medName" in data: target_plan.med_name = data["medName"]
             if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
-
-            # 저장! -> 이때 target_plan.updated_at이 '현재 시간(NOW)'으로 갱신됩니다.
             target_plan.save()
 
-            # 2. 같은 그룹(Family) 찾아서 동기화
-            if new_taken_at and old_taken_at and target_plan.regihistory:
-                # 조건: 같은 처방 + 같은 시간 + "같은 업데이트 타임(old_updated_at)"
-                siblings = Plan.objects.filter(
-                    regihistory=target_plan.regihistory,
-                    taken_at=old_taken_at,
-                    updated_at=old_updated_at  # ✅ 식사시간 대신 업데이트 시간으로 식별
-                ).exclude(id=target_plan.id)
+            # --- 형제 일정 이동 ---
+            siblings = Plan.objects.filter(
+                regihistory=target_plan.regihistory,
+                taken_at=old_taken_at,
+                created_at=old_created_at
+            ).exclude(id=target_plan.id)
 
-                # 형제 약들의 시간과 업데이트 타임을 target_plan과 똑같이 맞춤
-                # 이렇게 해야 다음번 이동 때도 같이 움직입니다.
-                updated_count = siblings.update(
-                    taken_at=new_taken_at,
-                    updated_at=target_plan.updated_at  # 타겟과 완벽 동기화
-                )
-                print(f"[Plan Update] 업데이트 시간({old_updated_at})이 같은 약 {updated_count}개를 함께 이동했습니다.")
+            count = siblings.update(
+                taken_at=new_taken_at
+            )
+            print(f"[Plan Update] created_at={old_created_at} 그룹에서 {count}개 이동됨.")
 
         else:
-            # 시간 변경이 없는 경우 그냥 저장
+            # 시간 변경 없는 경우
             if "medName" in data: target_plan.med_name = data["medName"]
             if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
             target_plan.save()

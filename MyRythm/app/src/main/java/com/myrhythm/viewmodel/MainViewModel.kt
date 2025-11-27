@@ -13,6 +13,7 @@ import com.domain.usecase.push.GetFcmTokenUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -75,19 +76,18 @@ class MainViewModel @Inject constructor(
     }
 
     // 실제 시간 연장 적용
-    fun extendPlanMinutes(minutes: Int) {
-        val plan = _nextPlan.value ?: return
-        val oldTime = plan.takenAt ?: return
-
+    suspend fun extendPlanMinutesSuspend(minutes: Int) = viewModelScope.async {
+        val plan = _nextPlan.value ?: return@async false
+        val oldTime = plan.takenAt ?: return@async false
         val newTime = oldTime + minutes * 60_000L
 
-        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull() ?: return
+        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull() ?: return@async false
         val updated = plan.copy(takenAt = newTime)
 
-        viewModelScope.launch {
-            val ok = updatePlanUseCase(userId, updated)
-            if (ok) load(userId)
-        }
+        val ok = updatePlanUseCase(userId, updated)
+        if (ok) load(userId)
+
+        ok
     }
 
     // 복용 완료 처리

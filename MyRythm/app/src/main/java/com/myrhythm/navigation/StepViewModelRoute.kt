@@ -23,6 +23,8 @@ import com.myrhythm.health.StepViewModel
 import com.myrhythm.viewmodel.MainViewModel
 import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.MainScreen
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun StepViewModelRoute(
@@ -51,6 +53,8 @@ fun StepViewModelRoute(
     var hasShownGuardianDialog by remember { mutableStateOf(false) }
     var showGuardianDialog by remember { mutableStateOf(false) }
     var showExtendDialog by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     // 보호자 이메일 팝업
     LaunchedEffect(profile) {
@@ -124,16 +128,16 @@ fun StepViewModelRoute(
 
         val originalRemain = remainText ?: "--:--"
 
-        val previewRemain = remember(remainText, previewExtend) {
-            val base = nextPlan!!.takenAt ?: return@remember originalRemain
-            val previewTime = base + previewExtend * 60 * 1000
+        val previewRemain = run {
+            val base = nextPlan?.takenAt ?: 0L
+            val previewTime = base + previewExtend * 60_000L
 
             val diff = previewTime - System.currentTimeMillis()
             val mins = diff / 1000 / 60
             val h = mins / 60
             val m = mins % 60
 
-            String.format("%02d:%02d", h, m)
+            String.format(Locale.getDefault(), "%02d:%02d", h, m)
         }
 
         AlertDialog(
@@ -208,11 +212,13 @@ fun StepViewModelRoute(
                             text = "확인",
                             modifier = Modifier.weight(1f)
                         ) {
-                            if (previewExtend > 0) {
-                                mainViewModel.extendPlanMinutes(previewExtend)
+                            scope.launch {
+                                val ok = mainViewModel.extendPlanMinutesSuspend(previewExtend).await()
+                                if (ok) {
+                                    mainViewModel.clearPreview()
+                                    showExtendDialog = false
+                                }
                             }
-                            mainViewModel.clearPreview()
-                            showExtendDialog = false
                         }
                     }
                 }
