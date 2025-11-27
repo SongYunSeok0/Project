@@ -50,6 +50,8 @@ fun MainScreen(
     val healthinsightText = stringResource(R.string.healthinsight)
     val healthinsightMessage = stringResource(R.string.main_message_healthinsight)
 
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()

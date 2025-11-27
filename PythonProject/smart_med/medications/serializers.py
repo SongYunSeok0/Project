@@ -36,6 +36,7 @@ def from_ms(ms):
 class PlanSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     regihistoryId = serializers.SerializerMethodField()
+    regihistory_label = serializers.CharField(source="regihistory.label", read_only=True, default=None)
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.SerializerMethodField()
     mealTime = serializers.CharField(source="meal_time")
@@ -47,6 +48,7 @@ class PlanSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "regihistoryId",
+            "regihistory_label",
             "medName",
             "takenAt",
             "mealTime",
