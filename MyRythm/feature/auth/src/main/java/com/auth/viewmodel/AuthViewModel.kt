@@ -152,18 +152,6 @@ class AuthViewModel @Inject constructor(
         emit(if (ok) "회원가입 성공" else "회원가입 실패")
     }
 
-
-    // 6) 기존 signup(req) (소셜로그인용)
-    fun signup(req: SignupRequest) = viewModelScope.launch {
-        _state.update { it.copy(loading = true) }
-
-        val ok = runCatching { signupUseCase(req) }.getOrDefault(false)
-
-        _state.update { it.copy(loading = false) }
-        emit(if (ok) "회원가입 성공" else "회원가입 실패")
-    }
-
-
     // 로그인
     fun login() = viewModelScope.launch {
         val email = form.value.email

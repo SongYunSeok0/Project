@@ -379,7 +379,7 @@ fun SignupScreen(
                         weight = weight.toDouble()
                     )
                     // 소셜 로그인으로 진입 시 provider/socialId 추가 처리 필요할 수 있음
-                    viewModel.signup(req)
+                    viewModel.signup()
                 },
                 enabled = !ui.loading,
                 useLoginTheme = false,
