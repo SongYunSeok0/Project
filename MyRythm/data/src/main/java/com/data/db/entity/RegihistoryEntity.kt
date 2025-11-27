@@ -3,7 +3,7 @@ package com.data.db.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "regihistory")
+@Entity(tableName = "regiHistory")
 data class RegiHistoryEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Long,
