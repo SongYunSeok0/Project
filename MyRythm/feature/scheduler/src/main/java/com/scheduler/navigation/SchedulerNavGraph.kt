@@ -22,7 +22,6 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
         SchedulerScreen(userId = uid.toLong())
     }
 
-    // 등록 화면
     composable<RegiRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<RegiRoute>()
         val uid = route.userId
@@ -42,7 +41,6 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
         )
     }
 
-    // OCR 화면
     composable<OcrRoute> {
         val route = it.toRoute<OcrRoute>()
         val uid = route.userId

@@ -1,5 +1,6 @@
 package com.auth.ui
 
+import com.auth.BuildConfig
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,8 +50,10 @@ fun LoginScreen(
     val passwordText = stringResource(R.string.auth_password)
     val pwMissingMessage = stringResource(R.string.auth_message_password_missing)
     val loginText = stringResource(R.string.auth_login)
+    val setAutologinText = stringResource(R.string.auth_setautologin)
     val loginLoading = stringResource(R.string.auth_login_loading)
     val signupText = stringResource(R.string.auth_signup)
+    val testLoginMessage = stringResource(R.string.auth_message_testlogin)
     val testLogin = stringResource(R.string.auth_testlogin)
     val oauthText = stringResource(R.string.auth_oauth)
     val kakaoLoginText = stringResource(R.string.auth_kakaologin_description)
@@ -59,19 +62,27 @@ fun LoginScreen(
     val form by viewModel.form.collectAsStateWithLifecycle()
     val ui by viewModel.state.collectAsStateWithLifecycle()
 
+    Log.e("LoginScreen", "🎨 State 수집: isLoggedIn=${ui.isLoggedIn}, userId=${ui.userId}, loading=${ui.loading}")
+
+    // 1125 자동로그인 진행중
+    val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
+
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
-    // 이벤트 메시지 수신 → Snackbar 표시
     LaunchedEffect(Unit) {
+        Log.e("LoginScreen", "📡 Event 수집 시작")
         viewModel.events.collect { msg ->
+            Log.e("LoginScreen", "📡 Event 받음: $msg")
             snackbar.showSnackbar(msg)
         }
     }
 
-    // 로그인 성공 시 네비게이션
     LaunchedEffect(ui.isLoggedIn, ui.userId) {
+        Log.e("LoginScreen", "🚀 ========== LaunchedEffect 트리거 ==========")
+        Log.e("LoginScreen", "🚀 isLoggedIn = ${ui.isLoggedIn}")
+        Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
+        Log.e("LoginScreen", "🚀 form.email = ${form.email}")
         if (ui.isLoggedIn) {
             val uid = ui.userId
             if (uid != null) {
@@ -96,7 +107,6 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-
                 item { Spacer(Modifier.height(50.dp)) }
 
                 item { AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm) }
@@ -123,6 +133,37 @@ fun LoginScreen(
                         imeAction = ImeAction.Done
                     )
 
+                    Spacer(Modifier.height(12.dp))
+
+                    // 1125 자동 로그인 진행중 - 토글 디자인만 추가
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = setAutologinText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.loginTheme.loginTertiary,
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Switch(
+                            checked = autoLoginEnabled,
+                            onCheckedChange = { viewModel.setAutoLogin(it) },
+                            colors = SwitchDefaults.colors(
+                                uncheckedThumbColor = MaterialTheme.loginTheme.loginTertiary,
+                                uncheckedTrackColor = MaterialTheme.loginTheme.loginTertiary.copy(alpha = 0.5f),
+                                uncheckedBorderColor = MaterialTheme.loginTheme.loginTertiary,
+
+                                checkedThumbColor = MaterialTheme.loginTheme.loginAppName,
+                                checkedTrackColor = MaterialTheme.loginTheme.loginAppName.copy(alpha = 0.7f),
+                                checkedBorderColor = MaterialTheme.loginTheme.loginTertiary
+                            )
+                        )
+                    }
+
                     Spacer(Modifier.height(8.dp))
 
                     Row(
@@ -141,7 +182,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(18.dp))
 
-                    // 로그인 버튼
                     AuthPrimaryButton(
                         text = if (ui.loading) loginLoading else loginText,
                         onClick = { viewModel.login() },
@@ -155,34 +195,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // 테스트 로그인 버튼
-                    Button(
-                        onClick = {
-                            val uid = ui.userId
-                            if (uid != null) {
-                                onLogin(uid, form.password)
-                            } else {
-                                scope.launch {
-                                    snackbar.showSnackbar("로그인 후 이용해주세요")
-                                }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            testLogin,
-                            color = MaterialTheme.colorScheme.onTertiary,
-                            fontSize = 16.sp
-                        )
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-
-                    // 회원가입 버튼
                     AuthSecondaryButton(
                         text = signupText,
                         onClick = onSignUp,
@@ -195,7 +207,6 @@ fun LoginScreen(
                     Spacer(Modifier.height(30.dp))
                 }
 
-                // SNS 로그인
                 item {
                     var expandedSns by remember { mutableStateOf(false) }
 

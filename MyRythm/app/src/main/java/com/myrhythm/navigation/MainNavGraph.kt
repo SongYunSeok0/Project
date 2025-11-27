@@ -17,7 +17,6 @@ import com.shared.navigation.MainRoute
 
 @OptIn(ExperimentalSerializationApi::class)
 fun NavGraphBuilder.mainNavGraph(nav: NavController) {
-
     composable<MainRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<MainRoute>()
         val uid = route.userId     // 🔥 절대 빈값 아님
@@ -31,7 +30,7 @@ fun NavGraphBuilder.mainNavGraph(nav: NavController) {
             onOpenHeart     = { nav.navigate(HeartReportRoute) },
             onOpenMap       = { nav.navigate(MapRoute) },
             onOpenNews      = { nav.navigate(NewsRoute(uid)) },
-            onOpenEditScreen = { nav.navigate(EditProfileRoute) },
+            onOpenEditScreen = { nav.navigate(EditProfileRoute) }
         )
     }
 }
