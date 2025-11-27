@@ -26,7 +26,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val api: UserApi,
     private val tokenStore: TokenStore,
     private val io: CoroutineDispatcher = Dispatchers.IO,
-    private val prefs: AuthPreferencesDataSource    //1126
+    private val prefs: AuthPreferencesDataSource    //1127
 ) : AuthRepository {
 
     override suspend fun sendEmailCode(email: String): Boolean {
@@ -39,7 +39,7 @@ class AuthRepositoryImpl @Inject constructor(
         return res.isSuccessful
     }
 
-// 1126
+// 1127 자동로그인 적용 - 일부 수정한 코드
     override suspend fun login(id: String, pw: String, autoLogin: Boolean): Result<AuthTokens> =
         withContext(io) {
             runCatching {
@@ -53,19 +53,18 @@ class AuthRepositoryImpl @Inject constructor(
                 val tokens = body.asAuthTokens()
                 tokenStore.set(tokens.access, tokens.refresh)
 
-                //1126 1줄추가 - prefs.setAutoLoginEnabled(autoLogin)
+                //1127 1줄추가 - prefs.setAutoLoginEnabled(autoLogin)
                 prefs.setAutoLoginEnabled(autoLogin)
                 tokens
 
             }
         }
 
-    // 1126
+    // 1127 자동로그인 관련 추가
     override suspend fun saveAutoLoginEnabled(enabled: Boolean) =
         prefs.setAutoLoginEnabled(enabled)
     override suspend fun isAutoLoginEnabled(): Boolean =
         prefs.isAutoLoginEnabled()
-
 
     override suspend fun socialLogin(param: SocialLoginParam): Result<SocialLoginResult> =
         withContext(io) {

@@ -6,7 +6,7 @@ import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
 
 interface AuthRepository {
-    // 1126 자동로그인 autoLogin: Boolean = false 추가
+    // 1127 자동로그인 autoLogin: Boolean = false 추가
     suspend fun login(id: String, pw: String, autoLogin: Boolean = false): Result<AuthTokens>
     suspend fun refresh(refreshToken: String): Result<AuthTokens>
     suspend fun socialLogin(param: SocialLoginParam): Result<SocialLoginResult>
@@ -18,8 +18,7 @@ interface AuthRepository {
 
     suspend fun withdrawal(): Boolean
 
-
-    //1126 자동로그인관련
+    //1127 자동로그인관련 추가
     suspend fun saveAutoLoginEnabled(enabled: Boolean)
     suspend fun isAutoLoginEnabled(): Boolean
 

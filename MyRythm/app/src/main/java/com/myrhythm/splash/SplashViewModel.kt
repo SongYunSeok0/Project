@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// 1126
+// 1127 자동로그인 적용
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val tokenStore: TokenStore,
@@ -22,13 +22,7 @@ class SplashViewModel @Inject constructor(
     private val _state = MutableStateFlow<SplashState>(SplashState.Loading)
     val state: StateFlow<SplashState> = _state
 
-
-    init {
-        checkAutoLogin()
-    }
-
-
-    /** 3초 후 스플래시 화면 → 자동로그인 체크 */
+    // 1127 자동로그인 적용 - 3초 스플래시+자동로그인 여부 체크
     fun checkAutoLogin() {
         viewModelScope.launch {
             Log.d("SplashViewModel", "🔐 자동 로그인 체크 시작")
@@ -45,15 +39,12 @@ class SplashViewModel @Inject constructor(
 
             val tokens = tokenStore.tokens.first()
             val hasToken = !tokens.access.isNullOrBlank()
-            //토큰확인용 로그만 추가
-            Log.d("SplashViewModel", "토큰 존재 여부: $hasToken (access=${tokens.access?.take(20)}...)")
 
             _state.value = if (hasToken) {
                 Log.d("SplashViewModel", "✅ 자동 로그인 성공 → Home으로 이동")
-                SplashState.GoMain        // 자동로그인
+                SplashState.GoMain        // 자동로그인 성공
             } else {
-                Log.d("SplashViewModel", "❌ 토큰 없음 → Login으로 이동")
-                SplashState.GoLogin       // 로그인 화면으로
+                SplashState.GoLogin
             }
         }
     }

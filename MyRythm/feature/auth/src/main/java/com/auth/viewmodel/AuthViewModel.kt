@@ -47,7 +47,7 @@ class AuthViewModel @Inject constructor(
     private val authPrefs: AuthPreferencesDataSource
 ) : ViewModel() {
 
-    // 1126 자동로그인
+    // 1127 자동로그인
     private val _autoLoginEnabled = MutableStateFlow(false)
     val autoLoginEnabled: StateFlow<Boolean> = _autoLoginEnabled
     fun setAutoLogin(enabled: Boolean) {
@@ -95,7 +95,7 @@ class AuthViewModel @Inject constructor(
     val events: SharedFlow<String> = _events
 
     private fun emit(msg: String) = _events.tryEmit(msg)
-    //fun emitInfo(msg: String) = emit(msg)
+    fun emitInfo(msg: String) = emit(msg)
 
     private val _form = MutableStateFlow(FormState())
     val form: StateFlow<FormState> = _form
@@ -186,13 +186,13 @@ class AuthViewModel @Inject constructor(
 
         _state.update { it.copy(loading = true) }
 
-        // 1126 수정 전 val result = loginUseCase(email, pw)
+        // 1127 자동로그인 적용 - 수정 전 val result = loginUseCase(email, pw)
+        // 로컬유저는 자동로그인 토글 설정 시 자동로그인 적용됨
         val result = loginUseCase(email, pw, _autoLoginEnabled.value)
         val ok = result.isSuccess
 
         if (ok) {
             Log.d("AuthViewModel", "✅ 로그인 성공 - 자동로그인: ${_autoLoginEnabled.value}")
-
             authPrefs.setAutoLoginEnabled(_autoLoginEnabled.value)
 
             PushManager.fcmToken?.let { token ->
@@ -212,7 +212,7 @@ class AuthViewModel @Inject constructor(
     fun logout() = viewModelScope.launch {
         runCatching { logoutUseCase() }
         _state.update { it.copy(isLoggedIn = false) }
-        _autoLoginEnabled.value = false // 로그아웃 시 자동로그인 해제
+        _autoLoginEnabled.value = false // 1127 로그아웃 시 로컬/소셜 모두 자동로그인 해제
         emit("로그아웃 완료")
     }
 
@@ -353,12 +353,8 @@ class AuthViewModel @Inject constructor(
                     withContext(Dispatchers.Main) {
                         when (result) {
                             is SocialLoginResult.Success -> {
-                                // 1126
-                                Log.d("AuthViewModel", "✅ 소셜 로그인 성공 - 자동로그인 자동 활성화됨")
-
-                                // 🔥 자동 로그인 저장 추가
+                                // 1127 소셜로그인은 로그인 성공 시 언제나 자동 로그인 저장
                                 authPrefs.setAutoLoginEnabled(true)
-                                Log.e("AutoLogin", "⭐ 소셜 로그인 → DataStore 저장 완료")
 
                                 _state.update {
                                     it.copy(

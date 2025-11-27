@@ -33,4 +33,11 @@ object CoreAuthModule {
     fun provideAuthHeaderInterceptor(
         tokenStore: TokenStore
     ): AuthHeaderInterceptor = AuthHeaderInterceptor(tokenStore)
+
+    // 1127 자동로그인 적용
+    @Provides
+    @Singleton
+    fun provideAuthPreferencesDataSource(
+        @ApplicationContext ctx: Context
+    ): AuthPreferencesDataSource = AuthPreferencesDataSource(ctx)
 }

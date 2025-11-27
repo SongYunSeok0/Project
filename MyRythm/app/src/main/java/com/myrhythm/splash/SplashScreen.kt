@@ -12,36 +12,21 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.shared.R
 import android.util.Log
+import androidx.compose.ui.res.stringResource
 
+// 1127 자동로그인 적용 + 스플래시 화면
 @Composable
 fun SplashScreen(
     onFinish: () -> Unit = {}
 ) {
-
-    Log.e("SplashScreen", "🔥 Splash 화면 등장")
+    val splashScreenDescription = stringResource(R.string.splashscreen)
 
     var imageIndex by remember { mutableStateOf(0) }
-
-    // 이미지 리스트
     val images = listOf(
         R.drawable.splashlogo1,
         R.drawable.splashlogo2,
         R.drawable.splashlogo3
     )
-
-    // ✔ 1초 간격으로 이미지 변경 + 3초 뒤 종료 콜백 호출
-    LaunchedEffect(Unit) {
-        Log.e("SplashScreen", "⏳ 이미지 변경 루프 시작")
-
-        repeat(3) { i ->
-            imageIndex = i
-            Log.e("SplashScreen", "⏳ 이미지 index = $i")
-            delay(1000)
-        }
-
-        Log.e("SplashScreen", "⏳ 3초 끝 → onFinish() 호출")
-        onFinish()   // 끝나면 네비게이션 호출
-    }
 
     Box(
         modifier = Modifier
@@ -51,8 +36,20 @@ fun SplashScreen(
     ) {
         Image(
             painter = painterResource(id = images[imageIndex]),
-            contentDescription = "스플래시 이미지",
+            contentDescription = splashScreenDescription,
             modifier = Modifier.size(300.dp)
         )
+    }
+
+    // 스플래시 화면 - 1초 간격으로 이미지 변경 + 3초 뒤 종료 콜백 호출
+    // unit이 한번만실행? true도 동일한거같긴함
+    LaunchedEffect(Unit) {
+        repeat(3) { i ->
+            Log.e("SplashScreen", "⏳ 이미지 index = $i")
+            imageIndex = i
+            delay(1000)
+        }
+        Log.e("SplashScreen", "⏳ 3초 끝 → onFinish() 호출")
+        onFinish()
     }
 }

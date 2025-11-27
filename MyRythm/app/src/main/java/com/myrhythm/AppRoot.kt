@@ -1,5 +1,6 @@
 package com.myrythm
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -30,7 +31,7 @@ import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.reflect.KClass
 
-// 1126 수정 전 fun AppRoot() {
+// 1127 자동로그인 적용 - 수정 전 fun AppRoot() {
 @Composable
 fun AppRoot(startFromLogin: Boolean = false) {
     val nav = rememberNavController()
@@ -44,6 +45,15 @@ fun AppRoot(startFromLogin: Boolean = false) {
     }
     val userId = remember {
         JwtUtils.extractUserId(tokenStore.current().access) ?: ""
+    }
+
+    // 1127 startFromLogin에 따라 시작 화면 결정
+    val startDestination = if (startFromLogin) {
+        Log.d("AppRoot", "시작 화면: LoginRoute")
+        AuthGraph
+    } else {
+        Log.d("AppRoot", "시작 화면: MainRoute (자동로그인)")
+        MainRoute(userId)
     }
 
     // AuthViewModel은 상위(AppRoot)에서 소유
@@ -126,7 +136,8 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     ) { inner ->
         Box(Modifier.padding(inner)) {
-            NavHost(navController = nav, startDestination = AuthGraph) {
+            // 1127 수정전 startDestination = AuthGraph
+            NavHost(navController = nav,startDestination = startDestination ) {
                 authNavGraph(nav)
                 mainNavGraph(nav,userId )
                 mapNavGraph()

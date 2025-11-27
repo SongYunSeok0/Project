@@ -47,7 +47,7 @@
     <string name="sent">전송됨</string>
     <string name="send">전송</string>
     <string name="verification_code">인증번호</string>
-    <string name="email_verification">전화번호 인증 *</string>
+    <string name="email_verification">이메일 인증 *</string>
     <string name="verification">인증</string>
     <string name="scheduler">스케줄러</string>
     <string name="step">걸음수</string>
@@ -158,6 +158,7 @@
     <string name="completion_rate">완료율</string>
     <string name="percent_suffix">%</string>
     <string name="dose_complete">복용 완료</string>
+    <string name="splashscreen">스플래시 이미지</string>
 
     <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
     <!--<string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>-->

@@ -3,7 +3,6 @@ package com.myrhythm
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -24,20 +23,17 @@ class MainActivity : ComponentActivity() {
 
     private val fcmViewModel: InitFcmTokenViewModel by viewModels()
 
-    // 1126 스플래시뷰모델 추가
+// 1127 자동로그인 적용 - 스플래시 뷰모델 추가
     private val splashVm: SplashViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1126 17:52
-        //splashVm.state.value
-
         fcmViewModel.initFcmToken()
         askNotificationPermission()
 
         //setContent { AppRoot() }
-        // 1126 setContent 코드 수정
+        // 1127 setContent 코드 수정 완료
         setContent {
             MyRhythmTheme {
 
@@ -58,16 +54,6 @@ class MainActivity : ComponentActivity() {
                         AppRoot(startFromLogin = false)
                     }
                 }
-                    /*
-                when (splashState) {
-                    SplashState.Loading -> SplashScreen(
-                        onFinish = { splashVm.checkAutoLogin() }
-                    )
-
-                    SplashState.GoLogin -> AppRoot(startFromLogin = true)
-
-                    SplashState.GoMain -> AppRoot(startFromLogin = false)
-                }*/
             }
         }
     }
