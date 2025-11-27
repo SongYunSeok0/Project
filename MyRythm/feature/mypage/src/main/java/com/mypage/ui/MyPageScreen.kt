@@ -64,7 +64,6 @@ fun MyPageScreen(
 
     val editPageText = stringResource(R.string.editpage)
     val heartRateText = stringResource(R.string.heartrate)
-    val medicationInsightText = stringResource(R.string.medicationinsight)
     val faqCategoryText = stringResource(R.string.faqcategory)
     val logoutText = stringResource(R.string.logout)
 
@@ -111,7 +110,7 @@ fun MyPageScreen(
         Column(Modifier.fillMaxWidth()) {
             MenuItem(editPageText, onEditClick)
             MenuItem(heartRateText, onHeartClick)
-            MenuItem(medicationInsightText) { onMediClick }
+            MenuItem("복약 기록",onMediClick)
             MenuItem(faqCategoryText, onFaqClick)
             MenuItem(logoutText, onLogoutClick)
             MenuItem("회원 탈퇴") {showDeleteDialog = true}

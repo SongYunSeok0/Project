@@ -4,12 +4,11 @@
 
 // ------------------ HX711 설정 ------------------
 #define DOUT  4
-
 #define CLK   5
 #define CALIBRATION_FACTOR -380.0
 HX711 scale(DOUT, CLK);
 
-// ------------------ 맥박 센서 설정 ------------------
+// ------------------ 맥박 센서 ------------------
 const int SENSOR_PIN = 35;
 const unsigned long BPM_INTERVAL = 10000;
 const unsigned long MIN_GAP = 300;
@@ -21,42 +20,52 @@ int beats = 0;
 int baseline = 0;
 bool isAbove = false;
 float currentBPM = 0;
-unsigned long openedTime = 0;
 
-// ------------------ Wi-Fi & 서버 ------------------
+// ------------------ WiFi & 서버 ------------------
 const char* ssid = "sesac";
 const char* password = "12345678";
-const char* postUrl = "http://52.87.174.140:8000/api/alerts/sensor/"; //서버에게 주는곳
-const char* getUrl  = "http://52.87.174.140:8000/api/alerts/commands/"; //서버로부터 받는곳
 
-// ------------------ 하드웨어 핀 ------------------
-#define RED_LED 14
-#define GREEN_LED 27
+const char* postUrl = "http://192.168.0.154:8000/api/iot/ingest/";
+const char* getUrl  = "http://192.168.0.154:8000/api/iot/alerts/commands/";
+
+const char* DEVICE_UUID  = "2cac933d85a51608";
+const char* DEVICE_TOKEN = "97211228f1fa705b3b3750f3c7693f3de4086e0b9050aa8df3c1e459e4f1f133";  // 실제 토큰 넣기
+
+// ------------------ LED, 부저 ------------------
+#define RED_LED 18
+#define GREEN_LED 19
 #define BUZZER 12
 
-// ------------------ 상태 변수 ------------------
-bool isOpened = false;
-bool isTime = false;
+// ------------------ Weight ------------------
 float currentWeight = 0;
 float prevWeight = 0;
+unsigned long lastWeightReadTime = 0;
+const unsigned long WEIGHT_READ_INTERVAL = 500;
+const unsigned long HX711_BLOCK_MS = 80;
+
+bool isOpened = false;
+unsigned long openedTime = 0;
+
+// ------------------ Time 상태 ------------------
+bool isTime = false;
+unsigned long greenStart = 0;
+const unsigned long GREEN_DURATION = 10000;
+
+// POST 상태 체크
 bool lastIsOpened = false;
 bool lastIsTime = false;
 float lastBPM = 0;
-unsigned long lastWeightReadTime = 0;
-const unsigned long WEIGHT_READ_INTERVAL = 500; // HX711 읽기 간격 (ms)
-const unsigned long HX711_BLOCK_MS = 80;   
 
+// GET 주기
 unsigned long lastGetTime = 0;
-unsigned long greenStart = 0;
 const unsigned long GET_INTERVAL = 10000;
-const unsigned long GREEN_DURATION = 10000; // 10초
 
 // ===================================================
-// 초기화
+// Setup
 // ===================================================
 void setup() {
   Serial.begin(115200);
-  Serial.println("\n=== Pill Detection + Heartbeat System ===");
+  Serial.println("\n=== PillBox + Heartbeat ESP32 ===");
 
   pinMode(RED_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
@@ -66,31 +75,29 @@ void setup() {
   digitalWrite(GREEN_LED, LOW);
   digitalWrite(BUZZER, LOW);
 
-  analogReadResolution(12); // 값 더 세밀하게 읽기
+  analogReadResolution(12);
   analogSetPinAttenuation(SENSOR_PIN, ADC_11db);
 
-  // Wi-Fi 연결
+  // WiFi 연결
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to Wi-Fi");
+  Serial.print("WiFi connecting...");
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
     Serial.print(".");
+    delay(500);
   }
-  Serial.println("\nWi-Fi connected!");
-  Serial.print("IP: ");
+  Serial.println("\nWiFi Connected!");
   Serial.println(WiFi.localIP());
 
   // HX711 초기화
   scale.set_scale(CALIBRATION_FACTOR);
   scale.tare();
-  Serial.println("HX711 Ready");
+  prevWeight = scale.get_units();
 
   bpmStartTime = millis();
-  prevWeight = scale.get_units();
 }
 
 // ===================================================
-// 맥박 센서 관련 함수
+// 심박 측정
 // ===================================================
 int readSmooth(int pin, int samples = 15) {
   long sum = 0;
@@ -102,22 +109,18 @@ int readSmooth(int pin, int samples = 15) {
 }
 
 void updateBPM() {
-
   unsigned long now = millis();
 
-  // HX711 읽은 직후면 스킵
-  if (now - lastWeightReadTime < HX711_BLOCK_MS) {
-    // optional: Serial.println("PPG skip due to HX711 noise");
-    return;
-  }
+  if (now - lastWeightReadTime < HX711_BLOCK_MS) return;
 
   int val = readSmooth(SENSOR_PIN);
-  // baseline 최초 초기화
+
   if (baseline == 0) baseline = val;
   baseline = (baseline * 19 + val) / 20;
+
   int threshold = baseline + THRESHOLD_OFFSET;
 
-  if (val > threshold && !isAbove && (now - lastBeat) > MIN_GAP) {
+  if (val > threshold && (now - lastBeat) > MIN_GAP && !isAbove) {
     beats++;
     lastBeat = now;
     isAbove = true;
@@ -127,153 +130,147 @@ void updateBPM() {
 
   if (now - bpmStartTime >= BPM_INTERVAL) {
     currentBPM = beats * (60000.0 / BPM_INTERVAL);
-    Serial.print("BPM: ");
-    Serial.println(currentBPM);
+    Serial.printf("BPM: %.1f\n", currentBPM);
     beats = 0;
     bpmStartTime = now;
   }
 }
 
-
 // ===================================================
-// 서버 통신
+// 서버로 데이터 전송 (HEADERS 인증 방식!!)
 // ===================================================
 void sendDataToServer() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  String jsonData = "{";
-  jsonData += "\"isOpened\":" + String(isOpened ? "true" : "false") + ",";
-  jsonData += "\"isTime\":" + String(isTime ? "true" : "false") + ",";
-  jsonData += "\"Bpm\":" + String((int)currentBPM);
-  jsonData += "}";
-
-  Serial.println("Sending data to server: " + jsonData);
-
   HTTPClient http;
   http.begin(postUrl);
+
+  // ⭐ 인증 헤더 추가
+  http.addHeader("X-DEVICE-UUID",  DEVICE_UUID);
+  http.addHeader("X-DEVICE-TOKEN", DEVICE_TOKEN);
   http.addHeader("Content-Type", "application/json");
-  int code = http.POST(jsonData);
-  Serial.print("POST Response: ");
+
+  // JSON body
+  String json = "{";
+json += "\"device_uuid\":\"2cac933d85a51608\",";  // 여기에 실제 uuid
+json += "\"isOpened\":" + String(isOpened ? "true" : "false") + ",";
+json += "\"isTime\":" + String(isTime ? "true" : "false") + ",";
+json += "\"bpm\":" + String((int)currentBPM);
+json += "}";
+
+  Serial.println("POST JSON = " + json);
+
+  int code = http.POST(json);
+
+  Serial.print("POST response: ");
   Serial.println(code);
 
   if (code > 0) {
-    String response = http.getString();
-    Serial.println("Server says: " + response);
+    Serial.println("Server: " + http.getString());
   }
 
   http.end();
 }
 
 // ===================================================
-// 서버에서 명령 받기
+// 서버에서 명령 받기 (헤더 인증 포함!)
 // ===================================================
 void getCommandFromServer() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   HTTPClient http;
   http.begin(getUrl);
+
+  http.addHeader("X-DEVICE-UUID",  DEVICE_UUID);
+  http.addHeader("X-DEVICE-TOKEN", DEVICE_TOKEN);
+
   int code = http.GET();
 
-  if (code == 200) {
-    String response = http.getString();
-    Serial.println("Command received: " + response);
+  Serial.print("GET response: ");
+  Serial.println(code);
 
-    if (response.indexOf("\"time\":true") != -1) {
-      Serial.println("⏰ Time signal received!");
+  if (code == 200) {
+    String res = http.getString();
+    Serial.println("Command: " + res);
+
+    if (res.indexOf("\"time\":true") != -1) {
       isTime = true;
       digitalWrite(RED_LED, LOW);
       digitalWrite(GREEN_LED, HIGH);
       greenStart = millis();
-
-      // 바로 서버 전송
       sendDataToServer();
-      lastIsTime = isTime; // 갱신
-      lastIsOpened = isOpened;
-      lastBPM = currentBPM;
     }
-  } else {
-    Serial.print("GET failed, code: ");
-    Serial.println(code);
   }
 
   http.end();
 }
 
-
 // ===================================================
-// 무게 변화 감지 로직
+// HX711 무게 감지
 // ===================================================
-void checkWeightChange() {
+void checkWeight() {
   unsigned long now = millis();
-  if (now - lastWeightReadTime < WEIGHT_READ_INTERVAL) return; // 너무 자주 읽지 않음
+  if (now - lastWeightReadTime < WEIGHT_READ_INTERVAL) return;
 
-  float newWeight = scale.get_units();
-  lastWeightReadTime = now; // 읽은 시간 기록
+  currentWeight = scale.get_units();
+  lastWeightReadTime = now;
 
-  float diff = prevWeight - newWeight;
-  if (diff > 100.0 && !isOpened) { // 100g 이상 줄었을 때
+  float diff = prevWeight - currentWeight;
+
+  if (diff > 100.0 && !isOpened) {
     isOpened = true;
-    openedTime = millis(); // 기록
-    Serial.println("⚠️ Weight decreased! isOpened = true");
+    openedTime = now;
+    Serial.println("⚠️ Weight drop detected!");
 
-    if (isTime) {
-      Serial.println("✅ Time mode: No buzzer");
-    } else {
-      Serial.println("🚨 Unauthorized open! Buzzer ON");
-      tone(BUZZER, 1000, 1000);
+    if (!isTime) {
+      tone(BUZZER, 1000, 800);
     }
   }
 
-  prevWeight = newWeight;
+  prevWeight = currentWeight;
 }
 
 // ===================================================
-// 상태 업데이트 및 초기화
+// 상태 초기화
 // ===================================================
-void handleLedReset() {
-  // 기존 Time 기반 reset
-  if (isTime && (millis() - greenStart >= GREEN_DURATION)) {
-    Serial.println("🕒 10s passed - Resetting to red LED");
+void handleReset() {
+  unsigned long now = millis();
+
+  if (isTime && now - greenStart >= GREEN_DURATION) {
     isTime = false;
     digitalWrite(GREEN_LED, LOW);
     digitalWrite(RED_LED, HIGH);
-    noTone(BUZZER);
   }
 
-  // 무게 감소 기반 reset (예: 10초 후)
-  if (isOpened && (millis() - openedTime >= 10000)) {
-    Serial.println("🕒 10s passed - Resetting isOpened");
+  if (isOpened && now - openedTime >= 10000) {
     isOpened = false;
     noTone(BUZZER);
   }
 }
 
 // ===================================================
-// 메인 루프
+// LOOP
 // ===================================================
 void loop() {
   unsigned long now = millis();
 
   updateBPM();
-  checkWeightChange();
-  handleLedReset();
+  checkWeight();
+  handleReset();
 
-  // 10초마다 GET 요청
   if (now - lastGetTime >= GET_INTERVAL) {
     getCommandFromServer();
     lastGetTime = now;
   }
 
-  // 상태 변화 or BPM이 크게 변했을 때만 POST
-if (isOpened != lastIsOpened 
-    || isTime != lastIsTime 
-    || currentBPM >= 60) 
-{
-  sendDataToServer();
+  if (isOpened != lastIsOpened ||
+      isTime   != lastIsTime ||
+      abs(currentBPM - lastBPM) >= 3) {
 
-  lastIsOpened = isOpened;
-  lastIsTime = isTime;
-  lastBPM = currentBPM;
-}
+    sendDataToServer();
 
+    lastIsOpened = isOpened;
+    lastIsTime   = isTime;
+    lastBPM      = currentBPM;
+  }
 }

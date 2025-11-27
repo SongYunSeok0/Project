@@ -13,7 +13,7 @@ interface RegiRepository {
         useAlarm: Boolean
     ): Long
 
-    fun observeRegiHistories(): Flow<List<RegiHistory>>
+    fun getRegiHistories(): Flow<List<RegiHistory>>
 
     suspend fun updateRegiHistory(regi: RegiHistory)
 

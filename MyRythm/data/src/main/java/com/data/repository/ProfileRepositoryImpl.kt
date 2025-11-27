@@ -16,12 +16,19 @@ class ProfileRepositoryImpl @Inject constructor(
     private val dao: UserDao
 ) : ProfileRepository {
 
+    private var cachedUserId: Long? = null
+
     override suspend fun getProfile(): UserProfile {
         val dto = api.getMe()
+        cachedUserId = dto.id
         dao.upsert(dto.asEntity())
         return dto.toProfile()
     }
 
+    fun getCachedUserId(): Long {
+        return cachedUserId
+            ?: throw IllegalStateException("User ID not loaded yet! Call getProfile() first.")
+    }
 
     override suspend fun updateProfile(profile: UserProfile): UserProfile {
         return try {
@@ -29,6 +36,7 @@ class ProfileRepositoryImpl @Inject constructor(
             val updatedDto = api.updateProfile(dto)
 
             dao.upsert(updatedDto.asEntity())
+            cachedUserId = updatedDto.id
             updatedDto.toProfile()
 
         } catch (e: Exception) {

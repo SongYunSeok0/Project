@@ -5,6 +5,7 @@
     <string name="auth_login">로그인</string>
     <string name="auth_login_loading">로그인 중...</string>
     <string name="auth_signup">회원가입</string>
+    <string name="auth_setautologin">자동 로그인</string>
     <string name="auth_testlogin">임시 테스트 로그인 (SKIP)</string>
     <string name="auth_oauth">SNS 연동 로그인 하기</string>
     <string name="auth_kakaologin_description">카카오톡 로그인</string>
@@ -31,8 +32,10 @@
     <string name="male">남성</string>
     <string name="female">여성</string>
     <string name="email">이메일</string>
+    <string name="guardianemail">보호자 이메일</string>
     <string name="name">이름</string>
     <string name="birth">생년월일</string>
+    <string name="birth_example">(예: 2000-10-10)</string>
     <string name="year">YYYY</string>
     <string name="month">MM</string>
     <string name="day">DD</string>
@@ -44,7 +47,7 @@
     <string name="sent">전송됨</string>
     <string name="send">전송</string>
     <string name="verification_code">인증번호</string>
-    <string name="phone_verification">전화번호 인증 *</string>
+    <string name="email_verification">이메일 인증 *</string>
     <string name="verification">인증</string>
     <string name="scheduler">스케줄러</string>
     <string name="step">걸음수</string>
@@ -155,9 +158,10 @@
     <string name="completion_rate">완료율</string>
     <string name="percent_suffix">%</string>
     <string name="dose_complete">복용 완료</string>
+    <string name="splashscreen">스플래시 이미지</string>
 
     <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
-    <string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>
+    <!--<string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>-->
     <string name="auth_message_code_sent">인증번호가 전송되었습니다. 테스트 코드는 0000 입니다</string>
     <string name="auth_message_verification_completed">전화번호 인증이 완료되었습니다</string>
     <string name="auth_message_backtologin">이미 계정이 있으신가요?</string>

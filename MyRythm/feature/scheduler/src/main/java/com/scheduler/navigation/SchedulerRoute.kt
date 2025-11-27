@@ -11,6 +11,9 @@ data class SchedulerRoute(
 @Serializable
 data class RegiRoute(
     val userId: String,
+    val drugNames: List<String> = emptyList(),
+    val times: Int? = null,
+    val days: Int? = null,
     val regihistoryId: Long? = null
 )
 

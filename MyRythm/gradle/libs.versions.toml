@@ -18,7 +18,7 @@ googleid = "1.1.1"
 
 # compose
 activityCompose = "1.9.3"
-composeBom = "2024.09.00"
+composeBom = "2025.01.00"
 appcompat = "1.7.1"
 material = "1.13.0"
 runtime = "1.9.4"
@@ -55,6 +55,7 @@ ksp = "2.0.21-1.0.28"
 datastore = "1.1.1"
 securityCrypto = "1.1.0"
 monitor = "1.8.0"
+datastoreCore = "1.2.0"
 
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -160,6 +161,7 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 
 androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "health-connect" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

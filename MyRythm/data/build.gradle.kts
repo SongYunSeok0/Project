@@ -51,6 +51,7 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
+    implementation(libs.androidx.datastore.core)
     ksp(libs.hilt.compiler)
 
     // Room
@@ -75,4 +76,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    // 1126 자동로그인 관련 데이터스토어 의존성
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }

@@ -22,13 +22,15 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
         SchedulerScreen(userId = uid.toLong())
     }
 
-    // 등록 화면
     composable<RegiRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<RegiRoute>()
         val uid = route.userId
         Log.e("RegiRoute", "uid = $uid")
 
         RegiScreen(
+            drugNames = route.drugNames,
+            times = route.times,
+            days = route.days,
             regihistoryId = route.regihistoryId,
             onCompleted = {
                 nav.navigate(SchedulerRoute(uid)) {
@@ -39,7 +41,6 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
         )
     }
 
-    // OCR 화면
     composable<OcrRoute> {
         val route = it.toRoute<OcrRoute>()
         val uid = route.userId
@@ -47,8 +48,16 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
 
         OcrScreen(
             imagePath = route.path,
-            onConfirm = { _, _, _ ->
-                nav.navigate(RegiRoute(userId = uid, regihistoryId = null))
+            onConfirm = { names, times, days ->
+                nav.navigate(
+                    RegiRoute(
+                        userId = uid,
+                        drugNames = names,
+                        times = times,
+                        days = days,
+                        regihistoryId = null
+                    )
+                )
             },
             onRetake = { nav.popBackStack() }
         )
