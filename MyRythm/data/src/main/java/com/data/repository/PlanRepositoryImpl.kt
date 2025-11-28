@@ -77,6 +77,7 @@ class PlanRepositoryImpl @Inject constructor(
 
         // API 호출 (PlanApi에 createPlanSmart 함수가 있어야 합니다)
         api.createPlanSmart(body)
+
     }
 
     override suspend fun update(userId: Long, plan: Plan) {
