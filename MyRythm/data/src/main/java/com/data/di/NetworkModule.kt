@@ -46,7 +46,7 @@ object NetworkModule {
     // ---- Common ----
     @Provides @Singleton
     fun provideLogging(): HttpLoggingInterceptor =
-        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
 
     @Provides @Singleton
     fun provideMoshi(): Moshi =

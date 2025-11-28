@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.Plan
+import com.domain.repository.PlanRepository
 import com.domain.repository.RegiRepository
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
@@ -18,7 +19,8 @@ import java.time.ZoneId
 
 @HiltViewModel
 class RegiViewModel @Inject constructor(
-    private val repository: RegiRepository
+    private val regiRepository: RegiRepository,
+    private val planRepository: PlanRepository,
 ) : ViewModel() {
 
     private var currentRegiHistoryId: Long? = null
@@ -47,7 +49,7 @@ class RegiViewModel @Inject constructor(
 
     fun loadPlans(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.observeAllPlans(userId)
+            regiRepository.observeAllPlans(userId)
                 .catch { e ->
                     _uiState.update { it.copy(error = e.message) }
                 }
@@ -58,33 +60,47 @@ class RegiViewModel @Inject constructor(
         }
     }
 
-    fun createRegiAndPlans(
+    // ✅ [수정] 여러 약(List<String>)을 한 번에 등록하도록 변경
+    fun createRegiAndSmartPlans(
         regiType: String,
         label: String?,
         issuedDate: String?,
         useAlarm: Boolean,
-        plans: List<Plan>
+        startDate: String,
+        duration: Int,
+        times: List<String>,
+        medNames: List<String> // 👈 String -> List<String> 변경
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _uiState.update { it.copy(loading = true, error = null) }
 
+
+                // 1. 처방전(RegiHistory)은 1개만 생성 (약들이 그룹으로 묶임)
                 val realRegiId = currentRegiHistoryId ?: run {
-                    val newId = repository.createRegiHistory(
+                    regiRepository.createRegiHistory(
                         regiType = regiType,
-                        label = label,
+                        label = label, // 병명(감기 등)
                         issuedDate = issuedDate,
                         useAlarm = useAlarm
                     )
-                    newId
                 }
 
-                repository.createPlans(realRegiId, plans)
+                // 2. 각 약 이름별로 스마트 플랜 생성 요청 (반복문)
+                medNames.forEach { medName ->
+                    planRepository.createPlansSmart(
+                        regihistoryId = realRegiId,
+                        startDate = startDate,
+                        duration = duration,
+                        times = times,
+                        medName = medName // 각각의 약 이름(A, B...) 전달
+                    )
+                }
 
                 _events.emit("등록 완료")
 
             } catch (e: Exception) {
-                Log.e("RegiViewModel", "createRegiAndPlans 실패", e)
+                Log.e("RegiViewModel", "createRegiAndSmartPlans 실패", e)
                 _events.emit("등록 실패")
             } finally {
                 _uiState.update { it.copy(loading = false) }
