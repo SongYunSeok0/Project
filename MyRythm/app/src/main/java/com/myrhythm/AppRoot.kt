@@ -58,9 +58,8 @@ fun AppRoot(startFromLogin: Boolean = false) {
     val userId = ui.userId ?: jwtUserId
 
     // 최초 스타트만 remember (userId는 나중에 적용됨)
-    val startDestination = remember {
-        if (startFromLogin) AuthGraph else MainRoute(jwtUserId)
-    }
+    val startDestination =
+        if (startFromLogin) AuthGraph else MainRoute(userId)
 
     // Health Connect
     LaunchedEffect(Unit) {
@@ -95,21 +94,18 @@ fun AppRoot(startFromLogin: Boolean = false) {
 
     // 항상 최신 userId 사용
     fun goHome() = nav.navigate(MainRoute(userId)) {
-        popUpTo(nav.graph.startDestinationId) { saveState = true }
+        popUpTo(0)      // 전체 스택 초기화
         launchSingleTop = true
-        restoreState = true
     }
 
     fun goMyPage() = nav.navigate(MyPageRoute) {
-        popUpTo(nav.graph.startDestinationId) { saveState = true }
+        popUpTo(0)
         launchSingleTop = true
-        restoreState = true
     }
 
     fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
-        popUpTo(nav.graph.startDestinationId) { saveState = true }
+        popUpTo(0)
         launchSingleTop = true
-        restoreState = true
     }
 
     Scaffold(

@@ -35,13 +35,4 @@ class UserRepositoryImpl @Inject constructor(
         return true
     }
 
-    // FCM 토큰 등록
-    override suspend fun registerFcmToken(token: String) {
-        try {
-            api.registerFcmToken(FcmTokenRequestDto(fcm_token = token))
-        } catch (e: Exception) {
-            Log.e("FCM", "registerFcmToken 실패", e)
-        }
-    }
-
 }

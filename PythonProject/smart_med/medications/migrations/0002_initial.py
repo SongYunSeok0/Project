@@ -10,36 +10,28 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("iot", "0001_initial"),
+        ("medications", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="device",
+            model_name="regihistory",
             name="user",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name="iot_devices",
                 to=settings.AUTH_USER_MODEL,
+                verbose_name="사용자 ID",
             ),
         ),
         migrations.AddField(
-            model_name="sensordata",
-            name="device",
+            model_name="plan",
+            name="regihistory",
             field=models.ForeignKey(
+                blank=True,
+                null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name="sensor_data",
-                to="iot.device",
-            ),
-        ),
-        migrations.AddField(
-            model_name="sensordata",
-            name="user",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="sensor_data",
-                to=settings.AUTH_USER_MODEL,
+                to="medications.regihistory",
             ),
         ),
     ]

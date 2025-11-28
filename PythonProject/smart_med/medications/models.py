@@ -19,6 +19,14 @@ class RegiHistory(models.Model):
         verbose_name="등록 유형 (영양제/병원약)"
     )
 
+    # ✅ [추가] IoT Device UUID (String 형태로 저장, 필요 시 UUIDField로 변경 가능)
+    iot_device_uuid = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="IoT 기기 UUID"
+    )
+
     # 병명 (기존 disase_name)
     label = models.CharField(
         max_length=100,

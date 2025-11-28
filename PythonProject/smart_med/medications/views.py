@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 import datetime
 
 from .models import RegiHistory, Plan
@@ -104,32 +105,32 @@ class PlanListView(APIView):
         return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
 
 
-# Plan PATCH
-class PlanUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, pk):
-        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
-        if plan is None:
-            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        data = request.data
-
-        if "medName" in data:
-            plan.med_name = data["medName"]
-        if "takenAt" in data:
-            plan.taken_at = to_dt(data["takenAt"])
-        if "mealTime" in data:
-            plan.meal_time = data["mealTime"]
-        if "note" in data:
-            plan.note = data["note"]
-        if "taken" in data:
-            plan.taken = to_dt(data["taken"])
-        if "useAlarm" in data:
-            plan.use_alarm = data["useAlarm"]
-
-        plan.save()
-        return Response(PlanSerializer(plan).data, status=status.HTTP_200_OK)
+# # Plan PATCH
+# class PlanUpdateView(APIView):
+#     permission_classes = [IsAuthenticated]
+#
+#     def patch(self, request, pk):
+#         plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+#         if plan is None:
+#             return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+#
+#         data = request.data
+#
+#         if "medName" in data:
+#             plan.med_name = data["medName"]
+#         if "takenAt" in data:
+#             plan.taken_at = to_dt(data["takenAt"])
+#         if "mealTime" in data:
+#             plan.meal_time = data["mealTime"]
+#         if "note" in data:
+#             plan.note = data["note"]
+#         if "taken" in data:
+#             plan.taken = to_dt(data["taken"])
+#         if "useAlarm" in data:
+#             plan.use_alarm = data["useAlarm"]
+#
+#         plan.save()
+#         return Response(PlanSerializer(plan).data, status=status.HTTP_200_OK)
 
 
 # Plan DELETE
@@ -173,3 +174,50 @@ class TodayPlansView(APIView):
             result.append(item)
 
         return Response(result, status=status.HTTP_200_OK)
+
+
+class PlanUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        target_plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+        if not target_plan:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data
+
+        if "takenAt" in data:
+            raw_taken_at = data["takenAt"]
+            if isinstance(raw_taken_at, (int, float)):
+                new_taken_at = datetime.datetime.fromtimestamp(raw_taken_at / 1000.0, tz=datetime.timezone.utc)
+            else:
+                new_taken_at = parse_datetime(raw_taken_at)
+
+            old_taken_at = target_plan.taken_at
+            old_created_at = target_plan.created_at   # ★ 그룹 기준 이것으로 변경
+
+            # --- 타겟 시간 업데이트 ---
+            target_plan.taken_at = new_taken_at
+            if "medName" in data: target_plan.med_name = data["medName"]
+            if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
+            target_plan.save()
+
+            # --- 형제 일정 이동 ---
+            siblings = Plan.objects.filter(
+                regihistory=target_plan.regihistory,
+                taken_at=old_taken_at,
+                created_at=old_created_at
+            ).exclude(id=target_plan.id)
+
+            count = siblings.update(
+                taken_at=new_taken_at
+            )
+            print(f"[Plan Update] created_at={old_created_at} 그룹에서 {count}개 이동됨.")
+
+        else:
+            # 시간 변경 없는 경우
+            if "medName" in data: target_plan.med_name = data["medName"]
+            if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
+            target_plan.save()
+
+        return Response(PlanSerializer(target_plan).data, status=status.HTTP_200_OK)
