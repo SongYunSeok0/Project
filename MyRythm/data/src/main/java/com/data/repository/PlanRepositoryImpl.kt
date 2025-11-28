@@ -27,7 +27,7 @@ class PlanRepositoryImpl @Inject constructor(
             list.map { it.toDomainLocal() }
         }
 
-    override suspend fun refresh(userId: Long) = withContext(Dispatchers.IO) {
+    override suspend fun syncPlans(userId: Long) = withContext(Dispatchers.IO) {
         val remotePlans = api.getPlans()
         val domainPlans = remotePlans.map { it.toDomain() }
         val entities = domainPlans.map { it.toEntity() }
@@ -59,11 +59,11 @@ class PlanRepositoryImpl @Inject constructor(
 
     override suspend fun update(userId: Long, plan: Plan) {
         api.updatePlan(plan.id, plan.toUpdateRequest())
-        refresh(userId)
+        syncPlans(userId)
     }
 
     override suspend fun delete(userId: Long, planId: Long) {
         api.deletePlan(planId)
-        refresh(userId)
+        syncPlans(userId)
     }
 }

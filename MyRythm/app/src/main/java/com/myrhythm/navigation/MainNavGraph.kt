@@ -15,16 +15,30 @@ import com.mypage.viewmodel.MyPageViewModel
 import com.news.navigation.NewsRoute
 import com.shared.navigation.MainRoute
 
+import com.domain.sharedvm.MainVMContract
+import com.domain.sharedvm.HeartRateVMContract
+import com.domain.sharedvm.StepVMContract
+
+
 @OptIn(ExperimentalSerializationApi::class)
-fun NavGraphBuilder.mainNavGraph(nav: NavController) {
+fun NavGraphBuilder.mainNavGraph(
+    nav: NavController,
+    mainVm: MainVMContract,
+    heartVm: HeartRateVMContract,
+    stepVm: StepVMContract,
+    onLogoutClick: () -> Unit
+) {
     composable<MainRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<MainRoute>()
-        val uid = route.userId     // 🔥 절대 빈값 아님
+        val uid = route.userId
 
         val myPageViewModel: MyPageViewModel = hiltViewModel()
 
         StepViewModelRoute(
             myPageViewModel = myPageViewModel,
+            mainViewModel = mainVm,
+            heartViewModel = heartVm,
+            stepViewModel = stepVm,
             onOpenChatBot   = { nav.navigate(ChatBotRoute()) },
             onOpenScheduler = { nav.navigate(SchedulerRoute(uid)) },
             onOpenHeart     = { nav.navigate(HeartReportRoute) },

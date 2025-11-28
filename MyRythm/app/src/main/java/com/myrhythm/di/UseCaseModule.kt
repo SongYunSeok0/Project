@@ -4,7 +4,7 @@ import android.content.Context
 import com.data.core.push.FcmTokenStore
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
-import com.domain.repository.HealthRepository
+import com.domain.repository.HeartRateRepository
 import com.domain.repository.PushRepository
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
@@ -61,12 +61,12 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideGetLatestHeartRateUseCase(
-        healthRepository: HealthRepository
-    ) = GetLatestHeartRateUseCase(healthRepository)
+        heartRateRepository: HeartRateRepository
+    ) = GetLatestHeartRateUseCase(heartRateRepository)
 
     @Provides
     @Singleton
     fun provideGetHeartHistoryUseCase(
-        healthRepository: HealthRepository
-    ) = GetHeartHistoryUseCase(healthRepository)
+        heartRateRepository: HeartRateRepository
+    ) = GetHeartHistoryUseCase(heartRateRepository)
 }

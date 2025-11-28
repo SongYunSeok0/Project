@@ -10,9 +10,11 @@ import com.data.network.dto.regihistory.RegiHistoryRequest
 import com.domain.model.Plan
 import com.domain.model.RegiHistory
 import com.domain.repository.RegiRepository
-import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 class RegiRepositoryImpl @Inject constructor(
     private val regiHistoryApi: RegiHistoryApi,
@@ -51,7 +53,6 @@ class RegiRepositoryImpl @Inject constructor(
         return res.id
     }
 
-    // 전체 조회
     override fun getRegiHistories(): Flow<List<RegiHistory>> =
         regiHistoryDao.getAll().map { list ->
             list.map { row ->
@@ -154,4 +155,47 @@ class RegiRepositoryImpl @Inject constructor(
                 )
             }
         }
+
+    /** 🔥 새로 추가된 sync(userId) 구현 */
+    override suspend fun syncRegiHistories(userId: Long) = withContext(Dispatchers.IO) {
+
+        // 1. 서버에서 최신 데이터 가져오기
+        val remoteRegi = regiHistoryApi.getRegiHistories()   // List<RegiHistoryResponse>
+        val remotePlans = planApi.getPlans()                 // List<PlanResponse>
+
+        // 2. 기존 userId 데이터 삭제
+        //    regihistory와 plan 모두 삭제됨
+        db.regiHistoryDao().deleteAllByUser(userId = userId)
+        db.planDao().deleteAllByUser(userId = userId)
+
+        // 3. 최신 RegiHistory 저장
+        val regiEntities = remoteRegi.map { res ->
+            RegiHistoryEntity(
+                id = res.id,
+                userId = res.userId,
+                regiType = res.regiType,
+                label = res.label,
+                issuedDate = res.issuedDate,
+                useAlarm = res.useAlarm
+            )
+        }
+
+        regiHistoryDao.insertAll(regiEntities)
+
+        // 4. 최신 Plan 저장
+        val planEntities = remotePlans.map { res ->
+            PlanEntity(
+                id = res.id,
+                regihistoryId = res.regihistoryId,
+                medName = res.medName,
+                takenAt = res.takenAt,
+                mealTime = res.mealTime,
+                note = res.note,
+                taken = res.taken,
+                useAlarm = res.useAlarm
+            )
+        }
+
+        planDao.insertAll(planEntities)
+    }
 }
