@@ -13,4 +13,7 @@ sealed interface MyPageEvent {
 
     data object WithdrawalFailed : MyPageEvent
 
+    data class DeviceRegisterSuccess(val uuid: String) : MyPageEvent
+    data object DeviceRegisterFailed : MyPageEvent
+
 }

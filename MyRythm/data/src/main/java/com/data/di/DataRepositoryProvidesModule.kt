@@ -2,15 +2,18 @@ package com.data.di
 
 import com.data.db.dao.InquiryDao
 import com.data.network.api.ChatbotApi
+import com.data.network.api.DeviceApi
 import com.data.network.api.HealthApi
 import com.data.network.api.MapApi
 import com.data.network.api.NewsApi
 import com.data.repository.ChatbotRepositoryImpl
+import com.data.repository.DeviceRepositoryImpl
 import com.data.repository.HealthRepositoryImpl
 import com.data.repository.InquiryRepositoryImpl
 import com.data.repository.MapRepositoryImpl
 import com.data.repository.NewsRepositoryImpl
 import com.domain.repository.ChatbotRepository
+import com.domain.repository.DeviceRepository
 import com.domain.repository.HealthRepository
 import com.domain.repository.InquiryRepository
 import com.domain.repository.MapRepository
@@ -38,4 +41,9 @@ object DataRepositoryProvidesModule {
     @Provides
     fun provideInquiryRepository(dao: InquiryDao): InquiryRepository =
         InquiryRepositoryImpl(dao)
+
+    @Provides
+    @Singleton
+    fun provideDeviceRepository(api: DeviceApi): DeviceRepository =
+        DeviceRepositoryImpl(api)
 }

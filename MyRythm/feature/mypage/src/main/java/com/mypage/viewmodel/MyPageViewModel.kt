@@ -7,6 +7,7 @@ import com.domain.repository.InquiryRepository
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.model.UserProfile
 import com.domain.repository.AuthRepository
+import com.domain.repository.DeviceRepository
 import com.domain.repository.ProfileRepository
 import com.domain.usecase.health.GetLatestHeartRateUseCase
 import com.domain.usecase.health.GetHeartHistoryUseCase
@@ -28,6 +29,7 @@ class MyPageViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val getLatestHeartRateUseCase: GetLatestHeartRateUseCase,
     private val getHeartHistoryUseCase: GetHeartHistoryUseCase,
+    private val deviceRepository: DeviceRepository,
 
     ) : ViewModel() {
 
@@ -139,6 +141,17 @@ class MyPageViewModel @Inject constructor(
             }
         }.onFailure {
             _events.send(MyPageEvent.WithdrawalFailed)
+        }
+    }
+
+    fun requestDeviceRegister() {
+        viewModelScope.launch {
+            try {
+                val device = deviceRepository.registerDevice()
+                _events.send(MyPageEvent.DeviceRegisterSuccess(device.uuid))
+            } catch (e: Exception) {
+                _events.send(MyPageEvent.DeviceRegisterFailed)
+            }
         }
     }
 

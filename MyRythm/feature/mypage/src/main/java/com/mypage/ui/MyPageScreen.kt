@@ -51,6 +51,8 @@ fun MyPageScreen(
 
     //탈퇴 확인
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    var showDeviceDialog by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             if (event is MyPageEvent.WithdrawalSuccess) {
@@ -111,11 +113,43 @@ fun MyPageScreen(
             MenuItem(editPageText, onEditClick)
             MenuItem(heartRateText, onHeartClick)
             MenuItem("복약 기록",onMediClick)
+            MenuItem("기기 등록") {showDeviceDialog = true}
             MenuItem(faqCategoryText, onFaqClick)
             MenuItem(logoutText, onLogoutClick)
             MenuItem("회원 탈퇴") {showDeleteDialog = true}
         }
     }
+
+    if (showDeviceDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeviceDialog = false },
+
+            title = { Text("기기 등록") },
+            text = { Text("정말 기기를 등록하시겠습니까?") },
+
+            confirmButton = {
+                Text(
+                    text = "등록하기",
+                    color = Color(0xFF407CE2),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable {
+                            showDeviceDialog = false
+                            viewModel.requestDeviceRegister()
+                        }
+                )
+            },
+            dismissButton = {
+                Text(
+                    text = "취소",
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clickable { showDeviceDialog = false }
+                )
+            }
+        )
+    }
+
 
     if (showDeleteDialog) {
         AlertDialog(

@@ -23,6 +23,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
+import com.data.network.api.DeviceApi
 import com.data.network.api.StepApi
 import com.data.network.api.RegiHistoryApi
 
@@ -87,7 +88,8 @@ object NetworkModule {
         OkHttpClient.Builder()
             .commonTimeouts()
             .addInterceptor(authHeaderInterceptor) // Bearer
-            .addInterceptor(logging)
+            .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
+
             .build()
 
     @Provides @Singleton @NewsOkHttp
@@ -98,7 +100,8 @@ object NetworkModule {
         OkHttpClient.Builder()
             .commonTimeouts()
             .addInterceptor(newsAuth)
-            .addInterceptor(logging)
+            .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
+
             .build()
 
     @Provides @Singleton @MapOkHttp
@@ -109,7 +112,8 @@ object NetworkModule {
         OkHttpClient.Builder()
             .commonTimeouts()
             .addInterceptor(mapAuth)
-            .addInterceptor(logging)
+            .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
+
             .build()
 
     // ---- Retrofit per API ----
@@ -175,4 +179,9 @@ object NetworkModule {
     @Singleton
     fun provideStepApi(@UserRetrofit retrofit: Retrofit): StepApi =
         retrofit.create(StepApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDeviceApi(@UserRetrofit retrofit: Retrofit): DeviceApi =
+        retrofit.create(DeviceApi::class.java)
 }
