@@ -20,6 +20,7 @@ import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel
+import com.shared.ui.components.AppInputField
 import com.shared.ui.components.AppSelectableButton
 
 @Composable
@@ -117,12 +118,13 @@ fun NewInquiryForm(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.align(Alignment.Start)
             )
-            InquiryTextField(
+            AppInputField(
                 value = title,
                 onValueChange = { title = it },
                 label = title_Message,
                 singleLine = true,
-                maxLines = 1
+                maxLines = 1,
+                useFloatingLabel = true
             )
 
             Text(
@@ -131,11 +133,12 @@ fun NewInquiryForm(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.align(Alignment.Start)
             )
-            InquiryTextField(
+            AppInputField(
                 value = content,
                 onValueChange = { content = it },
                 label = content_Message,
-                height = 150.dp
+                height = 150.dp,
+                useFloatingLabel = true
             )
 
             /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)

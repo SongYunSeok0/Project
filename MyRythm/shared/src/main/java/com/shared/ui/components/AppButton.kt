@@ -43,9 +43,9 @@ fun AppSelectableButton(
     selectedColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
     unselectedColor: Color = Color.White,
     selectedBorderColor: Color = MaterialTheme.colorScheme.primary,
-    unselectedBorderColor: Color = Color.Gray,
+    unselectedBorderColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     selectedTextColor: Color = MaterialTheme.colorScheme.primary,
-    unselectedTextColor: Color =  Color.Gray,
+    unselectedTextColor: Color =  MaterialTheme.colorScheme.surfaceVariant,
     useClickEffect: Boolean = true
 ) {
     val themeSelectedColor = selectedColor ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)

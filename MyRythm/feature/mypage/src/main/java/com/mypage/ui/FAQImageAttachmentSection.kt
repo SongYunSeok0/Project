@@ -30,41 +30,6 @@ import androidx.compose.ui.unit.Dp
 import com.shared.R
 
 @Composable
-fun InquiryTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    singleLine: Boolean = false,
-    maxLines: Int = 10,
-    height: Dp? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = modifier
-            .fillMaxWidth()
-            .then(
-                if (height != null) Modifier.height(height)
-                else Modifier
-            ),
-        shape = RoundedCornerShape(12.dp),
-        singleLine = singleLine,
-        maxLines = maxLines,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = Color.Gray,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            unfocusedLabelColor = Color.Gray
-        ),
-        textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onSurface),
-    )
-}
-
-
-@Composable
 fun ImageAttachmentSection(
     images: List<Uri>,
     onImagesSelected: (List<Uri>) -> Unit,
@@ -101,7 +66,7 @@ fun ImageAttachmentSection(
             Text(
                 text = "${images.size}/3",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.surfaceVariant
             )
         }
 
@@ -134,14 +99,14 @@ fun ImageAttachmentSection(
                             Icon(
                                 painter = painterResource(R.drawable.camera),
                                 contentDescription = attachImage,
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.surfaceVariant,
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = addText,
                                 fontSize = 12.sp,
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.surfaceVariant
                             )
                         }
                     }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
@@ -143,7 +144,12 @@ fun AppRoot(startFromLogin: Boolean = false) {
             }
         }
     ) { inner ->
-        Box(Modifier.padding(inner)) {
+        Box(
+            Modifier.padding(
+                top = inner.calculateTopPadding(),
+                bottom = 0.dp
+            )
+        ) {
             NavHost(navController = nav, startDestination = startDestination) {
                 authNavGraph(nav)
                 mainNavGraph(nav)

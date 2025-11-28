@@ -245,7 +245,7 @@ fun ChatbotScreen(
                             ) {
                                 Text(
                                     answerLoadingMessage,
-                                    color = Color.Gray,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
                                     fontSize = 14.sp
                                 )
                             }

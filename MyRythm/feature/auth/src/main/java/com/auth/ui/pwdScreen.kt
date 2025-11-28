@@ -54,18 +54,16 @@ fun PwdScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(MaterialTheme.authTheme.authBackground)
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(50.dp))
 
-            // 로고
             AuthLogoHeader(textLogoResId = R.drawable.auth_myrhythm)
 
             Spacer(Modifier.height(10.dp))
 
-            // 휴대폰 번호 + 전송 버튼
+            // 휴대폰 번호 + 전송 버튼 -> 이메일로 변경 필요, 확인하면 비번을바꿔서저장하는필드넣거나
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -75,7 +73,6 @@ fun PwdScreen(
                     onValueChange = { phone = it },
                     hint = phoneNumberPlaceholderText,
                     modifier = Modifier.weight(1f),
-                    imeAction = ImeAction.Next
                 )
 
                 Spacer(Modifier.width(8.dp))
@@ -88,7 +85,6 @@ fun PwdScreen(
                     },
                     enabled = !sent && phone.isNotBlank(),
                     modifier = Modifier
-                        .height(56.dp)
                         .widthIn(min = 90.dp)
                 )
             }
@@ -110,9 +106,7 @@ fun PwdScreen(
                 text = comfirmText,
                 onClick = { onConfirm(phone, code) },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                useLoginTheme = true,
+                    .fillMaxWidth(),
                 useClickEffect = true
             )
 
@@ -123,46 +117,10 @@ fun PwdScreen(
                 onClick = onBackToLogin,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                useLoginTheme = true
             )
 
             Spacer(Modifier.weight(1f))
             Spacer(Modifier.height(30.dp))
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewPwd() {
-    MaterialTheme(
-        typography = MaterialTheme.typography.copy(
-            labelLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            // 입력 필드와 본문 글씨
-            bodyLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.5.sp
-            ),
-            // 안내메시지 등 작은 글씨
-            bodySmall = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.25.sp
-            )
-        )
-    ) {
-        PwdScreen()
     }
 }

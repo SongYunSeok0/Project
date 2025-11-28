@@ -1,7 +1,6 @@
 package com.auth.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,9 +25,8 @@ import com.shared.ui.components.AuthInputField
 import com.shared.ui.components.AuthLogoIcon
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
+import com.shared.ui.components.AuthTextButton
 import com.shared.ui.theme.AuthBackground
-import com.shared.ui.theme.AuthSecondrayButton
-import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,34 +121,108 @@ fun SignupScreen(
         ) {
             // 로고
             AuthLogoIcon()
+
             Spacer(Modifier.height(24.dp))
 
-            // 이메일 입력 (상단)
-            AuthInputField(
-                value = email,
-                onValueChange = {
-                    email = it
-                    // 이메일 변경 시 인증 상태 초기화 (보안상 권장)
-                    if (isVerificationCompleted) {
-                        isVerificationCompleted = false
-                        isEmailCodeSent = false
-                    }
-                },
-                hint = emailText,
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Email,
-                enabled = !isVerificationCompleted // 인증 완료되면 수정 불가 처리
+            Text(
+                emailVerification,   // 이메일 인증
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             )
 
-            Spacer(Modifier.height(16.dp))
+            // 이메일 입력 + 전송버튼
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 이메일 입력칸 (좌측)
+                AuthInputField(
+                    value = email,
+                    onValueChange = {
+                        email = it
+                        // 이메일 변경 시 인증 상태 초기화 (보안상 권장)
+                        if (isVerificationCompleted) {
+                            isVerificationCompleted = false
+                            isEmailCodeSent = false
+                        }
+                    },
+                    hint = emailText,
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Email,
+                    enabled = !isVerificationCompleted  // 인증 완료되면 수정 불가 처리
+                )
+
+                Spacer(Modifier.width(8.dp))
+
+                // 전송 버튼 (우측 작은 버튼)
+                AuthActionButton(
+                    text = if (isEmailCodeSent) sentText else sendText,
+                    onClick = {
+                        if (email.isNotBlank()) {
+                            // 에러 메시지 처리는 ViewModel 이벤트나 로컬 스낵바로 가능
+                            viewModel.updateSignupEmail(email)
+                            //viewModel.sendCode()  1128 실제코드
+                            isEmailCodeSent = true  // 1128 ui테스트용 임시로직
+                            isVerificationCompleted = false
+                            code = ""
+                        }
+                    },
+                    enabled = !isEmailCodeSent && email.isNotBlank(),
+                    modifier = Modifier.widthIn(min = 90.dp)
+                )
+            }
+
+            // 인증번호 입력 칸 (전송된 경우에만 표시하거나, 항상 표시하되 비활성화)
+            if (isEmailCodeSent) {
+                Spacer(Modifier.height(20.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    AuthInputField(
+                        value = code,
+                        onValueChange = {
+                            code = it
+                            // ViewModel에도 코드 업데이트 (verifyCode 호출 시 사용됨)
+                            viewModel.updateCode(it)
+                        },
+                        hint = verificationCodeText,
+                        modifier = Modifier.weight(1f),
+                        imeAction = ImeAction.Done,
+                        keyboardType = KeyboardType.Number,
+                        enabled = !isVerificationCompleted
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    AuthActionButton(
+                        text = verificationText,    // "인증하기"
+                        onClick = {
+                            // ViewModel에 현재 코드 상태 확실히 업데이트 후 검증 요청
+                            viewModel.updateSignupEmail(email) // 안전장치
+                            viewModel.updateCode(code)
+                            // viewModel.verifyCode()  1128 실제코드
+                            // 1128 UI 테스트용 임시 로직
+                            if (code == "1234") {
+                                isVerificationCompleted = true
+                            }
+                        },
+                        enabled = !isVerificationCompleted && code.isNotBlank(),
+                        modifier = Modifier.widthIn(min = 90.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
 
             AuthInputField(
                 value = username,
                 onValueChange = { username = it },
                 hint = nameText,
                 modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next
             )
 
             Spacer(Modifier.height(20.dp))
@@ -161,7 +233,6 @@ fun SignupScreen(
                 hint = passwordText,
                 isPassword = true,
                 modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.Password
             )
 
@@ -183,7 +254,6 @@ fun SignupScreen(
                     onValueChange = { birthYear = it.filter { c -> c.isDigit() }.take(4) },
                     hint = yearText,
                     modifier = Modifier.weight(1.5f),
-                    imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
                 )
                 AuthInputField(
@@ -191,7 +261,6 @@ fun SignupScreen(
                     onValueChange = { birthMonth = it.filter { c -> c.isDigit() }.take(2) },
                     hint = monthText,
                     modifier = Modifier.weight(1f),
-                    imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
                 )
                 AuthInputField(
@@ -199,7 +268,6 @@ fun SignupScreen(
                     onValueChange = { birthDay = it.filter { c -> c.isDigit() }.take(2) },
                     hint = dayText,
                     modifier = Modifier.weight(1f),
-                    imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
                 )
             }
@@ -210,7 +278,6 @@ fun SignupScreen(
             AuthGenderDropdown(
                 value = gender,
                 onValueChange = { gender = it },
-                hint = genderText,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -226,7 +293,6 @@ fun SignupScreen(
                     onValueChange = { height = it },
                     hint = heightText,
                     modifier = Modifier.weight(1f),
-                    imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
                 )
                 AuthInputField(
@@ -234,7 +300,6 @@ fun SignupScreen(
                     onValueChange = { weight = it },
                     hint = weightText,
                     modifier = Modifier.weight(1f),
-                    imeAction = ImeAction.Next,
                     keyboardType = KeyboardType.Number
                 )
             }
@@ -255,86 +320,11 @@ fun SignupScreen(
                 onValueChange = { phone = it },
                 hint = phoneNumberPlaceholderText,
                 modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.Phone
             )
 
             Spacer(Modifier.height(24.dp))
 
-            // -------------------------------------------------------
-            // ⭐ 이메일 인증 섹션 (전화번호 칸 아래에 추가)
-            // -------------------------------------------------------
-            Text(
-                emailVerification,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // 인증번호 전송 버튼
-                AuthActionButton(
-                    text = if (isEmailCodeSent) sentText else sendText, // 전송됨 / 전송
-                    onClick = {
-                        if (email.isBlank()) {
-                            // 에러 메시지 처리는 ViewModel 이벤트나 로컬 스낵바로 가능
-                        } else {
-                            // ViewModel에 현재 이메일 상태 업데이트 후 전송 요청
-                            viewModel.updateSignupEmail(email)
-                            viewModel.sendCode()
-                            isVerificationCompleted = false
-                            code = ""
-                        }
-                    },
-                    enabled = !isVerificationCompleted && email.isNotBlank(),
-                    useLoginTheme = false,
-                    modifier = Modifier
-                        .height(56.dp)
-                        .fillMaxWidth() // 버튼을 꽉 채우거나 디자인에 따라 조정
-                )
-            }
-
-            // 인증번호 입력 칸 (전송된 경우에만 표시하거나, 항상 표시하되 비활성화)
-            if (isEmailCodeSent) {
-                Spacer(Modifier.height(12.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    AuthInputField(
-                        value = code,
-                        onValueChange = {
-                            code = it
-                            // ViewModel에도 코드 업데이트 (verifyCode 호출 시 사용됨)
-                            viewModel.updateCode(it)
-                        },
-                        hint = verificationCodeText,
-                        modifier = Modifier.weight(1f),
-                        imeAction = ImeAction.Done,
-                        keyboardType = KeyboardType.Number,
-                        enabled = !isVerificationCompleted
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-
-                    AuthSecondaryButton(
-                        text = verificationText, // "인증하기"
-                        onClick = {
-                            // ViewModel에 현재 코드 상태 확실히 업데이트 후 검증 요청
-                            viewModel.updateSignupEmail(email) // 안전장치
-                            viewModel.updateCode(code)
-                            viewModel.verifyCode()
-                        },
-                        enabled = !isVerificationCompleted,
-                        modifier = Modifier
-                            .height(56.dp)
-                            .widthIn(min = 90.dp)
-                    )
-                }
-            }
 
             Spacer(Modifier.height(24.dp))
 
@@ -382,11 +372,8 @@ fun SignupScreen(
                     viewModel.signup()
                 },
                 enabled = !ui.loading,
-                useLoginTheme = false,
-                useClickEffect = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(62.dp)
             )
             Spacer(Modifier.height(24.dp))
 
@@ -394,11 +381,8 @@ fun SignupScreen(
             AuthSecondaryButton(
                 text = backText,
                 onClick = { onBackToLogin() },
-                enabled = true,
-                useLoginTheme = false,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
             )
 
             Spacer(Modifier.height(16.dp))
@@ -410,23 +394,11 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
             ) {
-                Text(
+                AuthTextButton(
                     text = backToLoginMessage,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.loginTheme.loginTertiary,
-                    modifier = Modifier
-                        .clickable { onBackToLogin() }
-                        .padding(vertical = 4.dp)
+                    onClick = { onBackToLogin() }
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-private fun SignupPreview() {
-    MaterialTheme {
-        SignupScreen()
     }
 }

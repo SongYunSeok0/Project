@@ -36,7 +36,7 @@ fun MediRecordCard(
     val (statusText, statusColor) = when (record.taken) {
         true -> "복용 완료" to Color(0xFF16A34A)
         false -> "미복용" to Color(0xFFEF4444)
-        null -> "미확인" to Color.Gray
+        null -> "미확인" to MaterialTheme.colorScheme.surfaceVariant
     }
 
     Column(

@@ -276,7 +276,7 @@ fun EditScreen(
                 .clip(RoundedCornerShape(14.dp))
                 .background(
                     // 이메일이 입력되어 있는데 인증 안 된 경우 -> 비활성(Gray)
-                    if (prot_email.isNotBlank() && !isProtEmailVerified) Color.Gray
+                    if (prot_email.isNotBlank() && !isProtEmailVerified) MaterialTheme.colorScheme.surfaceVariant
                     else MaterialTheme.colorScheme.primary
                 )
                 .clickable {
