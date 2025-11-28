@@ -21,5 +21,5 @@ urlpatterns = [
     path("plan/<int:pk>/delete/", PlanDeleteView.as_view(), name="plan_delete"),
 
     # Today plans
-    path("plan/today/", TodayPlansView.as_view(), name="today_plans"),
+    # path("plan/today/", TodayPlansView.as_view(), name="today_plans"),
 ]
