@@ -137,6 +137,7 @@ class MeView(APIView):
         user = request.user
         logger.info(f"[MeView][GET] user={user} (id={user.id}, email={user.email})")
         logger.info(f"[MeView][GET] headers={request.headers}")
+        print("🔍 Authorization header:", request.headers.get("Authorization"))
 
         return Response(
             {
