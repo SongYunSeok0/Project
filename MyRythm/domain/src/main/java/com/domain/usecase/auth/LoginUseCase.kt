@@ -20,7 +20,7 @@ class LoginUseCase @Inject constructor(
         val tokens = loginResult.getOrNull()!!
 
         // 2) 프로필 최신화 (실패해도 로그인은 성공 처리해야 함)
-        runCatching { userRepo.refreshMe() }
+        runCatching { userRepo.syncUser() }
 
         // 3) AuthTokens 반환
         return Result.success(tokens)

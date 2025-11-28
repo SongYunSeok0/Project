@@ -46,9 +46,7 @@ data class MedItem(
 )
 
 
-// ─────────────────────────────────────────────
 //  외부에서 호출되는 Screen
-// ─────────────────────────────────────────────
 @Composable
 fun SchedulerScreen(
     userId: Long,
@@ -70,9 +68,7 @@ fun SchedulerScreen(
 }
 
 
-// ─────────────────────────────────────────────
 //  내부 Content
-// ─────────────────────────────────────────────
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SchedulerContent(
@@ -94,14 +90,12 @@ fun SchedulerContent(
     val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 10000 })
     val scope = rememberCoroutineScope()
 
-    // 주차 리셋
     LaunchedEffect(resetKey, today) {
         weekAnchor = today
         selectedDay = today
         pagerState.scrollToPage(startPage)
     }
 
-    // 페이지 이동 → 날짜 갱신
     LaunchedEffect(pagerState.currentPage, today) {
         val diff = pagerState.currentPage - startPage
         weekAnchor = today.plusWeeks(diff.toLong())
@@ -114,22 +108,20 @@ fun SchedulerContent(
         mutableStateOf(itemsByDate[selectedDay].orEmpty())
     }
 
-    // Scaffold
     Scaffold(
         containerColor = BG,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 
+        // ★ 화면 전체를 스크롤 가능하도록 변경
         Column(
             Modifier
                 .padding(padding)
                 .fillMaxSize()
                 .background(BG)
+                .verticalScroll(rememberScrollState())   // ← ★ 이거 필수
         ) {
 
-            // ───────────────────────
-            //  주차 타이틀
-            // ───────────────────────
             val wf = WeekFields.of(Locale.KOREAN)
             val startOfWeek = weekRangeOf(weekAnchor).first()
             val weekNum = weekAnchor.get(wf.weekOfMonth())
@@ -148,9 +140,6 @@ fun SchedulerContent(
                 )
             }
 
-            // ───────────────────────
-            //  요일 Row
-            // ───────────────────────
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -170,9 +159,6 @@ fun SchedulerContent(
                 }
             }
 
-            // ───────────────────────
-            //  주간 Pager
-            // ───────────────────────
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
@@ -228,27 +214,21 @@ fun SchedulerContent(
                 }
             }
 
-            // ───────────────────────
-            //  날짜 헤더
-            // ───────────────────────
             Text(
-                selectedDay.format(DateTimeFormatter.ofPattern(dateFormat, Locale.KOREAN)),
+                selectedDay.format(
+                    DateTimeFormatter.ofPattern(dateFormat, Locale.KOREAN)
+                ),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF101828),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
             )
 
-            // ───────────────────────
-            //  복용 일정 리스트 (Card 하나씩)
-            // ───────────────────────
             Column(
                 Modifier
                     .padding(horizontal = 24.dp)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth()
             ) {
-
                 if (dayItems.isEmpty()) {
                     Text(emptyMessage, color = GrayText, fontSize = 13.sp)
                 } else {
@@ -301,7 +281,6 @@ fun SchedulerContent(
         }
     }
 }
-
 
 // ─────────────────────────────────────────────
 //  Helpers
