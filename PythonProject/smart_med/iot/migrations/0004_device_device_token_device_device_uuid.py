@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("iot", "0003_sensordata_status"),
+        ("iot", "0002_initial"),
     ]
 
     operations = [

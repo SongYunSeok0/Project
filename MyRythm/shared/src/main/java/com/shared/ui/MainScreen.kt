@@ -25,13 +25,14 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
-    onOpenAlram: () -> Unit = {},
+    onOpenAlram: () -> Unit = {}, // ✅ 알람 카드 클릭 시 호출될 콜백
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
     nextTime: String? = null,
     todaySteps: Int = 0,
     remainText: String? = null,
+    nextLabel: String? = null,
 ) {
     val tempIconResId = R.drawable.logo
     val chatBotIconResId = R.drawable.robot
@@ -49,6 +50,8 @@ fun MainScreen(
     val newsText = stringResource(R.string.news)
     val healthinsightText = stringResource(R.string.healthinsight)
     val healthinsightMessage = stringResource(R.string.main_message_healthinsight)
+
+
 
     Column(
         modifier = Modifier
@@ -100,6 +103,7 @@ fun MainScreen(
             )
         }
 
+        // 복용 알림 카드 (클릭 연결)
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.timeRemainingCard,
             onClick = onOpenAlram
@@ -125,12 +129,33 @@ fun MainScreen(
                         Modifier.size(48.dp)
                     )
                 }
+
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    remainText ?: "--:--",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+
+                // ⭐ 여기를 "좌(label) - 우(시간)" 로 나누기
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp), // 카드 좌우에서 살짝 안쪽으로
+                    horizontalArrangement = Arrangement.SpaceEvenly, // 중앙 배치
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Label
+                    Text(
+                        text = nextLabel ?: "다음 복용",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(end = 8.dp) // 너무 붙지 않게 약간 간격
+                    )
+
+                    // Time
+                    Text(
+                        text = remainText ?: "--:--",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
         }
 

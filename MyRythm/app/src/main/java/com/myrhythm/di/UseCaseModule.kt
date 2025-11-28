@@ -5,6 +5,7 @@ import com.data.core.push.FcmTokenStore
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
 import com.domain.repository.HealthRepository
+import com.domain.repository.PushRepository
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
@@ -48,8 +49,8 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideRegisterFcmTokenUseCase(
-        userRepository: UserRepository
-    ): RegisterFcmTokenUseCase = RegisterFcmTokenUseCase(userRepository)
+        pushRepository: PushRepository
+    ): RegisterFcmTokenUseCase = RegisterFcmTokenUseCase(pushRepository)
 
     @Provides
     @Singleton

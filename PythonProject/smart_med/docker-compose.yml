@@ -4,7 +4,9 @@ services:
   web:
     build: .
     container_name: django_web
-    command: gunicorn smart_med.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn smart_med.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"

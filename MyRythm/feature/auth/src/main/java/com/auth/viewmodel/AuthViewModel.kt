@@ -1,7 +1,6 @@
 package com.auth.viewmodel
 
 import android.content.Context
-import android.util.Log
 import androidx.credentials.*
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
@@ -169,10 +168,6 @@ class AuthViewModel @Inject constructor(
                     isLoggedIn = true,
                     userId = uid
                 )
-            }
-
-            PushManager.fcmToken?.let { token ->
-                runCatching { registerFcmTokenUseCase(token) }
             }
         } else {
             _state.update { it.copy(loading = false, isLoggedIn = false) }

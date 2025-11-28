@@ -1,27 +1,28 @@
 # users/views.py
 import secrets
-import logging
+import traceback
 
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.conf import settings
+from django.db import IntegrityError
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
-
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
-from smart_med.firebase import send_fcm_to_token  # smart_med/firebase.py 에 있다고 가정
-from django.db import IntegrityError
-import traceback
-
-
-logger = logging.getLogger(__name__)
+from rest_framework_simplejwt.views import TokenObtainPairView
+from notifications.services import send_fcm_to_token
 
 User = get_user_model()
+
+
+# ===========================================================================
+# ✅ [추가] 기본 로그인(/api/token/)을 대체할 커스텀 뷰
+# ===========================================================================
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         # 1. 기본 로직 실행 (토큰 발급)
@@ -92,20 +93,29 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 #             status=status.HTTP_200_OK,
 #         )
 
+
 class SocialLoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
     def post(self, request):
+        print("[SocialLoginView] POST request received")  # 로그 추가
         provider = request.data.get("provider")
         social_id = request.data.get("socialId")
 
         # 신규회원 여부 확인 - 기존회원의 경우
         try:
             user = User.objects.get(provider=provider, social_id=social_id)
+            print(f"[SocialLoginView] Existing user found: {user.id}")  # 로그 추가
             # JWT 발급
             # 구글은 아이디 토큰 jwt 안에 정도가 들어있어서 토큰하나적어두면 알아서받아옴
             refresh = RefreshToken.for_user(user)
+
+            # ✅ [핵심 1-1] 소셜 로그인도 마찬가지로 표식을 남깁니다.
+            cache_key = f"just_logged_in:{user.id}"
+            cache.set(cache_key, True, timeout=60)
+            print(f"[SocialLoginView] Cache set: key='{cache_key}', value=True")  # 로그 추가
+
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
@@ -113,6 +123,7 @@ class SocialLoginView(APIView):
             }, status=200)
 
         except User.DoesNotExist:
+            print("[SocialLoginView] User does not exist (New User)")  # 로그 추가
             # 신규유저는 프로바이더+소셜아이디 데이터베이스에 저장
             user = User.objects.create_user(
                 email=None,
@@ -135,10 +146,6 @@ class MeView(APIView):
 
     def get(self, request):
         user = request.user
-        logger.info(f"[MeView][GET] user={user} (id={user.id}, email={user.email})")
-        logger.info(f"[MeView][GET] headers={request.headers}")
-        print("🔍 Authorization header:", request.headers.get("Authorization"))
-
         return Response(
             {
                 "id": user.id,
@@ -166,19 +173,9 @@ class MeView(APIView):
     def patch(self, request):
         user = request.user
 
-        logger.info(f"[MeView][PATCH] user={user} (id={user.id})")
-        logger.info(f"[MeView][PATCH] request.data = {request.data}")
-        logger.info(f"[MeView][PATCH] headers={request.headers}")
-
         serializer = UserUpdateSerializer(user, data=request.data, partial=True)
-
-        if not serializer.is_valid():
-            logger.error(f"[MeView][PATCH] serializer errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        logger.info(f"[MeView][PATCH] Update Success for user_id={user.id}")
 
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
@@ -188,20 +185,42 @@ class RegisterFcmTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        print("[RegisterFcmTokenView] POST request received")  # 로그 추가
         token = request.data.get("fcm_token")
         if not token:
+            print("[RegisterFcmTokenView] Error: fcm_token missing in request data")  # 로그 추가
             return Response({"detail": "fcm_token 누락"}, status=status.HTTP_400_BAD_REQUEST)
 
         user = request.user
+        print(f"[RegisterFcmTokenView] User: {user.id}, Token: {token[:20]}...")  # 로그 추가 (토큰 일부만 출력)
+
         user.fcm_token = token
         user.save(update_fields=["fcm_token"])
+        print("[RegisterFcmTokenView] Token saved to DB")  # 로그 추가
 
-        # ✅ 여기서 바로 푸시 전송
-        send_fcm_to_token(
-            token=token,
-            title="로그인 알림",
-            body=f"{user.username} 님이 로그인했습니다.",
-        )
+        # ✅ [핵심 2] "방금 로그인했니?" 확인 후 알림 발송
+        cache_key = f"just_logged_in:{user.id}"
+        is_just_logged_in = cache.get(cache_key)
+        print(f"[RegisterFcmTokenView] Checking cache key='{cache_key}'. Result: {is_just_logged_in}")  # 로그 추가
+
+        if is_just_logged_in:
+            print("[RegisterFcmTokenView] 'Just Logged In' flag found! Sending notification...")  # 로그 추가
+            try:
+                res = send_fcm_to_token(
+                    token=token,
+                    title="로그인 알림",
+                    body=f"{user.username} 님이 로그인했습니다.",
+                )
+                print(f"[RegisterFcmTokenView] Notification sent result: {res}")  # 로그 추가
+            except Exception as e:
+                print(f"[RegisterFcmTokenView] Failed to send notification: {e}")
+                traceback.print_exc()
+
+            # 중복 발송 방지를 위해 표식 즉시 제거
+            cache.delete(cache_key)
+            print(f"[RegisterFcmTokenView] Cache key '{cache_key}' deleted.")  # 로그 추가
+        else:
+            print("[RegisterFcmTokenView] 'Just Logged In' flag NOT found. Skipping notification.")  # 로그 추가
 
         return Response({"detail": "ok"}, status=status.HTTP_200_OK)
 
@@ -218,13 +237,9 @@ class SendEmailCodeView(APIView):
         if not email:
             return Response({"detail": "email 필요"}, status=400)
 
-        # 6자리 인증코드 생성
         code = secrets.randbelow(900000) + 100000
-
-        # 3분간 유효한 코드 저장
         cache.set(f"email_code:{email}", code, timeout=180)
 
-        # 이메일 전송
         send_mail(
             "이메일 인증코드",
             f"인증코드: {code}\n3분 안에 입력해주세요.",
@@ -256,7 +271,6 @@ class VerifyEmailCodeView(APIView):
         if str(saved) != str(code):
             return Response({"detail": "코드 불일치"}, status=400)
 
-        # 성공 시 "인증됨" 상태 저장 (5분)
         cache.set(f"email_verified:{email}", True, timeout=300)
 
         return Response({"detail": "인증 성공"}, status=200)
@@ -305,9 +319,9 @@ class SignupView(APIView):
             status=201
         )
 class WithdrawalView(APIView):
-    permission_classes = [IsAuthenticated] # 로그인한 사람만 가능
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request):
         user = request.user
-        user.delete() # DB에서 CASCADE로 연쇄 삭제됨
+        user.delete()
         return Response({"message": "회원 탈퇴 완료"}, status=status.HTTP_200_OK)
