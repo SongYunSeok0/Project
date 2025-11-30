@@ -15,12 +15,10 @@
 
 <pre>
 [스마트 약통 (Arduino/ESP32 + HX711)]
- └─ LoRa / Wi-Fi
-      ↓
-[라즈베리파이 or IoT Gateway]
+ └─ Wi-Fi
  ├─ 무게 수집
  ├─ EWMA 필터링
- └─ 서버 전송 (HTTP/MQTT)
+ └─ 서버 전송 (HTTP)
       ↓
 [Django Backend + PostgreSQL]
  ├─ 무게 기반 복용 판별 AI
