@@ -66,7 +66,7 @@ core/
  ├─ push (FCM)
  └─ util
 
-common/design/
+shared/
  └─ UI 컴포넌트 (TopBar / BottomBar)
 </pre>
 
