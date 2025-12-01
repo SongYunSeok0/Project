@@ -12,7 +12,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.shared.ui.theme.componentTheme
 
 @Composable
@@ -23,18 +22,19 @@ fun AppMessageCard(
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     ) {
+    val finalBackground = backgroundColor ?: (
+            if (isUser) MaterialTheme.componentTheme.inquiryCardQuestion
+            else MaterialTheme.componentTheme.inquiryCardAnswer
+            )
+
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(
-                if (isUser) MaterialTheme.componentTheme.inquiryCardQuestion
-                else MaterialTheme.componentTheme.inquiryCardAnswer
-            )
+            .background(finalBackground)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
-            text = text,
-            fontSize = 14.sp
+            text = text
         )
     }
 }
