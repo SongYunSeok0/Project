@@ -14,7 +14,6 @@ import com.myrhythm.splash.SplashScreen
 import com.myrhythm.splash.SplashState
 import com.myrhythm.splash.SplashViewModel
 import com.myrhythm.ui.theme.MyRhythmTheme
-import com.myrythm.AppRoot
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.activity.enableEdgeToEdge
 

@@ -7,7 +7,7 @@ import com.data.network.api.NewsApi
 import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
 import com.data.network.api.ChatbotApi
-import com.data.network.api.HealthApi
+import com.data.network.api.HeartRateApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -46,7 +46,7 @@ object NetworkModule {
     // ---- Common ----
     @Provides @Singleton
     fun provideLogging(): HttpLoggingInterceptor =
-        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
 
     @Provides @Singleton
     fun provideMoshi(): Moshi =
@@ -167,8 +167,8 @@ object NetworkModule {
     ): RegiHistoryApi = retrofit.create(RegiHistoryApi::class.java)
     //건강
     @Provides
-    fun provideHealthApi(@UserRetrofit retrofit: Retrofit): HealthApi =
-        retrofit.create(HealthApi::class.java)
+    fun provideHealthApi(@UserRetrofit retrofit: Retrofit): HeartRateApi =
+        retrofit.create(HeartRateApi::class.java)
 
 
     @Provides

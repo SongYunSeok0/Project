@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import com.domain.usecase.auth.SendEmailCodeUseCase
 import com.domain.usecase.auth.VerifyEmailCodeUseCase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
@@ -21,84 +23,53 @@ class EditProfileViewModel @Inject constructor(
     private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase
 ) : ViewModel() {
 
-    // 서버에서 가져온 프로필 (도메인 모델 그대로)
-    private val _profile = MutableStateFlow<UserProfile?>(null)
-    val profile: StateFlow<UserProfile?> = _profile
+    val profile = userRepository.observeLocalProfile()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // 저장/로딩 결과 이벤트
     private val _events = Channel<EditProfileEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    init {
-        loadProfile()
-    }
-
-    fun loadProfile() = viewModelScope.launch {
-        runCatching { userRepository.getProfile() }
-            .onSuccess { userProfile ->
-                _profile.value = userProfile
-            }
-            .onFailure {
-                _events.send(EditProfileEvent.LoadFailed)
-            }
-    }
-
     fun sendEmailCode(email: String) = viewModelScope.launch {
-        // UseCase 실행 (operator invoke 덕분에 함수처럼 호출 가능)
         runCatching {
             sendEmailCodeUseCase(email)
         }
     }
 
-    // 2. 인증 코드 검증 (결과를 UI로 전달하기 위해 콜백 사용)
-    fun verifyEmailCode(email: String, code: String, onResult: (Boolean) -> Unit) = viewModelScope.launch {
-        val isSuccess = runCatching {
-            verifyEmailCodeUseCase(email, code)
-        }.getOrDefault(false)
+    fun verifyEmailCode(email: String, code: String, onResult: (Boolean) -> Unit) =
+        viewModelScope.launch {
+            val ok = runCatching { verifyEmailCodeUseCase(email, code) }.getOrDefault(false)
+            onResult(ok)
+        }
 
-        onResult(isSuccess)
-    }
-
-
-
-    /**
-     * UI에서 문자열로 받은 값들을 도메인 UserProfile로 변환해서 저장
-     */
     fun saveProfile(
         username: String,
         heightText: String,
         weightText: String,
-        ageText: String,   // 1125
-        gender: String? = null,
+        ageText: String,
+        gender: String?,
         phone: String?,
         prot_email: String?,
-        email: String,
+        email: String
     ) = viewModelScope.launch {
 
-        // 문자열 → 숫자 변환 (실패하면 null)
         val height = heightText.toDoubleOrNull()
         val weight = weightText.toDoubleOrNull()
-        val age = ageText.toIntOrNull()
 
         val newProfile = UserProfile(
             username = username,
             height = height,
             weight = weight,
-            //age = age,
-            //birth_date = profile.value?.birth_date,
-            // 1125         // ageText 를 yyyy-mm-dd 그대로 birth_date 로 사용
-            age = null,                    // 유저 테이블에 birth_date만 있고 age 없음
-            birth_date = ageText,          // 생년월일 2000-10-10 형태로 유저 테이블에 저장
+            age = null,
+            birth_date = ageText,
             gender = gender,
             phone = phone,
             prot_email = prot_email,
-            email = email,
+            email = email
         )
 
         runCatching {
             userRepository.updateProfile(newProfile)
-        }.onSuccess { updatedProfile ->
-            _profile.value = updatedProfile
+        }.onSuccess {
             _events.send(EditProfileEvent.SaveSuccess)
         }.onFailure {
             _events.send(EditProfileEvent.SaveFailed)

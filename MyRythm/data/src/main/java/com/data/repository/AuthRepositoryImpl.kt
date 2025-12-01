@@ -40,7 +40,7 @@ class AuthRepositoryImpl @Inject constructor(
         return res.isSuccessful
     }
 
-// 1127 자동로그인 적용 - 일부 수정한 코드
+    // 1127 자동로그인 적용 - 일부 수정한 코드
     override suspend fun login(id: String, pw: String, autoLogin: Boolean): Result<AuthTokens> =
         withContext(io) {
             runCatching {
@@ -217,7 +217,7 @@ class AuthRepositoryImpl @Inject constructor(
             false
         }
     }
-// 1127 11:27 merge seok into yun
+    // 1127 11:27 merge seok into yun
     override fun getUserId(): Long {
         val access = tokenStore.current().access
             ?: throw IllegalStateException("No access token stored!")
