@@ -70,11 +70,25 @@ class MainViewModel @Inject constructor(
         initFcmToken()
     }
 
+    // RegiHistory와 Plan을 모두 보관
+    private val _histories = MutableStateFlow<List<RegiHistory>>(emptyList())
+    private val _plans = MutableStateFlow<List<Plan>>(emptyList())
+
     // RegiHistory 먼저 로딩
     private fun load(userId: Long) {
+        // RegiHistory 구독
         getRegiHistoriesUseCase()
             .onEach { histories ->
-                observePlans(userId, histories)
+                _histories.value = histories
+                updateNextPlan(_plans.value, histories)
+            }
+            .launchIn(viewModelScope)
+
+        // Plan 구독
+        getPlansUseCase(userId)
+            .onEach { plans ->
+                _plans.value = plans
+                updateNextPlan(plans, _histories.value)
             }
             .launchIn(viewModelScope)
     }
@@ -90,12 +104,20 @@ class MainViewModel @Inject constructor(
             ?.toLongOrNull()
             ?: return false
 
-        val updated = plan.copy(takenAt = newTime)
+        // ✅ 같은 시간대의 모든 Plan 찾기
+        val samePlans = _plans.value.filter {
+            it.takenAt == oldTime && it.taken == null
+        }
 
-        val ok = updatePlanUseCase(userId, updated)
-        if (ok) load(userId)
+        // ✅ 모든 Plan 업데이트
+        var allSuccess = true
+        samePlans.forEach { p ->
+            val updated = p.copy(takenAt = newTime)
+            val ok = updatePlanUseCase(userId, updated)
+            if (!ok) allSuccess = false
+        }
 
-        return ok
+        return allSuccess
     }
 
     // 약 복용 완료 처리
@@ -107,18 +129,9 @@ class MainViewModel @Inject constructor(
         val updated = plan.copy(taken = now)
 
         viewModelScope.launch {
-            val ok = updatePlanUseCase(userId, updated)
-            if (ok) load(userId)
+            updatePlanUseCase(userId, updated)
+            // load는 자동으로 Flow에서 업데이트됨
         }
-    }
-
-    // Plan 흐름 감시
-    private fun observePlans(userId: Long, histories: List<RegiHistory>) {
-        getPlansUseCase(userId)
-            .onEach { plans ->
-                updateNextPlan(plans, histories)
-            }
-            .launchIn(viewModelScope)
     }
 
     // 다음 복용 일정 계산
@@ -136,8 +149,9 @@ class MainViewModel @Inject constructor(
         _nextPlan.value = next
 
         if (next != null) {
-            val labelMap = histories.associateBy({ it.id }, { it.label ?: "" })
-            val label = labelMap[next.regihistoryId] ?: next.medName ?: "약"
+            // ✅ 수정: regihistoryId로 매칭되는 history를 직접 찾기
+            val matchedHistory = histories.find { it.id == next.regihistoryId }
+            val label = matchedHistory?.label ?: "복용 알림"
 
             _nextLabel.value = label
 

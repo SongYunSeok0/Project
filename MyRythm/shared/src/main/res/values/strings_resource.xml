@@ -203,4 +203,12 @@
     <string name="map_error_location_not_found">위치 정보를 가져올 수 없습니다.</string>
     <string name="scheduler_error_recognition_no_result_title">영역 인식 결과 없음</string>
     <string name="scheduler_error_recognition_no_text_detail">선택한 영역에서 텍스트를 찾지 못했습니다.\n영역을 다시 지정하세요.</string>
+
+    <string name="detail_title">복용 상세</string>
+    <string name="regi_label">처방명</string>
+    <string name="med_name_label">약 이름</string>
+    <string name="meal_time_label">식사 관계</string>
+    <string name="memo_label">메모</string>
+    <string name="alarm_off">알람해제</string>
+    <string name="alarm_label">알람</string>
 </resources>

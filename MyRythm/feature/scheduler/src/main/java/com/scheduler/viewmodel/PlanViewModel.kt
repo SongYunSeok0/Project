@@ -102,6 +102,15 @@ class PlanViewModel @Inject constructor(
         }
     }
 
+    // ✅ 알람 토글 함수 추가
+    fun toggleAlarm(userId: Long, planId: Long, newValue: Boolean) {
+        viewModelScope.launch {
+            val plan = _uiState.value.plans.find { it.id == planId } ?: return@launch
+            val updated = plan.copy(useAlarm = newValue)
+            updatePlanUseCase(userId, updated)
+        }
+    }
+
     private fun makeItemsByDate(
         plans: List<Plan>,
         histories: List<RegiHistory>
@@ -116,6 +125,7 @@ class PlanViewModel @Inject constructor(
 
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
+        // 같은 날짜, 같은 regihistoryId, 같은 시간으로 그룹화
         plans
             .filter { it.takenAt != null }
             .groupBy { p ->
@@ -125,19 +135,27 @@ class PlanViewModel @Inject constructor(
                 val rhId = p.regihistoryId
                 Triple(date, rhId, time)
             }
-            .forEach { (_, group) ->
-                val p = group.first()
+            .forEach { (key, group) ->
+                val (date, rhId, time) = key
 
-                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
-                val date = local.toLocalDate()
-                val time = local.toLocalTime().toString().substring(0, 5)
+                val label = labelMap[rhId] ?: group.first().medName ?: "약"
 
-                val label = labelMap[p.regihistoryId] ?: p.medName
+                // 그룹의 모든 약 이름 수집
+                val medNames = group.map { it.medName }
+                val planIds = group.map { it.id }
+
+                // 대표 Plan (첫 번째)
+                val representative = group.first()
 
                 val item = MedItem(
+                    planIds = planIds,
                     label = label,
+                    medNames = medNames,
                     time = time,
-                    status = IntakeStatus.SCHEDULED
+                    mealTime = representative.mealTime,
+                    memo = representative.note,
+                    useAlarm = representative.useAlarm,
+                    status = if (group.all { it.taken != null }) IntakeStatus.DONE else IntakeStatus.SCHEDULED
                 )
 
                 out.getOrPut(date) { mutableListOf() }.add(item)

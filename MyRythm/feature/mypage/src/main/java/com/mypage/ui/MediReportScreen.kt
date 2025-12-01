@@ -13,9 +13,14 @@ import com.mypage.viewmodel.MediReportViewModel
 
 @Composable
 fun MediReportScreen(
+    userId: Long,
     viewModel: MediReportViewModel = hiltViewModel()
 ) {
     val records by viewModel.records.collectAsState()
+
+    val groupedRecords = remember(records) {
+        groupMediRecords(records)
+    }
 
     Column(
         modifier = Modifier
@@ -33,10 +38,14 @@ fun MediReportScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(records) { record ->
-                MediRecordCard(record = record)
+            items(groupedRecords) { group ->
+                GroupedMediRecordCard(
+                    group = group,
+                    onDeleteGroup = { deletedGroup ->
+                        viewModel.deleteRecordGroup(userId, deletedGroup)
+                    }
+                )
             }
         }
     }
 }
-

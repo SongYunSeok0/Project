@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.scheduler.viewmodel.PlanViewModel
 import com.shared.R
@@ -40,8 +41,13 @@ private val BG = Color(0xFFFCF8FF)
 // 데이터 모델
 enum class IntakeStatus { DONE, SCHEDULED }
 data class MedItem(
+    val planIds: List<Long>,          // 여러 Plan의 ID 리스트
     val label: String,
+    val medNames: List<String>,       // 여러 약 이름 리스트
     val time: String,
+    val mealTime: String?,
+    val memo: String?,
+    val useAlarm: Boolean,
     val status: IntakeStatus
 )
 
@@ -63,7 +69,12 @@ fun SchedulerScreen(
 
     SchedulerContent(
         itemsByDate = items,
-        resetKey = ui.plans.hashCode()
+        resetKey = ui.plans.hashCode(),
+        onToggleAlarm = { planIds, newValue ->
+            planIds.forEach { planId ->
+                vm.toggleAlarm(userId, planId, newValue)
+            }
+        }
     )
 }
 
@@ -74,17 +85,20 @@ fun SchedulerScreen(
 fun SchedulerContent(
     itemsByDate: Map<LocalDate, List<MedItem>> = emptyMap(),
     clock: Clock = Clock.systemDefaultZone(),
-    resetKey: Any? = null
+    resetKey: Any? = null,
+    onToggleAlarm: (List<Long>, Boolean) -> Unit = { _, _ -> }
 ) {
     val monthSuffix = stringResource(R.string.month_suffix)
     val weekSuffix = stringResource(R.string.week_suffix)
     val dateFormat = stringResource(R.string.format_date_month_day)
     val upcomingText = stringResource(R.string.status_upcoming)
+    val alarmOffText = stringResource(R.string.alarm_off)
     val emptyMessage = stringResource(R.string.scheduler_message_schedule_empty)
 
     val today = remember(clock) { LocalDate.now(clock) }
     var weekAnchor by remember { mutableStateOf(today) }
     var selectedDay by remember { mutableStateOf(today) }
+    var selectedItem by remember { mutableStateOf<MedItem?>(null) }
 
     val startPage = 5000
     val pagerState = rememberPagerState(initialPage = startPage, pageCount = { 10000 })
@@ -113,13 +127,12 @@ fun SchedulerContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 
-        // ★ 화면 전체를 스크롤 가능하도록 변경
         Column(
             Modifier
                 .padding(padding)
                 .fillMaxSize()
                 .background(BG)
-                .verticalScroll(rememberScrollState())   // ← ★ 이거 필수
+                .verticalScroll(rememberScrollState())
         ) {
 
             val wf = WeekFields.of(Locale.KOREAN)
@@ -195,7 +208,8 @@ fun SchedulerContent(
                                 .clickable {
                                     selectedDay = day
                                     val diffWeeks =
-                                        java.time.temporal.ChronoUnit.WEEKS.between(today, day).toInt()
+                                        java.time.temporal.ChronoUnit.WEEKS.between(today, day)
+                                            .toInt()
                                     val target = startPage + diffWeeks
                                     if (pagerState.currentPage != target) {
                                         scope.launch { pagerState.animateScrollToPage(target) }
@@ -237,7 +251,8 @@ fun SchedulerContent(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 12.dp),
+                                .padding(bottom = 12.dp)
+                                .clickable { selectedItem = item },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -269,7 +284,7 @@ fun SchedulerContent(
                                 }
 
                                 Text(
-                                    upcomingText,
+                                    if (item.useAlarm) upcomingText else alarmOffText,
                                     color = Color(0xFF999999),
                                     fontSize = 12.sp
                                 )
@@ -279,6 +294,142 @@ fun SchedulerContent(
                 }
             }
         }
+    }
+
+    // 상세보기 다이얼로그
+    selectedItem?.let { item ->
+        MedDetailDialog(
+            item = item,
+            onDismiss = { selectedItem = null },
+            onToggleAlarm = { newValue ->
+                onToggleAlarm(item.planIds, newValue)
+                selectedItem = item.copy(useAlarm = newValue)
+            }
+        )
+    }
+}
+
+@Composable
+fun MedDetailDialog(
+    item: MedItem,
+    onDismiss: () -> Unit,
+    onToggleAlarm: (Boolean) -> Unit
+) {
+    val detailTitle = stringResource(R.string.detail_title)
+    val regiLabel = stringResource(R.string.regi_label)
+    val medNameLabel = stringResource(R.string.med_name_label)
+    val mealTimeLabel = stringResource(R.string.meal_time_label)
+    val memoLabel = stringResource(R.string.memo_label)
+    val alarmLabel = stringResource(R.string.alarm_label)
+    val closeText = stringResource(R.string.close)
+
+    val mealTimeText = when(item.mealTime) {
+        "before" -> stringResource(R.string.meal_relation_before)
+        "after" -> stringResource(R.string.meal_relation_after)
+        "none" -> stringResource(R.string.meal_relation_irrelevant)
+        else -> "-"
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .heightIn(max = 600.dp) // 최대 높이 제한
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()) // 스크롤 가능하게
+            ) {
+                Text(
+                    detailTitle,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF101828),
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+
+                DetailRow(regiLabel, item.label)
+
+                // 약 이름이 여러 개일 경우 세로로 표시
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text(
+                        medNameLabel,
+                        fontSize = 14.sp,
+                        color = GrayText,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    item.medNames.forEach { medName ->
+                        Text(
+                            "• $medName",
+                            fontSize = 14.sp,
+                            color = Color(0xFF101828),
+                            modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                        )
+                    }
+                }
+
+                DetailRow(mealTimeLabel, mealTimeText)
+                DetailRow(memoLabel, item.memo ?: "-")
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        alarmLabel,
+                        fontSize = 14.sp,
+                        color = GrayText
+                    )
+                    Switch(
+                        checked = item.useAlarm,
+                        onCheckedChange = onToggleAlarm
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(closeText)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            label,
+            fontSize = 14.sp,
+            color = GrayText,
+            modifier = Modifier.width(80.dp)
+        )
+        Text(
+            value,
+            fontSize = 14.sp,
+            color = Color(0xFF101828)
+        )
     }
 }
 
