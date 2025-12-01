@@ -34,7 +34,8 @@ fun AppMessageCard(
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
-            text = text
+            text = text,
+            style = style
         )
     }
 }
