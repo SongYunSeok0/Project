@@ -38,7 +38,8 @@ fun EditScreen(
 
     val isLocal = !profile?.email.isNullOrEmpty()
 
-    var name by remember { mutableStateOf("") }
+    val initialName = profile?.username
+    var name by remember(profile) { mutableStateOf(initialName ?: "") }
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var birthDate by remember { mutableStateOf("") }
@@ -47,8 +48,21 @@ fun EditScreen(
     var protEmail by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
 
+    /*
+     // 1125 로컬/소셜 구분 (이메일 유무 기준)
+    val isLocal = !profile?.email.isNullOrEmpty()
+
+    // --- 서버값 초기화 ---
+    // ⚡ 서버에서 받은 값으로 초기값 설정
+    var name by remember(profile) { mutableStateOf(profile?.username ?: "") }
+    var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
+    var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
+    var birthDate by rememberSaveable(profile) { mutableStateOf(profile?.birth_date ?: "") }
+    var phone by remember(profile) { mutableStateOf(profile?.phone ?: "") }
+     */
+
     // 데이터 없으면 1회 입력 있으면 수정 불가
-    val hasName = name.isNotBlank()
+    val hasName = !initialName.isNullOrBlank()
     val hasGender = gender.isNotBlank()
 
     var isProtEmailVerified by remember { mutableStateOf(false) }
@@ -119,6 +133,7 @@ fun EditScreen(
             } else {
                 EditableField(nameText, name) { name = it }
             }
+
             EditableField(heightText, height) { height = it }
             EditableField(weightText, weight) { weight = it }
 

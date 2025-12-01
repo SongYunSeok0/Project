@@ -24,6 +24,6 @@ interface AuthRepository {
     // 1201 비밀번호잊음창의 휴대폰->이메일 인증 변경중, 비번재설정 추가
     suspend fun resetPassword(email: String, newPassword: String): Boolean
 
-
+    suspend fun logout(): Result<Unit>
     fun getUserId(): Long
 }

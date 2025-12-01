@@ -37,7 +37,7 @@ import com.shared.ui.components.ProfileHeader
 
 @Composable
 fun MyPageScreen(
-    viewModel: MyPageViewModel = hiltViewModel(),   //viewModel 추가
+    viewModel: MyPageViewModel = hiltViewModel(),
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
@@ -45,21 +45,28 @@ fun MyPageScreen(
     onMediClick: () -> Unit = {},
     onWithdrawalSuccess: () -> Unit = {}
 ) {
-    //프로필 상태 Flow → Compose State
     val profile by viewModel.profile.collectAsState()
-
-    //탈퇴 성공 감지 및 화면 이동 로직
     val context = LocalContext.current
-
-    //탈퇴 확인
     var showDeleteDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            if (event is MyPageEvent.WithdrawalSuccess) {
-                Toast.makeText(context, "회원 탈퇴가 완료되었습니다.", Toast.LENGTH_SHORT).show()
-                onWithdrawalSuccess() // -> 로그인 화면으로 이동!
-            } else if (event is MyPageEvent.WithdrawalFailed) {
-                Toast.makeText(context, "탈퇴 처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
+            when (event) {
+                is MyPageEvent.WithdrawalSuccess -> {
+                    Toast.makeText(context, "회원 탈퇴가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                    onWithdrawalSuccess()
+                }
+                is MyPageEvent.WithdrawalFailed -> {
+                    Toast.makeText(context, "탈퇴 처리에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                }
+                is MyPageEvent.LogoutSuccess -> {
+                    Toast.makeText(context, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show()
+                    onLogoutClick()
+                }
+                is MyPageEvent.LogoutFailed -> {
+                    Toast.makeText(context, "로그아웃에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                }
+                else -> {} // 다른 이벤트 무시
             }
         }
     }
@@ -81,11 +88,12 @@ fun MyPageScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             InfoCard("Heart rate", "215bpm", R.drawable.heart)
-
             InfoCard("Height", "${profile?.height ?: "-"}cm", R.drawable.height)
-
             InfoCard("Weight", "${profile?.weight ?: "-"}kg", R.drawable.weight)
         }
 
@@ -94,25 +102,22 @@ fun MyPageScreen(
         Column(Modifier.fillMaxWidth()) {
             MenuItem(editPageText, onEditClick)
             MenuItem(heartRateText, onHeartClick)
-            MenuItem("복약 기록",onMediClick)
+            MenuItem("복약 기록", onMediClick)
             MenuItem(faqCategoryText, onFaqClick)
-            MenuItem(logoutText, onLogoutClick)
-            MenuItem("회원 탈퇴") {showDeleteDialog = true}
+            MenuItem(logoutText) { viewModel.logout() }
+            MenuItem("회원 탈퇴") { showDeleteDialog = true }
         }
     }
 
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-
             title = {
                 Text("정말 탈퇴하시겠습니까?")
             },
-
             text = {
                 Text("회원 탈퇴 시 모든 데이터가 삭제되며\n복구가 불가능합니다.")
             },
-
             confirmButton = {
                 Text(
                     text = "탈퇴하기",
@@ -125,7 +130,6 @@ fun MyPageScreen(
                         }
                 )
             },
-
             dismissButton = {
                 Text(
                     text = "취소",
@@ -151,8 +155,7 @@ fun InfoCard(
             .width(110.dp)
             .height(130.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(Color.White), // 은은한 배경색
-
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -163,8 +166,9 @@ fun InfoCard(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary
-                        .copy(alpha = 0.15f)),
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -212,10 +216,16 @@ fun MenuItem(title: String, onClick: () -> Unit) {
         Spacer(Modifier.width(16.dp))
         Text(text = title, fontSize = 16.sp, color = Color(0xff221f1f))
         Spacer(Modifier.weight(1f))
-        Image(painter = painterResource(id = R.drawable.arrow), contentDescription = null, modifier = Modifier.size(20.dp))
+        Image(
+            painter = painterResource(id = R.drawable.arrow),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
 @Preview(widthDp = 392, heightDp = 1271)
 @Composable
-private fun MyPageScreenPreview() { MyPageScreen() }
+private fun MyPageScreenPreview() {
+    MyPageScreen()
+}

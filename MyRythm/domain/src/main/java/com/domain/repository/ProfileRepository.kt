@@ -9,4 +9,6 @@ interface ProfileRepository {
     suspend fun updateProfile(profile: UserProfile): UserProfile
 
     fun observeLocalProfile(): Flow<UserProfile?>
+
+    suspend fun clearProfile()
 }

@@ -443,7 +443,7 @@ private fun weekRangeOf(anchor: LocalDate): List<LocalDate> {
 }
 
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun Preview_SchedulerContent() {
 
@@ -459,4 +459,4 @@ fun Preview_SchedulerContent() {
         itemsByDate = demoItems,
         resetKey = 0
     )
-}
+}*/

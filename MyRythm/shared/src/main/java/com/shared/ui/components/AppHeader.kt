@@ -53,7 +53,7 @@ fun ChatbotHeader(
         ) {
             Text(
                 botIcon,
-                color = Color.White,
+                color = LoginTertiary,
                 fontSize = 16.sp,
                 lineHeight = 1.5.em
             )
@@ -111,11 +111,14 @@ fun ProfileHeader(
 
         // 인사말 + 사용자명
         Column {
-            Text(text = "안녕하세요")
+            Text(text = "안녕하세요",
+                color = LoginTertiary
+            )
 
             Text(
                 text = "${username ?: ""}님",
-                style = TextStyle(fontSize = 18.sp)
+                style = TextStyle(fontSize = 18.sp),
+                color = LoginTertiary
             )
         }
     }

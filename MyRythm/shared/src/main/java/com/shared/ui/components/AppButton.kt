@@ -4,8 +4,14 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -78,6 +84,61 @@ fun AppSelectableButton(
                 color = textColor,
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+@Composable
+fun AppButton(
+    text: String = "",
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    height: Dp = 48.dp,
+    cornerRadius: Dp = 12.dp,                // ⭐ 추가됨
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    textColor: Color = Color.White,
+    useClickEffect: Boolean = true,
+    content: (@Composable () -> Unit)? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val finalBackground = when {
+        useClickEffect && isPressed -> backgroundColor.copy(alpha = 0.7f)
+        else -> backgroundColor
+    }
+
+    Surface(
+        color = finalBackground,
+        shape = RoundedCornerShape(cornerRadius),
+        modifier = modifier
+            .height(height)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) { onClick() }
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (content != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    content()
+
+                    if (text.isNotEmpty()) Spacer(Modifier.width(6.dp))
+
+                    if (text.isNotEmpty()) {
+                        Text(text, color = textColor, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            } else {
+                Text(
+                    text = text,
+                    color = textColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

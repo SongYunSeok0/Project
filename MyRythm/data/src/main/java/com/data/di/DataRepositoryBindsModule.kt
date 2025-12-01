@@ -5,6 +5,7 @@ import com.data.repository.AuthRepositoryImpl
 import com.data.repository.ChatbotRepositoryImpl
 import com.data.repository.FavoriteRepositoryImpl
 import com.data.repository.HeartRateRepositoryImpl
+import com.data.repository.InquiryRepositoryImpl
 import com.data.repository.MediRecordRepositoryImpl
 import com.data.repository.PlanRepositoryImpl
 import com.data.repository.ProfileRepositoryImpl
@@ -16,6 +17,7 @@ import com.domain.repository.AuthRepository
 import com.domain.repository.ChatbotRepository
 import com.domain.repository.FavoriteRepository
 import com.domain.repository.HeartRateRepository
+import com.domain.repository.InquiryRepository
 import com.domain.repository.MediRecordRepository
 import com.domain.repository.PlanRepository
 import com.domain.repository.ProfileRepository
@@ -71,4 +73,8 @@ abstract class DataRepositoryBindsModule {
     @Binds
     @Singleton
     abstract fun bindPushRepository(impl: PushRepositoryImpl): PushRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindInquiryRepository(impl: InquiryRepositoryImpl): InquiryRepository
 }

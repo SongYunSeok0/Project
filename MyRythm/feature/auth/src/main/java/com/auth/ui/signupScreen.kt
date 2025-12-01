@@ -157,10 +157,10 @@ fun SignupScreen(
                         if (email.isNotBlank()) {
                             // 에러 메시지 처리는 ViewModel 이벤트나 로컬 스낵바로 가능
                             viewModel.updateSignupEmail(email)
-                            //viewModel.sendCode()  1128 실제코드
-                            isEmailCodeSent = true  // 1128 ui테스트용 임시로직
-                            isVerificationCompleted = false
-                            code = ""
+                            viewModel.sendCode()
+                            //isEmailCodeSent = true  // 1128 ui테스트용 임시로직
+                            //isVerificationCompleted = false
+                            //code = ""
                         }
                     },
                     enabled = !isEmailCodeSent && email.isNotBlank(),
@@ -197,11 +197,11 @@ fun SignupScreen(
                             // ViewModel에 현재 코드 상태 확실히 업데이트 후 검증 요청
                             viewModel.updateSignupEmail(email) // 안전장치
                             viewModel.updateCode(code)
-                            // viewModel.verifyCode()  1128 실제코드
+                            viewModel.verifyCode()
                             // 1128 UI 테스트용 임시 로직
-                            if (code == "1234") {
-                                isVerificationCompleted = true
-                            }
+                            //if (code == "1234") {
+                            //    isVerificationCompleted = true
+                            //}
                         },
                         enabled = !isVerificationCompleted && code.isNotBlank(),
                         modifier = Modifier.widthIn(min = 90.dp)
@@ -343,7 +343,7 @@ fun SignupScreen(
                         weight = weight.toDouble()
                     )
                     // 소셜 로그인으로 진입 시 provider/socialId 추가 처리 필요할 수 있음
-                    viewModel.signup()
+                    viewModel.signup(req)
                 },
                 enabled = !ui.loading,
                 modifier = Modifier
