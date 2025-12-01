@@ -57,6 +57,29 @@ class PlanRepositoryImpl @Inject constructor(
         api.createPlan(body)
     }
 
+
+    // ✅ [추가] 스마트 일괄 생성 구현
+    override suspend fun createPlansSmart(
+        regihistoryId: Long,
+        startDate: String,
+        duration: Int,
+        times: List<String>,
+        medName: String
+    ) {
+        // 서버 API 규격에 맞춰 Map으로 데이터를 구성합니다.
+        val body = mapOf(
+            "regihistoryId" to regihistoryId,
+            "startDate" to startDate,
+            "duration" to duration,
+            "times" to times,
+            "medName" to medName
+        )
+
+        // API 호출 (PlanApi에 createPlanSmart 함수가 있어야 합니다)
+        api.createPlanSmart(body)
+
+    }
+
     override suspend fun update(userId: Long, plan: Plan) {
         api.updatePlan(plan.id, plan.toUpdateRequest())
         syncPlans(userId)

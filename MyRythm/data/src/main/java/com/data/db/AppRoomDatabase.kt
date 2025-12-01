@@ -33,7 +33,7 @@ import com.data.db.entity.UserEntity
         DailyStepEntity::class,
         HeartRateEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {
