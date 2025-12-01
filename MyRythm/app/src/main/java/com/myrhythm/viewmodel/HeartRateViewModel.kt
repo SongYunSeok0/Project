@@ -38,7 +38,7 @@ class HeartRateViewModel @Inject constructor(
         }
     }
 
-    init {
+    fun start() {
         loadLatestHeartRate()
         syncHeartHistory()
     }

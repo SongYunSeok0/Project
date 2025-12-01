@@ -78,7 +78,8 @@ fun HeartReportScreen(
                     Spacer(Modifier.height(8.dp))
 
                     Box(
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.heartrate),
