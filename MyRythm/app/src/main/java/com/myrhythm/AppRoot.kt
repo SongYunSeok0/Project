@@ -1,54 +1,88 @@
-package com.myrythm
+package com.myrhythm
 
-import androidx.compose.foundation.layout.Box
+import android.util.Log
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.auth.navigation.*
 import com.auth.viewmodel.AuthViewModel
-import com.chatbot.navigation.*
-import com.shared.bar.AppBottomBar
-import com.shared.bar.AppTopBar
-import com.shared.navigation.*
-import com.map.navigation.*
-import com.mypage.navigation.*
-import com.news.navigation.*
-import com.scheduler.navigation.*
+import com.chatbot.navigation.ChatBotRoute
+import com.chatbot.navigation.chatbotNavGraph
 import com.data.core.auth.JwtUtils
 import com.data.core.di.CoreEntryPoint
+import com.domain.repository.*
+import com.domain.sharedvm.HeartRateVMContract
+import com.domain.sharedvm.MainVMContract
+import com.domain.sharedvm.StepVMContract
+import com.google.accompanist.swiperefresh.*
+import com.map.navigation.MapRoute
+import com.map.navigation.mapNavGraph
+import com.mypage.navigation.*
+import com.mypage.viewmodel.MyPageViewModel
 import com.myrhythm.navigation.mainNavGraph
+import com.myrhythm.viewmodel.*
+import com.news.navigation.NewsRoute
+import com.news.navigation.newsNavGraph
+import com.scheduler.navigation.*
+import com.shared.bar.AppBottomBar
+import com.shared.bar.AppTopBar
+import com.shared.navigation.MainRoute
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface SyncEntryPoint {
+    fun regiRepository(): RegiRepository
+    fun planRepository(): PlanRepository
+    fun heartRepository(): HeartRateRepository
+    fun userRepository(): UserRepository
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppRoot() {
+fun AppRoot(startFromLogin: Boolean = false) {
+
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    // TokenStore 주입 → JWT에서 userId 추출
-    val ctx = LocalContext.current
-    val tokenStore = remember {
-        EntryPointAccessors.fromApplication(ctx, CoreEntryPoint::class.java).tokenStore()
-    }
-    val userId = remember {
-        JwtUtils.extractUserId(tokenStore.current().access) ?: ""
-    }
-
-    // AuthViewModel은 상위(AppRoot)에서 소유
     val authVm: AuthViewModel = hiltViewModel()
+    val stepVm: StepViewModel = hiltViewModel()
+    val mainVm: MainViewModel = hiltViewModel()
+    val heartVm: HeartRateViewModel = hiltViewModel()
+    val myPageVm: MyPageViewModel = hiltViewModel()
 
-    // 로그아웃 완료 이벤트 수신 → 로그인 화면으로 이동
+    val ui by authVm.state.collectAsStateWithLifecycle()
+
+    val ctx = LocalContext.current
+    val tokenStore = EntryPointAccessors
+        .fromApplication(ctx, CoreEntryPoint::class.java)
+        .tokenStore()
+
+    val access = tokenStore.current().access
+    val jwtUserId = JwtUtils.extractUserId(access) ?: ""
+    val userId = ui.userId ?: jwtUserId
+    val userIdLong = userId.toLongOrNull() ?: 0L
+
+    val startDestination =
+        if (startFromLogin) AuthGraph else MainRoute(userId)
+
+    LaunchedEffect(Unit) {
+        stepVm.checkPermission()
+        stepVm.startAutoUpdateOnce()
+    }
+
     LaunchedEffect(Unit) {
         authVm.events.collectLatest { ev ->
             if (ev == "로그아웃 완료") {
@@ -62,34 +96,44 @@ fun AppRoot() {
 
     fun isRoute(k: KClass<*>) =
         routeName.startsWith(k.qualifiedName.orEmpty())
-
-
     fun isOf(vararg ks: KClass<*>) = ks.any { isRoute(it) }
 
+    val hideTopBar = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class) ||
+            isRoute(MainRoute::class)
+    val hideBottomBar = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class) ||
+            isRoute(ChatBotRoute::class)
 
-    val isAuth = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class)
-    val isMain = isRoute(MainRoute::class)
-    val isNews = isRoute(NewsRoute::class)
-
-
-    val hideTopBar = isAuth || isMain
-    val hideBottomBar = isAuth
-
-    // 탭 이동 함수
     fun goHome() = nav.navigate(MainRoute(userId)) {
-        popUpTo(nav.graph.startDestinationId) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+        popUpTo(0); launchSingleTop = true
     }
-    fun goMyPage() = nav.navigate(MyPageRoute(userId)) {
-        popUpTo(nav.graph.startDestinationId) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+    fun goMyPage() = nav.navigate(MyPageRoute) {
+        popUpTo(0); launchSingleTop = true
     }
     fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
-        popUpTo(nav.graph.startDestinationId) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+        popUpTo(0); launchSingleTop = true
+    }
+
+    // Accompanist SwipeRefresh
+    val syncEntry = EntryPointAccessors.fromApplication(ctx, SyncEntryPoint::class.java)
+    val regiRepo = syncEntry.regiRepository()
+    val planRepo = syncEntry.planRepository()
+    val heartRepo = syncEntry.heartRepository()
+    val userRepo = syncEntry.userRepository()
+
+    val scope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+
+    fun refreshAll() {
+        scope.launch {
+            refreshing = true
+            regiRepo.syncRegiHistories(userIdLong)
+            planRepo.syncPlans(userIdLong)
+            heartRepo.syncHeartHistory()
+            userRepo.syncUser()
+            myPageVm.refreshProfile()
+            Log.d("Sync", "싱크완료")
+            refreshing = false
+        }
     }
 
     Scaffold(
@@ -99,11 +143,14 @@ fun AppRoot() {
                     title = titleFor(routeName),
                     showBack = true,
                     onBackClick = {
-                        if (nav.previousBackStackEntry != null) nav.popBackStack() else goHome()
+                        if (nav.previousBackStackEntry != null) nav.popBackStack()
+                        else goHome()
                     },
-                    showSearch = isNews,
+                    showSearch = isRoute(NewsRoute::class),
                     onSearchClick = {
-                        nav.currentBackStackEntry?.savedStateHandle?.set("openSearch", true)
+                        nav.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("openSearch", true)
                     }
                 )
             }
@@ -114,8 +161,8 @@ fun AppRoot() {
                     currentScreen = tabFor(routeName),
                     onTabSelected = { tab ->
                         when (tab) {
-                            "Home"     -> goHome()
-                            "MyPage"   -> goMyPage()
+                            "Home" -> goHome()
+                            "MyPage" -> goMyPage()
                             "Schedule" -> goScheduleFlow()
                         }
                     }
@@ -123,15 +170,35 @@ fun AppRoot() {
             }
         }
     ) { inner ->
-        Box(Modifier.padding(inner)) {
-            NavHost(navController = nav, startDestination = AuthGraph) {
+
+        SwipeRefresh(
+            modifier = Modifier.padding(inner),
+            state = rememberSwipeRefreshState(isRefreshing = refreshing),
+            onRefresh = { refreshAll() }
+        ) {
+
+            NavHost(
+                navController = nav,
+                startDestination = startDestination
+            ) {
                 authNavGraph(nav)
-                mainNavGraph(nav, userId)
+                mainNavGraph(
+                    nav = nav,
+                    mainVm = mainVm as MainVMContract,
+                    heartVm = heartVm as HeartRateVMContract,
+                    stepVm = stepVm as StepVMContract,
+                    onLogoutClick = { authVm.logout() }
+                )
                 mapNavGraph()
-                newsNavGraph(nav)
-                schedulerNavGraph(nav, userId) // userId 전달
-                // 뷰모델을 NavGraph 내부에서 쓰지 않음. 람다만 전달.
-                mypageNavGraph(nav, onLogoutClick = { authVm.logout() })
+                newsNavGraph(nav, userId)
+                schedulerNavGraph(nav)
+                mypageNavGraph(
+                    nav = nav,
+                    mainVm = mainVm as MainVMContract,
+                    heartVm = heartVm as HeartRateVMContract,
+                    stepVm = stepVm as StepVMContract,
+                    onLogoutClick = { authVm.logout() }
+                )
                 chatbotNavGraph()
             }
         }
@@ -139,16 +206,16 @@ fun AppRoot() {
 }
 
 private fun titleFor(routeName: String) = when (routeName) {
-    MyPageRoute::class.qualifiedName      -> "마이페이지"
-    SchedulerRoute::class.qualifiedName   -> "일정"
-    RegiRoute::class.qualifiedName        -> "처방전 등록"
-    CameraRoute::class.qualifiedName      -> "카메라"
-    OcrRoute::class.qualifiedName         -> "처방전 인식"
+    MyPageRoute::class.qualifiedName -> "마이페이지"
+    SchedulerRoute::class.qualifiedName -> "일정"
+    RegiRoute::class.qualifiedName -> "처방전 등록"
+    CameraRoute::class.qualifiedName -> "카메라"
+    OcrRoute::class.qualifiedName -> "처방전 인식"
     HeartReportRoute::class.qualifiedName -> "심박수"
     EditProfileRoute::class.qualifiedName -> "내 정보 수정"
-    ChatBotRoute::class.qualifiedName     -> "챗봇"
-    MapRoute::class.qualifiedName         -> "지도"
-    NewsRoute::class.qualifiedName        -> "뉴스"
+    ChatBotRoute::class.qualifiedName -> "챗봇"
+    MapRoute::class.qualifiedName -> "지도"
+    NewsRoute::class.qualifiedName -> "뉴스"
     else -> "마이 리듬"
 }
 

@@ -6,18 +6,28 @@ import com.data.network.dto.plan.PlanResponse
 import com.data.network.dto.plan.PlanUpdateRequest
 import retrofit2.Response
 import retrofit2.http.*
+
 interface PlanApi {
 
     @GET("plan/")
     suspend fun getPlans(): List<PlanResponse>
 
+    //단건등록
     @POST("plan/")
-    suspend fun createPlan(@Body body: PlanCreateRequest)
+    suspend fun createPlan(@Body body: PlanCreateRequest): PlanResponse
+
+    //여러건 등록 ex)3일치 점심 저녁
+    @POST("plan/")
+    suspend fun createPlanSmart(@Body body: @JvmSuppressWildcards Map<String, Any>): Response<Any>
 
     @PATCH("plan/{id}/")
-    suspend fun updatePlan(@Path("id") planId: Long, @Body body: PlanUpdateRequest)
+    suspend fun updatePlan(
+        @Path("id") planId: Long,
+        @Body body: PlanUpdateRequest
+    ): PlanResponse
 
-    @DELETE("plan/{id}/")
-    suspend fun deletePlan(@Path("id") planId: Long)
+    @DELETE("plan/{id}/delete/")
+    suspend fun deletePlan(
+        @Path("id") planId: Long
+    ): Response<Unit>
 }
-

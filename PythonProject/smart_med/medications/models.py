@@ -13,16 +13,18 @@ class RegiHistory(models.Model):
         verbose_name="사용자 ID"
     )
 
-    # 고유 ID 자동 생성
-    # id = models.BigAutoField(
-    #     primary_key=True,
-    #     verbose_name="등록 이력 ID"
-    # )
-
     # 등록 유형 (영양제 / 병원약 등)
     regi_type = models.CharField(
         max_length=50,
         verbose_name="등록 유형 (영양제/병원약)"
+    )
+
+    # ✅ [추가] IoT Device UUID (String 형태로 저장, 필요 시 UUIDField로 변경 가능)
+    iot_device_uuid = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="IoT 기기 UUID"
     )
 
     # 병명 (기존 disase_name)
@@ -32,7 +34,6 @@ class RegiHistory(models.Model):
         null=True,
         verbose_name="병명"
     )
-
     # 발행 날짜
     issued_date = models.CharField(
         max_length=20,
@@ -40,6 +41,8 @@ class RegiHistory(models.Model):
         null=True,
         verbose_name="발행 날짜"
     )
+    # 알람 여부
+    use_alarm = models.BooleanField(default=True)
 
     class Meta:
         db_table = "regihistory"
@@ -47,7 +50,7 @@ class RegiHistory(models.Model):
         verbose_name_plural = "등록 이력 목록"
 
     def __str__(self):
-        return f"RegiHistory #{self.id} (user={self.user})"
+        return f"regihistory #{self.id} (user={self.user})"
 
 
 
@@ -62,7 +65,7 @@ class Plan(models.Model):
         blank=True  # ← 필수!!
     )
 
-    med_name = models.CharField(max_length=120)
+    med_name = models.CharField(null=True, max_length=120)
     taken_at = models.DateTimeField(null=True, blank=True)
     meal_time = models.CharField(
         max_length=20,
@@ -74,6 +77,7 @@ class Plan(models.Model):
     )
     note = models.TextField(blank=True, null=True)
     taken = models.DateTimeField(null=True, blank=True)
+    use_alarm = models.BooleanField(default=True)
     #관리용
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

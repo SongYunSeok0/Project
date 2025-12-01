@@ -109,7 +109,6 @@ DATABASES = {
     }
 }
 
-
 # ========== Email 설정 ==========
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -127,7 +126,6 @@ CACHES = {
     }
 }
 
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -135,6 +133,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+}
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'send-med-alarms-every-minute': {
+        'task': 'plans.tasks.send_med_alarms_task',  # 실행할 함수 경로
+        'schedule': crontab(minute='*'),  # 매 분마다 실행
+    },
 }
 
 # i18n

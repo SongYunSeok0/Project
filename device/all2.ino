@@ -2,14 +2,13 @@
 #include <HTTPClient.h>
 #include "HX711.h"
 
-// ------------------ HX711 설정 ------------------
+// ------------------ HX711 ------------------
 #define DOUT  4
-
 #define CLK   5
 #define CALIBRATION_FACTOR -380.0
 HX711 scale(DOUT, CLK);
 
-// ------------------ 맥박 센서 설정 ------------------
+// ------------------ Heartbeat ------------------
 const int SENSOR_PIN = 35;
 const unsigned long BPM_INTERVAL = 10000;
 const unsigned long MIN_GAP = 300;
@@ -21,77 +20,7 @@ int beats = 0;
 int baseline = 0;
 bool isAbove = false;
 float currentBPM = 0;
-unsigned long openedTime = 0;
 
-// ------------------ Wi-Fi & 서버 ------------------
-const char* ssid = "sesac";
-const char* password = "12345678";
-const char* postUrl = "http://52.87.174.140:8000/api/alerts/sensor/"; //서버에게 주는곳
-const char* getUrl  = "http://52.87.174.140:8000/api/alerts/commands/"; //서버로부터 받는곳
-
-// ------------------ 하드웨어 핀 ------------------
-#define RED_LED 14
-#define GREEN_LED 27
-#define BUZZER 12
-
-// ------------------ 상태 변수 ------------------
-bool isOpened = false;
-bool isTime = false;
-float currentWeight = 0;
-float prevWeight = 0;
-bool lastIsOpened = false;
-bool lastIsTime = false;
-float lastBPM = 0;
-unsigned long lastWeightReadTime = 0;
-const unsigned long WEIGHT_READ_INTERVAL = 500; // HX711 읽기 간격 (ms)
-const unsigned long HX711_BLOCK_MS = 80;   
-
-unsigned long lastGetTime = 0;
-unsigned long greenStart = 0;
-const unsigned long GET_INTERVAL = 10000;
-const unsigned long GREEN_DURATION = 10000; // 10초
-
-// ===================================================
-// 초기화
-// ===================================================
-void setup() {
-  Serial.begin(115200);
-  Serial.println("\n=== Pill Detection + Heartbeat System ===");
-
-  pinMode(RED_LED, OUTPUT);
-  pinMode(GREEN_LED, OUTPUT);
-  pinMode(BUZZER, OUTPUT);
-
-  digitalWrite(RED_LED, HIGH);
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(BUZZER, LOW);
-
-  analogReadResolution(12); // 값 더 세밀하게 읽기
-  analogSetPinAttenuation(SENSOR_PIN, ADC_11db);
-
-  // Wi-Fi 연결
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nWi-Fi connected!");
-  Serial.print("IP: ");
-  Serial.println(WiFi.localIP());
-
-  // HX711 초기화
-  scale.set_scale(CALIBRATION_FACTOR);
-  scale.tare();
-  Serial.println("HX711 Ready");
-
-  bpmStartTime = millis();
-  prevWeight = scale.get_units();
-}
-
-// ===================================================
-// 맥박 센서 관련 함수
-// ===================================================
 int readSmooth(int pin, int samples = 15) {
   long sum = 0;
   for (int i = 0; i < samples; i++) {
@@ -101,179 +30,364 @@ int readSmooth(int pin, int samples = 15) {
   return sum / samples;
 }
 
-void updateBPM() {
+// ------------------ WiFi ------------------
+const char* ssid = "sesac";
+const char* password = "12345678";
 
+const char* postUrl = "http://192.168.0.154:8000/api/iot/ingest/";
+const char* getUrl  = "http://192.168.0.154:8000/api/iot/alerts/commands/";
+
+const char* DEVICE_UUID  = "2cac933d85a51608";
+const char* DEVICE_TOKEN = "97211228f1fa705b3b3750f3c7693f3de4086e0b9050aa8df3c1e459e4f1f133";
+
+// ------------------ LEDs / Buzzer ------------------
+#define RED_LED 18
+#define GREEN_LED 19
+#define BUZZER 12
+
+// ------------------ Weight ------------------
+float currentWeight = 0;
+float prevWeight = 0;
+unsigned long lastWeightReadTime = 0;
+const unsigned long WEIGHT_READ_INTERVAL = 500;
+
+bool isOpened = false;
+bool openedEvent = false;
+unsigned long openedTime = 0;
+
+// ------------------ Time state ------------------
+bool isTime = false;
+unsigned long greenStart = 0;
+const unsigned long GREEN_DURATION = 10000;
+
+// --------------filter-----------------------------
+int medianBuf[5] = {0};
+int medianIndex = 0;
+bool fingerPresent = false;
+
+float smoothBPM = 0;
+const float BPM_SMOOTH_ALPHA = 0.2;
+
+// ===================================================
+// ===== 🔥 median5() 필터 함수 추가 =====
+// ===================================================
+int median5(int *arr) {
+  int buf[5];
+  memcpy(buf, arr, sizeof(buf));
+  for (int i = 0; i < 4; i++) {
+    for (int j = i + 1; j < 5; j++) {
+      if (buf[j] < buf[i]) {
+        int tmp = buf[i];
+        buf[i] = buf[j];
+        buf[j] = tmp;
+      }
+    }
+  }
+  return buf[2];  // 중앙값
+}
+// ===================================================
+
+
+// ------------------ FreeRTOS Queue ------------------
+QueueHandle_t httpQueue;
+
+typedef struct {
+  bool doPost;
+  bool doGet;
+  char body[256];
+} HttpTaskMessage;
+
+unsigned long lastPostSend = 0;
+const unsigned long POST_MIN_INTERVAL = 5000;
+
+unsigned long lastGetSend = 0;
+const unsigned long GET_INTERVAL = 10000;
+
+float lastBPM = 0;
+bool lastIsTime = false;
+
+
+// ===================================================
+// HTTP TASK (비동기)
+// ===================================================
+void httpTask(void* param) {
+  HttpTaskMessage msg;
+  for (;;) {
+    if (xQueueReceive(httpQueue, &msg, portMAX_DELAY)) {
+
+      // -------- POST --------
+      if (msg.doPost) {
+        HTTPClient http;
+        http.begin(postUrl);
+        http.addHeader("Content-Type", "application/json; charset=utf-8");
+        http.addHeader("X-DEVICE-UUID", DEVICE_UUID);
+        http.addHeader("X-DEVICE-TOKEN", DEVICE_TOKEN);
+
+        int code = http.POST((uint8_t*)msg.body, strlen(msg.body));
+        Serial.print("POST code = ");
+        Serial.println(code);
+
+        if (code > 0) {
+          Serial.println("POST response: " + http.getString());
+        }
+        http.end();
+      }
+
+      // -------- GET --------
+      if (msg.doGet) {
+        HTTPClient http;
+        http.begin(getUrl);
+        http.addHeader("X-DEVICE-UUID", DEVICE_UUID);
+        http.addHeader("X-DEVICE-TOKEN", DEVICE_TOKEN);
+
+        int code = http.GET();
+        Serial.print("GET code = ");
+        Serial.println(code);
+
+        if (code == 200) {
+          String res = http.getString();
+          Serial.println("GET response: " + res);
+
+          if (res.indexOf("\"time\":true") != -1) {
+            isTime = true;
+            digitalWrite(RED_LED, LOW);
+            digitalWrite(GREEN_LED, HIGH);
+            greenStart = millis();
+          }
+        }
+        http.end();
+      }
+    }
+  }
+}
+
+// ===================================================
+// queuePost
+// ===================================================
+void queuePost() {
+  if (millis() - lastPostSend < POST_MIN_INTERVAL) return;
+
+  HttpTaskMessage msg;
+  msg.doPost = true;
+  msg.doGet  = false;
+
+  snprintf(
+    msg.body,
+    sizeof(msg.body),
+    "{\"device_uuid\":\"%s\",\"isOpened\":%s,\"isTime\":%s,\"bpm\":%d}",
+    DEVICE_UUID,
+    isOpened ? "true" : "false",
+    isTime   ? "true" : "false",
+    (int)currentBPM
+  );
+
+  Serial.print("QUEUE JSON = ");
+  Serial.println(msg.body);
+
+  xQueueSend(httpQueue, &msg, 0);
+
+  lastPostSend = millis();
+}
+
+// ===================================================
+void queueGet() {
+  HttpTaskMessage msg;
+  msg.doPost = false;
+  msg.doGet  = true;
+  xQueueSend(httpQueue, &msg, 0);
+}
+
+// ===================================================
+// Heartbeat
+// ===================================================
+void updateBPM() {
   unsigned long now = millis();
 
-  // HX711 읽은 직후면 스킵
-  if (now - lastWeightReadTime < HX711_BLOCK_MS) {
-    // optional: Serial.println("PPG skip due to HX711 noise");
+  // 1) 부드럽게 ADC 읽기
+  int val = readSmooth(SENSOR_PIN);
+
+  // 2) 손가락 감지 (밝기 기준)
+  //  - 손 안댐: 0 ~ 200 근처
+  //  - 손 댐:  1500 ~ 2500 근처 (너가 준 값 기준)
+  fingerPresent = (val > 500);   // 필요하면 400~800 사이에서 조절 가능
+
+  if (!fingerPresent) {
+    // 손 안 올리면 BPM은 항상 0으로
+    baseline    = 0;
+    beats       = 0;
+    currentBPM  = 0;
+    bpmStartTime = now;
+    isAbove     = false;
+
+    // 디버그용
+    Serial.printf("NO FINGER  RAW=%d\n", val);
     return;
   }
 
-  int val = readSmooth(SENSOR_PIN);
-  // baseline 최초 초기화
-  if (baseline == 0) baseline = val;
-  baseline = (baseline * 19 + val) / 20;
-  int threshold = baseline + THRESHOLD_OFFSET;
+  // 3) baseline 계산 (손가락 있을 때만)
+  if (baseline == 0) {
+    baseline = val;   // 처음 한 번 맞추고
+  } else {
+    // 너무 빨리 따라가지 않게 약간만 섞어줌
+    baseline = (baseline * 19 + val) / 20;
+  }
 
-  if (val > threshold && !isAbove && (now - lastBeat) > MIN_GAP) {
-    beats++;
-    lastBeat = now;
+  int threshold = baseline + 10;  // 원래 +5 였던거 조금 올림
+
+  // 4) 피크 감지 (예: threshold 넘는 순간 한 번만 카운트)
+  //    MIN_GAP 크게 잡아서 중복 카운트 방지
+  const unsigned long LOCAL_MIN_GAP = 550; // 0.55초 → 최대 BPM 약 110 근처
+
+  if (!isAbove && val > threshold && (now - lastBeat) > LOCAL_MIN_GAP) {
     isAbove = true;
-  } else if (val < baseline) {
+    lastBeat = now;
+    beats++;
+    // Serial.println("Beat!");
+  } else if (isAbove && val < baseline) {
+    // 파형이 다시 baseline 아래로 내려오면 다음 피크 기다림
     isAbove = false;
   }
 
+  // 5) BPM 계산 (윈도우: BPM_INTERVAL = 10000ms = 10초)
   if (now - bpmStartTime >= BPM_INTERVAL) {
-    currentBPM = beats * (60000.0 / BPM_INTERVAL);
-    Serial.print("BPM: ");
-    Serial.println(currentBPM);
-    beats = 0;
+    unsigned long window = now - bpmStartTime;
+    float instantBPM = 0.0;
+
+    if (window > 0) {
+      instantBPM = beats * (60000.0 / window);   // 10초 동안 beat 개수 → BPM
+    }
+
     bpmStartTime = now;
-  }
-}
+    beats = 0;
 
-
-// ===================================================
-// 서버 통신
-// ===================================================
-void sendDataToServer() {
-  if (WiFi.status() != WL_CONNECTED) return;
-
-  String jsonData = "{";
-  jsonData += "\"isOpened\":" + String(isOpened ? "true" : "false") + ",";
-  jsonData += "\"isTime\":" + String(isTime ? "true" : "false") + ",";
-  jsonData += "\"Bpm\":" + String((int)currentBPM);
-  jsonData += "}";
-
-  Serial.println("Sending data to server: " + jsonData);
-
-  HTTPClient http;
-  http.begin(postUrl);
-  http.addHeader("Content-Type", "application/json");
-  int code = http.POST(jsonData);
-  Serial.print("POST Response: ");
-  Serial.println(code);
-
-  if (code > 0) {
-    String response = http.getString();
-    Serial.println("Server says: " + response);
-  }
-
-  http.end();
-}
-
-// ===================================================
-// 서버에서 명령 받기
-// ===================================================
-void getCommandFromServer() {
-  if (WiFi.status() != WL_CONNECTED) return;
-
-  HTTPClient http;
-  http.begin(getUrl);
-  int code = http.GET();
-
-  if (code == 200) {
-    String response = http.getString();
-    Serial.println("Command received: " + response);
-
-    if (response.indexOf("\"time\":true") != -1) {
-      Serial.println("⏰ Time signal received!");
-      isTime = true;
-      digitalWrite(RED_LED, LOW);
-      digitalWrite(GREEN_LED, HIGH);
-      greenStart = millis();
-
-      // 바로 서버 전송
-      sendDataToServer();
-      lastIsTime = isTime; // 갱신
-      lastIsOpened = isOpened;
-      lastBPM = currentBPM;
-    }
-  } else {
-    Serial.print("GET failed, code: ");
-    Serial.println(code);
-  }
-
-  http.end();
-}
-
-
-// ===================================================
-// 무게 변화 감지 로직
-// ===================================================
-void checkWeightChange() {
-  unsigned long now = millis();
-  if (now - lastWeightReadTime < WEIGHT_READ_INTERVAL) return; // 너무 자주 읽지 않음
-
-  float newWeight = scale.get_units();
-  lastWeightReadTime = now; // 읽은 시간 기록
-
-  float diff = prevWeight - newWeight;
-  if (diff > 100.0 && !isOpened) { // 100g 이상 줄었을 때
-    isOpened = true;
-    openedTime = millis(); // 기록
-    Serial.println("⚠️ Weight decreased! isOpened = true");
-
-    if (isTime) {
-      Serial.println("✅ Time mode: No buzzer");
+    // 약간의 스무딩 (갑자기 튀는 거 방지)
+    if (currentBPM == 0) {
+      currentBPM = instantBPM;
     } else {
-      Serial.println("🚨 Unauthorized open! Buzzer ON");
-      tone(BUZZER, 1000, 1000);
+      currentBPM = currentBPM * 0.6f + instantBPM * 0.4f;
     }
-  }
 
-  prevWeight = newWeight;
+    Serial.printf("RAW=%d BASE=%d TH=%d BPM=%.1f (finger=%d)\n",
+                  val, baseline, threshold, currentBPM, fingerPresent);
+  }
 }
 
+
+
+
+
 // ===================================================
-// 상태 업데이트 및 초기화
+// Weight
 // ===================================================
-void handleLedReset() {
-  // 기존 Time 기반 reset
-  if (isTime && (millis() - greenStart >= GREEN_DURATION)) {
-    Serial.println("🕒 10s passed - Resetting to red LED");
+void checkWeight() {
+  unsigned long now = millis();
+  if (now - lastWeightReadTime < WEIGHT_READ_INTERVAL) return;
+
+  currentWeight = scale.get_units();
+  lastWeightReadTime = now;
+
+  float diff = prevWeight - currentWeight;
+  prevWeight = currentWeight;
+
+  Serial.printf("Weight: %.2f Diff: %.2f\n", currentWeight, diff);
+
+  if (diff > 100 && !isOpened) {
+    isOpened = true;
+    openedEvent = true;
+    openedTime = now;
+    Serial.println("⚠️ Weight drop detected!");
+    if (!isTime) tone(BUZZER, 1000, 800);
+  }
+}
+
+
+// ===================================================
+void handleReset() {
+  unsigned long now = millis();
+
+  if (isTime && now - greenStart >= GREEN_DURATION) {
     isTime = false;
     digitalWrite(GREEN_LED, LOW);
     digitalWrite(RED_LED, HIGH);
-    noTone(BUZZER);
   }
 
-  // 무게 감소 기반 reset (예: 10초 후)
-  if (isOpened && (millis() - openedTime >= 10000)) {
-    Serial.println("🕒 10s passed - Resetting isOpened");
+  if (isOpened && now - openedTime >= 10000) {
     isOpened = false;
     noTone(BUZZER);
   }
 }
 
+
 // ===================================================
-// 메인 루프
+// Setup
+// ===================================================
+void setup() {
+  Serial.begin(115200);
+  Serial.println("\n=== PillBox FreeRTOS Async HTTP (SAFE VERSION) ===");
+
+  pinMode(RED_LED, OUTPUT);
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+
+  digitalWrite(RED_LED, HIGH);
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(BUZZER, LOW);
+
+  analogReadResolution(12);
+  analogSetPinAttenuation(SENSOR_PIN, ADC_11db);
+
+  WiFi.begin(ssid, password);
+  Serial.print("WiFi connecting...");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(400);
+  }
+  Serial.println("\nWiFi Connected!");
+
+  scale.set_scale(CALIBRATION_FACTOR);
+  scale.tare();
+  prevWeight = scale.get_units();
+
+  bpmStartTime = millis();
+
+  httpQueue = xQueueCreate(10, sizeof(HttpTaskMessage));
+
+  xTaskCreatePinnedToCore(
+    httpTask,
+    "httpTask",
+    9000,
+    NULL,
+    1,
+    NULL,
+    1
+  );
+}
+
+
+// ===================================================
+// Loop
 // ===================================================
 void loop() {
   unsigned long now = millis();
 
   updateBPM();
-  checkWeightChange();
-  handleLedReset();
+  checkWeight();
+  handleReset();
 
-  // 10초마다 GET 요청
-  if (now - lastGetTime >= GET_INTERVAL) {
-    getCommandFromServer();
-    lastGetTime = now;
+  if (now - lastGetSend >= GET_INTERVAL) {
+    queueGet();
+    lastGetSend = now;
   }
 
-  // 상태 변화 or BPM이 크게 변했을 때만 POST
-if (isOpened != lastIsOpened 
-    || isTime != lastIsTime 
-    || currentBPM >= 60) 
-{
-  sendDataToServer();
+  bool needPost =
+    openedEvent ||
+    abs(currentBPM - lastBPM) >= 25 ||
+    (isTime != lastIsTime);
 
-  lastIsOpened = isOpened;
-  lastIsTime = isTime;
-  lastBPM = currentBPM;
-}
-
+  if (needPost) {
+    queuePost();
+    lastBPM = currentBPM;
+    lastIsTime = isTime;
+    openedEvent = false;
+  }
 }

@@ -1,19 +1,19 @@
 package com.scheduler.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.Plan
-import com.domain.repository.PlanRepository
+import com.domain.model.RegiHistory
+import com.domain.usecase.plan.CreatePlanUseCase
+import com.domain.usecase.plan.DeletePlanUseCase
+import com.domain.usecase.plan.GetPlansUseCase
+import com.domain.usecase.plan.RefreshPlansUseCase
+import com.domain.usecase.plan.UpdatePlanUseCase
+import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -22,152 +22,126 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlanViewModel @Inject constructor(
-    private val repository: PlanRepository
+    private val getPlansUseCase: GetPlansUseCase,
+    private val createPlanUseCase: CreatePlanUseCase,
+    private val updatePlanUseCase: UpdatePlanUseCase,
+    private val deletePlanUseCase: DeletePlanUseCase,
+    private val refreshPlansUseCase: RefreshPlansUseCase,
+    private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase
 ) : ViewModel() {
 
     data class UiState(
         val loading: Boolean = false,
         val plans: List<Plan> = emptyList(),
+        val histories: List<RegiHistory> = emptyList(),
         val error: String? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    val uiState = _uiState.asStateFlow()
 
     private val _itemsByDate = MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
-    val itemsByDate: StateFlow<Map<LocalDate, List<MedItem>>> = _itemsByDate.asStateFlow()
+    val itemsByDate = _itemsByDate.asStateFlow()
 
-    // ✅ Plan 목록 로드
-    fun load(userId: String) {
-        if (userId.isBlank()) {
-            Log.e("PlanViewModel", "❌ userId가 비어있음")
-            return
-        }
+    fun load(userId: Long) {
+        viewModelScope.launch {
 
-        val uid = userId.toLongOrNull()
-        if (uid == null) {
-            Log.e("PlanViewModel", "❌ userId 숫자 변환 실패: $userId")
-            return
-        }
+            getRegiHistoriesUseCase()
+                .catch { e ->
+                    _uiState.update { it.copy(error = e.message) }
+                }
+                .collect { histories ->
 
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.observePlans(uid)
-                .catch { e -> _uiState.update { it.copy(error = e.message) } }
-                .collect { list ->
-                    _uiState.update { it.copy(plans = list) }
-                    _itemsByDate.value = makeItemsByDate(list)
+                    _uiState.update { it.copy(histories = histories) }
+
+                    getPlansUseCase(userId)
+                        .catch { e ->
+                            _uiState.update { it.copy(error = e.message) }
+                        }
+                        .collect { plans ->
+
+                            _uiState.update { it.copy(plans = plans) }
+
+                            _itemsByDate.value = makeItemsByDate(plans, histories)
+                        }
                 }
         }
     }
 
-    // ✅ Plan 생성 (서버에는 userId 안 보내고, 필요하면 끝에서 refresh에만 사용)
     fun createPlan(
-        userId: Long,          // 로컬 refresh 용 (서버에는 안 감)
-        prescriptionId: Long?,
+        regihistoryId: Long?,
         medName: String,
         takenAt: Long,
         mealTime: String?,
         note: String?,
-        taken: Long?
+        taken: Long?,
+        useAlarm: Boolean
     ) {
-        if (userId <= 0L) {
-            Log.e("PlanViewModel", "❌ createPlan: userId <= 0")
-            return
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _uiState.update { it.copy(loading = true, error = null) }
-
-                Log.e(
-                    "PlanViewModel",
-                    """
-                    🔥 서버로 보낼 값 =================
-                    prescriptionId = $prescriptionId
-                    medName        = $medName
-                    takenAt        = $takenAt
-                    mealTime       = $mealTime
-                    note           = $note
-                    taken          = $taken
-                    =================================
-                    """.trimIndent()
-                )
-
-                // 👉 여기서는 domain 레이어 함수만 호출
-                repository.create(
-                    prescriptionId = prescriptionId,
-                    medName = medName,
-                    takenAt = takenAt,
-                    mealTime = mealTime,
-                    note = note,
-                    taken = taken
-                )
-
-                // 필요하면 로컬 DB 동기화
-                repository.refresh(userId)
-
-                Log.d("PlanViewModel", "💾 Plan 생성 완료: $medName")
-            } catch (e: Exception) {
-                Log.e("PlanViewModel", "❌ createPlan 실패", e)
-                _uiState.update { it.copy(error = e.message) }
-            } finally {
-                _uiState.update { it.copy(loading = false) }
-            }
+        viewModelScope.launch {
+            createPlanUseCase(
+                regihistoryId,
+                medName,
+                takenAt,
+                mealTime,
+                note,
+                taken,
+                useAlarm
+            )
         }
     }
 
     fun updatePlan(userId: Long, plan: Plan) {
-        if (userId <= 0L) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _uiState.update { it.copy(loading = true, error = null) }
-                repository.update(userId, plan)
-                Log.d("PlanViewModel", "✏️ Plan 수정 완료: ${plan.medName}")
-            } catch (e: Exception) {
-                Log.e("PlanViewModel", "❌ updatePlan 실패", e)
-                _uiState.update { it.copy(error = e.message) }
-            } finally {
-                _uiState.update { it.copy(loading = false) }
-            }
+        viewModelScope.launch {
+            updatePlanUseCase(userId, plan)
         }
     }
 
     fun deletePlan(userId: Long, planId: Long) {
-        if (userId <= 0L) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                _uiState.update { it.copy(loading = true, error = null) }
-                repository.delete(userId, planId)
-                Log.d("PlanViewModel", "🗑️ Plan 삭제 완료: $planId")
-            } catch (e: Exception) {
-                Log.e("PlanViewModel", "❌ deletePlan 실패", e)
-                _uiState.update { it.copy(error = e.message) }
-            } finally {
-                _uiState.update { it.copy(loading = false) }
-            }
+        viewModelScope.launch {
+            deletePlanUseCase(userId, planId)
         }
     }
 
-    private fun makeItemsByDate(plans: List<Plan>): Map<LocalDate, List<MedItem>> {
+    private fun makeItemsByDate(
+        plans: List<Plan>,
+        histories: List<RegiHistory>
+    ): Map<LocalDate, List<MedItem>> {
+
         val zone = ZoneId.systemDefault()
+
+        val labelMap = histories.associateBy(
+            { it.id },
+            { it.label ?: "" }
+        )
+
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
-        plans.forEach { p ->
-            val takenAt = p.takenAt ?: return@forEach
-            val instant = Instant.ofEpochMilli(takenAt)
-            val localDateTime = instant.atZone(zone)
-            val localDate = localDateTime.toLocalDate()
-            val localTime = localDateTime.toLocalTime().toString().substring(0, 5)
+        plans
+            .filter { it.takenAt != null }
+            .groupBy { p ->
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+                val rhId = p.regihistoryId
+                Triple(date, rhId, time)
+            }
+            .forEach { (_, group) ->
+                val p = group.first()
 
-            val item = MedItem(
-                name = p.medName,
-                time = localTime,
-                status = IntakeStatus.SCHEDULED
-            )
-            out.getOrPut(localDate) { mutableListOf() }.add(item)
-        }
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+
+                val label = labelMap[p.regihistoryId] ?: p.medName
+
+                val item = MedItem(
+                    label = label,
+                    time = time,
+                    status = IntakeStatus.SCHEDULED
+                )
+
+                out.getOrPut(date) { mutableListOf() }.add(item)
+            }
 
         return out.mapValues { (_, v) -> v.sortedBy { it.time } }
     }

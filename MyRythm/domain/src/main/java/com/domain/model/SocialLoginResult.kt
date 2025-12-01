@@ -3,6 +3,7 @@ package com.domain.model
 sealed class SocialLoginResult {
 
     data class Success(
+        val userId: Long,
         val tokens: AuthTokens
     ) : SocialLoginResult()
 
@@ -16,4 +17,3 @@ sealed class SocialLoginResult {
         val message: String?
     ) : SocialLoginResult()
 }
-

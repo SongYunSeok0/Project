@@ -5,17 +5,16 @@ import datetime
 from .models import RegiHistory, Plan
 
 
-# ----------------------------
 #  공통 함수: timestamp <-> datetime 변환
-# ----------------------------
 def to_ms(dt):
+    """datetime → ms"""
     if dt is None:
         return None
     if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
         dt = datetime.datetime.combine(
             dt,
             datetime.time.min,
-            tzinfo=timezone.get_current_timezone(),
+            tzinfo=timezone.get_current_timezone()
         )
     if timezone.is_naive(dt):
         dt = timezone.make_aware(dt, timezone.get_current_timezone())
@@ -23,52 +22,43 @@ def to_ms(dt):
 
 
 def from_ms(ms):
-    if ms in (None, ""):
+    """ms → datetime"""
+    if ms in (None, "", 0):
         return None
-    return datetime.datetime.utcfromtimestamp(int(ms) / 1000.0)
 
-
-# ----------------------------
-#  (옵션) 단일 시간 정보
-# ----------------------------
-class PlanTimeSerializer(serializers.Serializer):
-    alarm_time = serializers.CharField()  # "09:00"
-    days_of_week = serializers.ListField(
-        child=serializers.IntegerField(min_value=0, max_value=6),
-        default=list,
-        required=False,
+    return datetime.datetime.fromtimestamp(
+        ms / 1000.0,
+        tz=timezone.get_current_timezone(),
     )
 
 
-# ----------------------------
-#  복용 스케줄 조회용
-# ----------------------------
+#  Plan 조회용 Serializer
 class PlanSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    regiHistoryId = serializers.SerializerMethodField()
+    regihistoryId = serializers.SerializerMethodField()
+    regihistory_label = serializers.CharField(source="regihistory.label", read_only=True, default=None)
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.SerializerMethodField()
     mealTime = serializers.CharField(source="meal_time")
     taken = serializers.SerializerMethodField()
-    createdAt = serializers.SerializerMethodField()
-    updatedAt = serializers.SerializerMethodField()
+    useAlarm = serializers.BooleanField(source="use_alarm")
 
     class Meta:
         model = Plan
         fields = [
             "id",
-            "regiHistoryId",
+            "regihistoryId",
+            "regihistory_label",
             "medName",
             "takenAt",
             "mealTime",
             "note",
             "taken",
-            "createdAt",
-            "updatedAt",
+            "useAlarm",
         ]
 
-    def get_regiHistoryId(self, obj):
-        return obj.RegiHistory.id if obj.RegiHistory else None
+    def get_regihistoryId(self, obj):
+        return obj.regihistory.id if obj.regihistory else None
 
     def get_takenAt(self, obj):
         return to_ms(obj.taken_at)
@@ -76,38 +66,94 @@ class PlanSerializer(serializers.ModelSerializer):
     def get_taken(self, obj):
         return to_ms(obj.taken)
 
-    def get_createdAt(self, obj):
-        return to_ms(obj.created_at)
 
-    def get_updatedAt(self, obj):
-        return to_ms(obj.updated_at)
-
-
-# ----------------------------
-#  복용 스케줄 생성 입력용
-# ----------------------------
-class PlanTimeIn(serializers.Serializer):
-    alarm_time = serializers.CharField(required=True)  # "HH:MM"
-    days_of_week = serializers.ListField(
-        child=serializers.IntegerField(min_value=0, max_value=6),
-        required=False,
-        default=list,
-    )
-
-
+#  Plan 생성용 입력 Serializer (Raw 입력)
 class PlanCreateIn(serializers.Serializer):
-    # ✅ 이제 처방전이 아니라 RegiHistory FK 사용
-    regiHistoryId = serializers.IntegerField(required=False, allow_null=True)
+    regihistoryId = serializers.IntegerField(required=False, allow_null=True)
 
     medName = serializers.CharField()
-    takenAt = serializers.IntegerField(required=False, allow_null=True)  # ms
+    takenAt = serializers.IntegerField(required=False, allow_null=True)
     mealTime = serializers.CharField(required=False, allow_null=True)
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    taken = serializers.IntegerField(required=False, allow_null=True)  # ms
+    taken = serializers.IntegerField(required=False, allow_null=True)
 
-    def to_dt(self, ms):
-        if ms is None:
-            return None
-        return datetime.datetime.fromtimestamp(
-            ms / 1000.0, tz=timezone.get_current_timezone()
-        )
+    useAlarm = serializers.BooleanField(required=False, default=True)
+
+
+#  Plan 생성 실제 수행 Serializer
+class PlanCreateSerializer(serializers.ModelSerializer):
+    regihistoryId = serializers.IntegerField(write_only=True)
+
+    medName = serializers.CharField(source="med_name")
+    takenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    mealTime = serializers.CharField(source="meal_time", required=False, allow_null=True)
+    note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    taken = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    useAlarm = serializers.BooleanField(source="use_alarm", required=False, default=True)
+
+    class Meta:
+        model = Plan
+        fields = [
+            "regihistoryId",
+            "medName",
+            "takenAt",
+            "mealTime",
+            "note",
+            "taken",
+            "useAlarm",
+        ]
+
+    def create(self, validated_data):
+        regihistory_id = validated_data.pop("regihistoryId")
+
+        # FK 검증
+        try:
+            regi = RegiHistory.objects.get(id=regihistory_id)
+        except RegiHistory.DoesNotExist:
+            raise serializers.ValidationError({"regihistoryId": "RegiHistory not found"})
+
+        # ms -> datetime 변환
+        taken_at = validated_data.pop("takenAt", None)
+        taken = validated_data.pop("taken", None)
+
+        if taken_at:
+            validated_data["taken_at"] = from_ms(taken_at)
+        if taken:
+            validated_data["taken"] = from_ms(taken)
+
+        return Plan.objects.create(regihistory=regi, **validated_data)
+
+
+#  RegiHistory 조회용 Serializer
+class RegiHistorySerializer(serializers.ModelSerializer):
+    userId = serializers.IntegerField(source="user.id", read_only=True)
+    useAlarm = serializers.BooleanField(source="use_alarm")
+
+    class Meta:
+        model = RegiHistory
+        fields = [
+            "id",
+            "userId",
+            "regi_type",
+            "label",
+            "issued_date",
+            "useAlarm",
+        ]
+
+
+#  RegiHistory 생성 Serializer
+class RegiHistoryCreateSerializer(serializers.ModelSerializer):
+    useAlarm = serializers.BooleanField(source="use_alarm", required=False, default=True)
+
+    class Meta:
+        model = RegiHistory
+        fields = [
+            "regi_type",
+            "label",
+            "issued_date",
+            "useAlarm",
+        ]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        return RegiHistory.objects.create(user=user, **validated_data)

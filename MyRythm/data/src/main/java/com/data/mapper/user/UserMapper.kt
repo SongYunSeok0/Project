@@ -4,17 +4,15 @@ import com.data.db.entity.UserEntity
 import com.data.network.dto.user.UserDto
 import com.data.network.dto.user.UserUpdateDto
 import com.domain.model.User
+import com.domain.model.UserProfile
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import com.domain.model.UserProfile
 import java.time.LocalDate
-import kotlin.String
 
 private val moshi = Moshi.Builder().build()
 private val mapType = Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
 private val mapAdapter = moshi.adapter<Map<String, Any>>(mapType)
 
-/** Remote DTO → Local Entity */
 fun UserDto.asEntity(): UserEntity = UserEntity(
     id = id,
     uuid = uuid,
@@ -26,7 +24,7 @@ fun UserDto.asEntity(): UserEntity = UserEntity(
     height = height,
     weight = weight,
     preferences = mapAdapter.toJson(preferences ?: emptyMap()),
-    protPhone = prot_phone,
+    protPhone = prot_email,
     relation = relation,
     isActive = is_active,
     isStaff = is_staff,
@@ -35,7 +33,6 @@ fun UserDto.asEntity(): UserEntity = UserEntity(
     lastLogin = last_login
 )
 
-/** Local Entity → Domain */
 fun UserEntity.asDomain(): User = User(
     id = id,
     uuid = uuid,
@@ -60,7 +57,7 @@ fun UserDto.toProfile(): UserProfile {
     val age = birth_date?.let { birth ->
         try {
             val year = birth.substring(0, 4).toInt()
-            val now = java.time.LocalDate.now().year
+            val now = LocalDate.now().year
             now - year
         } catch (_: Exception) {
             null
@@ -75,21 +72,44 @@ fun UserDto.toProfile(): UserProfile {
         birth_date = birth_date,
         gender = gender,
         phone = phone,
-        prot_phone = prot_phone,
-        email = email,
+        prot_email = prot_email,
+        email = email
     )
 }
 
 fun UserProfile.toDto(): UserUpdateDto {
     return UserUpdateDto(
-        username = username?: "",
+        username = username ?: "",
         height = height,
         weight = weight,
         gender = gender,
-        birth_date =birth_date,
+        birth_date = birth_date,
         phone = phone,
-        prot_phone = prot_phone,
-        email = email?: "",
+        prot_email = prot_email,
+        email = email ?: ""
     )
 }
 
+fun UserEntity.toProfile(): UserProfile {
+    val age = birthDate?.let { birth ->
+        try {
+            val year = birth.substring(0, 4).toInt()
+            val now = LocalDate.now().year
+            now - year
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    return UserProfile(
+        username = username,
+        height = height,
+        weight = weight,
+        age = age,
+        birth_date = birthDate,
+        gender = gender,
+        phone = phone,
+        prot_email = protPhone,
+        email = email
+    )
+}

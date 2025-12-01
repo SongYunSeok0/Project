@@ -7,5 +7,5 @@ import javax.inject.Inject
 class RefreshUserUseCase @Inject constructor(
     private val repo: UserRepository
 ) {
-    suspend operator fun invoke(userId: String): User = repo.refreshUser(userId)
+    suspend operator fun invoke(userId: String): User = repo.syncUser()
 }

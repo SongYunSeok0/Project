@@ -1,14 +1,12 @@
 package com.data.repository
 
 import com.data.db.dao.PlanDao
-import com.data.mapper.toDomain              // DB → Domain
 import com.data.mapper.toDomainLocal
-import com.data.mapper.toEntity             // Domain → Entity
+import com.data.mapper.toEntity
 import com.data.network.api.PlanApi
 import com.data.network.dto.plan.PlanCreateRequest
 import com.data.network.mapper.toDomain
 import com.data.network.mapper.toUpdateRequest
-import com.data.network.mapper.toDomain as toRemoteDomain  // Remote → Domain (alias)
 import com.domain.model.Plan
 import com.domain.repository.PlanRepository
 import kotlinx.coroutines.Dispatchers
@@ -24,60 +22,71 @@ class PlanRepositoryImpl @Inject constructor(
     private val api: PlanApi
 ) : PlanRepository {
 
-    // ----------------------------
-    // 🔥 로컬 DB → 도메인
-    // ----------------------------
     override fun observePlans(userId: Long): Flow<List<Plan>> =
-        dao.observePlans().map { list ->
+        dao.getAllByUser(userId).map { list ->
             list.map { it.toDomainLocal() }
         }
 
-    // ----------------------------
-    // 🔥 서버 → 로컬 동기화
-    // ----------------------------
-    override suspend fun refresh(userId: Long) = withContext(Dispatchers.IO) {
-        val remote = api.getPlans()
-        dao.deleteAllByUser()
-        remote.forEach { resp ->
-            dao.insert(resp.toDomain().toEntity())
-        }
+    override suspend fun syncPlans(userId: Long) = withContext(Dispatchers.IO) {
+        val remotePlans = api.getPlans()
+        val domainPlans = remotePlans.map { it.toDomain() }
+        val entities = domainPlans.map { it.toEntity() }
+
+        dao.deleteAllByUser(userId)
+        dao.insertAll(entities)
     }
 
-    // ----------------------------
-    // 🔥 서버로 새로운 Plan 생성
-    // ----------------------------
     override suspend fun create(
-        prescriptionId: Long?,
+        regihistoryId: Long?,
         medName: String,
         takenAt: Long,
         mealTime: String?,
         note: String?,
-        taken: Long?
+        taken: Long?,
+        useAlarm: Boolean
     ) {
         val body = PlanCreateRequest(
-            prescriptionId = prescriptionId,
+            regihistoryId = regihistoryId,
             medName = medName,
             takenAt = takenAt,
             mealTime = mealTime,
             note = note,
-            taken = taken
+            taken = taken,
+            useAlarm = useAlarm
         )
         api.createPlan(body)
     }
 
-    // ----------------------------
-    // 🔥 수정
-    // ----------------------------
-    override suspend fun update(userId: Long, plan: Plan) {
-        api.updatePlan(plan.id, plan.toUpdateRequest())
-        dao.update(plan.toEntity())
+
+    // ✅ [추가] 스마트 일괄 생성 구현
+    override suspend fun createPlansSmart(
+        regihistoryId: Long,
+        startDate: String,
+        duration: Int,
+        times: List<String>,
+        medName: String
+    ) {
+        // 서버 API 규격에 맞춰 Map으로 데이터를 구성합니다.
+        val body = mapOf(
+            "regihistoryId" to regihistoryId,
+            "startDate" to startDate,
+            "duration" to duration,
+            "times" to times,
+            "medName" to medName
+        )
+
+        // API 호출 (PlanApi에 createPlanSmart 함수가 있어야 합니다)
+        api.createPlanSmart(body)
+
     }
 
-    // ----------------------------
-    // 🔥 삭제
-    // ----------------------------
+    override suspend fun update(userId: Long, plan: Plan) {
+        api.updatePlan(plan.id, plan.toUpdateRequest())
+        syncPlans(userId)
+    }
+
     override suspend fun delete(userId: Long, planId: Long) {
         api.deletePlan(planId)
-        dao.deleteById(planId)
+        syncPlans(userId)
     }
 }

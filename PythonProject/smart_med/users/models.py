@@ -9,14 +9,18 @@ from django.core.exceptions import ValidationError
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra):
-        if not email:
-            raise ValueError("이메일은 필수입니다.")
-        if not password:
-            raise ValueError("비밀번호는 필수입니다.")
+        # 이메일 정규화
+        if email:
+            email = self.normalize_email(email).lower()
 
-        email = self.normalize_email(email).lower()
         user = self.model(email=email, **extra)
-        user.set_password(password)
+
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+
+        # ✔️ 3. 저장
         user.save(using=self._db)
         return user
 
@@ -57,14 +61,29 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text="Firebase phone auth UID"
     )
 
+    # 1121 11:59 소셜로그인용 소셜아이디+프로바이더 추가
+    social_id = models.CharField(
+        max_length=128,
+        unique=True,
+        null=True,
+        blank=True
+    )
+    provider = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True
+    )
     # 로그인/식별
-    email = models.EmailField(unique=True, db_index=True)
+    # 1121 11:59 소셜로그인 적용을 위해 이메일/유저네임/휴대폰 필드 널허용+빈칸허용으로 수정
+    email = models.EmailField(unique=True, db_index=True, null=True, blank=True)
     # password 필드는 AbstractBaseUser에서 상속됨 (CharField, max_length=128)
-    username = models.CharField(max_length=100)
+    username = models.CharField(max_length=100, null=True, blank=True)
     phone = models.CharField(
         max_length=20,
         unique=True,
-        validators=[RegexValidator(r"^\+?\d{9,15}$")]
+        validators=[RegexValidator(r"^\+?\d{9,15}$")],
+        null=True,
+        blank=True
     )
 
     # 부가 정보
@@ -82,7 +101,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[MinValueValidator(0)]
     )
     preferences = models.JSONField(default=dict, blank=True)
-    prot_phone = models.CharField(max_length=20, blank=True, null=True)
+    prot_email = models.CharField(max_length=30, blank=True, null=True)
     relation = models.CharField(max_length=30, blank=True, null=True)
 
     # 자동 기록
@@ -103,7 +122,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 인증 설정
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username", "phone"]  # createsuperuser 시 추가 입력
+    # 1121 소셜로그인 적용으로 유저네임,휴대폰번호 제거
+    REQUIRED_FIELDS = []  # createsuperuser 시 추가 입력
 
 
     objects = UserManager()

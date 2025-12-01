@@ -27,6 +27,7 @@ import com.shared.ui.components.AuthLogoIcon
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.theme.AuthBackground
+import com.shared.ui.theme.AuthSecondrayButton
 import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,11 +36,8 @@ fun SignupScreen(
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = hiltViewModel(),
     onSignupComplete: () -> Unit = {},
-    onBackToLogin: () -> Unit = {},
-    socialId: String? = null,
-    provider: String? = null
+    onBackToLogin: () -> Unit = {}
 ) {
-    // UI 입력 상태 관리 (로컬)
     var email by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -75,16 +73,21 @@ fun SignupScreen(
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
-    val phoneVerification = stringResource(R.string.phone_verification) // "휴대폰 인증" -> 필요 시 "이메일 인증" 등으로 교체 고려
+    val emailVerification = stringResource(R.string.email_verification) //1126 휴대폰인증->이메일인증 문자열 변경 완료
     val sendText = stringResource(R.string.send)
     val sentText = stringResource(R.string.sent)
     val verificationText = stringResource(R.string.verification)
     val verificationCodeText = stringResource(R.string.verification_code)
+    //val testCodeText = stringResource(R.string.auth_testcode)
     val signupLoading = stringResource(R.string.auth_signup_loading)
     val signupText = stringResource(R.string.auth_signup)
     val backText = stringResource(R.string.back)
+    //val codeSentMessage = stringResource(R.string.auth_message_code_sent)
+    //val verificationCompletedMessage = stringResource(R.string.auth_message_verification_completed)
     val backToLoginMessage = stringResource(R.string.auth_message_backtologin)
-
+    //val errorPhoneBlank = stringResource(R.string.auth_error_phone_blank)
+    //val errorCodeBlank = stringResource(R.string.auth_error_code_blank)
+    //val errorCodeIncorrent = stringResource(R.string.auth_error_code_incorrent)
     // 에러/메시지 텍스트
     val errorBlank = stringResource(R.string.auth_error_blank)
     val errorVerificationIncompleted = stringResource(R.string.auth_error_verification_incompleted)
@@ -150,6 +153,8 @@ fun SignupScreen(
                 imeAction = ImeAction.Next
             )
 
+            Spacer(Modifier.height(20.dp))
+
             AuthInputField(
                 value = password,
                 onValueChange = { password = it },
@@ -162,7 +167,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // 생년월일
             Text(
                 birthText,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -212,11 +216,11 @@ fun SignupScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // 키/몸무게
             Row(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
+
                 AuthInputField(
                     value = height,
                     onValueChange = { height = it },
@@ -234,7 +238,6 @@ fun SignupScreen(
                     keyboardType = KeyboardType.Number
                 )
             }
-
             Spacer(Modifier.height(24.dp))
 
             // -------------------------------------------------------
@@ -262,7 +265,7 @@ fun SignupScreen(
             // ⭐ 이메일 인증 섹션 (전화번호 칸 아래에 추가)
             // -------------------------------------------------------
             Text(
-                "이메일 인증", // 필요 시 stringResource로 변경
+                emailVerification,
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth()
@@ -333,7 +336,7 @@ fun SignupScreen(
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(24.dp))
 
             // -------------------------------------------------------
             // 회원가입 버튼
@@ -400,7 +403,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 로그인으로 돌아가기 텍스트 링크
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,

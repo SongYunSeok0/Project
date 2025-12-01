@@ -4,10 +4,14 @@ import android.content.Context
 import com.data.core.push.FcmTokenStore
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
+import com.domain.repository.HeartRateRepository
+import com.domain.repository.PushRepository
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
 import com.domain.usecase.user.SignupUseCase
+import com.domain.usecase.health.GetHeartHistoryUseCase
+import com.domain.usecase.health.GetLatestHeartRateUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase   // ← 이거 추가
 import dagger.Module
 import dagger.Provides
@@ -45,12 +49,24 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideRegisterFcmTokenUseCase(
-        userRepository: UserRepository
-    ): RegisterFcmTokenUseCase = RegisterFcmTokenUseCase(userRepository)
+        pushRepository: PushRepository
+    ): RegisterFcmTokenUseCase = RegisterFcmTokenUseCase(pushRepository)
 
     @Provides
     @Singleton
     fun provideFcmTokenStore(
         @ApplicationContext context: Context
     ): FcmTokenStore = FcmTokenStore(context)
+
+    @Provides
+    @Singleton
+    fun provideGetLatestHeartRateUseCase(
+        heartRateRepository: HeartRateRepository
+    ) = GetLatestHeartRateUseCase(heartRateRepository)
+
+    @Provides
+    @Singleton
+    fun provideGetHeartHistoryUseCase(
+        heartRateRepository: HeartRateRepository
+    ) = GetHeartHistoryUseCase(heartRateRepository)
 }

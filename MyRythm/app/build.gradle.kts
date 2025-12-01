@@ -105,5 +105,6 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
 
-
+    implementation(libs.androidx.health.connect)
+    implementation(libs.accompanist.swiperefresh)
 }
