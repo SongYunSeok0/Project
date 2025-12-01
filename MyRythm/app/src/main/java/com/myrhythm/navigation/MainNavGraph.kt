@@ -14,24 +14,23 @@ import com.mypage.navigation.EditProfileRoute
 import com.mypage.viewmodel.MyPageViewModel
 import com.news.navigation.NewsRoute
 import com.shared.navigation.MainRoute
-
-import com.domain.sharedvm.MainVMContract
-import com.domain.sharedvm.HeartRateVMContract
-import com.domain.sharedvm.StepVMContract
-
+import com.myrhythm.viewmodel.MainViewModel
+import com.myrhythm.viewmodel.HeartRateViewModel
+import com.myrhythm.viewmodel.StepViewModel
 
 @OptIn(ExperimentalSerializationApi::class)
 fun NavGraphBuilder.mainNavGraph(
     nav: NavController,
-    mainVm: MainVMContract,
-    heartVm: HeartRateVMContract,
-    stepVm: StepVMContract,
     onLogoutClick: () -> Unit
 ) {
     composable<MainRoute> { backStackEntry ->
         val route = backStackEntry.toRoute<MainRoute>()
         val uid = route.userId
 
+        // 여기서 ViewModel 생성
+        val mainVm: MainViewModel = hiltViewModel()
+        val heartVm: HeartRateViewModel = hiltViewModel()
+        val stepVm: StepViewModel = hiltViewModel()
         val myPageViewModel: MyPageViewModel = hiltViewModel()
 
         StepViewModelRoute(

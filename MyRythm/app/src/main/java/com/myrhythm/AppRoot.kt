@@ -19,16 +19,13 @@ import com.chatbot.navigation.chatbotNavGraph
 import com.data.core.auth.JwtUtils
 import com.data.core.di.CoreEntryPoint
 import com.domain.repository.*
-import com.domain.sharedvm.HeartRateVMContract
-import com.domain.sharedvm.MainVMContract
-import com.domain.sharedvm.StepVMContract
 import com.google.accompanist.swiperefresh.*
 import com.map.navigation.MapRoute
 import com.map.navigation.mapNavGraph
 import com.mypage.navigation.*
-import com.mypage.viewmodel.MyPageViewModel
 import com.myrhythm.navigation.mainNavGraph
-import com.myrhythm.viewmodel.*
+import com.myrhythm.viewmodel.HeartRateViewModel
+import com.myrhythm.viewmodel.StepViewModel
 import com.news.navigation.NewsRoute
 import com.news.navigation.newsNavGraph
 import com.scheduler.navigation.*
@@ -59,9 +56,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
 
     val authVm: AuthViewModel = hiltViewModel()
     val stepVm: StepViewModel = hiltViewModel()
-    val mainVm: MainViewModel = hiltViewModel()
     val heartVm: HeartRateViewModel = hiltViewModel()
-    val myPageVm: MyPageViewModel = hiltViewModel()
 
     val ui by authVm.state.collectAsStateWithLifecycle()
 
@@ -71,16 +66,24 @@ fun AppRoot(startFromLogin: Boolean = false) {
         .tokenStore()
 
     val access = tokenStore.current().access
-    val jwtUserId = JwtUtils.extractUserId(access) ?: ""
-    val userId = ui.userId ?: jwtUserId
+    val isLoggedIn = access?.isNotBlank() == true
+    val realUserId = JwtUtils.extractUserId(access) ?: "0"
+    val userId = ui.userId ?: realUserId
     val userIdLong = userId.toLongOrNull() ?: 0L
 
     val startDestination =
-        if (startFromLogin) AuthGraph else MainRoute(userId)
+        if (!isLoggedIn || startFromLogin) AuthGraph
+        else MainRoute(realUserId)
 
     LaunchedEffect(Unit) {
         stepVm.checkPermission()
         stepVm.startAutoUpdateOnce()
+    }
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            heartVm.start()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -96,6 +99,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
 
     fun isRoute(k: KClass<*>) =
         routeName.startsWith(k.qualifiedName.orEmpty())
+
     fun isOf(vararg ks: KClass<*>) = ks.any { isRoute(it) }
 
     val hideTopBar = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class) ||
@@ -113,7 +117,6 @@ fun AppRoot(startFromLogin: Boolean = false) {
         popUpTo(0); launchSingleTop = true
     }
 
-    // Accompanist SwipeRefresh
     val syncEntry = EntryPointAccessors.fromApplication(ctx, SyncEntryPoint::class.java)
     val regiRepo = syncEntry.regiRepository()
     val planRepo = syncEntry.planRepository()
@@ -130,7 +133,6 @@ fun AppRoot(startFromLogin: Boolean = false) {
             planRepo.syncPlans(userIdLong)
             heartRepo.syncHeartHistory()
             userRepo.syncUser()
-            myPageVm.refreshProfile()
             Log.d("Sync", "싱크완료")
             refreshing = false
         }
@@ -176,27 +178,26 @@ fun AppRoot(startFromLogin: Boolean = false) {
             state = rememberSwipeRefreshState(isRefreshing = refreshing),
             onRefresh = { refreshAll() }
         ) {
-
             NavHost(
                 navController = nav,
                 startDestination = startDestination
             ) {
+
+                // 항상 전체 그래프 등록
                 authNavGraph(nav)
+
                 mainNavGraph(
                     nav = nav,
-                    mainVm = mainVm as MainVMContract,
-                    heartVm = heartVm as HeartRateVMContract,
-                    stepVm = stepVm as StepVMContract,
                     onLogoutClick = { authVm.logout() }
                 )
+
                 mapNavGraph()
                 newsNavGraph(nav, userId)
                 schedulerNavGraph(nav)
                 mypageNavGraph(
                     nav = nav,
-                    mainVm = mainVm as MainVMContract,
-                    heartVm = heartVm as HeartRateVMContract,
-                    stepVm = stepVm as StepVMContract,
+                    heartVm = heartVm,
+                    userId = userIdLong,
                     onLogoutClick = { authVm.logout() }
                 )
                 chatbotNavGraph()

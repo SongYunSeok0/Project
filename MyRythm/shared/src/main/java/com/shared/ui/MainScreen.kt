@@ -27,7 +27,7 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
-    onOpenAlram: () -> Unit = {}, // ✅ 알람 카드 클릭 시 호출될 콜백
+    onOpenAlram: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
