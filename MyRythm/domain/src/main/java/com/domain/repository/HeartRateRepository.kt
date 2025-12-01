@@ -1,10 +1,9 @@
-// domain/src/main/java/com/domain/repository/HealthRepository.kt
 package com.domain.repository
 
 import com.domain.model.HeartRateHistory
 import kotlinx.coroutines.flow.Flow
 
-interface HealthRepository {
+interface HeartRateRepository {
 
     suspend fun getLatestHeartRate(): Int?
 
@@ -12,5 +11,5 @@ interface HealthRepository {
 
     fun observeHeartHistory(): Flow<List<HeartRateHistory>>
 
-    suspend fun refreshHeartHistory()
+    suspend fun syncHeartHistory()
 }

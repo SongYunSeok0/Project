@@ -14,14 +14,11 @@ import com.myrhythm.splash.SplashScreen
 import com.myrhythm.splash.SplashState
 import com.myrhythm.splash.SplashViewModel
 import com.myrhythm.ui.theme.MyRhythmTheme
-import com.myrhythm.viewmodel.InitFcmTokenViewModel
-import com.myrythm.AppRoot
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val fcmViewModel: InitFcmTokenViewModel by viewModels()
 
 // 1127 자동로그인 적용 - 스플래시 뷰모델 추가
     private val splashVm: SplashViewModel by viewModels()
@@ -29,7 +26,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        fcmViewModel.initFcmToken()
         askNotificationPermission()
 
         //setContent { AppRoot() }
@@ -66,6 +62,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+
 
 @Preview(showBackground = true)
 @Composable

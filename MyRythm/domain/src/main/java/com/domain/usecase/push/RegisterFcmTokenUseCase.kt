@@ -1,12 +1,13 @@
 package com.domain.usecase.push
 
-import com.domain.repository.UserRepository
+import com.domain.repository.PushRepository
 import javax.inject.Inject
 
-class RegisterFcmTokenUseCase (
-    private val userRepository: UserRepository
+class RegisterFcmTokenUseCase @Inject constructor(
+    private val repository: PushRepository
 ) {
+
     suspend operator fun invoke(token: String) {
-        userRepository.registerFcmToken(token)
+        repository.registerFcmToken(token)
     }
 }

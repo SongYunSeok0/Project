@@ -1,93 +1,85 @@
 package com.myrhythm.navigation
 
-import androidx.compose.runtime.*
-import android.content.Intent
-import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.mypage.viewmodel.MyPageViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
-import com.myrhythm.health.StepViewModel
-import com.myrhythm.viewmodel.MainViewModel
+
+import com.domain.sharedvm.MainVMContract
+import com.domain.sharedvm.HeartRateVMContract
+import com.domain.sharedvm.StepVMContract
+
+import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.MainScreen
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun StepViewModelRoute(
+    mainViewModel: MainVMContract,
+    heartViewModel: HeartRateVMContract,
+    stepViewModel: StepVMContract,
     myPageViewModel: MyPageViewModel,
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
-    onOpenEditScreen: () -> Unit = {},
+    onOpenEditScreen: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
-    val stepViewModel: StepViewModel = hiltViewModel()
-    val mainViewModel: MainViewModel = hiltViewModel()
-
+    val nextPlan by mainViewModel.nextPlan.collectAsStateWithLifecycle()
+    val nextLabel by mainViewModel.nextLabel.collectAsStateWithLifecycle()
     val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
+
+    val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
+    val previewExtend by mainViewModel.previewExtendMinutes.collectAsStateWithLifecycle()
+
     val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
 
-    // 이미 팝업을 띄운 적 있는지 확인
-    var hasShownGuardianDialog by rememberSaveable { mutableStateOf(false) }
+    val latestBpm by heartViewModel.latestHeartRate.collectAsStateWithLifecycle()
 
-    // 실제로 화면에 보여줄 팝업 상태
-    var showGuardianDialog by rememberSaveable { mutableStateOf(false) }
+    var hasShownGuardianDialog by remember { mutableStateOf(false) }
+    var showGuardianDialog by remember { mutableStateOf(false) }
+    var showExtendDialog by remember { mutableStateOf(false) }
 
-    // profile이 서버에서 로딩된 것을 의미 (null → 값)
-    val isProfileReady = profile != null
+    val scope = rememberCoroutineScope()
 
-    // 팝업 표시 로직 (안정 버전)
+    // 보호자 이메일 팝업
     LaunchedEffect(profile) {
-        val p = profile
-
-        // 아직 서버에서 로딩되지 않았으면 아무것도 하지 않음
-        if (p == null) return@LaunchedEffect
-
-        // 이미 한번 팝업 뜬 적 있으면 다시 뜨지 않음
-        if (hasShownGuardianDialog) return@LaunchedEffect
-
-        // prot_email 비어있으면 팝업 ON
-        if (p.prot_email.isNullOrBlank()) {
+        val p = profile ?: return@LaunchedEffect
+        if (!hasShownGuardianDialog && p.prot_email.isNullOrBlank()) {
             showGuardianDialog = true
-        } else {
-            showGuardianDialog = false
         }
     }
 
-    // 팝업 UI (profile이 null이 아님 + 팝업 ON 인 경우만)
-    if (isProfileReady && showGuardianDialog) {
+    if (showGuardianDialog) {
         AlertDialog(
-            onDismissRequest = { /* 뒤로가기 막기 */ },
-
-            title = {
-                Text("추가 정보가 필요해요 😊")
-            },
-
-            text = {
-                Text("원활한 사용을 위해 보호자 이메일을 입력해 주세요!")
-            },
-
+            onDismissRequest = {},
+            title = { Text("추가 정보가 필요해요 😊") },
+            text = { Text("원활한 사용을 위해 보호자 이메일을 입력해 주세요!") },
             confirmButton = {
                 Text(
-                    text = "정보 입력하기",
+                    "정보 입력하기",
                     modifier = Modifier
                         .padding(8.dp)
                         .clickable {
-                            hasShownGuardianDialog = true     // 이제 다시 안 뜸
+                            hasShownGuardianDialog = true
                             showGuardianDialog = false
                             onOpenEditScreen()
                         }
@@ -96,23 +88,10 @@ fun StepViewModelRoute(
         )
     }
 
-    // --- Health Connect 부분 동일 ---
-    LaunchedEffect(Unit) {
-        val status = HealthConnectClient.getSdkStatus(context)
-        Log.e("HC", "SDK STATUS = $status")
-    }
-
-    val installed =
-        HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
-
-    if (!installed) {
-        Toast.makeText(context, "Health Connect 설치 필요", Toast.LENGTH_LONG).show()
-
-        val url =
-            "https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata"
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        return
-    }
+    // HealthConnect 권한 체크
+    val installed = HealthConnectClient.getSdkStatus(context) ==
+            HealthConnectClient.SDK_AVAILABLE
+    if (!installed) return
 
     val permissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -125,18 +104,113 @@ fun StepViewModelRoute(
     }
 
     val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
-    val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         stepViewModel.checkPermission()
+        heartViewModel.syncHeartHistory()
     }
 
     LaunchedEffect(granted) {
         if (!granted) {
             permissionLauncher.launch(stepViewModel.requestPermissions())
         } else {
-            stepViewModel.startAutoUpdateOnce(intervalMillis = 5_000L)
+            stepViewModel.startAutoUpdateOnce(5_000)
         }
+    }
+
+    val onAlarmCardClick = {
+        if (nextPlan != null) {
+            mainViewModel.clearPreview()
+            showExtendDialog = true
+        } else {
+            Toast.makeText(context, "예정된 복용 일정이 없습니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    if (showExtendDialog && nextPlan != null) {
+
+        val previewRemain = run {
+            val base = nextPlan?.takenAt ?: 0L
+            val previewTime = base + previewExtend * 60_000L
+
+            val diff = previewTime - System.currentTimeMillis()
+            val mins = diff / 1000 / 60
+            val h = mins / 60
+            val m = mins % 60
+
+            String.format(Locale.getDefault(), "%02d:%02d", h, m)
+        }
+
+        AlertDialog(
+            onDismissRequest = { showExtendDialog = false },
+
+            title = {
+                Text(
+                    text = nextLabel ?: "다음 복용",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = previewRemain,
+                        style = MaterialTheme.typography.displayLarge,
+                        modifier = Modifier.padding(bottom = 20.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ExtendChip(text = "+5분", modifier = Modifier.weight(1f)) {
+                            mainViewModel.previewExtend(5)
+                        }
+                        ExtendChip(text = "+10분", modifier = Modifier.weight(1f)) {
+                            mainViewModel.previewExtend(10)
+                        }
+                        ExtendChip(text = "+15분", modifier = Modifier.weight(1f)) {
+                            mainViewModel.previewExtend(15)
+                        }
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        BottomActionButton("복용완료", Modifier.weight(1f)) {
+                            mainViewModel.finishPlan()
+                            mainViewModel.clearPreview()
+                            showExtendDialog = false
+                        }
+
+                        BottomActionButton("취소", Modifier.weight(1f)) {
+                            mainViewModel.clearPreview()
+                            showExtendDialog = false
+                        }
+
+                        BottomActionButton("확인", Modifier.weight(1f)) {
+                            scope.launch {
+                                val ok = mainViewModel.extendPlanMinutesSuspend(previewExtend)
+                                if (ok) {
+                                    mainViewModel.clearPreview()
+                                    showExtendDialog = false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            confirmButton = {}
+        )
     }
 
     MainScreen(
@@ -145,7 +219,56 @@ fun StepViewModelRoute(
         onOpenHeart = onOpenHeart,
         onOpenMap = onOpenMap,
         onOpenNews = onOpenNews,
+        onOpenAlram = onAlarmCardClick,
         todaySteps = todaySteps,
-        remainText = remainText
+        remainText = remainText,
+        nextLabel = nextLabel
     )
+}
+
+/* 연장 버튼 */
+@Composable
+fun ExtendChip(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+            .clickable { onClick() }
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+/* 액션 버튼 */
+@Composable
+fun BottomActionButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+    }
 }
