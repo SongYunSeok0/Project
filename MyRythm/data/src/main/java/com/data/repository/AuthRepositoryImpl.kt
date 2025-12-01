@@ -189,6 +189,21 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    // 1201 비밀번호잊음창의 휴대폰->이메일 인증 변경중, 비번재설정 추가
+    override suspend fun resetPassword(email: String, newPassword: String): Boolean {
+        return try {
+            val res = api.resetPassword(
+                mapOf(
+                    "email" to email,
+                    "password" to newPassword
+                )
+            )
+            res.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     override suspend fun withdrawal(): Boolean {
         return try {
             val response = api.deleteAccount()

@@ -86,7 +86,9 @@ fun LoginScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { padding ->
         Box(
             modifier = modifier
                 .fillMaxSize()

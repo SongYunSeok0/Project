@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.shared.R
 import com.mypage.viewmodel.MyPageViewModel
+import com.shared.ui.components.ProfileHeader
 
 @Composable
 fun MyPageScreen(
@@ -74,26 +75,7 @@ fun MyPageScreen(
     ) {
         Spacer(Modifier.height(16.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .size(90.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xffffb7c5)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "😊", fontSize = 48.sp)
-            }
-
-            Spacer(Modifier.width(16.dp))
-
-            Column {
-                Text(text = "안녕하세요")
-
-                // 🔥 profile.username 표시
-                Text(text = "${profile?.username ?: ""}님")
-            }
-        }
+        ProfileHeader(username = profile?.username)
 
         Spacer(Modifier.height(24.dp))
 

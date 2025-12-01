@@ -25,6 +25,7 @@ import com.shared.ui.components.AuthInputField
 import com.shared.ui.components.AuthLogoIcon
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
+import com.shared.ui.components.AuthSectionTitle
 import com.shared.ui.components.AuthTextButton
 import com.shared.ui.theme.AuthBackground
 
@@ -119,19 +120,11 @@ fun SignupScreen(
                 .padding(horizontal = 24.dp, vertical = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 로고
             AuthLogoIcon()
 
             Spacer(Modifier.height(24.dp))
 
-            Text(
-                emailVerification,   // 이메일 인증
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
+            AuthSectionTitle(emailVerification)
 
             // 이메일 입력 + 전송버튼
             Row(
@@ -238,12 +231,7 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Text(
-                birthText,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth()
-            )
+            AuthSectionTitle(birthText)
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -274,7 +262,6 @@ fun SignupScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // 성별
             AuthGenderDropdown(
                 value = gender,
                 onValueChange = { gender = it },
@@ -287,7 +274,6 @@ fun SignupScreen(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 AuthInputField(
                     value = height,
                     onValueChange = { height = it },
@@ -305,15 +291,8 @@ fun SignupScreen(
             }
             Spacer(Modifier.height(24.dp))
 
-            // -------------------------------------------------------
-            // 전화번호 입력 (기존 인증 버튼 제거, 단순 입력칸으로 변경)
-            // -------------------------------------------------------
-            Text(
-                phoneNumberPlaceholderText, // "전화번호" 텍스트
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // 전화번호인증 - 단순 입력칸
+            AuthSectionTitle(phoneNumberPlaceholderText)
 
             AuthInputField(
                 value = phone,
@@ -325,12 +304,7 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-
-            Spacer(Modifier.height(24.dp))
-
-            // -------------------------------------------------------
-            // 회원가입 버튼
-            // -------------------------------------------------------
+            // 회원가입버튼
             AuthPrimaryButton(
                 text = if (ui.loading) signupLoading else signupText,
                 onClick = {
@@ -375,9 +349,8 @@ fun SignupScreen(
                 modifier = Modifier
                     .fillMaxWidth()
             )
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
 
-            // 뒤로가기 버튼
             AuthSecondaryButton(
                 text = backText,
                 onClick = { onBackToLogin() },

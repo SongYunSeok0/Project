@@ -60,9 +60,10 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.hilt.android)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil3.coil.compose)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
-
 }

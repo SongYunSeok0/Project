@@ -33,42 +33,41 @@ import androidx.compose.ui.unit.dp
  * @param unselectedTextColor 비선택 상태 텍스트 색상
  * @param useClickEffect 클릭 시 색상 변화 적용 여부
  */
+
+// 선택 시 민트, 미선택 시 회색인 셀렉터블 버튼
 @Composable
 fun AppSelectableButton(
     text: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    height: Dp = 75.dp,
-    selectedColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-    unselectedColor: Color = Color.White,
-    selectedBorderColor: Color = MaterialTheme.colorScheme.primary,
-    unselectedBorderColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    height: Dp = 48.dp,
+    shape: RoundedCornerShape = RoundedCornerShape(12.dp),
+
+    // 색상 최소 옵션만 유지
+    selectedBackground: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+    unselectedBackground: Color = Color.White,
     selectedTextColor: Color = MaterialTheme.colorScheme.primary,
-    unselectedTextColor: Color =  MaterialTheme.colorScheme.surfaceVariant,
+    unselectedTextColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    borderColor: Color = MaterialTheme.colorScheme.primary, // 선택 상태 테두리
     useClickEffect: Boolean = true
 ) {
-    val themeSelectedColor = selectedColor ?: MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-    val themeSelectedBorder = selectedBorderColor ?: MaterialTheme.colorScheme.primary
-    val themeSelectedText = selectedTextColor ?: MaterialTheme.colorScheme.primary
-
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     // 클릭 시 배경 색상 결정
     val backgroundColor = when {
-        useClickEffect && isPressed -> selectedColor.copy(alpha = 0.3f)
-        selected -> selectedColor
-        else -> unselectedColor
+        useClickEffect && isPressed -> selectedBackground.copy(alpha = 0.3f)
+        selected -> selectedBackground
+        else -> unselectedBackground
     }
-
-    val borderColor = if (selected) selectedBorderColor else unselectedBorderColor
-    val textColor = if (selected) selectedTextColor else unselectedTextColor
+    val actualBorderColor = if (selected) borderColor else unselectedTextColor
+    val textColor = actualBorderColor
 
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = shape,
         color = backgroundColor,
-        border = BorderStroke(1.5.dp, borderColor),
+        border = BorderStroke(1.5.dp, actualBorderColor),
         modifier = modifier
             .clickable(interactionSource = interactionSource, indication = null) { onClick() }
             .height(height)

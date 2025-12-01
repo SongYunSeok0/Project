@@ -177,6 +177,24 @@ class AuthViewModel @Inject constructor(
         emit(if (ok) "로그인 성공" else "이메일 또는 비밀번호가 올바르지 않습니다.")
     }
 
+    // 1201 비번잊음창의 휴대폰인증->이메일인증 변경중
+    fun resetPassword(email: String, newPassword: String) = viewModelScope.launch {
+        val ok = repo.resetPassword(email, newPassword)
+        emit(if (ok) "비밀번호 재설정 성공" else "비밀번호 재설정 실패")
+    }
+    // 비번 인증코드 전송
+    fun sendResetCode(email: String) = viewModelScope.launch {
+        val ok = repo.sendEmailCode(email)
+        emit(if (ok) "비밀번호 재설정 인증코드 전송" else "전송 실패")
+    }
+    // 비번 인증코드 검증
+    fun verifyResetCode(email: String, code: String) = viewModelScope.launch {
+        val ok = repo.verifyEmailCode(email, code)
+        emit(if (ok) "재설정 인증 성공" else "인증 실패")
+    }
+
+
+
     // 로그아웃 ---------------------------------------------------------
     fun logout() = viewModelScope.launch {
         runCatching { logoutUseCase() }

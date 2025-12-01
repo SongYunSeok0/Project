@@ -1,6 +1,8 @@
 package com.shared.ui.components
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,10 +18,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import com.shared.ui.theme.AuthFieldHeight // Dimension.kt에서 가져옴
 import com.shared.ui.theme.ShadowElevationDefault
 import com.shared.ui.theme.authTheme
 import com.shared.R
+
+
 /**
  * 로그인/회원가입 등 인증 화면의 공통 입력 필드 컴포넌트 (AuthTheme 색상으로 통합)
  *
@@ -112,6 +117,18 @@ fun AuthInputField(
             unfocusedBorderColor = surfaceColor,
             cursorColor = textColor
         )
+    )
+}
+
+@Composable
+fun AuthSectionTitle(text: String) {
+    Text(
+        text = text,
+        color = MaterialTheme.colorScheme.onSurface,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
     )
 }
 
