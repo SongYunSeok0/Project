@@ -15,12 +15,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
-import com.myrhythm.health.StepViewModel
-import com.myrhythm.viewmodel.MainViewModel
+
+import com.domain.sharedvm.MainVMContract
+import com.domain.sharedvm.HeartRateVMContract
+import com.domain.sharedvm.StepVMContract
+
 import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.MainScreen
 import kotlinx.coroutines.launch
@@ -28,6 +30,9 @@ import java.util.Locale
 
 @Composable
 fun StepViewModelRoute(
+    mainViewModel: MainVMContract,
+    heartViewModel: HeartRateVMContract,
+    stepViewModel: StepVMContract,
     myPageViewModel: MyPageViewModel,
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
@@ -38,18 +43,17 @@ fun StepViewModelRoute(
 ) {
     val context = LocalContext.current
 
-    val stepViewModel: StepViewModel = hiltViewModel()
-    val mainViewModel: MainViewModel = hiltViewModel()
-
     val nextPlan by mainViewModel.nextPlan.collectAsStateWithLifecycle()
     val nextLabel by mainViewModel.nextLabel.collectAsStateWithLifecycle()
     val remainText by mainViewModel.remainText.collectAsStateWithLifecycle()
-    val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
 
-    // preview 상태값 가져오기
+    val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
     val previewExtend by mainViewModel.previewExtendMinutes.collectAsStateWithLifecycle()
 
     val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
+
+    val latestBpm by heartViewModel.latestHeartRate.collectAsStateWithLifecycle()
+
     var hasShownGuardianDialog by remember { mutableStateOf(false) }
     var showGuardianDialog by remember { mutableStateOf(false) }
     var showExtendDialog by remember { mutableStateOf(false) }
@@ -101,7 +105,10 @@ fun StepViewModelRoute(
 
     val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) { stepViewModel.checkPermission() }
+    LaunchedEffect(Unit) {
+        stepViewModel.checkPermission()
+        heartViewModel.syncHeartHistory()
+    }
 
     LaunchedEffect(granted) {
         if (!granted) {
@@ -111,7 +118,6 @@ fun StepViewModelRoute(
         }
     }
 
-    // 알람 카드 클릭 → 팝업 열기
     val onAlarmCardClick = {
         if (nextPlan != null) {
             mainViewModel.clearPreview()
@@ -121,12 +127,7 @@ fun StepViewModelRoute(
         }
     }
 
-    //===============================
-    // ★ 연장 / 복용 / 확인 팝업
-    //===============================
     if (showExtendDialog && nextPlan != null) {
-
-        val originalRemain = remainText ?: "--:--"
 
         val previewRemain = run {
             val base = nextPlan?.takenAt ?: 0L
@@ -155,15 +156,12 @@ fun StepViewModelRoute(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
-                    // 큰 시간 표시
                     Text(
                         text = previewRemain,
                         style = MaterialTheme.typography.displayLarge,
                         modifier = Modifier.padding(bottom = 20.dp)
                     )
 
-                    // 연장 버튼
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -183,37 +181,24 @@ fun StepViewModelRoute(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // 복용완료 + 확인 + 취소 같은 줄에 배치
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // 복용완료
-                        BottomActionButton(
-                            text = "복용완료",
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        BottomActionButton("복용완료", Modifier.weight(1f)) {
                             mainViewModel.finishPlan()
                             mainViewModel.clearPreview()
                             showExtendDialog = false
                         }
 
-                        // 취소
-                        BottomActionButton(
-                            text = "취소",
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        BottomActionButton("취소", Modifier.weight(1f)) {
                             mainViewModel.clearPreview()
                             showExtendDialog = false
                         }
 
-                        // 확인
-                        BottomActionButton(
-                            text = "확인",
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        BottomActionButton("확인", Modifier.weight(1f)) {
                             scope.launch {
-                                val ok = mainViewModel.extendPlanMinutesSuspend(previewExtend).await()
+                                val ok = mainViewModel.extendPlanMinutesSuspend(previewExtend)
                                 if (ok) {
                                     mainViewModel.clearPreview()
                                     showExtendDialog = false
@@ -228,7 +213,6 @@ fun StepViewModelRoute(
         )
     }
 
-    // 메인 화면 연결
     MainScreen(
         onOpenChatBot = onOpenChatBot,
         onOpenScheduler = onOpenScheduler,
@@ -242,7 +226,7 @@ fun StepViewModelRoute(
     )
 }
 
-/* 연장 버튼(칩) */
+/* 연장 버튼 */
 @Composable
 fun ExtendChip(
     text: String,
@@ -265,7 +249,7 @@ fun ExtendChip(
     }
 }
 
-/* 아래쪽 액션 버튼 (복용완료/확인/취소 공용 스타일) */
+/* 액션 버튼 */
 @Composable
 fun BottomActionButton(
     text: String,

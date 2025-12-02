@@ -1,10 +1,12 @@
-package com.myrhythm.health
+package com.myrhythm.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.DailyStep
 import com.domain.repository.StepRepository
+import com.domain.sharedvm.StepVMContract
+import com.myrhythm.health.HealthConnectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,13 +21,13 @@ import javax.inject.Inject
 class StepViewModel @Inject constructor(
     private val repo: StepRepository,
     private val hc: HealthConnectRepository
-) : ViewModel() {
+) : ViewModel(), StepVMContract {
 
     private val _permissionGranted = MutableStateFlow(false)
-    val permissionGranted = _permissionGranted.asStateFlow()
+    override val permissionGranted = _permissionGranted.asStateFlow()
 
     private val _todaySteps = MutableStateFlow(0)
-    val todaySteps = _todaySteps.asStateFlow()
+    override val todaySteps = _todaySteps.asStateFlow()
 
     private var autoJob: Job? = null
     private var autoStarted = false
@@ -35,13 +37,13 @@ class StepViewModel @Inject constructor(
 
     private var dailyUploaded = false
 
-
-    fun checkPermission() = viewModelScope.launch {
-        _permissionGranted.value = hc.isGranted()
+    override fun checkPermission() {
+        viewModelScope.launch {
+            _permissionGranted.value = hc.isGranted()
+        }
     }
 
-
-    fun startAutoUpdateOnce(intervalMillis: Long = 1_000L) {
+    override fun startAutoUpdateOnce(intervalMs: Long) {
         if (autoStarted) return
         autoStarted = true
 
@@ -58,27 +60,23 @@ class StepViewModel @Inject constructor(
 
                     repo.insertStep(steps)
 
-                    // 날짜 변경 감지
                     val dateChanged = nowDate != lastDate
 
-                    // 새 날이 되었고 아직 업로드 안 한 경우
                     if (dateChanged && !dailyUploaded) {
                         uploadYesterdaySteps()
                         dailyUploaded = true
                         lastDate = nowDate
                     }
 
-                    // 날짜가 바뀌었으면 잠금 해제
                     if (dateChanged) dailyUploaded = false
 
                     lastSteps = steps
                 }
 
-                delay(intervalMillis)
+                delay(intervalMs)
             }
         }
     }
-
 
     private suspend fun uploadYesterdaySteps() {
         val yesterday = lastDate
@@ -94,9 +92,7 @@ class StepViewModel @Inject constructor(
         repo.clearSteps()
     }
 
-
-    fun requestPermissions() = hc.permissions
-
+    override fun requestPermissions() = hc.permissions
 
     override fun onCleared() {
         autoJob?.cancel()

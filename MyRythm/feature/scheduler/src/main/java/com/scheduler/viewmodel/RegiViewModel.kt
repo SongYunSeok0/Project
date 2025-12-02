@@ -58,6 +58,7 @@ class RegiViewModel @Inject constructor(
         }
     }
 
+    private var isCreating = false
     fun createRegiAndPlans(
         regiType: String,
         label: String?,
@@ -65,6 +66,9 @@ class RegiViewModel @Inject constructor(
         useAlarm: Boolean,
         plans: List<Plan>
     ) {
+        if (isCreating) return     // ← 중복 방지!!
+        isCreating = true
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _uiState.update { it.copy(loading = true, error = null) }
@@ -88,6 +92,7 @@ class RegiViewModel @Inject constructor(
                 _events.emit("등록 실패")
             } finally {
                 _uiState.update { it.copy(loading = false) }
+                isCreating = false
             }
         }
     }
@@ -96,19 +101,38 @@ class RegiViewModel @Inject constructor(
         val zone = ZoneId.systemDefault()
         val out = mutableMapOf<LocalDate, MutableList<MedItem>>()
 
-        plans.forEach { p ->
-            val takenAt = p.takenAt ?: return@forEach
-            val local = Instant.ofEpochMilli(takenAt).atZone(zone)
-            val date = local.toLocalDate()
-            val time = local.toLocalTime().toString().substring(0, 5)
+        // 같은 날짜, 같은 시간으로 그룹화
+        plans
+            .filter { it.takenAt != null }
+            .groupBy { p ->
+                val local = Instant.ofEpochMilli(p.takenAt!!).atZone(zone)
+                val date = local.toLocalDate()
+                val time = local.toLocalTime().toString().substring(0, 5)
+                Pair(date, time)
+            }
+            .forEach { (key, group) ->
+                val (date, time) = key
 
-            val item = MedItem(
-                label = p.medName,
-                time = time,
-                status = IntakeStatus.SCHEDULED
-            )
-            out.getOrPut(date) { mutableListOf() }.add(item)
-        }
+                // 그룹의 모든 약 이름과 ID 수집
+                val medNames = group.map { it.medName }
+                val planIds = group.map { it.id }
+
+                // 대표 Plan (첫 번째)
+                val representative = group.first()
+
+                val item = MedItem(
+                    planIds = planIds,
+                    label = representative.medName,
+                    medNames = medNames,
+                    time = time,
+                    mealTime = representative.mealTime,
+                    memo = representative.note,
+                    useAlarm = representative.useAlarm,
+                    status = if (group.all { it.taken != null }) IntakeStatus.DONE else IntakeStatus.SCHEDULED
+                )
+
+                out.getOrPut(date) { mutableListOf() }.add(item)
+            }
 
         return out.mapValues { (_, v) -> v.sortedBy { it.time } }
     }

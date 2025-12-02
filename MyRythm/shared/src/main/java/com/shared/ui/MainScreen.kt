@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.shared.R
+import com.shared.bar.AppBottomBar
 import com.shared.ui.components.FullWidthFeatureCard
 import com.shared.ui.components.MainFeatureCard
 import com.shared.ui.theme.AppTypography
@@ -25,7 +27,7 @@ import com.shared.ui.theme.componentTheme
 fun MainScreen(
     onOpenChatBot: () -> Unit = {},
     onOpenScheduler: () -> Unit = {},
-    onOpenAlram: () -> Unit = {}, // ✅ 알람 카드 클릭 시 호출될 콜백
+    onOpenAlram: () -> Unit = {},
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
@@ -52,36 +54,43 @@ fun MainScreen(
     val healthinsightMessage = stringResource(R.string.main_message_healthinsight)
 
 
-
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp, vertical = 24.dp)
-            .padding(top = 10.dp)
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 0.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        FullWidthFeatureCard(
+            bg = MaterialTheme.componentTheme.healthInsightCard,
+            onClick = { /* 연결 필요하면 추가 */ }
         ) {
-            MainFeatureCard(
-                title = chatbotText,
-                bg = MaterialTheme.componentTheme.chatbotCard,
-                icon = chatBotIconResId,
-                onClick = onOpenChatBot,
-                modifier = Modifier.weight(1f).height(140.dp)
-            )
-
-            MainFeatureCard(
-                title = schedulerText,
-                bg = MaterialTheme.componentTheme.schedulerCard,
-                icon = schedulerIconResId,
-                onClick = onOpenScheduler,
-                modifier = Modifier.weight(1f).height(140.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painterResource(tempIconResId),
+                    healthinsightText,
+                    Modifier.size(48.dp)
+                )
+                Text(
+                    healthinsightText,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    healthinsightMessage,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
         Row(
@@ -94,12 +103,13 @@ fun MainScreen(
                 icon = stepIconResId,
                 modifier = Modifier.weight(1f).height(140.dp),
             )
+
             MainFeatureCard(
-                title = rateText,
-                bg = MaterialTheme.componentTheme.rateCard,
-                icon = rateIconResId,
-                onClick = onOpenHeart,
-                modifier = Modifier.weight(1f).height(140.dp),
+                title = schedulerText,
+                bg = MaterialTheme.componentTheme.schedulerCard,
+                icon = schedulerIconResId,
+                onClick = onOpenScheduler,
+                modifier = Modifier.weight(1f).height(140.dp)
             )
         }
 
@@ -158,7 +168,25 @@ fun MainScreen(
                 }
             }
         }
-
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            MainFeatureCard(
+                title = chatbotText,
+                bg = MaterialTheme.componentTheme.chatbotCard,
+                icon = chatBotIconResId,
+                onClick = onOpenChatBot,
+                modifier = Modifier.weight(1f).height(140.dp)
+            )
+            MainFeatureCard(
+                title = rateText,
+                bg = MaterialTheme.componentTheme.rateCard,
+                icon = rateIconResId,
+                onClick = onOpenHeart,
+                modifier = Modifier.weight(1f).height(140.dp),
+            )
+        }
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
@@ -178,45 +206,30 @@ fun MainScreen(
                 modifier = Modifier.weight(1f).height(140.dp)
             )
         }
-
-        FullWidthFeatureCard(
-            bg = MaterialTheme.componentTheme.healthInsightCard,
-            onClick = { /* 연결 필요하면 추가 */ }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painterResource(tempIconResId),
-                    healthinsightText,
-                    Modifier.size(48.dp)
-                )
-                Text(
-                    healthinsightText,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    healthinsightMessage,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, heightDp = 800)
 @Composable
-fun MainScreenPreview() {
-    MaterialTheme(
-        typography = AppTypography
-    ) {
-        MainScreen()
+fun MainScreenRealPreview() {
+    MaterialTheme(typography = AppTypography) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 콘텐츠 영역
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 80.dp)  // AppRoot padding
+            ) {
+                MainScreen()
+            }
+
+            // 바텀바 (하단 고정)
+            Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                AppBottomBar(
+                    currentScreen = "Home",
+                    onTabSelected = {}
+                )
+            }
+        }
     }
 }

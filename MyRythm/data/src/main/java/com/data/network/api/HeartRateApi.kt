@@ -1,12 +1,12 @@
 // data/network/api/HealthApi.kt
 package com.data.network.api
 
-import com.data.network.dto.health.HeartRateHistoryResponse
-import com.data.network.dto.health.LatestHeartRateResponse
+import com.data.network.dto.heart.HeartRateHistoryResponse
+import com.data.network.dto.heart.LatestHeartRateResponse
 import retrofit2.http.GET
 
 
-interface HealthApi {
+interface HeartRateApi {
     @GET("health/heart/latest/")
     suspend fun getLatestHeartRate(): LatestHeartRateResponse
 

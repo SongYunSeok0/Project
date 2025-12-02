@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,46 +24,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import coil3.compose.rememberAsyncImagePainter
 //import coil.compose.rememberAsyncImagePainter
 import com.shared.R
-
-@Composable
-fun InquiryTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    singleLine: Boolean = false,
-    maxLines: Int = 10,
-    height: Dp? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = modifier
-            .fillMaxWidth()
-            .then(
-                if (height != null) Modifier.height(height)
-                else Modifier
-            ),
-        shape = RoundedCornerShape(12.dp),
-        singleLine = singleLine,
-        maxLines = maxLines,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = Color.Gray,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            unfocusedLabelColor = Color.Gray
-        ),
-        textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onSurface),
-    )
-}
-
 
 @Composable
 fun ImageAttachmentSection(
@@ -73,7 +41,7 @@ fun ImageAttachmentSection(
 ) {
     val attachImage = stringResource(R.string.attachimage)
     val addText = stringResource(R.string.add)
-    //val attachedImages = stringResource(R.string.mypage_attachedimages)
+    val attachedImages = stringResource(R.string.attachedimages)
     val ImagesText = stringResource(R.string.images)
     val deleteImage = stringResource(R.string.deleteimage)
 
@@ -101,7 +69,7 @@ fun ImageAttachmentSection(
             Text(
                 text = "${images.size}/3",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.surfaceVariant
             )
         }
 
@@ -134,14 +102,14 @@ fun ImageAttachmentSection(
                             Icon(
                                 painter = painterResource(R.drawable.camera),
                                 contentDescription = attachImage,
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.surfaceVariant,
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = addText,
                                 fontSize = 12.sp,
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.surfaceVariant
                             )
                         }
                     }
@@ -153,17 +121,18 @@ fun ImageAttachmentSection(
                 Box(
                     modifier = Modifier.size(100.dp)
                 ) {
-                    // coil 의존성 추가 필요해서 임시 블록처리
-                    /*Image(
+                    // coil 의존성 추가 필요해서 임시 블록처리 -> 1201 추가,
+                    // 이미지첨부는되는데 서버로전달은안됨
+                    Image(
                         painter = rememberAsyncImagePainter(uri),
                         contentDescription = "$attachedImages ${index + 1}",
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(12.dp)),
                         contentScale = ContentScale.Crop
-                    )*/
+                    )
 
-                    // 코일 대신 ui보는 용도 임시코드
+                    /*// 코일 대신 ui보는 용도 임시코드
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -176,7 +145,7 @@ fun ImageAttachmentSection(
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
+                    }*/
 
                     // 삭제 버튼
                     IconButton(

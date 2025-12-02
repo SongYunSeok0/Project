@@ -8,6 +8,6 @@ class LogoutUseCase @Inject constructor(
 ) {
     // suspend 로 선언
     suspend operator fun invoke() {
-        repo.clearTokens()
+        repo.logout()
     }
 }

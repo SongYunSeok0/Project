@@ -23,6 +23,7 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color.Black,
     secondary = Secondary,
     onSurfaceVariant = OnSurfaceVariant,
+    surfaceVariant = Color.Gray,
     // 오류 팝업
     error = Color.Red,
     onError = Color.White
@@ -68,12 +69,11 @@ fun AppTheme(
 fun OnlyColorTheme(content: @Composable () -> Unit) {
     // 현재 테마의 폰트 / 모양 유지, 컬러만 맨 위에서 지정한 걸로 변경
     val currentTypography = MaterialTheme.typography
-    val currentShapes = MaterialTheme.shapes
 
     MaterialTheme(
         colorScheme = LightColorScheme,
         typography = currentTypography,
-        shapes = currentShapes
+        shapes = AppShapes
     ) {
         content()
     }
