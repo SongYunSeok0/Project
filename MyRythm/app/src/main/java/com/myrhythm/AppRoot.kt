@@ -138,6 +138,11 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     }
 
+    // 🔹 현재 route 기준으로 싱크 허용 여부 결정
+    val syncEnabled = remember(routeName) {
+        isSyncAllowedRoute(routeName)
+    }
+
     Scaffold(
         topBar = {
             if (!hideTopBar) {
@@ -176,7 +181,14 @@ fun AppRoot(startFromLogin: Boolean = false) {
         SwipeRefresh(
             modifier = Modifier.padding(inner),
             state = rememberSwipeRefreshState(isRefreshing = refreshing),
-            onRefresh = { refreshAll() }
+            swipeEnabled = syncEnabled,              // 🔹 허용된 화면에서만 제스처 활성화
+            onRefresh = {
+                if (syncEnabled) {
+                    refreshAll()
+                } else {
+                    Log.d("Sync", "이 화면에서는 싱크 비활성")
+                }
+            }
         ) {
             NavHost(
                 navController = nav,
@@ -203,6 +215,27 @@ fun AppRoot(startFromLogin: Boolean = false) {
                 chatbotNavGraph()
             }
         }
+    }
+}
+
+
+private fun isSyncAllowedRoute(routeName: String): Boolean {
+    return when {
+        // 홈
+        routeName.startsWith(MainRoute::class.qualifiedName.orEmpty()) -> true
+
+        // 마이페이지 및 관련 화면
+        routeName.startsWith(MyPageRoute::class.qualifiedName.orEmpty()) -> true
+        routeName.startsWith(EditProfileRoute::class.qualifiedName.orEmpty()) -> true
+        routeName.startsWith(HeartReportRoute::class.qualifiedName.orEmpty()) -> true
+
+        // 일정 / 처방 관련
+        routeName.startsWith(SchedulerRoute::class.qualifiedName.orEmpty()) -> true
+
+        // 뉴스
+        routeName.startsWith(NewsRoute::class.qualifiedName.orEmpty()) -> true
+
+        else -> false
     }
 }
 

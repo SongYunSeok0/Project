@@ -1,5 +1,6 @@
 package com.mypage.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.UserProfile
@@ -8,6 +9,7 @@ import com.domain.repository.AuthRepository
 import com.domain.repository.ProfileRepository
 import com.domain.usecase.auth.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.cancelChildren
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,10 +59,23 @@ class MyPageViewModel @Inject constructor(
             .onSuccess { _profile.value = it }
     }
 
-    fun onLogout() = viewModelScope.launch {
+    private var isLoggingOut = false
+
+    fun logout() = viewModelScope.launch {
+        if (isLoggingOut) return@launch
+        isLoggingOut = true
+
+        Log.d("MyPageVM", "로그아웃 시작")
         runCatching { logoutUseCase() }
-            .onSuccess { _events.send(MyPageEvent.LogoutSuccess) }
-            .onFailure { _events.send(MyPageEvent.LogoutFailed) }
+            .onSuccess {
+                Log.d("MyPageVM", "로그아웃 성공")
+                _events.send(MyPageEvent.LogoutSuccess)
+            }
+            .onFailure {
+                Log.e("MyPageVM", "로그아웃 실패", it)
+                _events.send(MyPageEvent.LogoutFailed)
+            }
+            .also { isLoggingOut = false }
     }
 
     fun addInquiry(type: String, title: String, content: String) {

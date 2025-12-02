@@ -5,7 +5,8 @@ data class SocialLoginResponse(
     val refresh: String?,
     val needAdditionalInfo: Boolean? = false,        //신규회원여부, 소셜로그인응답에서만
     val provider: String? = null,
-    val socialId: String? = null
+    val socialId: String? = null,
+    val user_id: Long?, //1127 18:08
 )
 
 /*

@@ -1,6 +1,8 @@
 package com.shared.ui.components
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,10 +18,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import com.shared.ui.theme.AuthFieldHeight // Dimension.kt에서 가져옴
 import com.shared.ui.theme.ShadowElevationDefault
 import com.shared.ui.theme.authTheme
 import com.shared.R
+
+
 /**
  * 로그인/회원가입 등 인증 화면의 공통 입력 필드 컴포넌트 (AuthTheme 색상으로 통합)
  *
@@ -44,7 +49,7 @@ fun AuthInputField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardType: KeyboardType = KeyboardType.Text,
     enabled: Boolean = true,
-    shape: Shape = MaterialTheme.shapes.extraSmall,
+    shape: Shape = MaterialTheme.shapes.medium,
     trailingContent: @Composable (() -> Unit)? = null
 ) {
     // 비밀번호 표시/숨김 상태
@@ -53,13 +58,9 @@ fun AuthInputField(
     // 모든 입력 필드는 MaterialTheme.authTheme의 색상을 사용하도록 고정 (통합)
     val authColors = MaterialTheme.authTheme
 
-    val surfaceColor = authColors.authSurface
-    val hintColor = authColors.authOnFieldHint
-    val textColor = authColors.authOnSurface
-    val accentColor = authColors.authPrimaryButton
-
-    // Shape와 Typography는 공통 (Theme.kt에서 MaterialTheme에 제공됨)
-    // extraSmall은 Shape.kt에서 AuthFieldShape(10.dp)로 매핑되어 있습니다.
+    val surfaceColor = authColors.authSurface   //하얀
+    val hintColor = authColors.authOnFieldHint  //블랙40
+    val textColor = authColors.authOnSurface    //검정
     val textStyle = MaterialTheme.typography.bodyLarge
 
     val passwordShow = stringResource(R.string.auth_password_show)
@@ -78,8 +79,7 @@ fun AuthInputField(
         singleLine = true,
         shape = shape,
         modifier = modifier
-            .height(AuthFieldHeight) // Dimension.kt의 AuthFieldHeight 사용
-            .shadow(elevation = ShadowElevationDefault, shape = shape),
+            .height(AuthFieldHeight), // Dimension.kt의 AuthFieldHeight 사용
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation()
         else
@@ -94,7 +94,7 @@ fun AuthInputField(
                             else
                                 Icons.Filled.Visibility,
                             contentDescription = if (passwordVisible) passwordHide else passwordShow,
-                            tint = accentColor
+                            tint = hintColor
                         )
                     }
                 }
@@ -113,23 +113,25 @@ fun AuthInputField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = surfaceColor,
             unfocusedContainerColor = surfaceColor,
-            focusedBorderColor = accentColor,
-            unfocusedBorderColor = hintColor.copy(alpha = 0.5f),
-            cursorColor = accentColor,
-            focusedTextColor = textColor,
-            unfocusedTextColor = textColor
+            focusedBorderColor = hintColor,
+            unfocusedBorderColor = surfaceColor,
+            cursorColor = textColor
         )
     )
 }
 
-/**
- * 성별 선택 드롭다운 컴포넌트 (입력 필드 스타일)
- *
- * @param value 현재 선택된 값 ("M", "F", "")
- * @param onValueChange 값 변경 콜백 (M 또는 F 반환)
- * @param hint Placeholder 텍스트
- * @param modifier Modifier
- */
+@Composable
+fun AuthSectionTitle(text: String) {
+    Text(
+        text = text,
+        color = MaterialTheme.colorScheme.onSurface,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthGenderDropdown(

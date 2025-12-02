@@ -17,12 +17,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.BuildConfig
@@ -32,8 +28,8 @@ import com.shared.ui.components.AuthInputField
 import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
-import com.shared.ui.theme.Primary
-import com.shared.ui.theme.defaultFontFamily
+import com.shared.ui.components.AuthTextButton
+import com.shared.ui.theme.AuthFieldHeight
 import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,7 +57,6 @@ fun LoginScreen(
 
     Log.e("LoginScreen", "🎨 State 수집: isLoggedIn=${ui.isLoggedIn}, userId=${ui.userId}, loading=${ui.loading}")
 
-    // 1125 자동로그인 진행중
     val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
     val snackbar = remember { SnackbarHostState() }
@@ -81,7 +76,7 @@ fun LoginScreen(
         Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
         Log.e("LoginScreen", "🚀 form.email = ${form.email}")
         if (ui.isLoggedIn) {
-            val uid = ui.userId //?: form.email // 1127 15:45 수정전val uid = ui.userId
+            val uid = ui.userId
             if (uid != null) {
                 Log.e("LoginScreen", "➡ 로그인 성공 → MainRoute 이동 userId=$uid")
                 onLogin(uid, form.password)
@@ -90,24 +85,10 @@ fun LoginScreen(
             }
         }
     }
-    /* 1127병합이전코드
-    LaunchedEffect(ui.isLoggedIn, ui.userId) {
-        Log.e("LoginScreen", "🚀 ========== LaunchedEffect 트리거 ==========")
-        Log.e("LoginScreen", "🚀 isLoggedIn = ${ui.isLoggedIn}")
-        Log.e("LoginScreen", "🚀 userId = ${ui.userId}")
-        Log.e("LoginScreen", "🚀 form.email = ${form.email}")
-        if (ui.isLoggedIn) {
-            val userId = ui.userId ?: form.email
-            Log.e("LoginScreen", "✅ 네비게이션 실행: userId=$userId, password=${form.password}")
-            onLogin(userId, form.password)
-            Log.e("LoginScreen", "✅ onLogin 호출 완료")
-        } else {
-            Log.e("LoginScreen", "⏸️ 네비게이션 대기 중")
-        }
-    }
-     */
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) }
+    ) { padding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
@@ -120,7 +101,11 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                item { Spacer(Modifier.height(50.dp)) }
+
+                // 1128 상단 여백 투명화
+                item {
+                    Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+                }
 
                 item { AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm) }
 
@@ -132,7 +117,6 @@ fun LoginScreen(
                         onValueChange = { viewModel.updateLoginEmail(it) },
                         hint = idText,
                         modifier = Modifier.fillMaxWidth(),
-                        imeAction = ImeAction.Next
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -183,13 +167,9 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Text(
+                        AuthTextButton(
                             text = pwMissingMessage,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.loginTheme.loginTertiary,
-                            modifier = Modifier
-                                .clickable { onForgotPassword() }
-                                .padding(vertical = 4.dp)
+                            onClick = { onForgotPassword() }
                         )
                     }
 
@@ -199,11 +179,8 @@ fun LoginScreen(
                         text = if (ui.loading) loginLoading else loginText,
                         onClick = { viewModel.login() },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
+                            .fillMaxWidth(),
                         enabled = !ui.loading,
-                        useLoginTheme = true,
-                        useClickEffect = true
                     )
 
                     Spacer(Modifier.height(8.dp))
@@ -213,8 +190,6 @@ fun LoginScreen(
                         onClick = onSignUp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        useLoginTheme = true
                     )
 
                     Spacer(Modifier.height(30.dp))
@@ -247,8 +222,8 @@ fun LoginScreen(
                             contentDescription = kakaoLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .height(AuthFieldHeight)
+                                .clip(MaterialTheme.shapes.medium)
                                 .clickable {
                                     Log.e("LoginScreen", "🟡 ========== 카카오 버튼 클릭 ==========")
                                     viewModel.kakaoOAuth(
@@ -262,15 +237,15 @@ fun LoginScreen(
                             contentScale = ContentScale.FillBounds
                         )
 
-                        Spacer(Modifier.height(14.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         Image(
                             painter = painterResource(R.drawable.google_login_button),
                             contentDescription = googleLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .height(AuthFieldHeight)
+                                .clip(MaterialTheme.shapes.medium)
                                 .clickable {
                                     Log.e("LoginScreen", "🔵 ========== 구글 버튼 클릭 ==========")
                                     viewModel.googleOAuth(
@@ -285,27 +260,33 @@ fun LoginScreen(
                             contentScale = ContentScale.FillBounds
                         )
 
+                        // 1128 ui보는용 임시로그인
+                        Button(
+                            onClick = {
+                                Log.e("LoginScreen", "🔧 ========== 임시 로그인 버튼 클릭 ==========")
+                                // 임시 userId로 직접 네비게이션
+                                onLogin("test_user_123", "test_password")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                                contentColor = MaterialTheme.colorScheme.onError
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "🔧 임시 로그인 (테스트용)",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+
+
                         Spacer(Modifier.height(30.dp))
                     }
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewLogin() {
-    MaterialTheme(
-        colorScheme = lightColorScheme(primary = Primary),
-        typography = MaterialTheme.typography.copy(
-            labelLarge = TextStyle(
-                fontFamily = defaultFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.sp
-            )
-        )
-    ) {
-        LoginScreen()
     }
 }

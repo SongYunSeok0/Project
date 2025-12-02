@@ -23,8 +23,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.shared.R
 import com.mypage.viewmodel.EditProfileEvent
 import com.mypage.viewmodel.EditProfileViewModel
-import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.components.AuthGenderDropdown
+import com.mypage.viewmodel.MyPageViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +38,8 @@ fun EditScreen(
 
     val isLocal = !profile?.email.isNullOrEmpty()
 
-    var name by remember { mutableStateOf("") }
+    val initialName = profile?.username
+    var name by remember(profile) { mutableStateOf(initialName ?: "") }
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var birthDate by remember { mutableStateOf("") }
@@ -46,6 +47,23 @@ fun EditScreen(
     var gender by remember { mutableStateOf("") }
     var protEmail by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+
+    /*
+     // 1125 로컬/소셜 구분 (이메일 유무 기준)
+    val isLocal = !profile?.email.isNullOrEmpty()
+
+    // --- 서버값 초기화 ---
+    // ⚡ 서버에서 받은 값으로 초기값 설정
+    var name by remember(profile) { mutableStateOf(profile?.username ?: "") }
+    var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
+    var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
+    var birthDate by rememberSaveable(profile) { mutableStateOf(profile?.birth_date ?: "") }
+    var phone by remember(profile) { mutableStateOf(profile?.phone ?: "") }
+     */
+
+    // 데이터 없으면 1회 입력 있으면 수정 불가
+    val hasName = !initialName.isNullOrBlank()
+    val hasGender = gender.isNotBlank()
 
     var isProtEmailVerified by remember { mutableStateOf(false) }
     var isProtEmailSent by remember { mutableStateOf(false) }
@@ -64,8 +82,26 @@ fun EditScreen(
             isProtEmailVerified = !it.prot_email.isNullOrBlank()
         }
     }
+    // 문자열 리소스화
+    val editprofilephoto = stringResource(R.string.editprofilephoto)
+    val editText = stringResource(R.string.edit)
+
+    // 문자열 리소스
+    val emailText = stringResource(R.string.email)
+    val guardianEmailText = stringResource(R.string.guardianemail)
+    val nameText = stringResource(R.string.name)
+    val heightText = stringResource(R.string.height)
+    val weightText = stringResource(R.string.weight)
+    val birthText = stringResource(R.string.birth)
+    val genderText = stringResource(R.string.gender)
+    val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
+    val editDone = stringResource(R.string.edit_done)
+    val birthExampleText = stringResource(R.string.birth_example)
 
     val context = LocalContext.current
+    val sendText = stringResource(R.string.send)
+    val sentText = stringResource(R.string.sent)
+    val verificationText = stringResource(R.string.verification)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -92,17 +128,30 @@ fun EditScreen(
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            if (name.isNotBlank())
-                ReadonlyField(stringResource(R.string.name), name)
-            else
-                EditableField(stringResource(R.string.name), name) { name = it }
+            if (hasName) {
+                ReadonlyField(nameText, name)
+            } else {
+                EditableField(nameText, name) { name = it }
+            }
 
-            EditableField(stringResource(R.string.height), height) { height = it }
-            EditableField(stringResource(R.string.weight), weight) { weight = it }
+            EditableField(heightText, height) { height = it }
+            EditableField(weightText, weight) { weight = it }
 
             fun isValidBirthFormat(v: String) =
                 Regex("""^\d{4}-\d{2}-\d{2}$""").matches(v)
-
+            val hasValidBirth = isValidBirthFormat(birthDate)
+            if (hasValidBirth) {
+                ReadonlyField(birthText, birthDate)
+            } else {
+                EditableField(
+                    label = "${birthText} $birthExampleText",
+                    value = birthDate,
+                    onValueChange = { input ->
+                        birthDate = input
+                    }
+                )
+            }
+            /* 1201 18:07 seok 코드
             if (isValidBirthFormat(birthDate))
                 ReadonlyField(stringResource(R.string.birth), birthDate)
             else
@@ -110,24 +159,23 @@ fun EditScreen(
                     stringResource(R.string.birth) + " " + stringResource(R.string.birth_example),
                     birthDate
                 ) { birthDate = it }
-
-            if (gender.isNotBlank())
-                ReadonlyField(stringResource(R.string.gender), gender)
-            else
+             */
+            if (hasGender) {
+                ReadonlyField(genderText, gender)
+            } else {
                 AuthGenderDropdown(
                     value = gender,
                     onValueChange = { gender = it },
                     modifier = Modifier.fillMaxWidth()
                 )
-
-            if (isLocal)
-                ReadonlyField(stringResource(R.string.email), email)
-
-            EditableField(stringResource(R.string.phone_number_placeholder), phone) { phone = it }
+            }
+            if (isLocal) {
+                ReadonlyField(emailText, email)
+            }
+            EditableField(phoneNumberPlaceholderText, phone) { phone = it }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-
             Text("보호자 이메일", fontSize = 14.sp, color = Color(0xff3b566e))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -166,25 +214,19 @@ fun EditScreen(
                     },
                     enabled = !isProtEmailVerified,
                     shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     modifier = Modifier.height(56.dp)
                 ) {
-                    Text(
-                        text = if (isProtEmailSent) stringResource(R.string.sent)
-                        else stringResource(R.string.send),
-                        fontSize = 14.sp
-                    )
+                    // 전송됨 상태이면 sentText, 아니면 sendText
+                    Text(text = if (isProtEmailSent) sentText else sendText, fontSize = 14.sp)
                 }
             }
         }
 
         if (isProtEmailSent && !isProtEmailVerified) {
-
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-
-                Text("인증번호", fontSize = 14.sp, color = Color(0xff3b566e))
-
+                Text(text = "인증번호", fontSize = 14.sp, color = Color(0xff3b566e))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-
                     OutlinedTextField(
                         value = protEmailCode,
                         onValueChange = { protEmailCode = it },
@@ -199,7 +241,6 @@ fun EditScreen(
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
-
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Button(
@@ -217,7 +258,7 @@ fun EditScreen(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.height(56.dp)
                     ) {
-                        Text(stringResource(R.string.verification), fontSize = 14.sp)
+                        Text(text = verificationText, fontSize = 14.sp)
                     }
                 }
             }
@@ -231,7 +272,7 @@ fun EditScreen(
                 .height(56.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(
-                    if (protEmail.isNotBlank() && !isProtEmailVerified) Color.Gray
+                    if (protEmail.isNotBlank() && !isProtEmailVerified) MaterialTheme.colorScheme.surfaceVariant
                     else MaterialTheme.colorScheme.primary
                 )
                 .clickable {
@@ -260,7 +301,7 @@ fun EditScreen(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.edit_done),
+                    text = editDone,
                     color = MaterialTheme.colorScheme.surface,
                     fontSize = 16.sp
                 )
@@ -273,7 +314,10 @@ fun EditScreen(
 @Composable
 fun EditableField(label: String, value: String, onValueChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface)
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
