@@ -52,4 +52,9 @@ class ProfileRepositoryImpl @Inject constructor(
             entity?.toProfile()
         }
     }
+
+    override suspend fun clearProfile() {
+        dao.clear()
+        cachedUserId = null
+    }
 }

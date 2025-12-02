@@ -17,9 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.shared.R
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel
+import com.shared.ui.components.AppInputField
 import com.shared.ui.components.AppSelectableButton
 
 @Composable
@@ -71,7 +73,7 @@ fun NewInquiryForm(
     var selectedType by remember { mutableStateOf("일반 문의") }
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-    //var images by remember { mutableStateOf(listOf<Uri>()) }
+    var images by remember { mutableStateOf(listOf<Uri>()) }
 
     val titleText = stringResource(R.string.title)
     val title_Message = stringResource(R.string.mypage_message_title)
@@ -117,12 +119,13 @@ fun NewInquiryForm(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.align(Alignment.Start)
             )
-            InquiryTextField(
+            AppInputField(
                 value = title,
                 onValueChange = { title = it },
                 label = title_Message,
                 singleLine = true,
-                maxLines = 1
+                maxLines = 1,
+                useFloatingLabel = true
             )
 
             Text(
@@ -131,24 +134,25 @@ fun NewInquiryForm(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.align(Alignment.Start)
             )
-            InquiryTextField(
+            AppInputField(
                 value = content,
                 onValueChange = { content = it },
                 label = content_Message,
-                height = 150.dp
+                height = 150.dp,
+                useFloatingLabel = true
             )
 
-            /*// 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트)
-        ImageAttachmentSection(
-            images = images,
-            onImagesSelected = { newImages ->
-                images = newImages
-            },
-            onImageRemove = { index ->
-                images = images.filterIndexed { i, _ -> i != index }
-            }
-        )
-*/
+            // 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트) -> 1201
+            // 이미지첨부는되는데 서버로전달은안됨
+            ImageAttachmentSection(
+                images = images,
+                onImagesSelected = { newImages ->
+                    images = newImages
+                },
+                onImageRemove = { index ->
+                    images = images.filterIndexed { i, _ -> i != index }
+                }
+            )
 
             SubmitButton {
                 if (title.isNotBlank() && content.isNotBlank()) {

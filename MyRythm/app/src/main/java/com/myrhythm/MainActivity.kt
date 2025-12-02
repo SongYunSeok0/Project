@@ -15,12 +15,10 @@ import com.myrhythm.splash.SplashState
 import com.myrhythm.splash.SplashViewModel
 import com.myrhythm.ui.theme.MyRhythmTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.activity.enableEdgeToEdge
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-
-// 1127 자동로그인 적용 - 스플래시 뷰모델 추가
     private val splashVm: SplashViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,8 +26,9 @@ class MainActivity : ComponentActivity() {
 
         askNotificationPermission()
 
-        //setContent { AppRoot() }
-        // 1127 setContent 코드 수정 완료
+        // 1128 위아래 하얀 여백 StatusBar 배경 투명으로 변경
+        enableEdgeToEdge()
+
         setContent {
             MyRhythmTheme {
 
@@ -62,9 +61,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
-
 
 @Preview(showBackground = true)
 @Composable

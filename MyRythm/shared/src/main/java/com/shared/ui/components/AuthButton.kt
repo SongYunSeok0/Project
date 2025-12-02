@@ -1,17 +1,22 @@
 package com.shared.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.shared.ui.theme.AuthFieldHeight
 import com.shared.ui.theme.authTheme
 import com.shared.ui.theme.loginTheme
 
+// 메인액션버튼 (회원가입, 로그인 등) : 파란바탕-하얀글자
 /**
  * 인증 화면의 공통 메인 버튼 (Filled Button)
  *
@@ -19,7 +24,6 @@ import com.shared.ui.theme.loginTheme
  * @param onClick 클릭 이벤트
  * @param modifier Modifier
  * @param enabled 활성화 여부
- * @param useLoginTheme true면 loginTheme, false면 authTheme 사용
  * @param useClickEffect 클릭 시 투명도 효과 적용 여부 (기본: true)
  */
 @Composable
@@ -28,29 +32,13 @@ fun AuthPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    useLoginTheme: Boolean = true,
     useClickEffect: Boolean = true
 ) {
     val buttonShape = MaterialTheme.shapes.medium
     val textStyle = MaterialTheme.typography.labelLarge
-
-    val buttonColor = if (useLoginTheme) {
-        MaterialTheme.loginTheme.loginPrimaryButton
-    } else {
-        MaterialTheme.authTheme.authPrimaryButton
-    }
-
-    val textColor = if (useLoginTheme) {
-        MaterialTheme.loginTheme.loginOnPrimary
-    } else {
-        MaterialTheme.authTheme.authOnPrimary
-    }
-
-    val clickColor = if (useLoginTheme) {
-        buttonColor.copy(alpha = 0.5f)
-    } else {
-        MaterialTheme.authTheme.authPrimaryButtonClick
-    }
+    val buttonColor = MaterialTheme.loginTheme.loginPrimaryButton
+    val textColor = MaterialTheme.loginTheme.loginOnPrimary
+    val clickColor = buttonColor.copy(alpha = 0.5f)
 
     // 클릭 상태 감지
     val interactionSource = remember { MutableInteractionSource() }
@@ -60,7 +48,8 @@ fun AuthPrimaryButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier
+            .height(AuthFieldHeight),
         enabled = enabled,
         shape = buttonShape,
         colors = ButtonDefaults.buttonColors(
@@ -71,13 +60,11 @@ fun AuthPrimaryButton(
         ),
         interactionSource = interactionSource
     ) {
-        Text(
-            text = text,
-            style = textStyle
-        )
+        Text(text = text, style = textStyle)
     }
 }
 
+// 서브액션버튼 (뒤로가기, 취소 등) : 흰색바탕-파란글자
 /**
  * 인증 화면의 공통 서브 버튼 (Outlined Button)
  *
@@ -85,51 +72,35 @@ fun AuthPrimaryButton(
  * @param onClick 클릭 이벤트
  * @param modifier Modifier
  * @param enabled 활성화 여부
- * @param useLoginTheme true면 loginTheme, false면 authTheme 사용
  */
 @Composable
 fun AuthSecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    useLoginTheme: Boolean = true
+    enabled: Boolean = true
 ) {
     val buttonShape = MaterialTheme.shapes.medium
     val textStyle = MaterialTheme.typography.labelLarge
+    val buttonColor =MaterialTheme.loginTheme.loginOnPrimary
+    val textColor = MaterialTheme.loginTheme.loginPrimaryButton
 
-    // 테마에서 색상 가져오기
-    val buttonColor = if (useLoginTheme) {
-        MaterialTheme.loginTheme.loginSecondrayButton
-    } else {
-        MaterialTheme.authTheme.authSecondrayButton
-    }
-
-    val textColor = if (useLoginTheme) {
-        MaterialTheme.loginTheme.loginOnSecondray
-    } else {
-        MaterialTheme.authTheme.authOnSecondray
-    }
-
-    OutlinedButton(
+    Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.height(AuthFieldHeight),
         enabled = enabled,
         shape = buttonShape,
-        colors = ButtonDefaults.outlinedButtonColors(
+        colors = ButtonDefaults.buttonColors(
             containerColor = buttonColor,
             disabledContainerColor = buttonColor.copy(alpha = 0.5f),
             contentColor = textColor,
             disabledContentColor = textColor.copy(alpha = 0.7f)
-        ),
-        border = BorderStroke(1.dp, textColor)
-    ) {
-        Text(
-            text = text,
-            style = textStyle
         )
+    ) {
+        Text(text = text, style = textStyle)
     }
 }
+
 
 /**
  * 작은 액션 버튼 (전송, 인증 등)
@@ -138,7 +109,6 @@ fun AuthSecondaryButton(
  * @param onClick 클릭 이벤트
  * @param modifier Modifier
  * @param enabled 활성화 여부
- * @param useLoginTheme true면 loginTheme, false면 authTheme 사용
  * @param useClickEffect 클릭 시 투명도 효과 적용 여부
  */
 @Composable
@@ -147,30 +117,13 @@ fun AuthActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    useLoginTheme: Boolean = true,
     useClickEffect: Boolean = true
 ) {
     val buttonShape = MaterialTheme.shapes.medium
     val textStyle = MaterialTheme.typography.labelLarge
-
-    // 테마에서 색상 가져오기
-    val buttonColor = if (useLoginTheme) {
-        MaterialTheme.loginTheme.loginPrimaryButton
-    } else {
-        MaterialTheme.authTheme.authPrimaryButton
-    }
-
-    val textColor = if (useLoginTheme) {
-        MaterialTheme.loginTheme.loginOnPrimary
-    } else {
-        MaterialTheme.authTheme.authOnPrimary
-    }
-
-    val clickColor = if (useLoginTheme) {
-        buttonColor.copy(alpha = 0.5f)
-    } else {
-        MaterialTheme.authTheme.authPrimaryButtonClick
-    }
+    val buttonColor = MaterialTheme.loginTheme.loginPrimaryButton
+    val textColor = MaterialTheme.loginTheme.loginOnPrimary
+    val clickColor = buttonColor.copy(alpha = 0.5f)
 
     // 클릭 상태 감지
     val interactionSource = remember { MutableInteractionSource() }
@@ -181,7 +134,8 @@ fun AuthActionButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier
+            .height(AuthFieldHeight),
         enabled = enabled,
         shape = buttonShape,
         colors = ButtonDefaults.buttonColors(
@@ -192,9 +146,22 @@ fun AuthActionButton(
         ),
         interactionSource = interactionSource
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge
-        )
+        Text(text = text, style = textStyle)
     }
+}
+
+@Composable
+fun AuthTextButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.loginTheme.loginTertiary,
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp)
+    )
 }

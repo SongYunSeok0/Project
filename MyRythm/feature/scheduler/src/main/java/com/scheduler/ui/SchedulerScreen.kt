@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -127,6 +128,7 @@ fun SchedulerContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 
+        // ★ 화면 전체를 스크롤 가능하도록 변경
         Column(
             Modifier
                 .padding(padding)
@@ -440,3 +442,22 @@ private fun weekRangeOf(anchor: LocalDate): List<LocalDate> {
     val start = anchor.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
     return (0..6).map { start.plusDays(it.toLong()) }
 }
+
+
+/*@Preview(showBackground = true)
+@Composable
+fun Preview_SchedulerContent() {
+
+    val today = LocalDate.now()
+    val demoItems = mapOf(
+        today to listOf(
+            MedItem(label = "오메가3", time = "08:00", status = IntakeStatus.SCHEDULED),
+            MedItem(label = "비타민D", time = "12:00", status = IntakeStatus.DONE)
+        )
+    )
+
+    SchedulerContent(
+        itemsByDate = demoItems,
+        resetKey = 0
+    )
+}*/

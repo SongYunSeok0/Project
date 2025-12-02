@@ -17,6 +17,7 @@ import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
 import com.domain.repository.AuthRepository
+import com.domain.repository.ProfileRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,7 +28,8 @@ class AuthRepositoryImpl @Inject constructor(
     private val api: UserApi,
     private val tokenStore: TokenStore,
     private val io: CoroutineDispatcher = Dispatchers.IO,
-    private val prefs: AuthPreferencesDataSource    //1127
+    private val prefs: AuthPreferencesDataSource ,   //1127
+    private val profileRepository: ProfileRepository
 ) : AuthRepository {
 
     override suspend fun sendEmailCode(email: String): Boolean {
@@ -69,6 +71,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun socialLogin(param: SocialLoginParam): Result<SocialLoginResult> =
         withContext(io) {
             runCatching {
+                Log.d("SocialLogin", "Before clear: ${tokenStore.current().access}")
                 val res = api.socialLogin(param.toDto())
 
                 if (!res.isSuccessful) {
@@ -135,28 +138,38 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun clearTokens(): Result<Unit> =
         withContext(io) {
-            runCatching { tokenStore.clear() }
+            runCatching {
+                Log.d("AuthRepo", "clearTokens 시작")
+                tokenStore.clear()
+                Log.d("AuthRepo", "토큰 삭제 완료")
+                profileRepository.clearProfile()
+                Log.d("AuthRepo", "프로필 삭제 완료")
+                Unit
+            }
         }
 
-    /* // 1127 11:27 merge seok into yun 주석
-    override suspend fun signup(request: SignupRequest): Boolean {
-        return try {
-            val res = api.signup(request.toDto())
-            if (!res.isSuccessful) {
-                Log.e(
-                    "Signup",
-                    "HTTP ${res.code()} ${res.message()}\n${res.errorBody()?.string()}"
-                )
-                false
-            } else {
-                Log.d("Signup", "회원가입 성공: ${res.body()}")
-                true
+    override suspend fun logout(): Result<Unit> =
+        withContext(io) {
+            runCatching {
+                Log.d("AuthRepo", "logout 시작")
+
+                Log.d("AuthRepo", "토큰 삭제 시작")
+                tokenStore.clear()
+                Log.d("AuthRepo", "토큰 삭제 완료")
+
+                Log.d("AuthRepo", "프로필 삭제 시작")
+                profileRepository.clearProfile()
+                Log.d("AuthRepo", "프로필 삭제 완료")
+
+                Log.d("AuthRepo", "자동로그인 해제 시작")
+                prefs.setAutoLoginEnabled(false)
+                Log.d("AuthRepo", "자동로그인 해제 완료")
+
+                Log.d("AuthRepo", "logout 완료")
+                Unit
             }
-        } catch (e: Exception) {
-            Log.e("Signup", "네트워크 예외", e)
-            false
         }
-    }*/
+
     override suspend fun signup(request: SignupRequest): Boolean {
         return try {
 
@@ -189,11 +202,27 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    // 1201 비밀번호잊음창의 휴대폰->이메일 인증 변경중, 비번재설정 추가
+    override suspend fun resetPassword(email: String, newPassword: String): Boolean {
+        return try {
+            val res = api.resetPassword(
+                mapOf(
+                    "email" to email,
+                    "password" to newPassword
+                )
+            )
+            res.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     override suspend fun withdrawal(): Boolean {
         return try {
             val response = api.deleteAccount()
             if (response.isSuccessful) {
-                tokenStore.clear() // ✅ 내 폰의 토큰 삭제 (로그아웃 처리)
+                tokenStore.clear()
+                profileRepository.clearProfile()
                 true
             } else {
                 false
@@ -212,7 +241,6 @@ class AuthRepositoryImpl @Inject constructor(
 
         return idStr.toLong()
     }
-
 
 }
 

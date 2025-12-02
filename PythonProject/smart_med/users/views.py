@@ -222,7 +222,6 @@ class RegisterFcmTokenView(APIView):
 
         return Response({"detail": "ok"}, status=status.HTTP_200_OK)
 
-
 # ================================
 # 1) 인증코드 발송
 # ================================
@@ -247,7 +246,6 @@ class SendEmailCodeView(APIView):
         )
 
         return Response({"detail": "인증코드가 발송되었습니다."}, status=200)
-
 
 # ================================
 # 2) 인증코드 검증
@@ -274,7 +272,6 @@ class VerifyEmailCodeView(APIView):
         cache.set(f"email_verified:{email}", True, timeout=300)
 
         return Response({"detail": "인증 성공"}, status=200)
-
 
 # ================================
 # 3) 회원가입
@@ -315,8 +312,6 @@ class SignupView(APIView):
             {"message": "회원가입 성공", "user_id": user.id},
             status=201
         )
-
-
 class WithdrawalView(APIView):
     permission_classes = [IsAuthenticated]
 

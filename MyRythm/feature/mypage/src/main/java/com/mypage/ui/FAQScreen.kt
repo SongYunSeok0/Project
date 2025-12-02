@@ -124,7 +124,7 @@ private fun FAQTabRow(pagerState: PagerState) {
                 selected = pagerState.currentPage == index,
                 onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                 selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = Color.Gray,
+                unselectedContentColor = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.height(50.dp)
             ) {
                 Text(

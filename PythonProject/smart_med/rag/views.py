@@ -4,14 +4,8 @@ import time
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .services import (
-    retrieve_top_chunks,
-    build_answer,
-    detect_intent,
-    INTENT_COMPARE,
-    detect_compare_intent,
-    _select_chunk_for_med,   # 필요하면 public 으로 빼기
-)
+from .services import retrieve_top_chunks, build_answer
+from .intent_detector import detect_intent
 
 
 class DrugRAGView(APIView):
@@ -26,23 +20,8 @@ class DrugRAGView(APIView):
             return Response({"detail": "question 필드가 필요합니다."}, status=400)
 
         try:
-            intent = detect_intent(question)
-
-            if intent == INTENT_COMPARE:
-                meds = detect_compare_intent(question) or []
-                # 두 약에 대해 대표 chunk 몇 개씩 contexts로 제공
-                compare_chunks = []
-                for m in meds:
-                    for sec in ["효능효과", "부작용", "용법용량", "주의"]:
-                        c = _select_chunk_for_med(m, [sec])
-                        if c and c not in compare_chunks:
-                            compare_chunks.append(c)
-
-                answer = build_answer(question, compare_chunks)
-                chunks = compare_chunks
-            else:
-                chunks = retrieve_top_chunks(question, k=5)
-                answer = build_answer(question, chunks)
+            chunks = retrieve_top_chunks(question, k=5)
+            answer = build_answer(question, chunks)
 
         except Exception as e:
             elapsed = time.time() - start

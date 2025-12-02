@@ -3,6 +3,7 @@
     <string name="default_notification_channel_id">default_channel_나중에바꿈</string>
     <string name="auth_id">아이디</string>
     <string name="auth_password">비밀번호</string>
+    <string name="auth_newpassword">새 비밀번호</string>
     <string name="auth_login">로그인</string>
     <string name="auth_login_loading">로그인 중...</string>
     <string name="auth_signup">회원가입</string>

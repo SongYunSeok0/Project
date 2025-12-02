@@ -50,6 +50,10 @@ class MainViewModel @Inject constructor(
     private val _nextPlan = MutableStateFlow<Plan?>(null)
     override val nextPlan = _nextPlan.asStateFlow()
 
+    // RegiHistory와 Plan을 모두 보관
+    private val _histories = MutableStateFlow<List<RegiHistory>>(emptyList())
+    private val _plans = MutableStateFlow<List<Plan>>(emptyList())
+
     // 미리보기 연장 시간
     private val _previewExtendMinutes = MutableStateFlow(0)
     override val previewExtendMinutes = _previewExtendMinutes.asStateFlow()
@@ -70,9 +74,6 @@ class MainViewModel @Inject constructor(
         initFcmToken()
     }
 
-    // RegiHistory와 Plan을 모두 보관
-    private val _histories = MutableStateFlow<List<RegiHistory>>(emptyList())
-    private val _plans = MutableStateFlow<List<Plan>>(emptyList())
 
     // RegiHistory 먼저 로딩
     private fun load(userId: Long) {
