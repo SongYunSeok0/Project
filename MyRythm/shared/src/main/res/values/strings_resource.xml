@@ -45,7 +45,7 @@
     <string name="height">키 (cm)</string>
     <string name="weight">몸무게 (kg)</string>
     <string name="gotoback">돌아가기</string>
-    <string name="phone_number_placeholder">휴대폰 번호 (010-1111-1111)</string>
+    <string name="phone_number_placeholder">휴대폰 번호 (01011111111)</string>
     <string name="sent">전송됨</string>
     <string name="send">전송</string>
     <string name="verification_code">인증번호</string>

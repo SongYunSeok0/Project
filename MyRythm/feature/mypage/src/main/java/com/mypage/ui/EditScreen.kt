@@ -203,6 +203,17 @@ fun EditScreen(
                 Button(
                     onClick = {
                         if (protEmail.isNotBlank()) {
+
+                            //  1202 임시 테스트 - 보호자이메일 aaa@aaa.com 이면 테스트 인증코드 1234
+                            if (protEmail == "aaa@aaa.com") {
+                                isProtEmailSent = true
+                                isProtEmailVerified = false
+                                protEmailCode = ""
+                                Toast.makeText(context, "[테스트] 인증코드 전송됨 (코드는 1234)", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            // 실제코드
                             viewModel.sendEmailCode(protEmail)
                             isProtEmailSent = true
                             isProtEmailVerified = false
@@ -245,6 +256,16 @@ fun EditScreen(
 
                     Button(
                         onClick = {
+
+                            //  1202 임시 테스트 - 보호자이메일 aaa@aaa.com 이면 테스트 인증코드 1234
+                            if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
+                                isProtEmailVerified = true
+                                isProtEmailSent = false
+                                Toast.makeText(context, "[테스트] 보호자 이메일 인증 성공", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+
                             viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
                                 if (ok) {
                                     isProtEmailVerified = true
