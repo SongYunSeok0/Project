@@ -19,6 +19,7 @@ fun AppMessageCard(
     text: String,
     isUser: Boolean,
     backgroundColor: Color? = null,
+    textColor: Color? = null,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     ) {
@@ -26,6 +27,8 @@ fun AppMessageCard(
             if (isUser) MaterialTheme.componentTheme.inquiryCardQuestion
             else MaterialTheme.componentTheme.inquiryCardAnswer
             )
+
+    val finalTextColor = textColor ?: Color.Black
 
     Column(
         modifier = modifier
@@ -35,7 +38,8 @@ fun AppMessageCard(
     ) {
         Text(
             text = text,
-            style = style
+            style = style,
+            color = finalTextColor
         )
     }
 }

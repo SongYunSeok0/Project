@@ -136,6 +136,7 @@ fun ChatbotScreen(
                     ) {
                         Text(
                             sideEffectReportedText,
+                            color = Color.Black,
                             fontSize = 14.sp
                         )
                         Text(
