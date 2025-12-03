@@ -1,11 +1,16 @@
 # iot/views.py
+import secrets
+
 from django.db import transaction
+from django.http import FileResponse
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
+from pathlib import Path
 from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
 
@@ -80,6 +85,8 @@ def ingest(request):
     # 7) 디바이스 건강상태 갱신
     Device.objects.filter(id=device.id).update(last_connected_at=timezone.now())
 
+    print("📩 [IOT] sensor data:", request.data)
+
     return Response({
         "ok": True,
         "status": status_code,
@@ -90,3 +97,57 @@ def ingest(request):
         },
         "timestamp": ts,
     })
+
+
+class CommandView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        device_uuid = request.headers.get("X-DEVICE-UUID")
+        device_token = request.headers.get("X-DEVICE-TOKEN")
+
+        if not device_uuid or not device_token:
+            return Response({"error": "missing device headers"}, status=401)
+
+        try:
+            device = Device.objects.get(device_uuid=device_uuid)
+        except Device.DoesNotExist:
+            return Response({"error": "invalid device"}, status=401)
+
+        if device.device_token != device_token:
+            return Response({"error": "invalid token"}, status=401)
+
+        return Response({"time": True}, status=200)
+
+
+class RegisterDeviceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        device_uuid = secrets.token_hex(8)
+        device_token = secrets.token_hex(32)
+
+        device = Device.objects.create(
+            user=user,
+            device_uuid=device_uuid,
+            device_token=device_token
+        )
+
+        return Response({
+            "device_uuid": device_uuid,
+            "device_token": device_token
+        }, status=201)
+
+class QRCodeView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, chip_id):
+        filename = create_qr_for_chip(chip_id)
+        filepath = Path(filename)
+
+        if not filepath.exists():
+            return Response({"error": "QR not found"}, status=404)
+
+        return FileResponse(open(filepath, "rb"), content_type="image/png")
