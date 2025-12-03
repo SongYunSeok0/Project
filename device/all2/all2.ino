@@ -289,16 +289,29 @@ void checkWeight() {
   float diff = prevWeight - currentWeight;
   prevWeight = currentWeight;
 
-  Serial.printf("Weight: %.2f Diff: %.2f\n", currentWeight, diff);
+  Serial.printf("Weight: %.2f Diff: %.2f\n", abs(currentWeight), diff);
 
+  // 🔥 무게 감소 감지(약 꺼냄)
   if (diff > 100 && !isOpened) {
     isOpened = true;
     openedEvent = true;
     openedTime = now;
     Serial.println("⚠️ Weight drop detected!");
-    if (!isTime) tone(BUZZER, 1000, 800);
+
+    // 👇 여기 추가된 핵심 로직
+    // 약 먹을 시간(isTime = true) 상태에서 약을 꺼냈다면 LED 즉시 빨간불로 전환
+    if (isTime) {
+      isTime = false;
+      digitalWrite(GREEN_LED, LOW);
+      digitalWrite(RED_LED, HIGH);
+      Serial.println("➡️ Time satisfied! LED -> RED");
+    } else {
+      // 시간 아닐 때 열면 부저 울리는 기존 기능 유지
+      tone(BUZZER, 1000, 800);
+    }
   }
 }
+
 
 
 // ===================================================

@@ -8,4 +8,6 @@ sealed class MyPageEvent {
     object LoadFailed : MyPageEvent()
     object InquirySubmitSuccess : MyPageEvent()
     data class InquirySubmitFailed(val message: String) : MyPageEvent()
+    data class DeviceRegisterSuccess(val uuid: String) : MyPageEvent()
+    data object DeviceRegisterFailed : MyPageEvent()
 }

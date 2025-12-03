@@ -9,7 +9,6 @@ import com.domain.repository.AuthRepository
 import com.domain.repository.ProfileRepository
 import com.domain.usecase.auth.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.cancelChildren
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +23,7 @@ class MyPageViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val inquiryRepository: InquiryRepository,
     private val userRepository: ProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _events = Channel<MyPageEvent>(Channel.BUFFERED)
@@ -96,4 +95,5 @@ class MyPageViewModel @Inject constructor(
             }
             .onFailure { _events.send(MyPageEvent.WithdrawalFailed) }
     }
+
 }

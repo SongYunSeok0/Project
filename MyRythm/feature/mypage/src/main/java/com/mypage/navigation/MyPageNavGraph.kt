@@ -12,6 +12,7 @@ import com.mypage.ui.FAQScreenWrapper
 import com.mypage.ui.HeartReportScreen
 import com.mypage.ui.MediReportScreen
 import com.mypage.ui.MyPageScreen
+import com.mypage.viewmodel.BLERegisterViewModel
 
 import com.mypage.viewmodel.MyPageViewModel
 

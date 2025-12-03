@@ -87,7 +87,8 @@ object NetworkModule {
         OkHttpClient.Builder()
             .commonTimeouts()
             .addInterceptor(authHeaderInterceptor) // Bearer
-            .addInterceptor(logging)
+            .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
+
             .build()
 
     @Provides @Singleton @NewsOkHttp
@@ -98,7 +99,8 @@ object NetworkModule {
         OkHttpClient.Builder()
             .commonTimeouts()
             .addInterceptor(newsAuth)
-            .addInterceptor(logging)
+            .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
+
             .build()
 
     @Provides @Singleton @MapOkHttp
@@ -109,7 +111,8 @@ object NetworkModule {
         OkHttpClient.Builder()
             .commonTimeouts()
             .addInterceptor(mapAuth)
-            .addInterceptor(logging)
+            .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
+
             .build()
 
     // ---- Retrofit per API ----
