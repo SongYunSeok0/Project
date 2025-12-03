@@ -63,9 +63,12 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.compose)
     implementation(project(":data"))
+    implementation(libs.ui)
 
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
+    implementation("com.github.yuriy-budiyev:code-scanner:2.3.2")
+
 }
