@@ -6,5 +6,7 @@ data class BLERegisterState(
     val configSent: Boolean = false,
     val ssid: String = "",
     val pw: String = "",
+    val deviceUUID: String = "",
+    val deviceToken: String = "",
     val error: String? = null
 )

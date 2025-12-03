@@ -77,4 +77,11 @@ class BLERegisterViewModel @Inject constructor(
             configSent = true
         )
     }
+    fun setDeviceInfo(uuid: String, token: String) {
+        _state.value = _state.value.copy(
+            deviceUUID = uuid,
+            deviceToken = token
+        )
+    }
+
 }

@@ -40,6 +40,7 @@ fun MyPageScreen(
     onLogoutClick: () -> Unit = {},
     onFaqClick: () -> Unit = {},
     onMediClick: () -> Unit = {},
+    onDeviceRegisterClick: () -> Unit = {},   // ⭐ 추가
     onWithdrawalSuccess: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsState()
@@ -50,7 +51,16 @@ fun MyPageScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
 
-    // 🔥 BLE 상태 변화 → 토스트 표시
+    // ============================================================
+    // ⭐ QRScanScreen → MyPage 복귀 후 deviceUUID/deviceToken 들어오면 팝업 자동 오픈
+    // ============================================================
+    LaunchedEffect(bleState.deviceUUID, bleState.deviceToken) {
+        if (bleState.deviceUUID.isNotBlank() && bleState.deviceToken.isNotBlank()) {
+            showDeviceDialog = true
+        }
+    }
+
+    // BLE 상태 변화 → 토스트 표시
     LaunchedEffect(bleState.bleConnected, bleState.configSent, bleState.error) {
         when {
             bleState.error != null -> {
@@ -65,7 +75,7 @@ fun MyPageScreen(
         }
     }
 
-    // 🔥 기존 MyPage 이벤트 수집
+    // 기존 MyPage 이벤트 수집
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -83,11 +93,12 @@ fun MyPageScreen(
                 is MyPageEvent.LogoutFailed -> {
                     Toast.makeText(context, "로그아웃에 실패했습니다.", Toast.LENGTH_SHORT).show()
                 }
-                else -> Unit  // ← 'when must be exhaustive' 방지용
+                else -> Unit
             }
         }
     }
 
+    // ==================== UI ====================
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -114,8 +125,10 @@ fun MyPageScreen(
             MenuItem(stringResource(R.string.heartrate), onHeartClick)
             MenuItem("복약 기록", onMediClick)
 
-            // 🔥 기기 등록 다이얼로그 열기
-            MenuItem("기기 등록") { showDeviceDialog = true }
+            // ========================================
+            // 🔥 “기기 등록" → QRScanRoute로 이동
+            // ========================================
+            MenuItem("기기 등록") { onDeviceRegisterClick() }
 
             MenuItem(stringResource(R.string.faqcategory), onFaqClick)
             MenuItem(stringResource(R.string.logout)) { viewModel.logout() }
@@ -123,7 +136,7 @@ fun MyPageScreen(
         }
     }
 
-    // ======== 🔥 BLE 기기 등록 다이얼로그 ========
+    // ==================== BLE 기기 등록 다이얼로그 ====================
     if (showDeviceDialog) {
         AlertDialog(
             onDismissRequest = { showDeviceDialog = false },
@@ -160,7 +173,7 @@ fun MyPageScreen(
                     modifier = Modifier
                         .padding(8.dp)
                         .clickable {
-                            bleViewModel.startRegister()   // 🔥 여기서 BLE 시작
+                            bleViewModel.startRegister()
                             showDeviceDialog = false
                         }
                 )
@@ -176,7 +189,7 @@ fun MyPageScreen(
         )
     }
 
-    // ======== 🔥 회원 탈퇴 다이얼로그 ========
+    // ==================== 회원 탈퇴 다이얼로그 ====================
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -205,6 +218,7 @@ fun MyPageScreen(
         )
     }
 }
+
 
 @Composable
 fun InfoCard(title: String, value: String, iconRes: Int) {
