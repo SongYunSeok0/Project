@@ -30,4 +30,5 @@ dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
     implementation(libs.androidx.material3)
+    implementation(libs.accompanist.systemuicontroller)
 }

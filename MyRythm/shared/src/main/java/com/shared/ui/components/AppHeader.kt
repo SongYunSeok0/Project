@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -32,13 +33,14 @@ import com.shared.ui.theme.LoginTertiary
 
 @Composable
 fun ChatbotHeader(
-    title: String,
-    subtitle: String,
-    resetLabel: String,
     onResetClick: () -> Unit,
-    botIcon: String,
     modifier: Modifier = Modifier
 ) {
+    val chatbotText = stringResource(R.string.chatbot)
+    val botIconText = stringResource(R.string.chatbot_icon)
+    val chatbotProfile = stringResource(R.string.chatbotprofile)
+    val returnToOptionText = stringResource(R.string.return_to_option)
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -52,40 +54,35 @@ fun ChatbotHeader(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                botIcon,
-                color = LoginTertiary,
-                fontSize = 16.sp,
-                lineHeight = 1.5.em
+                botIconText,
+                style = MaterialTheme.typography.labelLarge
             )
         }
 
         Column {
-            Text(title, fontSize = 16.sp)
-            Text(subtitle, color = LoginTertiary, fontSize = 14.sp)
+            Text(chatbotText,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(chatbotProfile,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
 
         Spacer(Modifier.weight(1f))
 
-        InputChip(
-            label = { Text(resetLabel, fontSize = 14.sp) },
-            leadingIcon = {
-                Image(
-                    painter = painterResource(id = R.drawable.upload),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-            },
-            shape = RoundedCornerShape(10.dp),
-            colors = FilterChipDefaults.filterChipColors(
-                containerColor = InquiryCardQuestion
-            ),
+        AppTagButton(
+            label = returnToOptionText,
+            leadingIcon = painterResource(id = R.drawable.upload),
+            contentDescription = returnToOptionText,
             selected = true,
-            onClick = onResetClick
+            onClick = onResetClick,
+            alpha = 0.5f
         )
+
     }
 }
-
-
 
 @Composable
 fun ProfileHeader(

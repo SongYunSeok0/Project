@@ -22,7 +22,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.shared.ui.theme.AuthFieldHeight // Dimension.kt에서 가져옴
 import com.shared.ui.theme.ShadowElevationDefault
 import com.shared.ui.theme.authTheme
 import com.shared.R
@@ -81,8 +80,7 @@ fun AuthInputField(
         },
         singleLine = true,
         shape = shape,
-        modifier = modifier
-            .height(AuthFieldHeight), // Dimension.kt의 AuthFieldHeight 사용
+        modifier = modifier,
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation()
         else
@@ -189,7 +187,6 @@ fun AuthGenderDropdown(
             },
             modifier = Modifier
                 .menuAnchor()
-                .height(AuthFieldHeight)
                 .shadow(
                     elevation = ShadowElevationDefault,
                     shape = fieldShape

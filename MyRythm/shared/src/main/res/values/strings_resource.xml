@@ -28,8 +28,8 @@
     <string name="return_to_option">처음으로</string>
     <string name="send_eng">send</string>
     <string name="error">오류:</string>
-    <string name="example">예:</string>
-    <string name="sideeffectreported">부작용 확인</string>
+    <string name="chat_example">예: 타이레놀 부작용 알려줘!</string>
+    <string name="sideeffectreported">무엇이든 물어보세요.</string>
     <string name="confirm">확인</string>
     <string name="male">남성</string>
     <string name="female">여성</string>

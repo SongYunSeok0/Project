@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.map.data.PlaceItem
 import com.naver.maps.geometry.LatLng
 import com.shared.R
+import com.shared.ui.components.AppTagButton
 import java.util.Locale
 
 /* -------------------- 하단 시트 컨텐츠 -------------------- */
@@ -160,8 +162,7 @@ fun SearchHereChip(
     val searchHereText = stringResource(R.string.search_here)
 
     if (!visible) return
-
-    Surface(
+    /*Surface(
         modifier = modifier
             .wrapContentWidth(),
         shape = MaterialTheme.shapes.large,
@@ -176,6 +177,17 @@ fun SearchHereChip(
             color = MaterialTheme.colorScheme.onSurface
         )
     }
+}*/
+    AppTagButton(
+        label = searchHereText,
+        onClick = onClick,
+        modifier = modifier
+            .shadow(4.dp, MaterialTheme.shapes.large)
+            .wrapContentWidth()
+            .height(36.dp),
+        isCircle = false,
+        alpha = 0.7f
+    )
 }
 
 @Composable

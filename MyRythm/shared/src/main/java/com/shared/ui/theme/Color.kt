@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 // 기본 컬러가 Color.White 처럼 컴포즈상수에 존재하는 경우, color.kt에 정의하지 말고 theme.kt에 바로 넣기.
 val Black40 = Color(0x66000000)     // 블랙+투명도40, 가이드글씨
 val AuthBlue = Color(0xFF6AC0E0)
+val BorderGray = Color(0xFF808080)
+
 
 // 메인 화면 컬러 m3테마용
 val Primary = Color(0xFF6AE0D9)
