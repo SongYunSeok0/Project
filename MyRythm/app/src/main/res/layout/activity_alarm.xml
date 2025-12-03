@@ -42,9 +42,9 @@
         android:id="@+id/btn_stop_alarm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="알람 끄기"
-        android:textSize="18sp"
+        android:backgroundTint="#FF6B6B"
         android:padding="16dp"
-        android:backgroundTint="#FF6B6B" />
+        android:text="알람 끄기"
+        android:textSize="18sp" />
 
 </LinearLayout>
