@@ -4,6 +4,9 @@ djangorestframework
 djangorestframework-simplejwt
 drf-yasg
 
+django-cors-headers
+django-extensions
+
 # === Database ===
 psycopg2-binary
 python-dotenv
@@ -22,3 +25,9 @@ pytesseract
 
 # === Utilities ===
 requests
+
+pgvector
+sentence-transformers
+gunicorn
+django-celery-results
+qrcode[pil]

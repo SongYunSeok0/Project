@@ -4,9 +4,14 @@ from django.conf import settings
 import firebase_admin
 from firebase_admin import credentials, messaging
 
-# 앱 초기화
-if not firebase_admin._apps:
-    # settings 에서 바로 읽기
+
+def initialize_firebase():
+    """Firebase 초기화를 지연 로딩 방식으로 실행."""
+    if firebase_admin._apps:
+        # 이미 초기화됨
+        return firebase_admin.get_app()
+
+    # 이제서야 settings 읽기
     cred_path = getattr(settings, "FIREBASE_CREDENTIAL_PATH", None)
     if not cred_path:
         cred_path = os.path.join(settings.BASE_DIR, "smart_med_firebase_admin.json")
@@ -17,11 +22,16 @@ if not firebase_admin._apps:
         raise FileNotFoundError(f"[FCM] credential file not found: {cred_path}")
 
     cred = credentials.Certificate(cred_path)
-    firebase_admin.initialize_app(cred)
+    app = firebase_admin.initialize_app(cred)
     print("[FCM] firebase_admin initialized")
+    return app
 
 
 def send_fcm_to_token(token: str, title: str, body: str, data: dict | None = None) -> str:
+    """FCM 메시지 전송 함수"""
+    # 여기서 Firebase 초기화 상태를 확인하고 필요시 초기화
+    initialize_firebase()
+
     print("[FCM] send_fcm_to_token called")
     print("[FCM] token =", token)
     print("[FCM] title =", title, "body =", body)
