@@ -18,6 +18,7 @@ import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -71,13 +72,35 @@ class MainViewModel @Inject constructor(
     }
 
     init {
-        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull()
-        if (userId != null && userId > 0) {
-            syncData(userId)
-            load(userId)
+        try {
+            Log.d("MainVM", "init 시작")
+            val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull()
+            Log.d("MainVM", "userId: $userId")
+
+            if (userId != null && userId > 0) {
+                viewModelScope.launch {
+                    Log.d("MainVM", "동기화 시작")
+                    syncData(userId)
+
+                    // 👇 Flow에서 실제 데이터가 올 때까지 기다리기
+                    Log.d("MainVM", "첫 데이터 대기 중...")
+                    getPlansUseCase(userId).first()  // 첫 번째 emit 대기
+                    getRegiHistoriesUseCase().first()  // 첫 번째 emit 대기
+
+                    Log.d("MainVM", "데이터 확인 완료, load 시작")
+                    load(userId)
+                    Log.d("MainVM", "load 완료")
+                }
+            }
+
+            Log.d("MainVM", "FCM 초기화 시작")
+            initFcmToken()
+            Log.d("MainVM", "타이머 시작")
+            startTimeUpdater()
+            Log.d("MainVM", "init 완료")
+        } catch (e: Exception) {
+            Log.e("MainVM", "init 실패", e)
         }
-        initFcmToken()
-        startTimeUpdater()
     }
 
     private fun syncData(userId: Long) {
@@ -85,7 +108,6 @@ class MainViewModel @Inject constructor(
             try {
                 regiRepo.syncRegiHistories(userId)
                 planRepo.syncPlans(userId)
-                Log.d("MainVM", "초기 동기화 완료")
             } catch (e: Exception) {
                 Log.e("MainVM", "동기화 실패", e)
             }
@@ -125,6 +147,7 @@ class MainViewModel @Inject constructor(
         // RegiHistory 구독
         getRegiHistoriesUseCase()
             .onEach { histories ->
+                Log.d("MainVM", "RegiHistory 업데이트: ${histories.size}개") // 👈 추가
                 _histories.value = histories
                 updateNextPlan(_plans.value, histories)
             }
@@ -133,11 +156,13 @@ class MainViewModel @Inject constructor(
         // Plan 구독
         getPlansUseCase(userId)
             .onEach { plans ->
+                Log.d("MainVM", "Plan 업데이트: ${plans.size}개") // 👈 추가
                 _plans.value = plans
                 updateNextPlan(plans, _histories.value)
             }
             .launchIn(viewModelScope)
     }
+
 
     // 약 시간 연장 적용
     override suspend fun extendPlanMinutesSuspend(minutes: Int): Boolean {
@@ -182,6 +207,8 @@ class MainViewModel @Inject constructor(
 
     // 다음 복용 일정 계산
     private fun updateNextPlan(plans: List<Plan>, histories: List<RegiHistory>) {
+        Log.d("MainVM", "updateNextPlan 호출 - plans: ${plans.size}, histories: ${histories.size}") // 👈 로그 추가
+
         val now = System.currentTimeMillis()
 
         val next = plans
@@ -191,6 +218,8 @@ class MainViewModel @Inject constructor(
                         it.taken == null
             }
             .minByOrNull { it.takenAt!! }
+
+        Log.d("MainVM", "다음 복용: $next") // 👈 로그 추가
 
         _nextPlan.value = next
 

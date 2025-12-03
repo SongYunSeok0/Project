@@ -67,6 +67,7 @@ class Plan(models.Model):
 
     med_name = models.CharField(null=True, max_length=120)
     taken_at = models.DateTimeField(null=True, blank=True)
+    ex_taken_at = models.DateTimeField(null=True, blank=True)
     meal_time = models.CharField(
         max_length=20,
         choices=[
