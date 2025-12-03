@@ -7,29 +7,57 @@ from notifications.services import send_fcm_to_token
 
 def test_med_alarm_view(request):
     """
-    [테스트용] 브라우저에서 접속하면 즉시 알림 로직을 실행하는 뷰
+    [테스트용] 한국 시간(KST) 기준으로 로그를 출력하며 알림을 테스트합니다.
     """
-    # --- 기존 tasks.py 로직 시작 ---
-    now = timezone.now()
-    start_time = now.replace(second=0, microsecond=0)
-    end_time = start_time + timedelta(minutes=1)
+    # 1. 현재 시간 가져오기 (UTC)
+    now_utc = timezone.now()
 
-    print(f"[TEST View] 복약 알림 수동 체크 중... ({start_time.strftime('%H:%M')})")
+    # 2. 한국 시간(KST)으로 변환 (settings.TIME_ZONE이 'Asia/Seoul'이어야 함)
+    now_kst = timezone.localtime(now_utc)
 
-    # 테스트를 위해 범위를 조금 넓혀서 확인하고 싶다면 아래 주석을 푸세요
-    # end_time = start_time + timedelta(minutes=60) # 향후 1시간치 조회
+    # 3. 검색 범위 설정 (테스트용 앞뒤 12시간)
+    # DB 조회는 UTC 기준인 'now_utc'를 사용하는 것이 안전합니다. (Django가 알아서 처리)
+    start_time = now_utc - timedelta(hours=12)
+    end_time = now_utc + timedelta(hours=12)
 
+    print(f"\n=== [TEST View] 알림 테스트 시작 ===")
+    print(f"1. 서버 현재 시간 (UTC): {now_utc.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"2. 서버 현재 시간 (KST): {now_kst.strftime('%Y-%m-%d %H:%M:%S')}  <-- 한국 시간")
+
+    # 4. 데이터 조회
+    # Django ORM은 USE_TZ=True일 때, UTC 시간을 넣으면 알아서 DB와 비교해줍니다.
     targets = Plan.objects.filter(
-        use_alarm=True,
         taken_at__gte=start_time,
         taken_at__lt=end_time
     ).select_related('regihistory__user')
 
+    total_count = targets.count()
+    print(f"3. 검색된 Plan 개수: {total_count}개")
+
     count = 0
-    result_log = []  # 화면에 뿌려줄 로그 저장용
+    result_log = []
+
+    # 화면 출력용 문구
+    result_log.append(f"<b>현재 서버 시간(KST):</b> {now_kst.strftime('%Y-%m-%d %H:%M:%S')}<br>")
+    result_log.append(f"<b>검색된 데이터:</b> {total_count}건<hr>")
 
     for plan in targets:
         try:
+            # DB에 저장된 시간을 한국 시간으로 변환해서 로그에 출력
+            plan_time_kst = timezone.localtime(plan.taken_at)
+            plan_time_str = plan_time_kst.strftime('%Y-%m-%d %H:%M:%S')
+
+            user_name = "알수없음"
+            if plan.regihistory and plan.regihistory.user:
+                user_name = plan.regihistory.user.username
+
+            # 알람 설정 체크
+            if not plan.use_alarm:
+                msg = f"[스킵] {user_name} / {plan.med_name} (복용시간: {plan_time_str}) - 알람 OFF"
+                print(msg)
+                result_log.append(msg)
+                continue
+
             if not plan.regihistory or not plan.regihistory.user:
                 continue
 
@@ -37,33 +65,37 @@ def test_med_alarm_view(request):
             token = getattr(user, 'fcm_token', None)
 
             if token:
-                # 실제 FCM 발송
+                # 알림 발송
                 send_fcm_to_token(
                     token=token,
                     title="[테스트] 💊 약 드실 시간이에요!",
-                    body=f"{user.username}님, [{plan.med_name}] 복용할 시간입니다.",
+                    # 메시지에도 한국 시간을 넣어줍니다.
+                    body=f"{user.username}님, [{plan.med_name}] 복용 시간입니다. ({plan_time_kst.strftime('%H:%M')})",
                     data={
                         "type": "med_alarm",
                         "plan_id": str(plan.id)
                     }
                 )
-                log = f"성공: {user.username} / {plan.med_name}"
+                log = f"✅ <b>전송 성공:</b> {user.username} / {plan.med_name} / <b>복용시간(KST): {plan_time_str}</b>"
                 print(log)
                 result_log.append(log)
                 count += 1
             else:
-                result_log.append(f"실패(토큰없음): {user.username}")
+                msg = f"❌ [실패] {user_name}: 토큰 없음"
+                print(msg)
+                result_log.append(msg)
 
         except Exception as e:
-            err = f"에러 (Plan ID: {plan.id}): {e}"
+            err = f"⚠️ 에러 (Plan ID: {plan.id}): {e}"
             print(err)
             result_log.append(err)
 
-    # --- 로직 끝 ---
+    print("=== [TEST View] 테스트 종료 ===\n")
 
     return HttpResponse(
-        f"<h1>알림 테스트 완료</h1>"
-        f"<p>현재시간: {now}</p>"
-        f"<p>전송 건수: {count}</p>"
+        f"<h1>알림 테스트 결과 (KST 기준)</h1>"
+        f"<p>현재 서버 시간: {now_kst.strftime('%Y-%m-%d %H:%M:%S')}</p>"
+        f"<p>성공 건수: {count}</p>"
+        f"<hr>"
         f"<br>".join(result_log)
     )
