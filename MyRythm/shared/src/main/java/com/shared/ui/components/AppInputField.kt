@@ -2,6 +2,7 @@ package com.shared.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
+import com.shared.ui.theme.componentTheme
 
 @Composable
 fun AppInputField(
@@ -29,13 +31,9 @@ fun AppInputField(
     useFloatingLabel: Boolean = true,
     readOnly: Boolean = false,
 
-    // ⭐ ChatbotScreen 적용용 확장 기능 추가
     imeAction: ImeAction = ImeAction.Default,
-    keyboardActions: androidx.compose.foundation.text.KeyboardActions =
-        androidx.compose.foundation.text.KeyboardActions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardType: KeyboardType = KeyboardType.Text,
-
-    // ⭐ trailingContent 추가 (AuthInputField와 동일하게 사용 가능)
     trailingContent: @Composable (() -> Unit)? = null
 ) {
     val bgColor = MaterialTheme.colorScheme.surface
@@ -62,15 +60,12 @@ fun AppInputField(
         singleLine = singleLine,
         maxLines = maxLines,
         readOnly = readOnly,
-
-        // ⭐ 키보드 동작
         keyboardOptions = KeyboardOptions(
             imeAction = imeAction,
             keyboardType = keyboardType
         ),
         keyboardActions = keyboardActions,
-
-        // ⭐ 트레일링 지원
+        // 필드 옆에 추가하는 인증/아이콘 등등 UI
         trailingIcon = {
             if (trailingContent != null) trailingContent()
         },
@@ -90,8 +85,8 @@ fun AppInputField(
                 unfocusedContainerColor = bgColor,
                 focusedBorderColor = bgColor,
                 unfocusedBorderColor = bgColor,
-                focusedLabelColor = Color.Transparent,
-                unfocusedLabelColor = Color.Transparent
+                focusedLabelColor = MaterialTheme.componentTheme.appTransparent,
+                unfocusedLabelColor = MaterialTheme.componentTheme.appTransparent,
             )
         },
 

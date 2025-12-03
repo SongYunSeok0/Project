@@ -72,7 +72,7 @@ fun SignupScreen(
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
-    val emailVerification = stringResource(R.string.email_verification) //1126 휴대폰인증->이메일인증 문자열 변경 완료
+    val emailVerification = stringResource(R.string.email_verification)
     val sendText = stringResource(R.string.send)
     val sentText = stringResource(R.string.sent)
     val verificationText = stringResource(R.string.verification)
@@ -157,10 +157,10 @@ fun SignupScreen(
                         if (email.isNotBlank()) {
                             // 에러 메시지 처리는 ViewModel 이벤트나 로컬 스낵바로 가능
                             viewModel.updateSignupEmail(email)
-                            viewModel.sendCode()
-                            //isEmailCodeSent = true  // 1128 ui테스트용 임시로직
-                            //isVerificationCompleted = false
-                            //code = ""
+                            viewModel.sendCode()  //1128 실제코드
+                            /*isEmailCodeSent = true  // 1128 ui테스트용 임시로직
+                            isVerificationCompleted = false
+                            code = ""*/
                         }
                     },
                     enabled = !isEmailCodeSent && email.isNotBlank(),
@@ -197,11 +197,11 @@ fun SignupScreen(
                             // ViewModel에 현재 코드 상태 확실히 업데이트 후 검증 요청
                             viewModel.updateSignupEmail(email) // 안전장치
                             viewModel.updateCode(code)
-                            viewModel.verifyCode()
+                            viewModel.verifyCode()  //1128 실제코드
                             // 1128 UI 테스트용 임시 로직
-                            //if (code == "1234") {
-                            //    isVerificationCompleted = true
-                            //}
+                            /*if (code == "1234") {
+                                isVerificationCompleted = true
+                            }*/
                         },
                         enabled = !isVerificationCompleted && code.isNotBlank(),
                         modifier = Modifier.widthIn(min = 90.dp)
@@ -209,7 +209,9 @@ fun SignupScreen(
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
+
+            AuthSectionTitle(nameText)
 
             AuthInputField(
                 value = username,
@@ -218,7 +220,9 @@ fun SignupScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
+
+            AuthSectionTitle(passwordText)
 
             AuthInputField(
                 value = password,
@@ -229,7 +233,7 @@ fun SignupScreen(
                 keyboardType = KeyboardType.Password
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(12.dp))
 
             AuthSectionTitle(birthText)
 
@@ -268,7 +272,19 @@ fun SignupScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    AuthSectionTitle(heightText)
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    AuthSectionTitle(weightText)
+                }
+            }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -289,7 +305,7 @@ fun SignupScreen(
                     keyboardType = KeyboardType.Number
                 )
             }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(12.dp))
 
             // 전화번호인증 - 단순 입력칸
             AuthSectionTitle(phoneNumberPlaceholderText)

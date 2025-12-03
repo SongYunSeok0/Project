@@ -1,5 +1,8 @@
 package com.shared.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -167,6 +170,7 @@ fun AuthGenderDropdown(
         onExpandedChange = { expanded = !expanded },
         modifier = modifier
     ) {
+
         OutlinedTextField(
             value = displayText,
             onValueChange = {},
@@ -186,7 +190,10 @@ fun AuthGenderDropdown(
             modifier = Modifier
                 .menuAnchor()
                 .height(AuthFieldHeight)
-                .shadow(elevation = ShadowElevationDefault, shape = fieldShape),
+                .shadow(
+                    elevation = ShadowElevationDefault,
+                    shape = fieldShape
+                ),
             shape = fieldShape,
             textStyle = textStyle,
             colors = OutlinedTextFieldDefaults.colors(
@@ -203,20 +210,27 @@ fun AuthGenderDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            DropdownMenuItem(
-                text = { Text(maleText, style = textStyle) },
-                onClick = {
-                    onValueChange("M")
-                    expanded = false
+            Box(
+                modifier = Modifier.background(authColors.authSurface)
+            ) {
+                Column {
+                    DropdownMenuItem(
+                        text = { Text(maleText, style = textStyle) },
+                        onClick = {
+                            onValueChange("M")
+                            expanded = false
+                        }
+                    )
+
+                    DropdownMenuItem(
+                        text = { Text(femaleText, style = textStyle) },
+                        onClick = {
+                            onValueChange("F")
+                            expanded = false
+                        }
+                    )
                 }
-            )
-            DropdownMenuItem(
-                text = { Text(femaleText, style = textStyle) },
-                onClick = {
-                    onValueChange("F")
-                    expanded = false
-                }
-            )
+            }
         }
     }
 }

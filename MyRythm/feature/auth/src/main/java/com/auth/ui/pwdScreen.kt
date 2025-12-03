@@ -32,7 +32,7 @@ fun PwdScreen(
     var code by remember { mutableStateOf("") }
     var sent by remember { mutableStateOf(false) }
 
-    // 1201 새로운비번설정
+    // 1202 새로운비번설정
     var verified by remember { mutableStateOf(false) }
     var newPassword by remember { mutableStateOf("") }
 
@@ -78,7 +78,7 @@ fun PwdScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // 1201 휴대폰로직->이메일로직 변경중
+            // 1202 휴대폰로직->이메일로직 변경 완
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -103,9 +103,9 @@ fun PwdScreen(
                     text = if (sent) sentText else sendText,
                     onClick = {
 
-                        viewModel.sendResetCode(email) //1201 실제코드
+                        viewModel.sendResetCode(email) //1202 실제코드
 
-                        /*// 1201 ui테스트용 임시로직
+                        /*// 1202 ui테스트용 임시로직
                         sent = true
                         verified = false
                         code = ""
@@ -136,11 +136,11 @@ fun PwdScreen(
             Spacer(Modifier.width(8.dp))
 
             AuthActionButton(
-                text = verificationText,    // "인증하기"
+                text = verificationText,
                 onClick = {
-                    viewModel.verifyResetCode(email, code)    //1201 실제코드
+                    viewModel.verifyResetCode(email, code)    //1202 실제코드
 
-                    /*// 테스트용 임시 로직 1234
+                    /*// 1202 테스트용 임시 로직 1234
                     if (code == "1234") {
                         verified = true
                         return@AuthActionButton
@@ -178,7 +178,7 @@ fun PwdScreen(
                         return@AuthPrimaryButton
                     }
 
-                    // 1201 실제코드
+                    // 1202 실제코드
                     viewModel.resetPassword(email, newPassword)
 
                     // 성공하면 로그인 화면으로 이동

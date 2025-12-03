@@ -42,7 +42,8 @@ data class ComponentThemeColor(
     val mapCard : Color,
     val newsCard : Color,
     val healthInsightCard : Color,
-    val mainFeatureCardBorderStroke : Color
+    val mainFeatureCardBorderStroke : Color,
+    val appTransparent : Color,
 )
 
 val LoginThemeColors = LoginThemeColor(
@@ -82,7 +83,8 @@ val ComponentThemeColors = ComponentThemeColor(
     mapCard = MapCard,
     newsCard = NewsCard,
     healthInsightCard = HealthInsightCard,
-    mainFeatureCardBorderStroke = MainFeatureCardBorderStroke
+    mainFeatureCardBorderStroke = MainFeatureCardBorderStroke,
+    appTransparent = AppTransparent,
 )
 
 // Login Local
