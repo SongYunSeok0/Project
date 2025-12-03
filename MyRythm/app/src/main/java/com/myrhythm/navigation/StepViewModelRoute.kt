@@ -91,31 +91,37 @@ fun StepViewModelRoute(
     // HealthConnect 권한 체크
     val installed = HealthConnectClient.getSdkStatus(context) ==
             HealthConnectClient.SDK_AVAILABLE
-    if (!installed) return
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
-        if (granted.containsAll(stepViewModel.requestPermissions())) {
+    // HealthConnect가 설치된 경우에만 권한 관련 로직 실행
+    if (installed) {
+        val permissionLauncher = rememberLauncherForActivityResult(
+            PermissionController.createRequestPermissionResultContract()
+        ) { granted ->
+            if (granted.containsAll(stepViewModel.requestPermissions())) {
+                stepViewModel.checkPermission()
+            } else {
+                Toast.makeText(context, "걸음수 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
+
+        LaunchedEffect(Unit) {
             stepViewModel.checkPermission()
-        } else {
-            Toast.makeText(context, "걸음수 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+        }
+
+        LaunchedEffect(granted) {
+            if (!granted) {
+                permissionLauncher.launch(stepViewModel.requestPermissions())
+            } else {
+                stepViewModel.startAutoUpdateOnce(5_000)
+            }
         }
     }
 
-    val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
-
+    // 심박수 동기화 (HealthConnect 없어도 실행)
     LaunchedEffect(Unit) {
-        stepViewModel.checkPermission()
         heartViewModel.syncHeartHistory()
-    }
-
-    LaunchedEffect(granted) {
-        if (!granted) {
-            permissionLauncher.launch(stepViewModel.requestPermissions())
-        } else {
-            stepViewModel.startAutoUpdateOnce(5_000)
-        }
     }
 
     val onAlarmCardClick = {
@@ -213,6 +219,7 @@ fun StepViewModelRoute(
         )
     }
 
+    // MainScreen은 HealthConnect 유무와 관계없이 항상 표시
     MainScreen(
         onOpenChatBot = onOpenChatBot,
         onOpenScheduler = onOpenScheduler,
@@ -220,7 +227,7 @@ fun StepViewModelRoute(
         onOpenMap = onOpenMap,
         onOpenNews = onOpenNews,
         onOpenAlram = onAlarmCardClick,
-        todaySteps = todaySteps,
+        todaySteps = if (installed) todaySteps else 0,  // HealthConnect 없으면 0
         remainText = remainText,
         nextLabel = nextLabel
     )
