@@ -38,6 +38,7 @@ def send_fcm_to_token(token: str, title: str, body: str, data: dict | None = Non
 
     # 데이터 페이로드 정리 (모든 값을 문자열로 변환)
     payload_data = {
+        "type": "med_alarm",
         "title": title,
         "body": body,
         **{k: str(v) for k, v in (data or {}).items()},
@@ -46,21 +47,21 @@ def send_fcm_to_token(token: str, title: str, body: str, data: dict | None = Non
     msg = messaging.Message(
         token=token,
         # 1. 기본 알림 (화면 켜짐/꺼짐 공통)
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
+        # notification=messaging.Notification(
+        #     title=title,
+        #     body=body,
+        # ),
         # 2. 데이터 메시지
         data=payload_data,
 
         # 3. [핵심] 안드로이드 전용 설정 (앱 꺼짐/Doze 모드 깨우기용)
         android=messaging.AndroidConfig(
             priority='high',  # 'high'로 설정해야 절전 모드에서도 즉시 알림이 옴
-            notification=messaging.AndroidNotification(
-                channel_id='medication_alarm_channel',  # 안드로이드 앱 소스에 설정된 채널 ID와 일치해야 함
-                click_action='FLUTTER_NOTIFICATION_CLICK',  # 앱 아이콘 클릭 시 동작 (Flutter 기준 기본값, Native도 무방)
-                sound='default'  # 소리 설정
-            ),
+            # notification=messaging.AndroidNotification(
+            #     channel_id='medication_alarm_channel',  # 안드로이드 앱 소스에 설정된 채널 ID와 일치해야 함
+            #     click_action='FLUTTER_NOTIFICATION_CLICK',  # 앱 아이콘 클릭 시 동작 (Flutter 기준 기본값, Native도 무방)
+            #     sound='default'  # 소리 설정
+            # ),
         ),
     )
 

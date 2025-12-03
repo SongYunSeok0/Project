@@ -15,7 +15,6 @@ def test_med_alarm_view(request):
     now_utc = timezone.now()
 
     # 2. 검색 범위 설정: '현재 분' ~ '1분 뒤' (초 단위 절삭)
-    # 예: 12:16:30에 실행 -> 12:16:00 ~ 12:17:00 사이의 데이터 조회
     start_time = now_utc.replace(second=0, microsecond=0)
     end_time = start_time + timedelta(minutes=1)
 
@@ -26,11 +25,11 @@ def test_med_alarm_view(request):
     print(f"1. 현재 서버 시간 (KST): {now_kst.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"2. DB 검색 범위 (UTC): {start_time.strftime('%H:%M')} ~ {end_time.strftime('%H:%M')}")
 
-    # 4. 데이터 조회 (실제 로직처럼 use_alarm=True 조건 포함)
+    # 4. 데이터 조회
     targets = Plan.objects.filter(
-        use_alarm=True,  # 알람 켜진 것만
-        taken_at__gte=start_time,  # 시작 시간 이상
-        taken_at__lt=end_time  # 끝 시간 미만 (다음 1분 전까지)
+        use_alarm=True,
+        taken_at__gte=start_time,
+        taken_at__lt=end_time
     ).select_related('regihistory__user')
 
     total_count = targets.count()
@@ -49,7 +48,6 @@ def test_med_alarm_view(request):
     else:
         for plan in targets:
             try:
-                # 로그용 시간 표시
                 plan_time_kst = timezone.localtime(plan.taken_at)
                 plan_time_str = plan_time_kst.strftime('%H:%M')
 
@@ -60,13 +58,13 @@ def test_med_alarm_view(request):
                 token = getattr(user, 'fcm_token', None)
 
                 if token:
-                    # 실제 FCM 발송
+                    # ⭐ FCM 발송 - type을 "ALARM"으로 변경!
                     send_fcm_to_token(
                         token=token,
-                        title="MyRhythm 복약알림",
+                        title="💊 약 드실 시간이에요!",
                         body=f"{user.username}님, [{plan.med_name}] 복용 시간입니다. ({plan_time_str})",
                         data={
-                            "type": "med_alarm",
+                            "type": "ALARM",  # 👈 med_alarm → ALARM 변경!
                             "plan_id": str(plan.id),
                             "click_action": "FLUTTER_NOTIFICATION_CLICK"
                         }
@@ -85,12 +83,12 @@ def test_med_alarm_view(request):
                 print(err)
                 result_log.append(err)
 
-    print("=== [TEST View] 테스트 종료 ===\n")
+    print(f"=== [TEST View] 테스트 종료: 총 {count}건 전송 ===\n")
 
     return HttpResponse(
-        f"<h1>실전 알림 테스트 결과</h1>"
-        f"<p>서버 시간(KST): {now_kst.strftime('%Y-%m-%d %H:%M:%S')}</p>"
-        f"<p>실제 전송 성공: {count}건</p>"
+        f"<h1>🔔 실전 알림 테스트 결과</h1>"
+        f"<p><b>서버 시간(KST):</b> {now_kst.strftime('%Y-%m-%d %H:%M:%S')}</p>"
+        f"<p><b>실제 전송 성공:</b> {count}건 / {total_count}건</p>"
         f"<hr>"
         f"<br>".join(result_log)
     )

@@ -1,4 +1,4 @@
-package com.myrhythm.push
+package com.myrhythm.alarm
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -33,11 +33,9 @@ class AppFcmService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         Log.i(tag, "onNewToken: $token")
 
-        // 1. 메모리 및 로컬 저장 (기존 로직 유지)
         PushManager.fcmToken = token
         FcmTokenStore(this).saveToken(token)
 
-        // ⭐ 2. [추가됨] 서버(Django)에도 갱신된 토큰 전송 (필수!)
         CoroutineScope(Dispatchers.IO).launch {
             runCatching {
                 registerFcmTokenUseCase(token)
@@ -48,18 +46,77 @@ class AppFcmService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(msg: RemoteMessage) {
-        // 알림 내용 추출
         val title = msg.notification?.title ?: msg.data["title"] ?: "알림"
-        val body  = msg.notification?.body  ?: msg.data["body"]  ?: ""
+        val body = msg.notification?.body ?: msg.data["body"] ?: ""
 
-        Log.i(tag, "onMessageReceived title=$title body=$body")
+        // ⭐ 메시지 타입 확인 (서버에서 "type": "ALARM" 보내야 함)
+        val messageType = msg.data["type"] ?: "NORMAL"
 
-        // 알림 표시 함수 호출
-        sendNotification(title, body)
+        Log.i(tag, "onMessageReceived title=$title body=$body type=$messageType")
+
+
+        // 타입에 따라 다른 알림 표시
+        when (messageType) {
+            "ALARM" -> sendFullScreenAlarm(title, body)  // 전체 화면 알람
+            else -> sendNotification(title, body)        // 일반 알림
+        }
     }
 
+    /**
+     * ⭐ 새로 추가: 전체 화면 알람 (화면 깨우기 + 잠금화면 위에 표시)
+     */
+    private fun sendFullScreenAlarm(title: String, messageBody: String) {
+        // AlarmActivity를 띄우는 Intent
+        val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("title", title)
+            putExtra("body", messageBody)
+        }
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            System.currentTimeMillis().toInt(),
+            fullScreenIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val channelId = "alarm_channel"  // 알람 전용 채널
+        val alarmSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+
+        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(messageBody)
+            .setPriority(NotificationCompat.PRIORITY_MAX)  // 최고 우선순위
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setSound(alarmSoundUri)
+            .setAutoCancel(true)
+            .setFullScreenIntent(fullScreenPendingIntent, true)  // 👈 핵심!
+            .setContentIntent(fullScreenPendingIntent)
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // 알람 전용 채널 생성 (중요도 높음)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "복약 알람",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "약 복용 시간 알람"
+                enableVibration(true)
+                setSound(alarmSoundUri, null)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+    }
+
+    /**
+     * 기존 일반 알림 (그대로 유지)
+     */
     private fun sendNotification(title: String, messageBody: String) {
-        // 알림 클릭 시 메인 액티비티로 이동
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
@@ -72,7 +129,7 @@ class AppFcmService : FirebaseMessagingService() {
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification) // 아이콘 리소스 확인 필요
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(messageBody)
             .setAutoCancel(true)
@@ -82,7 +139,6 @@ class AppFcmService : FirebaseMessagingService() {
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // 오레오 이상 채널 생성
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
