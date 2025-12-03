@@ -63,6 +63,8 @@ fun MainScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
+        Spacer(modifier = Modifier.height(1.dp))
+
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.healthInsightCard,
             onClick = { /* 연결 필요하면 추가 */ }
@@ -206,6 +208,8 @@ fun MainScreen(
                 modifier = Modifier.weight(1f).height(140.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
     }
 }
 
