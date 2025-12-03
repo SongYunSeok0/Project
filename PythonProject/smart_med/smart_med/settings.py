@@ -1,12 +1,11 @@
 import os
 from pathlib import Path
-import environ
 from datetime import timedelta
-
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# .env 로드 (django-environ만 사용, dotenv 중복 제거)
+# === ENV 로드 ===
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -17,7 +16,7 @@ ALLOWED_HOSTS = ["*"]
 
 FIREBASE_CREDENTIAL_PATH = env(
     "FIREBASE_CREDENTIAL_PATH",
-    default=str(BASE_DIR / "smart_med_firebase_admin.json"),
+    default="/run/secrets/smart_med_firebase_admin.json"
 )
 
 # 와일드카드(*)는 CSRF_TRUSTED_ORIGINS에 허용되지 않아요.
@@ -40,8 +39,6 @@ SIMPLE_JWT = {
 
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-
-    # Serializer Override 가능 (기본값 사용)
 }
 
 
@@ -57,8 +54,12 @@ INSTALLED_APPS = [
     "drf_yasg",
     "corsheaders",
     "django_extensions",
-
-    "users", "medications", "iot", "health","rag.apps.RagConfig"
+    "django_celery_results",
+    "users",
+    "medications",
+    "iot",
+    "health",
+    "rag.apps.RagConfig",
 ]
 
 MIDDLEWARE = [
@@ -71,11 +72,20 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "utils.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+MIDDLEWARE.insert(0, "utils.middleware.DisableChunkedMiddleware")
 
-ROOT_URLCONF = "smart_med.urls"
+# === CELERY 설정 ===
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Seoul"
+CELERY_ENABLE_UTC = False
 
 TEMPLATES = [
     {
@@ -109,9 +119,9 @@ DATABASES = {
     }
 }
 
-# ========== Email 설정 ==========
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+# === Email ===
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
@@ -133,16 +143,18 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+    ),
 }
-
 from celery.schedules import crontab
 
-CELERY_BEAT_SCHEDULE = {
-    'send-med-alarms-every-minute': {
-        'task': 'plans.tasks.send_med_alarms_task',  # 실행할 함수 경로
-        'schedule': crontab(minute='*'),  # 매 분마다 실행
-    },
-}
+# CELERY_BEAT_SCHEDULE = {
+#     'send-med-alarms-every-minute': {
+#         'task': 'plans.tasks.send_med_alarms_task',  # 실행할 함수 경로
+#         'schedule': crontab(minute='*'),  # 매 분마다 실행
+#     },
+# }
 
 # i18n
 LANGUAGE_CODE = "ko-kr"
@@ -151,7 +163,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-
+ROOT_URLCONF = "smart_med.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CELERY_BROKER_URL = "redis://localhost:6379/0"
