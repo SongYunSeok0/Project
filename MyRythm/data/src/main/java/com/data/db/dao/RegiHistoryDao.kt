@@ -20,4 +20,10 @@ interface RegiHistoryDao {
 
     @Query("DELETE FROM regihistory WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM regihistory WHERE userId = :userId")
+    suspend fun deleteAllByUser(userId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<RegiHistoryEntity>)
 }

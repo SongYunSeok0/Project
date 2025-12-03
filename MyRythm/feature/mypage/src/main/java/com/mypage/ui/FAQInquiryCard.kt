@@ -86,7 +86,7 @@ fun InquiryCard(
     }
 
     val statusColor = when (status) {
-        InquiryStatus.UNANSWERED -> Color.Gray
+        InquiryStatus.UNANSWERED -> MaterialTheme.colorScheme.surfaceVariant
         InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     // 날짜는 기본값 (추후 domain에 필드 추가 가능, 현재는 임의 설정)
@@ -104,7 +104,7 @@ fun InquiryCard(
             .clip(RoundedCornerShape(14.dp))
             .background(Color.White)
             .border(
-                border = BorderStroke(0.7.dp, Color.Gray),
+                border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.surfaceVariant),
                 shape = RoundedCornerShape(14.dp)
             )
             .clickable(
@@ -153,7 +153,7 @@ fun InquiryCard(
                     Text(
                         text = status.toDisplayText(),
                         color = when (status) {
-                            InquiryStatus.UNANSWERED -> Color.Gray
+                            InquiryStatus.UNANSWERED -> MaterialTheme.colorScheme.surfaceVariant
                             InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
                         style = MaterialTheme.typography.bodyLarge

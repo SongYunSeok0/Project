@@ -25,6 +25,7 @@ val MapCard = Color(0x33C5FF80)
 val NewsCard = Color(0x33FFEF6C)
 val HealthInsightCard = Color(0x666AC0E0)
 val MainFeatureCardBorderStroke = Color(0xfff3f4f6)
+val AppTransparent = Color.Transparent
 
 
 // 로그인프로세스

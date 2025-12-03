@@ -9,6 +9,8 @@ import com.data.mapper.user.toProfile
 import com.data.network.api.UserApi
 import com.domain.model.UserProfile
 import com.domain.repository.ProfileRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(
@@ -43,5 +45,16 @@ class ProfileRepositoryImpl @Inject constructor(
             Log.e("ProfileRepo", "🔥 updateProfile 실패: ${e.message}", e)
             throw e
         }
+    }
+
+    override fun observeLocalProfile(): Flow<UserProfile?> {
+        return dao.observe().map { entity ->
+            entity?.toProfile()
+        }
+    }
+
+    override suspend fun clearProfile() {
+        dao.clear()
+        cachedUserId = null
     }
 }

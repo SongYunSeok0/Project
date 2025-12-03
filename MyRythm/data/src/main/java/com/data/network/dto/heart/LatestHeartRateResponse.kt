@@ -1,4 +1,4 @@
-package com.data.network.dto.health
+package com.data.network.dto.heart
 
 data class LatestHeartRateResponse(
     val bpm: Int?,

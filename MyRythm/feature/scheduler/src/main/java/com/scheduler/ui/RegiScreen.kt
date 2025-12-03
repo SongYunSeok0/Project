@@ -60,7 +60,6 @@ fun RegiScreen(
     onCompleted: () -> Unit = {},
     regihistoryId: Long? = null,
 ) {
-
     val context = LocalContext.current
 
     LaunchedEffect(viewModel) {
@@ -70,9 +69,8 @@ fun RegiScreen(
                     Toast.makeText(context, "등록이 완료되었습니다!", Toast.LENGTH_SHORT).show()
                     onCompleted()
                 }
-                "등록 실패" -> {
+                "등록 실패" ->
                     Toast.makeText(context, "등록에 실패했습니다.", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }
@@ -107,17 +105,18 @@ fun RegiScreen(
 
     val meds = remember {
         mutableStateListOf<String>().apply {
-            if (drugNames.isNotEmpty()) addAll(drugNames)
-            else add("")
+            if (drugNames.isNotEmpty()) addAll(drugNames) else add("")
         }
     }
 
+    var initialized by remember { mutableStateOf(false) }
+
     var dose by remember { mutableIntStateOf(3) }
+    val intakeTimes = remember { mutableStateListOf<String>() }
+
     var mealRelation by remember { mutableStateOf("after") }
     var memo by remember { mutableStateOf("") }
     var useAlarm by remember { mutableStateOf(true) }
-
-    val intakeTimes = remember { mutableStateListOf<String>() }
 
     val dateFmt = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     fun todayStr() = dateFmt.format(Calendar.getInstance().time)
@@ -129,91 +128,48 @@ fun RegiScreen(
     var showStart by remember { mutableStateOf(false) }
     var showEnd by remember { mutableStateOf(false) }
 
-    if (showStart) {
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = strToMillis(startDay) ?: System.currentTimeMillis()
-        )
-        DatePickerDialog(
-            onDismissRequest = { showStart = false },
-            confirmButton = {
-                Button(onClick = {
-                    state.selectedDateMillis?.let { startDay = dateFmt.format(Date(it)) }
-                    showStart = false
-                }) { Text(confirmText, color = Color.White) }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { showStart = false }) {
-                    Text(cancelText)
-                }
-            }
-        ) { DatePicker(state = state) }
-    }
-
-    if (showEnd) {
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = strToMillis(endDay) ?: System.currentTimeMillis()
-        )
-        DatePickerDialog(
-            onDismissRequest = { showEnd = false },
-            confirmButton = {
-                Button(onClick = {
-                    state.selectedDateMillis?.let { endDay = dateFmt.format(Date(it)) }
-                    showEnd = false
-                }) { Text(confirmText, color = Color.White) }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { showEnd = false }) {
-                    Text(cancelText)
-                }
-            }
-        ) { DatePicker(state = state) }
-    }
-
+    // 최초 1회 초기화
     LaunchedEffect(Unit) {
-        dose = 3
-        intakeTimes.clear()
-        intakeTimes.addAll(presetTimes(3))
-        startDay = todayStr()
-        endDay = ""
+        if (!initialized) {
+            initialized = true
+            dose = times ?: 3
+            intakeTimes.clear()
+            if (drugNames.isNotEmpty()) {
+                tab = RegiTab.DISEASE
+                intakeTimes.addAll(presetTimes(dose))
+            } else {
+                intakeTimes.addAll(presetTimes(3))
+            }
+            startDay = todayStr()
+            if (days != null) {
+                val end = Calendar.getInstance()
+                end.add(Calendar.DAY_OF_YEAR, days - 1)
+                endDay = dateFmt.format(end.time)
+            }
+        }
     }
 
+    // 탭 변경 시 기본값
     LaunchedEffect(tab) {
+        if (!initialized) return@LaunchedEffect
+        intakeTimes.clear()
         if (tab == RegiTab.SUPPLEMENT) {
             dose = 1
-            intakeTimes.clear()
             intakeTimes.add("12:00")
         } else {
             dose = 3
-            intakeTimes.clear()
             intakeTimes.addAll(presetTimes(3))
         }
     }
 
-    LaunchedEffect(dose, tab) {
-        intakeTimes.clear()
-        if (tab == RegiTab.SUPPLEMENT) repeat(dose) { intakeTimes.add("") }
-        else intakeTimes.addAll(presetTimes(dose))
-    }
-
-    LaunchedEffect(times) {
-        if (times != null) {
-            dose = times.coerceIn(1, 6)
-            intakeTimes.clear()
-            intakeTimes.addAll(presetTimes(dose))
-        }
-    }
-
-    LaunchedEffect(days) {
-        if (days != null) {
-            val end = Calendar.getInstance()
-            end.add(Calendar.DAY_OF_YEAR, days - 1)
-            startDay = todayStr()
-            endDay = dateFmt.format(end.time)
-        }
-    }
-
-    LaunchedEffect(drugNames) {
-        if (drugNames.isNotEmpty()) tab = RegiTab.DISEASE
+    // dose 바뀔 때 intakeTimes 길이 맞추기
+    LaunchedEffect(dose) {
+        if (intakeTimes.size < dose) {
+            repeat(dose - intakeTimes.size) { intakeTimes.add("") }
+        } else if (intakeTimes.size > dose) {
+            repeat(intakeTimes.size - dose) {
+                intakeTimes.removeAt(intakeTimes.lastIndex)
+            }        }
     }
 
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
@@ -252,7 +208,7 @@ fun RegiScreen(
                 )
             }
 
-            // 병명/영양제
+            // 병명 / 영양제
             if (tab == RegiTab.DISEASE) {
                 Column {
                     Text(diseaseNameText, color = SectionTitle)
@@ -307,18 +263,31 @@ fun RegiScreen(
                 }
             }
 
-            // 횟수
+            // 복용 횟수
             Column {
                 Text(doseDailyCount, color = SectionTitle)
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     IconButton(onClick = {
                         dose = (dose - 1).coerceAtLeast(1)
                     }) {
                         Icon(Icons.Default.Remove, contentDescription = null)
                     }
+
                     Spacer(Modifier.weight(1f))
-                    Text("${dose}회")
+
+                    Text(
+                        text = "${dose}회",
+                        fontSize = 18.sp
+                    )
+
                     Spacer(Modifier.weight(1f))
+
                     IconButton(onClick = {
                         dose = (dose + 1).coerceAtMost(6)
                     }) {
@@ -419,7 +388,6 @@ fun RegiScreen(
 
                     val nowMs = System.currentTimeMillis()
 
-                    // 마지막날 기준 미래 확장
                     run {
                         val lastDayStr = dfDay.format(Date(eMs))
                         val allTimes = realTimes.map { t ->
@@ -428,14 +396,12 @@ fun RegiScreen(
                                 .toInstant()
                                 .toEpochMilli()
                         }
-
                         if (allTimes.all { it < nowMs }) {
                             eMs += oneDay
                             endDay = dfDay.format(Date(eMs))
                         }
                     }
 
-                    // 날짜 목록
                     val dayList = buildList {
                         var cur = sMs
                         while (cur <= eMs) {
@@ -449,7 +415,6 @@ fun RegiScreen(
                     dayList.forEachIndexed { index, d ->
                         val ds = dfDay.format(Date(d))
                         realTimes.forEach { t ->
-
                             val date = LocalDate.parse(ds)
                             val time = LocalTime.parse(t)
 
@@ -457,10 +422,12 @@ fun RegiScreen(
                                 .toInstant()
                                 .toEpochMilli()
 
-                            // 지난 일정은 다음날로
-                            val takenAt =
-                                if (base < nowMs && index == 0) base + oneDay
-                                else base
+                            // 첫날의 지난 시간은 종료일 다음날로 미룸
+                            val takenAt = if (index == 0 && base < nowMs) {
+                                base + (eMs - sMs) + oneDay
+                            } else {
+                                base
+                            }
 
                             realMeds.forEach { med ->
                                 plans += Plan(
@@ -500,10 +467,49 @@ fun RegiScreen(
             Spacer(Modifier.height(20.dp))
         }
     }
+
+    if (showStart) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = strToMillis(startDay) ?: System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showStart = false },
+            confirmButton = {
+                Button(onClick = {
+                    state.selectedDateMillis?.let { startDay = dateFmt.format(Date(it)) }
+                    showStart = false
+                }) { Text(confirmText, color = Color.White) }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showStart = false }) {
+                    Text(cancelText)
+                }
+            }
+        ) { DatePicker(state = state) }
+    }
+
+    if (showEnd) {
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = strToMillis(endDay) ?: System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showEnd = false },
+            confirmButton = {
+                Button(onClick = {
+                    state.selectedDateMillis?.let { endDay = dateFmt.format(Date(it)) }
+                    showEnd = false
+                }) { Text(confirmText, color = Color.White) }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showEnd = false }) {
+                    Text(cancelText)
+                }
+            }
+        ) { DatePicker(state = state) }
+    }
 }
 
-// ------------------------------------------------------------
-
+/* 시간 입력 Row */
 @Composable
 fun TimeInputRow(
     label: String,
@@ -553,6 +559,7 @@ fun TimeInputRow(
     }
 }
 
+/* 날짜 박스 */
 @Composable
 private fun DateBox(
     label: String,
@@ -581,6 +588,7 @@ private fun DateBox(
     }
 }
 
+/* Segmented Chip */
 @Composable
 private fun SegChip(text: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Box(

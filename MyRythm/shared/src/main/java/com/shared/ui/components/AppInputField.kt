@@ -1,0 +1,97 @@
+package com.shared.ui.components
+
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
+import com.shared.ui.theme.componentTheme
+
+@Composable
+fun AppInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
+    maxLines: Int = 10,
+    height: Dp? = null,
+    shape: Shape = MaterialTheme.shapes.medium,
+    outlined: Boolean = false,
+    useFloatingLabel: Boolean = true,
+    readOnly: Boolean = false,
+
+    imeAction: ImeAction = ImeAction.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    trailingContent: @Composable (() -> Unit)? = null
+) {
+    val bgColor = MaterialTheme.colorScheme.surface
+    val borderColorFocused = MaterialTheme.colorScheme.primary
+    val borderColorUnfocused = MaterialTheme.colorScheme.surfaceVariant
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+
+        label = if (outlined && useFloatingLabel) {
+            { Text(label) }
+        } else null,
+
+        placeholder = if (!outlined) {
+            { Text(label, color = MaterialTheme.colorScheme.surfaceVariant) }
+        } else null,
+
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (height != null) Modifier.height(height) else Modifier),
+
+        shape = shape,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        readOnly = readOnly,
+        keyboardOptions = KeyboardOptions(
+            imeAction = imeAction,
+            keyboardType = keyboardType
+        ),
+        keyboardActions = keyboardActions,
+        // 필드 옆에 추가하는 인증/아이콘 등등 UI
+        trailingIcon = {
+            if (trailingContent != null) trailingContent()
+        },
+
+        colors = if (outlined) {
+            OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = bgColor,
+                unfocusedContainerColor = bgColor,
+                focusedBorderColor = borderColorFocused,
+                unfocusedBorderColor = borderColorUnfocused,
+                focusedLabelColor = borderColorFocused,
+                unfocusedLabelColor = borderColorUnfocused
+            )
+        } else {
+            OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = bgColor,
+                unfocusedContainerColor = bgColor,
+                focusedBorderColor = bgColor,
+                unfocusedBorderColor = bgColor,
+                focusedLabelColor = MaterialTheme.componentTheme.appTransparent,
+                unfocusedLabelColor = MaterialTheme.componentTheme.appTransparent,
+            )
+        },
+
+        textStyle = MaterialTheme.typography.bodyLarge.copy(
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    )
+}

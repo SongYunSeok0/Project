@@ -24,4 +24,6 @@ interface RegiRepository {
     fun observeAllPlans(userId: Long): Flow<List<Plan>>
 
     fun observePlans(regihistoryId: Long): Flow<List<Plan>>
+
+    suspend fun syncRegiHistories(userId: Long)
 }

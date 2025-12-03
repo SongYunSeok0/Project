@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.data.db.dao.FavoriteDao
+import com.data.db.dao.HeartRateDao
 import com.data.db.dao.InquiryDao
 import com.data.db.dao.PlanDao
 import com.data.db.dao.RegiHistoryDao
@@ -14,6 +15,7 @@ import com.data.db.dao.StepDao
 import com.data.db.dao.UserDao
 import com.data.db.entity.DailyStepEntity
 import com.data.db.entity.FavoriteEntity
+import com.data.db.entity.HeartRateEntity
 import com.data.db.entity.InquiryEntity
 import com.data.db.entity.PlanEntity
 import com.data.db.entity.RegiHistoryEntity
@@ -29,8 +31,9 @@ import com.data.db.entity.UserEntity
         InquiryEntity::class,
         StepEntity::class,
         DailyStepEntity::class,
+        HeartRateEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {
@@ -40,7 +43,7 @@ abstract class AppRoomDatabase : RoomDatabase() {
     abstract fun regiHistoryDao(): RegiHistoryDao
     abstract fun inquiryDao(): InquiryDao
     abstract fun stepDao(): StepDao
-
+    abstract fun heartRateDao(): HeartRateDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {

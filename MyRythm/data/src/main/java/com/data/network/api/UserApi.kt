@@ -35,6 +35,9 @@ interface UserApi {
     @POST("/api/auth/verify-code/")
     suspend fun verifyEmailCode(@Body body: VerifyCodeRequest): Response<Unit>
 
+    // 1201 비밀번호잊음창의 휴대폰->이메일 인증 변경중, 비번재설정 추가
+    @POST("/api/users/reset-password/")
+    suspend fun resetPassword(@Body body: Map<String, String>): Response<Unit>
 
     @POST("users/signup/")
     suspend fun signup(@Body user: UserSignupRequest): Response<SignupResponse>
