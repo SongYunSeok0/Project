@@ -14,10 +14,16 @@ class Device(models.Model):
     )
     is_active = models.BooleanField(default=True)
     last_connected_at = models.DateTimeField(null=True, blank=True)
+    device_name=models.CharField(
+        max_length=10,
+        null=True,
+        blank=True
+    )
 
 
     class Meta:
         db_table = "iot_device"
+        unique_together = ('user', 'device_name')
 
     def __str__(self):
         return f"Device {self.id} for {self.user.email}"
@@ -51,7 +57,7 @@ class SensorData(models.Model):
 
 import secrets
 from django.db import models
-from django.conf import settings
+
 
 
 class IntakeStatus(models.TextChoices):

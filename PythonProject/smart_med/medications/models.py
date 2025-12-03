@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 
 
-
 # 등록 이력(기존 Prescription)
 class RegiHistory(models.Model):
     # 사용자 ID (ForeignKey로 User 테이블과 연결 가능)
@@ -17,14 +16,6 @@ class RegiHistory(models.Model):
     regi_type = models.CharField(
         max_length=50,
         verbose_name="등록 유형 (영양제/병원약)"
-    )
-
-    # ✅ [추가] IoT Device UUID (String 형태로 저장, 필요 시 UUIDField로 변경 가능)
-    iot_device_uuid = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        verbose_name="IoT 기기 UUID"
     )
 
     # 병명 (기존 disase_name)
@@ -43,6 +34,15 @@ class RegiHistory(models.Model):
     )
     # 알람 여부
     use_alarm = models.BooleanField(default=True)
+
+    device = models.ForeignKey(
+        "iot.Device",
+        on_delete=models.SET_NULL,  # 기기가 삭제되어도 이력은 남김
+        null=True,
+        blank=True,
+        related_name='histories',
+        verbose_name="연동된 기기"
+    )
 
     class Meta:
         db_table = "regihistory"
