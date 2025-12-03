@@ -7,6 +7,8 @@ import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
 import com.domain.model.Plan
 import com.domain.model.RegiHistory
+import com.domain.repository.PlanRepository
+import com.domain.repository.RegiRepository
 import com.domain.sharedvm.MainVMContract
 import com.domain.usecase.plan.GetPlansUseCase
 import com.domain.usecase.plan.UpdatePlanUseCase
@@ -31,7 +33,9 @@ class MainViewModel @Inject constructor(
     private val tokenStore: TokenStore,
     private val updatePlanUseCase: UpdatePlanUseCase,
     private val getFcmTokenUseCase: GetFcmTokenUseCase,
-    private val registerFcmTokenUseCase: RegisterFcmTokenUseCase
+    private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
+    private val regiRepo: RegiRepository,
+    private val planRepo: PlanRepository,
 ) : ViewModel(), MainVMContract {
 
     // 다음 복용 시간 ("HH:mm")
@@ -69,9 +73,50 @@ class MainViewModel @Inject constructor(
     init {
         val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull()
         if (userId != null && userId > 0) {
+            syncData(userId)
             load(userId)
         }
         initFcmToken()
+        startTimeUpdater()
+    }
+
+    private fun syncData(userId: Long) {
+        viewModelScope.launch {
+            try {
+                regiRepo.syncRegiHistories(userId)
+                planRepo.syncPlans(userId)
+                Log.d("MainVM", "초기 동기화 완료")
+            } catch (e: Exception) {
+                Log.e("MainVM", "동기화 실패", e)
+            }
+        }
+    }
+
+    private fun startTimeUpdater() {
+        viewModelScope.launch {
+            while (true) {
+                updateRemainTime()  // 👈 먼저 즉시 실행
+                kotlinx.coroutines.delay(1_000L)
+            }
+        }
+    }
+
+    private fun updateRemainTime() {
+        val next = _nextPlan.value ?: return
+        val nextAt = next.takenAt ?: return
+        val now = System.currentTimeMillis()
+
+        val diff = nextAt - now
+        if (diff < 0) {
+            _remainText.value = "00:00"
+            return
+        }
+
+        val totalMinutes = diff / 1000 / 60
+        val hours = totalMinutes / 60
+        val mins = totalMinutes % 60
+
+        _remainText.value = String.format("%02d:%02d", hours, mins)
     }
 
 
