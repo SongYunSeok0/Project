@@ -1,17 +1,17 @@
 package com.data.di
 
+import android.content.Context
+import com.data.device.BLEManager
 import com.data.network.api.MapApi
 import com.data.network.api.NewsApi
-import com.data.network.api.DeviceApi
 import com.data.repository.MapRepositoryImpl
 import com.data.repository.NewsRepositoryImpl
-import com.data.repository.DeviceRepositoryImpl
 import com.domain.repository.MapRepository
 import com.domain.repository.NewsRepository
-import com.domain.repository.DeviceRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -28,8 +28,4 @@ object DataRepositoryProvidesModule {
     fun provideMapRepository(api: MapApi): MapRepository =
         MapRepositoryImpl(getMapDataRemote = { api.getMapData() })
 
-    @Provides
-    @Singleton
-    fun provideDeviceRepository(api: DeviceApi): DeviceRepository =
-        DeviceRepositoryImpl(api)
 }

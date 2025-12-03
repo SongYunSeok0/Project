@@ -6,11 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.domain.model.UserProfile
 import com.domain.repository.InquiryRepository
 import com.domain.repository.AuthRepository
-import com.domain.repository.DeviceRepository
 import com.domain.repository.ProfileRepository
 import com.domain.usecase.auth.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.cancelChildren
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +24,6 @@ class MyPageViewModel @Inject constructor(
     private val inquiryRepository: InquiryRepository,
     private val userRepository: ProfileRepository,
     private val authRepository: AuthRepository,
-    private val deviceRepository: DeviceRepository,
 ) : ViewModel() {
 
     private val _events = Channel<MyPageEvent>(Channel.BUFFERED)
@@ -97,22 +94,6 @@ class MyPageViewModel @Inject constructor(
                 else _events.send(MyPageEvent.WithdrawalFailed)
             }
             .onFailure { _events.send(MyPageEvent.WithdrawalFailed) }
-    }
-
-    fun requestDeviceRegister() {
-        viewModelScope.launch {
-            try {
-                val device = deviceRepository.registerDevice()
-                _events.send(MyPageEvent.DeviceRegisterSuccess(device.uuid))
-            } catch (e: Exception) {
-                _events.send(MyPageEvent.DeviceRegisterFailed)
-            }
-        }
-    }
-
-    init {
-        loadProfile()
-        refreshHeartData()
     }
 
 }

@@ -22,6 +22,10 @@
         android:name="android.hardware.camera.any"
         android:required="false" />
 
+    <!-- BLE 권한들 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
     <application
         android:name=".common.MyRhythmApplication"
         android:allowBackup="true"
