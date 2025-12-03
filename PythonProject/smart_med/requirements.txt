@@ -30,3 +30,4 @@ pgvector
 sentence-transformers
 gunicorn
 django-celery-results
+qrcode[pil]

@@ -2,6 +2,7 @@
 import secrets
 
 from django.db import transaction
+from django.http import FileResponse
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
@@ -9,7 +10,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-
+from pathlib import Path
+from utils.make_qr import create_qr_for_chip
 from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
 
@@ -138,3 +140,15 @@ class RegisterDeviceView(APIView):
             "device_uuid": device_uuid,
             "device_token": device_token
         }, status=201)
+
+class QRCodeView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, chip_id):
+        filename = create_qr_for_chip(chip_id)
+        filepath = Path(filename)
+
+        if not filepath.exists():
+            return Response({"error": "QR not found"}, status=404)
+
+        return FileResponse(open(filepath, "rb"), content_type="image/png")

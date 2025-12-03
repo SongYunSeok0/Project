@@ -39,8 +39,6 @@ SIMPLE_JWT = {
 
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-
-    # Serializer Override 가능 (기본값 사용)
 }
 
 
@@ -74,9 +72,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "utils.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+MIDDLEWARE.insert(0, "utils.middleware.DisableChunkedMiddleware")
 
 # === CELERY 설정 ===
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
@@ -143,8 +143,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+    ),
 }
-
 from celery.schedules import crontab
 
 # CELERY_BEAT_SCHEDULE = {
