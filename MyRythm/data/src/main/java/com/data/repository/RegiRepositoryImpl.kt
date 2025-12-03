@@ -114,6 +114,7 @@ class RegiRepositoryImpl @Inject constructor(
                 regihistoryId = res.regihistoryId,
                 medName = res.medName,
                 takenAt = res.takenAt,
+                exTakenAt = res.exTakenAt,  // 👈 추가
                 mealTime = res.mealTime,
                 note = res.note,
                 taken = res.taken,
@@ -132,6 +133,7 @@ class RegiRepositoryImpl @Inject constructor(
                     regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
+                    exTakenAt = row.exTakenAt,  // 👈 추가
                     mealTime = row.mealTime,
                     note = row.note,
                     taken = row.taken,
@@ -148,6 +150,7 @@ class RegiRepositoryImpl @Inject constructor(
                     regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
+                    exTakenAt = row.exTakenAt,  // 👈 추가
                     mealTime = row.mealTime,
                     note = row.note,
                     taken = row.taken,
@@ -189,6 +192,7 @@ class RegiRepositoryImpl @Inject constructor(
                 regihistoryId = res.regihistoryId,
                 medName = res.medName,
                 takenAt = res.takenAt,
+                exTakenAt = res.exTakenAt,  // 👈 추가
                 mealTime = res.mealTime,
                 note = res.note,
                 taken = res.taken,
