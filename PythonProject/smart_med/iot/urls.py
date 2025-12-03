@@ -6,5 +6,6 @@ urlpatterns = [
     path("ingest/", views.ingest, name="iot-ingest"),
     path('alerts/commands/', CommandView.as_view(), name='commands'),
     path("device/register/", RegisterDeviceView.as_view(), name="device-register"),
-    path("device/qr/<str:chip_id>/", QRCodeView.as_view()),
+    path("device/qr/<str:device_uuid>/", QRCodeView.as_view()),
+
 ]
