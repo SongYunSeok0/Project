@@ -39,6 +39,7 @@ class PlanSerializer(serializers.ModelSerializer):
     regihistory_label = serializers.CharField(source="regihistory.label", read_only=True, default=None)
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.SerializerMethodField()
+    exTakenAt = serializers.SerializerMethodField()  # 👈 추가: timestamp 변환
     mealTime = serializers.CharField(source="meal_time")
     taken = serializers.SerializerMethodField()
     useAlarm = serializers.BooleanField(source="use_alarm")
@@ -51,6 +52,7 @@ class PlanSerializer(serializers.ModelSerializer):
             "regihistory_label",
             "medName",
             "takenAt",
+            "exTakenAt",  # 👈 수정: camelCase로 변경
             "mealTime",
             "note",
             "taken",
@@ -62,6 +64,9 @@ class PlanSerializer(serializers.ModelSerializer):
 
     def get_takenAt(self, obj):
         return to_ms(obj.taken_at)
+
+    def get_exTakenAt(self, obj):  # 👈 추가: timestamp 변환
+        return to_ms(obj.ex_taken_at)
 
     def get_taken(self, obj):
         return to_ms(obj.taken)
