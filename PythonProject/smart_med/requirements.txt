@@ -2,7 +2,8 @@
 django>=4.2
 djangorestframework
 djangorestframework-simplejwt
-drf-yasg
+drf-spectacular
+drf-spectacular-sidecar
 
 django-cors-headers
 django-extensions

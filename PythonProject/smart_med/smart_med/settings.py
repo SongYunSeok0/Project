@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",
-    "drf_yasg",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     "corsheaders",
     "django_extensions",
     "django_celery_results",
@@ -147,7 +148,36 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Smart Medication Care API",
+    "DESCRIPTION": "MyRythm API 명세서",
+    "VERSION": "1.0.0",
+    # 스키마 포함 여부
+    "SERVE_INCLUDE_SCHEMA": False,
+    # Request/Response 분리
+    "COMPONENT_SPLIT_REQUEST": True,
+    # 공통 에러 Response 생성
+    "DEFAULT_GENERATE_ERROR_RESPONSE": True,
+    # 사용할 수 있는 VALID 옵션
+    "SCHEMA_PATH_PREFIX": "/api",
+    # JWT Auth 표시
+    "AUTHENTICATION_WHITELIST": [],
+    # 태그 정의
+    "TAGS": [
+        {"name": "Auth", "description": "로그인 · 회원가입 · 이메일 인증 · 소셜 로그인"},
+        {"name": "User", "description": "사용자 정보 조회 및 수정, FCM, 회원탈퇴"},
+        {"name": "Health", "description": "심박수 · 걸음수 건강 데이터"},
+        {"name": "IoT", "description": "IoT 기기 연동 · 센서 데이터 수집 · 명령 전달"},
+        {"name": "RAG", "description": "약학 RAG 검색 · 비동기 작업 조회"},
+        {"name": "RegiHistory", "description": "처방/영양제 등록 이력 관리"},
+        {"name": "Plan", "description": "복약 일정 생성 · 수정 · 삭제 · 스마트 일정 생성"},
+        {"name": "Notification", "description": "FCM 알림 기능"},
+    ],
+}
+
 
 
 # i18n
