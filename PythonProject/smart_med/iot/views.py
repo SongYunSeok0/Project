@@ -15,13 +15,47 @@ from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
 from smart_med.utils.make_qr import create_qr
 
+from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
 
-from .docs import (
-    ingest_docs,
-    command_docs,
-    qr_docs,
-    register_device_docs
-)
+
+# ============================
+# 공용 Boolean 파서
+# ============================
+def to_bool(v):
+    if isinstance(v, bool):
+        return v
+    if v is None:
+        return False
+    return str(v).lower() in {"1", "true", "yes", "y"}
+
+
+# ============================
+# 공용 timestamp 파서
+# ============================
+def parse_ts(v):
+    """
+    지원:
+    - 1700000000000 (ms)
+    - 2025-12-04T12:00:00Z (ISO)
+    - None → now()
+    """
+    if v is None:
+        return timezone.now()
+
+    if isinstance(v, (int, float)):
+        # ms 단위로 전달됨
+        return timezone.make_aware(
+            timezone.datetime.fromtimestamp(v / 1000.0)
+        )
+
+    if isinstance(v, str):
+        dt = parse_datetime(v)
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            return dt
+
+    return timezone.now()
 
 
 # ==========================================
@@ -33,34 +67,40 @@ from .docs import (
 def ingest(request):
     p = request.data
 
-    def _bool(v):
-        if isinstance(v, bool):
-            return v
-        return str(v).lower() in {"1", "true", "yes", "y"}
+    # --------------------------
+    # Header 인증 (CommandView와 동일하게)
+    # --------------------------
+    uuid = request.headers.get("X-DEVICE-UUID")
+    token = request.headers.get("X-DEVICE-TOKEN")
 
-    is_opened = _bool(p.get("is_opened", p.get("isOpened", False)))
-    is_time = _bool(p.get("is_time", p.get("isTime", False)))
-    bpm = p.get("bpm") or p.get("Bpm")
-
-    ts_str = p.get("timestamp") or p.get("collected_at")
-    ts = parse_datetime(ts_str) if isinstance(ts_str, str) else None
-    ts = ts or timezone.now()
-
-    # device lookup
-    device_uuid = p.get("device_uuid")
-    device_id = p.get("device_id")
+    if not uuid or not token:
+        return Response({"error": "missing headers"}, status=401)
 
     try:
-        if device_id:
-            device = Device.objects.get(id=device_id)
-        else:
-            device = Device.objects.get(device_uuid=device_uuid)
+        device = Device.objects.get(device_uuid=uuid)
     except Device.DoesNotExist:
-        return Response({"error": "device not found"}, status=404)
+        return Response({"error": "invalid device"}, status=401)
 
-    user_id = p.get("user_id") or device.user_id
+    if device.device_token != token:
+        return Response({"error": "invalid token"}, status=401)
 
-    # 복약 상태 판정
+    # --------------------------
+    # Payload 파싱
+    # --------------------------
+    is_opened = to_bool(p.get("is_opened") or p.get("isOpened"))
+    is_time = to_bool(p.get("is_time") or p.get("isTime"))
+    bpm_raw = p.get("bpm") or p.get("Bpm")
+
+    timestamp = parse_ts(
+        p.get("timestamp") or p.get("collected_at")
+    )
+
+    # user 보정 (등록되지 않은 기기면 user_id = None)
+    user_id = device.user_id
+
+    # --------------------------
+    # Status 판정
+    # --------------------------
     if is_time and is_opened:
         status_code = IntakeStatus.TAKEN
     elif not is_time and is_opened:
@@ -70,36 +110,45 @@ def ingest(request):
     else:
         status_code = IntakeStatus.NONE
 
-    # 저장
+    # --------------------------
+    # DB 저장
+    # --------------------------
     with transaction.atomic():
         SensorData.objects.create(
             device=device,
             user_id=user_id,
             is_opened=is_opened,
             is_time=is_time,
-            collected_at=ts,
+            collected_at=timestamp,
             status=status_code,
         )
-        if bpm:
+
+        # BPM 저장
+        if bpm_raw is not None:
             try:
-                ibpm = int(bpm)
-                if 20 <= ibpm <= 240:
+                bpm = int(bpm_raw)
+                if 20 <= bpm <= 240:
                     HeartRate.objects.create(
                         user_id=user_id,
-                        bpm=ibpm,
-                        collected_at=ts
+                        bpm=bpm,
+                        collected_at=timestamp
                     )
             except:
                 pass
 
+    # 마지막 통신 시간 갱신
     device.last_connected_at = timezone.now()
     device.save(update_fields=["last_connected_at"])
 
     return Response({
         "ok": True,
         "status": status_code,
-        "raw": {"is_opened": is_opened, "is_time": is_time, "bpm": bpm},
-        "timestamp": ts,
+        "timestamp": timestamp,
+        "raw": {
+            "is_opened": is_opened,
+            "is_time": is_time,
+            "bpm": bpm_raw,
+        }
     })
 
 
@@ -141,8 +190,7 @@ class QRCodeView(APIView):
         except Device.DoesNotExist:
             return Response({"error": "Device not found"}, status=404)
 
-        filename = create_qr(device.device_uuid, device.device_token)
-        filepath = Path(filename)
+        filepath = Path(create_qr(device.device_uuid, device.device_token))
 
         if not filepath.exists():
             return Response({"error": "QR not found"}, status=404)
@@ -155,7 +203,7 @@ class QRCodeView(APIView):
 # ==========================================
 @register_device_docs
 class RegisterDeviceView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         uuid = request.data.get("uuid")
@@ -170,14 +218,11 @@ class RegisterDeviceView(APIView):
         except Device.DoesNotExist:
             return Response({"error": "invalid device"}, status=404)
 
-        # token 검증
         if device.device_token != token:
             return Response({"error": "invalid token"}, status=401)
 
         # user 연결
         device.user = request.user
-
-        # device_name 있으면 업데이트
         if device_name:
             device.device_name = device_name
 
@@ -189,5 +234,3 @@ class RegisterDeviceView(APIView):
             "device_name": device.device_name,
             "user_id": request.user.id
         })
-
-

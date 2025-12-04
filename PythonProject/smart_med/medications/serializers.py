@@ -12,7 +12,7 @@ class PlanSerializer(serializers.ModelSerializer):
     regihistory_label = serializers.CharField(source="regihistory.label", read_only=True, default=None)
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.SerializerMethodField()
-    exTakenAt = serializers.SerializerMethodField()  # 👈 추가: timestamp 변환
+    exTakenAt = serializers.SerializerMethodField()
     mealTime = serializers.CharField(source="meal_time")
     taken = serializers.SerializerMethodField()
     useAlarm = serializers.BooleanField(source="use_alarm")
@@ -25,7 +25,7 @@ class PlanSerializer(serializers.ModelSerializer):
             "regihistory_label",
             "medName",
             "takenAt",
-            "exTakenAt",  # 👈 수정: camelCase로 변경
+            "exTakenAt",
             "mealTime",
             "note",
             "taken",
@@ -38,7 +38,7 @@ class PlanSerializer(serializers.ModelSerializer):
     def get_takenAt(self, obj):
         return to_ms(obj.taken_at)
 
-    def get_exTakenAt(self, obj):  # 👈 추가: timestamp 변환
+    def get_exTakenAt(self, obj):
         return to_ms(obj.ex_taken_at)
 
     def get_taken(self, obj):
@@ -64,6 +64,7 @@ class PlanCreateSerializer(serializers.ModelSerializer):
 
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    exTakenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)  # 👈 추가
     mealTime = serializers.CharField(source="meal_time", required=False, allow_null=True)
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     taken = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -75,6 +76,7 @@ class PlanCreateSerializer(serializers.ModelSerializer):
             "regihistoryId",
             "medName",
             "takenAt",
+            "exTakenAt",  # 👈 추가
             "mealTime",
             "note",
             "taken",
@@ -92,10 +94,13 @@ class PlanCreateSerializer(serializers.ModelSerializer):
 
         # ms -> datetime 변환
         taken_at = validated_data.pop("takenAt", None)
+        ex_taken_at = validated_data.pop("exTakenAt", None)  # 👈 추가
         taken = validated_data.pop("taken", None)
 
         if taken_at:
             validated_data["taken_at"] = from_ms(taken_at)
+        if ex_taken_at:  # 👈 추가
+            validated_data["ex_taken_at"] = from_ms(ex_taken_at)
         if taken:
             validated_data["taken"] = from_ms(taken)
 

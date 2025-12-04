@@ -3,7 +3,6 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from medications.plan_test_view import test_med_alarm_view
 from medications.views import (PlanListView
 )
 from users.views import CustomTokenObtainPairView
@@ -40,8 +39,6 @@ urlpatterns = [
     path("api/auth/verify-code/", VerifyEmailCodeView.as_view()),
     path('api/plan/', PlanListView.as_view(), name='plan_list'),
     path('api/rag/', include('rag.urls')),
+    path('api/med/', include('medications.urls')),
     path('api/health/', include('health.urls')),
-    path('test-alarm/', test_med_alarm_view, name='test_alarm'),
-    path("api/med/", include("medications.urls")),
-
 ]

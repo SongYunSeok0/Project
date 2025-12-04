@@ -11,12 +11,12 @@ def initialize_firebase():
         # 이미 초기화됨
         return firebase_admin.get_app()
 
-    # 이제서야 settings 읽기
+    # settings 에서 경로 읽기
     cred_path = getattr(settings, "FIREBASE_CREDENTIAL_PATH", None)
     if not cred_path:
         cred_path = os.path.join(settings.BASE_DIR, "smart_med_firebase_admin.json")
 
-    print("[FCM] use credential:", cred_path)
+    # print("[FCM] use credential:", cred_path)
 
     if not os.path.exists(cred_path):
         raise FileNotFoundError(f"[FCM] credential file not found: {cred_path}")
@@ -28,16 +28,21 @@ def initialize_firebase():
 
 
 def send_fcm_to_token(token: str, title: str, body: str, data: dict | None = None) -> str:
-    """FCM 메시지 전송 함수"""
-    # 여기서 Firebase 초기화 상태를 확인하고 필요시 초기화
+    """
+    FCM 메시지 전송 함수
+    - 화면 꺼짐: AlarmActivity 실행 (Data Message 처리)
+    - 화면 켜짐: Heads-up Notification (상단 배너) 표시
+    """
+    # Firebase 초기화 상태 확인
     initialize_firebase()
 
-    print("[FCM] send_fcm_to_token called")
-    print("[FCM] token =", token)
-    print("[FCM] title =", title, "body =", body)
+    # print(f"[FCM] Sending to token prefix: {token[:10]}...")
 
-    # 데이터 페이로드 정리 (모든 값을 문자열로 변환)
+    # 데이터 페이로드 정리
+    # 1. 기본값으로 "type": "med_alarm" 설정
+    # 2. 인자로 받은 data가 있다면 그 값으로 덮어씀 (예: "type": "ALARM")
     payload_data = {
+        "type": "med_alarm",
         "title": title,
         "body": body,
         **{k: str(v) for k, v in (data or {}).items()},
@@ -45,32 +50,28 @@ def send_fcm_to_token(token: str, title: str, body: str, data: dict | None = Non
 
     msg = messaging.Message(
         token=token,
-        # 1. 기본 알림 (화면 켜짐/꺼짐 공통)
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        # 2. 데이터 메시지
+
+        # [중요] notification 필드를 비워둬야 안드로이드 앱의
+        # onMessageReceived가 무조건 실행되어 커스텀 알람 처리가 가능합니다.
+        # notification=None,
+
+        # 데이터 메시지로만 전송
         data=payload_data,
 
-        # 3. [핵심] 안드로이드 전용 설정 (앱 꺼짐/Doze 모드 깨우기용)
+        # 안드로이드 설정
         android=messaging.AndroidConfig(
-            priority='high',  # 'high'로 설정해야 절전 모드에서도 즉시 알림이 옴
-            notification=messaging.AndroidNotification(
-                channel_id='medication_alarm_channel',  # 안드로이드 앱 소스에 설정된 채널 ID와 일치해야 함
-                click_action='FLUTTER_NOTIFICATION_CLICK',  # 앱 아이콘 클릭 시 동작 (Flutter 기준 기본값, Native도 무방)
-                sound='default'  # 소리 설정
-            ),
+            priority='high',  # 'high'여야 Doze 모드(절전)에서도 즉시 전송됨
+            ttl=0,  # 즉시 전송 (지연 없음)
+
+            # 아래 notification 설정은 Data Message 방식에서는 주석 처리가 맞습니다.
+            # 앱(Android) 코드에서 직접 채널과 알림을 생성해야 하기 때문입니다.
         ),
     )
 
-    print("[FCM] message =", msg)
-
     try:
         res = messaging.send(msg)
-        print("[FCM] sent =", res)
+        print(f"[FCM] Sent successfully. Type: {payload_data.get('type')}")
         return res
     except Exception as e:
-        print("[FCM] Error sending message:", e)
-        # 필요하다면 에러를 다시 raise 하거나 None 반환
+        print(f"[FCM] Error sending message: {e}")
         return str(e)
