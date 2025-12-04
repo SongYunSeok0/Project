@@ -4,33 +4,36 @@ import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.view.WindowManager
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatButton
-import androidx.lifecycle.lifecycleScope
-import com.myrhythm.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.myrhythm.viewmodel.AlarmViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class AlarmActivity : AppCompatActivity() {
+class AlarmActivity : ComponentActivity() {
 
     private val viewModel: AlarmViewModel by viewModels()
     private var ringtone: Ringtone? = null
 
-    // 데이터
-    private var planId: Long = -1L
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_alarm)
 
         // 1. 화면 깨우기 & 잠금화면 위로 설정
         turnScreenOnAndKeyguard()
@@ -38,82 +41,97 @@ class AlarmActivity : AppCompatActivity() {
         // 2. Intent 데이터 수신
         val title = intent.getStringExtra("title") ?: "약 드실 시간이에요!"
         val body = intent.getStringExtra("body") ?: "복약 시간입니다"
-        // FCM 보낼 때 data에 "plan_id"를 넣어야 함
         val planIdStr = intent.getStringExtra("plan_id") ?: "-1"
-        planId = planIdStr.toLongOrNull() ?: -1L
+        val planId = planIdStr.toLongOrNull() ?: -1L
 
-        // 보호자 여부 확인 (FCM data에 "is_guardian"을 true로 보내거나, type으로 구분)
-        // 예: type="ALARM" (환자), type="missed_alarm" (보호자)
+        // 보호자 여부 확인
         val type = intent.getStringExtra("type") ?: "ALARM"
         val isGuardian = type == "missed_alarm" || intent.getStringExtra("is_guardian") == "true"
 
-        // 3. UI 초기화
-        findViewById<TextView>(R.id.tv_alarm_title).text = title
-        findViewById<TextView>(R.id.tv_alarm_message).text = body
-
-        setupButtons(isGuardian)
-
-        // 4. 소리 재생
+        // 3. 소리 재생
         playAlarmSound()
 
-        // 5. ViewModel 이벤트 관찰 (성공/실패 처리)
-        observeViewModel()
-    }
-
-    private fun setupButtons(isGuardian: Boolean) {
-        val layoutPatient = findViewById<LinearLayout>(R.id.layout_patient_actions)
-        val btnGuardian = findViewById<AppCompatButton>(R.id.btn_guardian_confirm)
-
-        if (isGuardian) {
-            // [보호자 화면]
-            layoutPatient.visibility = View.GONE
-            btnGuardian.visibility = View.VISIBLE
-
-            btnGuardian.setOnClickListener {
-                stopAlarmAndFinish()
-            }
-        } else {
-            // [환자 화면]
-            layoutPatient.visibility = View.VISIBLE
-            btnGuardian.visibility = View.GONE
-
-            // (1) 미루기 버튼
-            findViewById<AppCompatButton>(R.id.btn_snooze).setOnClickListener {
-                if (planId != -1L) {
-                    viewModel.snooze(planId) // API 호출
-                } else {
-                    stopAlarmAndFinish()
-                }
-            }
-
-            // (2) 복약 완료 버튼
-            findViewById<AppCompatButton>(R.id.btn_taken).setOnClickListener {
-                if (planId != -1L) {
-                    viewModel.markAsTaken(planId) // API 호출
-                } else {
-                    stopAlarmAndFinish()
-                }
-            }
-
-            // (3) 닫기 버튼 (API 호출 없이 끔)
-            findViewById<TextView>(R.id.btn_close_patient).setOnClickListener {
-                stopAlarmAndFinish()
-            }
-        }
-    }
-
-    private fun observeViewModel() {
-        lifecycleScope.launch {
-            viewModel.eventFlow.collectLatest { event ->
-                when(event) {
-                    is AlarmViewModel.AlarmEvent.Success -> {
-                        // 성공하면 알람 끄고 종료
-                        stopAlarmAndFinish()
+        // 4. UI 표시 (Compose)
+        setContent {
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.White
+                ) {
+                    // 성공/실패 이벤트 관찰
+                    LaunchedEffect(key1 = true) {
+                        viewModel.eventFlow.collectLatest { event ->
+                            when(event) {
+                                is AlarmViewModel.AlarmEvent.Success -> {
+                                    Toast.makeText(this@AlarmActivity, "처리되었습니다.", Toast.LENGTH_SHORT).show()
+                                    stopAlarmAndFinish()
+                                }
+                                is AlarmViewModel.AlarmEvent.Error -> {
+                                    Toast.makeText(this@AlarmActivity, event.msg, Toast.LENGTH_SHORT).show()
+                                    stopAlarmAndFinish()
+                                }
+                            }
+                        }
                     }
-                    is AlarmViewModel.AlarmEvent.Error -> {
-                        Toast.makeText(this@AlarmActivity, event.msg, Toast.LENGTH_SHORT).show()
-                        // 에러가 나도 일단 알람은 꺼주는 게 사용자 경험상 좋을 수 있음 (선택사항)
-                        stopAlarmAndFinish()
+
+                    // 간단한 UI 구성
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = "⏰", fontSize = 60.sp)
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(text = title, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(text = body, fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(40.dp))
+
+                        if (isGuardian) {
+                            // [보호자용] 확인 버튼
+                            Button(
+                                onClick = { stopAlarmAndFinish() },
+                                modifier = Modifier.fillMaxWidth().height(50.dp)
+                            ) {
+                                Text("확인 (알람 끄기)")
+                            }
+                        } else {
+                            // [환자용] 미루기 / 복약완료 / 닫기
+                            Button(
+                                onClick = {
+                                    if (planId != -1L) viewModel.snooze(planId)
+                                    else stopAlarmAndFinish()
+                                },
+                                modifier = Modifier.fillMaxWidth().height(50.dp)
+                            ) {
+                                Text("30분 미루기")
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Button(
+                                onClick = {
+                                    if (planId != -1L) viewModel.markAsTaken(planId)
+                                    else stopAlarmAndFinish()
+                                },
+                                modifier = Modifier.fillMaxWidth().height(50.dp)
+                            ) {
+                                Text("복약 완료")
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Button(
+                                onClick = { stopAlarmAndFinish() },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("닫기 (나중에)")
+                            }
+                        }
                     }
                 }
             }

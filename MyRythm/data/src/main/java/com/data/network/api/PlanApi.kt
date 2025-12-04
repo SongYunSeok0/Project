@@ -9,24 +9,24 @@ import retrofit2.http.*
 
 interface PlanApi {
 
-    @GET("plan/")
+    @GET("med/plan/")
     suspend fun getPlans(): List<PlanResponse>
 
     //단건등록
-    @POST("plan/")
+    @POST("med/plan/")
     suspend fun createPlan(@Body body: PlanCreateRequest): PlanResponse
 
     //여러건 등록 ex)3일치 점심 저녁
-    @POST("plan/")
+    @POST("med/plan/")
     suspend fun createPlanSmart(@Body body: @JvmSuppressWildcards Map<String, Any>): Response<Any>
 
-    @PATCH("plan/{id}/")
+    @PATCH("med/plan/{id}/")
     suspend fun updatePlan(
         @Path("id") planId: Long,
         @Body body: PlanUpdateRequest
     ): PlanResponse
 
-    @DELETE("plan/{id}/delete/")
+    @DELETE("med/plan/{id}/delete/")
     suspend fun deletePlan(
         @Path("id") planId: Long
     ): Response<Unit>

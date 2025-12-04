@@ -87,6 +87,10 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
 
+        <receiver
+            android:name=".alarm.AlarmReceiver"
+            android:exported="false" />
+
         <!-- Android 14+ Health Connect -->
         <activity-alias
             android:name=".ViewPermissionUsageActivity"

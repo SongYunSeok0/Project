@@ -7,21 +7,21 @@ import retrofit2.http.*
 
 interface RegiHistoryApi {
 
-    @POST("regihistory/")
+    @POST("med/regihistory/")
     suspend fun createRegiHistory(
         @Body body: RegiHistoryRequest
     ): RegiHistoryResponse
 
-    @GET("regihistory/")
+    @GET("med/regihistory/")
     suspend fun getRegiHistories(): List<RegiHistoryResponse>
 
-    @PATCH("regihistory/{id}/")
+    @PATCH("med/regihistory/{id}/")
     suspend fun updateRegiHistory(
         @Path("id") id: Long,
         @Body body: RegiHistoryRequest
     ): RegiHistoryResponse
 
-    @DELETE("regihistory/{id}/delete/")
+    @DELETE("med/regihistory/{id}/delete/")
     suspend fun deleteRegiHistory(
         @Path("id") id: Long
     ): Response<Unit>
