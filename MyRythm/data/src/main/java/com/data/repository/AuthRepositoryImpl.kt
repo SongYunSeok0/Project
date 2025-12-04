@@ -32,9 +32,16 @@ class AuthRepositoryImpl @Inject constructor(
     private val profileRepository: ProfileRepository
 ) : AuthRepository {
 
-    override suspend fun sendEmailCode(email: String): Boolean {
-        val res = api.sendEmailCode(SendCodeRequest(email))
-        return res.isSuccessful
+    override suspend fun sendEmailCode(email: String, name: String?): Boolean {
+        // 수정: name까지 포함하여 요청을 보냄
+        // 404 에러 시 res.isSuccessful은 false가 되며, ViewModel에서 이를 체크해야 함
+        return try {
+            val res = api.sendEmailCode(SendCodeRequest(email, name))
+            res.isSuccessful
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     override suspend fun verifyEmailCode(email: String, code: String): Boolean {

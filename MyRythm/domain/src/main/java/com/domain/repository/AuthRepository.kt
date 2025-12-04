@@ -13,7 +13,7 @@ interface AuthRepository {
     suspend fun tryRefreshFromLocal(): Result<Boolean>
     suspend fun clearTokens(): Result<Unit>
     suspend fun signup(request: SignupRequest): Boolean
-    suspend fun sendEmailCode(email: String): Boolean
+    suspend fun sendEmailCode(email: String, name: String? = null): Boolean
     suspend fun verifyEmailCode(email: String, code: String): Boolean
     suspend fun withdrawal(): Boolean
 

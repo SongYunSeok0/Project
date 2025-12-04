@@ -179,8 +179,9 @@ class RegisterFcmTokenView(APIView):
 
         return Response({"detail": "ok"}, status=status.HTTP_200_OK)
 
+
 # ================================
-# 1) 인증코드 발송
+# 1) 인증코드 발송 (회원가입 & 보호자 인증 공용)
 # ================================
 class SendEmailCodeView(APIView):
     permission_classes = [AllowAny]
@@ -188,19 +189,46 @@ class SendEmailCodeView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
+        name = request.data.get("name")  # 보호자 이름 (선택 사항)
 
         if not email:
             return Response({"detail": "email 필요"}, status=400)
 
-        code = secrets.randbelow(900000) + 100000
+        # ---------------------------------------------------------
+        # [로직 추가] name이 들어왔다면? -> 보호자 등록용 인증 요청
+        # ---------------------------------------------------------
+        if name:
+            # DB에서 이메일과 이름이 일치하는 유저가 있는지 확인
+            # (보호자가 우리 앱 사용자인 경우에만 등록 가능하다는 정책이라면)
+            user_exists = User.objects.filter(email=email, username=name).exists()
+
+            if not user_exists:
+                return Response(
+                    {"detail": "해당 이름과 이메일을 가진 사용자를 찾을 수 없습니다."},
+                    status=404
+                )
+
+        # ---------------------------------------------------------
+        # 공통 로직 (인증코드 생성 및 발송)
+        # ---------------------------------------------------------
+        code = secrets.randbelow(900000) + 100000  # 100000 ~ 999999
+
+        # Redis 캐시에 저장 (3분 유효)
+        # 키를 구분하고 싶다면 보호자용은 접두사를 다르게 할 수도 있지만,
+        # 단순 인증 목적이라면 덮어씌워도 무방합니다.
         cache.set(f"email_code:{email}", code, timeout=180)
 
-        send_mail(
-            "이메일 인증코드",
-            f"인증코드: {code}\n3분 안에 입력해주세요.",
-            settings.EMAIL_HOST_USER,
-            [email],
-        )
+        # 메일 발송
+        try:
+            send_mail(
+                "[MyRhythm] 이메일 인증코드",
+                f"인증코드: {code}\n3분 안에 입력해주세요.",
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            return Response({"detail": f"메일 전송 실패: {str(e)}"}, status=500)
 
         return Response({"detail": "인증코드가 발송되었습니다."}, status=200)
 

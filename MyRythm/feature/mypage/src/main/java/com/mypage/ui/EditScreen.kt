@@ -5,8 +5,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,21 +47,11 @@ fun EditScreen(
     var birthDate by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
+
+    // 보호자 관련 상태
     var protEmail by remember { mutableStateOf("") }
+    var protName by remember { mutableStateOf("") } // [추가] 보호자 이름
     var email by remember { mutableStateOf("") }
-
-    /*
-     // 1125 로컬/소셜 구분 (이메일 유무 기준)
-    val isLocal = !profile?.email.isNullOrEmpty()
-
-    // --- 서버값 초기화 ---
-    // ⚡ 서버에서 받은 값으로 초기값 설정
-    var name by remember(profile) { mutableStateOf(profile?.username ?: "") }
-    var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
-    var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
-    var birthDate by rememberSaveable(profile) { mutableStateOf(profile?.birth_date ?: "") }
-    var phone by remember(profile) { mutableStateOf(profile?.phone ?: "") }
-     */
 
     // 데이터 없으면 1회 입력 있으면 수정 불가
     val hasName = !initialName.isNullOrBlank()
@@ -68,6 +60,9 @@ fun EditScreen(
     var isProtEmailVerified by remember { mutableStateOf(false) }
     var isProtEmailSent by remember { mutableStateOf(false) }
     var protEmailCode by remember { mutableStateOf("") }
+
+    // [수정] 스크롤 상태 추가
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(profile) {
         profile?.let {
@@ -78,17 +73,14 @@ fun EditScreen(
             phone = it.phone ?: ""
             gender = it.gender ?: ""
             protEmail = it.prot_email ?: ""
+            protName = it.prot_name ?: "" // [추가] 서버 프로필에 prot_name 필드가 있다면 여기서 초기화
             email = it.email ?: ""
             isProtEmailVerified = !it.prot_email.isNullOrBlank()
         }
     }
-    // 문자열 리소스화
-    val editprofilephoto = stringResource(R.string.editprofilephoto)
-    val editText = stringResource(R.string.edit)
 
     // 문자열 리소스
     val emailText = stringResource(R.string.email)
-    val guardianEmailText = stringResource(R.string.guardianemail)
     val nameText = stringResource(R.string.name)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
@@ -103,6 +95,7 @@ fun EditScreen(
     val sentText = stringResource(R.string.sent)
     val verificationText = stringResource(R.string.verification)
 
+    // [수정] 이벤트 핸들링: 성공/실패 여부를 여기서 처리
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -111,10 +104,23 @@ fun EditScreen(
                     Toast.makeText(context, "저장되었습니다", Toast.LENGTH_SHORT).show()
                     onDone()
                 }
-                EditProfileEvent.SaveFailed ->
+                EditProfileEvent.SaveFailed -> {
                     Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
-                EditProfileEvent.LoadFailed ->
+                }
+                EditProfileEvent.LoadFailed -> {
                     Toast.makeText(context, "프로필 불러오기 실패", Toast.LENGTH_SHORT).show()
+                }
+                // 이메일 전송 성공 시 UI 업데이트 및 토스트
+                EditProfileEvent.EmailSent -> {
+                    isProtEmailSent = true
+                    isProtEmailVerified = false
+                    protEmailCode = ""
+                    Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
+                }
+                // 에러 발생 시 토스트 (404 등)
+                is EditProfileEvent.Error -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -122,6 +128,7 @@ fun EditScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(scrollState) // [수정] 스크롤 기능 추가
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -151,15 +158,7 @@ fun EditScreen(
                     }
                 )
             }
-            /* 1201 18:07 seok 코드
-            if (isValidBirthFormat(birthDate))
-                ReadonlyField(stringResource(R.string.birth), birthDate)
-            else
-                EditableField(
-                    stringResource(R.string.birth) + " " + stringResource(R.string.birth_example),
-                    birthDate
-                ) { birthDate = it }
-             */
+
             if (hasGender) {
                 ReadonlyField(genderText, gender)
             } else {
@@ -175,7 +174,20 @@ fun EditScreen(
             EditableField(phoneNumberPlaceholderText, phone) { phone = it }
         }
 
+        // --- 보호자 정보 섹션 ---
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+
+            // 1. [추가] 보호자 이름 입력 필드
+            EditableField("보호자 이름", protName) {
+                protName = it
+                // 이름이 바뀌면 다시 인증하도록 초기화
+                isProtEmailVerified = false
+                isProtEmailSent = false
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 2. 보호자 이메일 입력 및 전송
             Text("보호자 이메일", fontSize = 14.sp, color = Color(0xff3b566e))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -202,9 +214,9 @@ fun EditScreen(
 
                 Button(
                     onClick = {
-                        if (protEmail.isNotBlank()) {
+                        if (protEmail.isNotBlank() && protName.isNotBlank()) {
 
-                            //  1202 임시 테스트 - 보호자이메일 aaa@aaa.com 이면 테스트 인증코드 1234
+                            //  1202 임시 테스트
                             if (protEmail == "aaa@aaa.com") {
                                 isProtEmailSent = true
                                 isProtEmailVerified = false
@@ -213,14 +225,12 @@ fun EditScreen(
                                 return@Button
                             }
 
-                            // 실제코드
-                            viewModel.sendEmailCode(protEmail)
-                            isProtEmailSent = true
-                            isProtEmailVerified = false
-                            protEmailCode = ""
-                            Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
+                            // [수정] 실제코드: 여기서는 ViewModel 함수만 호출하고
+                            // 결과(성공/실패)는 상단의 LaunchedEffect에서 처리합니다.
+                            viewModel.sendEmailCode(protEmail, protName)
+
                         } else {
-                            Toast.makeText(context, "이메일 입력", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "보호자 이름과 이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
                         }
                     },
                     enabled = !isProtEmailVerified,
@@ -228,7 +238,6 @@ fun EditScreen(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     modifier = Modifier.height(56.dp)
                 ) {
-                    // 전송됨 상태이면 sentText, 아니면 sendText
                     Text(text = if (isProtEmailSent) sentText else sendText, fontSize = 14.sp)
                 }
             }
@@ -257,14 +266,12 @@ fun EditScreen(
                     Button(
                         onClick = {
 
-                            //  1202 임시 테스트 - 보호자이메일 aaa@aaa.com 이면 테스트 인증코드 1234
                             if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
                                 isProtEmailVerified = true
                                 isProtEmailSent = false
                                 Toast.makeText(context, "[테스트] 보호자 이메일 인증 성공", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
-
 
                             viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
                                 if (ok) {
@@ -309,6 +316,7 @@ fun EditScreen(
                         email = email,
                         phone = phone,
                         prot_email = protEmail,
+                        prot_name = protName, // [추가] 보호자 이름도 저장
                         gender = gender
                     )
                 },
