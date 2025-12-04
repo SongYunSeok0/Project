@@ -31,12 +31,12 @@ interface PlanApi {
         @Path("id") planId: Long
     ): Response<Unit>
 
-    @POST("plan/{id}/taken/")
+    @POST("med/plan/{id}/taken/")
     suspend fun markAsTaken(
         @Path("id") planId: Long
     ): Response<Unit>
 
-    @POST("plan/{id}/snooze/")
+    @POST("med/plan/{id}/snooze/")
     suspend fun snoozePlan(
         @Path("id") planId: Long
     ): Response<Unit>
