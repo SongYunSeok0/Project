@@ -197,7 +197,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "height",
             "weight",
             "prot_email",
-            "email"
+            "relation",
+            "email",
+            # "prot_name"
         )
 
     def validate_phone(self, v: str) -> str:
@@ -216,11 +218,19 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return v2
 
     def update(self, instance, validated_data):
+        # 1. 패스워드와 보호자 이름(prot_name)을 데이터에서 꺼냄
         pwd = validated_data.pop("password", None)
+        prot_name_input = validated_data.pop("prot_name", None)
 
+        # 2. [핵심] prot_name이 들어왔다면 DB의 'relation' 필드에 저장
+        if prot_name_input:
+            instance.relation = prot_name_input
+
+        # 3. 나머지 데이터 업데이트
         for k, v in validated_data.items():
             setattr(instance, k, v)
 
+        # 4. 비밀번호 변경 시 처리
         if pwd:
             instance.set_password(pwd)
 
