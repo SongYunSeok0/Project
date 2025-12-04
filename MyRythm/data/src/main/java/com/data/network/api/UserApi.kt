@@ -1,5 +1,6 @@
 package com.data.network.api
 
+import com.data.network.dto.user.CheckEmailResponse
 import com.data.network.dto.user.FcmTokenRequestDto
 import com.data.network.dto.user.SocialLoginRequest
 import com.data.network.dto.user.SocialLoginResponse
@@ -61,4 +62,6 @@ interface UserApi {
     @DELETE("users/withdrawal/")
     suspend fun deleteAccount(): Response<Unit>
 
+    @POST("users/check-email/")
+    suspend fun checkEmailDuplicate(@Body body: Map<String, String>): CheckEmailResponse
 }

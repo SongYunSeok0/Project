@@ -2,11 +2,13 @@ package com.domain.usecase.mypage
 
 import com.domain.model.UserProfile
 import com.domain.repository.ProfileRepository
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class UpdateUserProfileUseCase @Inject constructor(
+class ObserveUserProfileUseCase @Inject constructor(
     private val repository: ProfileRepository
 ) {
-    suspend operator fun invoke(profile: UserProfile) =
-        repository.updateProfile(profile)
+    operator fun invoke(): Flow<UserProfile?> {
+        return repository.observeLocalProfile()
+    }
 }

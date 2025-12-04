@@ -72,6 +72,7 @@ fun UserDto.toProfile(): UserProfile {
         birth_date = birth_date,
         gender = gender,
         phone = phone,
+        prot_name = null,
         prot_email = prot_email,
         email = email
     )
@@ -86,6 +87,7 @@ fun UserProfile.toDto(): UserUpdateDto {
         birth_date = birth_date,
         phone = phone,
         prot_email = prot_email,
+        prot_name = prot_name,
         email = email ?: ""
     )
 }
@@ -110,6 +112,7 @@ fun UserEntity.toProfile(): UserProfile {
         gender = gender,
         phone = phone,
         prot_email = protPhone,
+        prot_name = null,
         email = email
     )
 }

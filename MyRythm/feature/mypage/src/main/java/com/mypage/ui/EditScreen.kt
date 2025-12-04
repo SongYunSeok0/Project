@@ -2,29 +2,21 @@ package com.mypage.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mypage.viewmodel.EditProfileEvent
 import com.mypage.viewmodel.EditProfileViewModel
 import com.mypage.viewmodel.MyPageViewModel
 import com.shared.R
@@ -44,47 +36,72 @@ fun EditScreen(
 ) {
     val profile by viewModel.profile.collectAsState()
 
-    val isLocal = !profile?.email.isNullOrEmpty()
+    // 소셜 로그인 판단
+    val isSocialLogin = profile?.username.isNullOrBlank() || profile?.phone.isNullOrBlank()
 
-    val initialName = profile?.username
-    var name by remember(profile) { mutableStateOf(initialName ?: "") }
+    var name by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") }
+
+    // 생년월일 3개 필드
+    var birthYear by remember { mutableStateOf("") }
+    var birthMonth by remember { mutableStateOf("") }
+    var birthDay by remember { mutableStateOf("") }
+
     var phone by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
+
+    // 보호자 관련 상태
     var protEmail by remember { mutableStateOf("") }
+    var protName by remember { mutableStateOf("") } // [추가] 보호자 이름
     var email by remember { mutableStateOf("") }
 
-    /*
-    // --- 서버값 초기화 ---
-    // ⚡ 서버에서 받은 값으로 초기값 설정
-    var name by remember(profile) { mutableStateOf(profile?.username ?: "") }
-    var height by remember(profile) { mutableStateOf(profile?.height?.toString() ?: "") }
-    var weight by remember(profile) { mutableStateOf(profile?.weight?.toString() ?: "") }
-    var birthDate by rememberSaveable(profile) { mutableStateOf(profile?.birth_date ?: "") }
-    var phone by remember(profile) { mutableStateOf(profile?.phone ?: "") }
-     */
 
-    // 데이터 없으면 1회 입력 있으면 수정 불가
-    val hasName = !initialName.isNullOrBlank()
-    val hasGender = gender.isNotBlank()
+    // 각 필드 등록 여부
+    val hasName = !profile?.username.isNullOrBlank()
+    val hasPhone = !profile?.phone.isNullOrBlank()
+    val hasGender = !profile?.gender.isNullOrBlank()
+    val hasEmail = !profile?.email.isNullOrBlank()
+    val hasValidBirth = profile?.birth_date?.let {
+        Regex("""^\d{4}-\d{2}-\d{2}$""").matches(it)
+    } ?: false
 
+    // 보호자 이메일 인증 상태
     var isProtEmailVerified by remember { mutableStateOf(false) }
     var isProtEmailSent by remember { mutableStateOf(false) }
     var protEmailCode by remember { mutableStateOf("") }
+
+    // [수정] 스크롤 상태 추가
+    val scrollState = rememberScrollState()
+
+    // 이메일 인증 상태
+    var isEmailVerified by remember { mutableStateOf(false) }
+    var isEmailSent by remember { mutableStateOf(false) }
+    var emailCode by remember { mutableStateOf("") }
 
     LaunchedEffect(profile) {
         profile?.let {
             name = it.username ?: ""
             height = it.height?.toString() ?: ""
             weight = it.weight?.toString() ?: ""
-            birthDate = it.birth_date ?: ""
+
+            // 생년월일 파싱
+            it.birth_date?.let { date ->
+                val parts = date.split("-")
+                if (parts.size == 3) {
+                    birthYear = parts[0]
+                    birthMonth = parts[1]
+                    birthDay = parts[2]
+                }
+            }
+
             phone = it.phone ?: ""
             gender = it.gender ?: ""
             protEmail = it.prot_email ?: ""
+            protName = it.prot_name ?: "" // [추가] 서버 프로필에 prot_name 필드가 있다면 여기서 초기화
             email = it.email ?: ""
             isProtEmailVerified = !it.prot_email.isNullOrBlank()
+            isEmailVerified = !it.email.isNullOrBlank()
         }
     }
 
@@ -98,15 +115,49 @@ fun EditScreen(
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
     val editDone = stringResource(R.string.edit_done)
     val birthExampleText = stringResource(R.string.birth_example)
+
+    val yearText = "년"
+    val monthText = "월"
+    val dayText = "일"
+
+    val context = LocalContext.current
     val sendText = stringResource(R.string.send)
     val sentText = stringResource(R.string.sent)
     val verificationText = stringResource(R.string.verification)
     val guardianEmailText = stringResource(R.string.guardianemail)
     val verificationCodeText = stringResource(R.string.verification_code)
 
-    val context = LocalContext.current
-
+    // [수정] 이벤트 핸들링: 성공/실패 여부를 여기서 처리
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                EditProfileEvent.SaveSuccess -> {
+                    myPageVm.refreshProfile()
+                    Toast.makeText(context, "저장되었습니다", Toast.LENGTH_SHORT).show()
+                    onDone()
+                }
+                EditProfileEvent.SaveFailed -> {
+                    Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
+                }
+                EditProfileEvent.LoadFailed -> {
+                    Toast.makeText(context, "프로필 불러오기 실패", Toast.LENGTH_SHORT).show()
+                }
+                // 이메일 전송 성공 시 UI 업데이트 및 토스트
+                EditProfileEvent.EmailSent -> {
+                    isProtEmailSent = true
+                    isProtEmailVerified = false
+                    protEmailCode = ""
+                    Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
+                }
+                // 에러 발생 시 토스트 (404 등)
+                is EditProfileEvent.Error -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
     AppTheme {
+
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -115,421 +166,461 @@ fun EditScreen(
             verticalArrangement = Arrangement.spacedBy(30.dp)
         ) {
 
-            if (hasName) {
-                AppInputField(
-                    value = name,
-                    onValueChange = {},
-                    label = nameText,
-                    readOnly = true,
-                    outlined = true,
-                    singleLine = true
-                )
-            } else {
-                AppInputField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = nameText,
-                    outlined = true,
-                    singleLine = true
-                )
+            // 소셜 로그인 안내
+            if (isSocialLogin) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "⚠️ 필수 정보를 입력해주세요\n이름, 전화번호, 성별, 이메일은 한번만 입력 가능합니다.",
+                        modifier = Modifier.padding(12.dp),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
-
-            AppInputField(
-                value = height,
-                onValueChange = { height = it },
-                label = heightText,
-                outlined = true,
-                singleLine = true
-            )
-
-            AppInputField(
-                value = weight,
-                onValueChange = { weight = it },
-                label = weightText,
-                outlined = true,
-                singleLine = true
-            )
-
-            fun isValidBirthFormat(v: String) =
-                Regex("""^\d{4}-\d{2}-\d{2}$""").matches(v)
-
-            val hasValidBirth = isValidBirthFormat(birthDate)
-
-            if (hasValidBirth) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // 이름
+                if (hasName) {
+                    AppInputField(
+                        value = name,
+                        onValueChange = {},
+                        label = nameText,
+                        readOnly = true,
+                        outlined = true,
+                        singleLine = true
+                    )
+                } else {
+                    AppInputField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = nameText,
+                        outlined = true,
+                        singleLine = true
+                    )
+                }
                 AppInputField(
-                    value = birthDate,
-                    onValueChange = {},
-                    label = birthText,
-                    readOnly = true,
+                    value = height,
+                    onValueChange = { height = it },
+                    label = heightText,
                     outlined = true,
                     singleLine = true
                 )
-            } else {
+
                 AppInputField(
-                    value = birthDate,
-                    onValueChange = { birthDate = it },
-                    label = "$birthText $birthExampleText",
+                    value = weight,
+                    onValueChange = { weight = it },
+                    label = weightText,
                     outlined = true,
                     singleLine = true
                 )
-            }
 
-            if (hasGender) {
-                AppInputField(
-                    value = gender,
-                    onValueChange = {},
-                    label = genderText,
-                    readOnly = true,
-                    outlined = true,
-                    singleLine = true
-                )
-            } else {
-                AuthGenderDropdown(
-                    value = gender,
-                    onValueChange = { gender = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+                // 생년월일 (3개 필드)
+                if (hasValidBirth) {
+                    AppInputField(
+                        value = profile?.birth_date ?: "",
+                        onValueChange = {},
+                        label = birthText,
+                        readOnly = true,
+                        outlined = true,
+                        singleLine = true
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = birthText,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-            if (isLocal) {
-                AppInputField(
-                    value = email,
-                    onValueChange = {},
-                    label = emailText,
-                    readOnly = true,
-                    outlined = true,
-                    singleLine = true
-                )
-            }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // 년
+                            AppInputField(
+                                value = birthYear,
+                                onValueChange = {
+                                    birthYear = it.filter { c -> c.isDigit() }.take(4)
+                                },
+                                label = yearText,
+                                outlined = true,
+                                singleLine = true,
+                                modifier = Modifier.weight(1.5f),
+                                keyboardType = KeyboardType.Number
+                            )
 
-            AppInputField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = phoneNumberPlaceholderText,
-                outlined = true,
-                singleLine = true
-            )
+                            // 월
+                            AppInputField(
+                                value = birthMonth,
+                                onValueChange = {
+                                    birthMonth = it.filter { c -> c.isDigit() }.take(2)
+                                },
+                                label = monthText,
+                                outlined = true,
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                keyboardType = KeyboardType.Number
+                            )
 
-            AppInputField(
-                value = protEmail,
-                onValueChange = {
-                    protEmail = it
-                    isProtEmailVerified = false
-                    isProtEmailSent = false
-                },
-                label = guardianEmailText,
-                outlined = true,
-                singleLine = true,
-                trailingContent = {
-                    AppButton(
-                        text = if (isProtEmailSent) sentText else sendText,
-                        height = AppFieldHeight,
-                        width = 80.dp,
-                        onClick = {
-                            if (protEmail.isNotBlank()) {
+                            // 일
+                            AppInputField(
+                                value = birthDay,
+                                onValueChange = {
+                                    birthDay = it.filter { c -> c.isDigit() }.take(2)
+                                },
+                                label = dayText,
+                                outlined = true,
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                keyboardType = KeyboardType.Number
+                            )
+                        }
+                    }
+                }
 
-                                // 1202 임시 테스트 - 보호자 이메일 aaa@aaa.com 은 테스트 코드 1234
-                                if (protEmail == "aaa@aaa.com") {
-                                    isProtEmailSent = true
-                                    isProtEmailVerified = false
-                                    protEmailCode = ""
-                                    Toast.makeText(
-                                        context,
-                                        "[테스트] 인증코드 전송됨 (코드는 1234)",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    return@AppButton
+
+                // 성별
+                if (hasGender) {
+                    AppInputField(
+                        value = gender,
+                        onValueChange = {},
+                        label = genderText,
+                        readOnly = true,
+                        outlined = true,
+                        singleLine = true
+                    )
+                } else {
+                    AuthGenderDropdown(
+                        value = gender,
+                        onValueChange = { gender = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // 이메일 (소셜 로그인만 입력 가능)
+                if (hasEmail) {
+                    AppInputField(
+                        value = email,
+                        onValueChange = {},
+                        label = emailText,
+                        readOnly = true,
+                        outlined = true,
+                        singleLine = true
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("이메일 (필수)", fontSize = 14.sp, color = Color(0xff3b566e))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // 입력 필드
+                            AppInputField(
+                                value = email,
+                                onValueChange = {
+                                    email = it
+                                    isEmailVerified = false
+                                    isEmailSent = false
+                                },
+                                label = emailText,
+                                outlined = true,
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                keyboardType = KeyboardType.Email
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // 인증코드 보내기 버튼
+                            AppButton(
+                                text = if (isEmailSent) sentText else sendText,
+                                height = AppFieldHeight,
+                                width = 80.dp,
+                                enabled = !isEmailVerified,
+                                onClick = {
+                                    if (email.isBlank()) {
+                                        Toast.makeText(context, "이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
+                                        return@AppButton
+                                    }
+
+                                    // 실제 코드: 중복 체크 후 인증코드 전송
+                                    viewModel.checkEmailDuplicate(email) { isDuplicate ->
+                                        if (isDuplicate) {
+                                            Toast.makeText(context, "이미 사용 중인 이메일입니다", Toast.LENGTH_LONG).show()
+                                        } else {
+                                            viewModel.sendEmailCode(email)
+                                            isEmailSent = true
+                                            isEmailVerified = false
+                                            emailCode = ""
+                                            Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
                                 }
+                            )
+                        }
+                    }
 
-                                // 실제코드
-                                /*viewModel.sendEmailCode(protEmail)
-                            isProtEmailSent = true
-                            isProtEmailVerified = false
-                            protEmailCode = ""
-                            Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()*/
-                            } else {
-                                Toast.makeText(context, "이메일 입력", Toast.LENGTH_SHORT).show()
+                    // 이메일 인증번호 입력
+                    if (isEmailSent && !isEmailVerified) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(text = "인증번호", fontSize = 14.sp, color = Color(0xff3b566e))
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                                // 인증코드 입력
+                                AppInputField(
+                                    value = emailCode,
+                                    onValueChange = { emailCode = it },
+                                    label = verificationCodeText,
+                                    outlined = true,
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f),
+                                    keyboardType = KeyboardType.Number
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                // 인증 버튼
+                                AppButton(
+                                    text = verificationText,
+                                    height = AppFieldHeight,
+                                    width = 80.dp,
+                                    onClick = {
+
+                                        // 테스트 코드
+                                        if (email == "test@test.com" && emailCode == "1111") {
+                                            isEmailVerified = true
+                                            isEmailSent = false
+                                            Toast.makeText(context, "[테스트] 이메일 인증 성공", Toast.LENGTH_SHORT).show()
+                                            return@AppButton
+                                        }
+
+                                        viewModel.verifyEmailCode(email, emailCode) { ok ->
+                                            if (ok) {
+                                                isEmailVerified = true
+                                                isEmailSent = false
+                                                Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                )
                             }
+                        }
+                    }
+                } // <--- 이메일 입력 섹션 (hasEmail == false)의 닫는 괄호
+
+                // 전화번호
+                if (hasPhone) {
+                    AppInputField(
+                        value = phone,
+                        onValueChange = {}, // 이미 등록된 번호는 수정 불가
+                        label = phoneNumberPlaceholderText,
+                        readOnly = true,
+                        outlined = true,
+                        singleLine = true
+                    )
+                } else {
+                    AppInputField(
+                        value = phone,
+                        onValueChange = { phone = it },
+                        label = phoneNumberPlaceholderText,
+                        outlined = true,
+                        singleLine = true
+                    )
+                }
+
+
+                // --- 보호자 정보 섹션 ---
+                // 보호자 이메일 (항상 수정 가능, 중복 체크 안 함)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+
+                    // 1. [추가] 보호자 이름 입력 필드
+                    AppInputField(
+                        value = protName,
+                        onValueChange = {
+                            protName = it
+                            // 이름이 바뀌면 다시 인증하도록 초기화
+                            isProtEmailVerified = false
+                            isProtEmailSent = false
+                        },
+                        label = "보호자 이름",
+                        outlined = true,
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 2. 보호자 이메일 입력 및 전송
+                    AppInputField(
+                        value = protEmail,
+                        onValueChange = {
+                            protEmail = it
+                            isProtEmailVerified = false
+                            isProtEmailSent = false
+                        },
+                        label = guardianEmailText,
+                        outlined = true,
+                        singleLine = true,
+                        trailingContent = {
+                            AppButton(
+                                text = if (isProtEmailSent) sentText else sendText,
+                                height = AppFieldHeight,
+                                width = 80.dp,
+                                enabled = !isProtEmailVerified,
+                                onClick = {
+                                    if (protEmail.isNotBlank() && protName.isNotBlank()) {
+
+                                        // 테스트 코드
+                                        if (protEmail == "aaa@aaa.com") {
+                                            isProtEmailSent = true
+                                            isProtEmailVerified = false
+                                            protEmailCode = ""
+                                            Toast.makeText(
+                                                context,
+                                                "[테스트] 인증코드 전송됨 (코드는 1234)",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@AppButton
+                                        }
+
+                                        // [수정] 실제코드: 여기서는 ViewModel 함수만 호출
+                                        // 결과(성공/실패)는 상단의 LaunchedEffect에서 처리
+                                        viewModel.sendEmailCode(protEmail, protName)
+
+                                    } else {
+                                        Toast.makeText(context, "보호자 이름과 이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            )
                         }
                     )
                 }
-            )
 
-            if (isProtEmailSent && !isProtEmailVerified) {
-                AppInputField(
-                    value = protEmailCode,
-                    onValueChange = { protEmailCode = it },
-                    label = verificationCodeText,
-                    outlined = true,
-                    singleLine = true,
-                    trailingContent = {
-                        AppButton(
-                            text = verificationText,
-                            height = AppFieldHeight,
-                            width = 80.dp,
-                            onClick = {
-                                // 1202 임시 테스트 - 보호자이메일 aaa@aaa.com 은 인증코드 1234
-                                if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
-                                    isProtEmailVerified = true
-                                    isProtEmailSent = false
-                                    Toast.makeText(
-                                        context,
-                                        "[테스트] 보호자 이메일 인증 성공",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    return@AppButton
-                                }
+                // 보호자 이메일 인증번호 입력
+                if (isProtEmailSent && !isProtEmailVerified) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        AppInputField(
+                            value = protEmailCode,
+                            onValueChange = { protEmailCode = it },
+                            label = verificationCodeText,
+                            outlined = true,
+                            singleLine = true,
+                            trailingContent = {
+                                AppButton(
+                                    text = verificationText,
+                                    height = AppFieldHeight,
+                                    width = 80.dp,
+                                    onClick = {
 
-                                // 실제코드
-                                /*viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
-                                if (ok) {
-                                    isProtEmailVerified = true
-                                    isProtEmailSent = false
-                                    Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
-                                }
-                            }*/
+                                        // 테스트 코드
+                                        if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
+                                            isProtEmailVerified = true
+                                            isProtEmailSent = false
+                                            Toast.makeText(
+                                                context,
+                                                "[테스트] 보호자 이메일 인증 성공",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@AppButton
+                                        }
+
+                                        viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
+                                            if (ok) {
+                                                isProtEmailVerified = true
+                                                isProtEmailSent = false
+                                                Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                )
                             }
+                        )
+                    }
+                }
+
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 저장 버튼
+                AppButton(
+                    text = editDone,
+                    onClick = {
+                        // 소셜 로그인 필수 정보 체크
+                        if (isSocialLogin) {
+                            if (name.isBlank()) {
+                                Toast.makeText(context, "이름을 입력해주세요", Toast.LENGTH_SHORT).show()
+                                return@AppButton
+                            }
+                            if (phone.isBlank()) {
+                                Toast.makeText(context, "전화번호를 입력해주세요", Toast.LENGTH_SHORT).show()
+                                return@AppButton
+                            }
+                            if (gender.isBlank()) {
+                                Toast.makeText(context, "성별을 선택해주세요", Toast.LENGTH_SHORT).show()
+                                return@AppButton
+                            }
+                            if (email.isBlank()) {
+                                Toast.makeText(context, "이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
+                                return@AppButton
+                            }
+                            if (!isEmailVerified) {
+                                Toast.makeText(context, "이메일 인증이 필요합니다", Toast.LENGTH_SHORT).show()
+                                return@AppButton
+                            }
+                        }
+
+                        if (protEmail.isNotBlank() && !isProtEmailVerified) {
+                            Toast.makeText(context, "보호자 이메일 인증 필요", Toast.LENGTH_SHORT).show()
+                            return@AppButton
+                        }
+
+                        // 생년월일 합치기
+                        val birthDate =
+                            if (birthYear.length == 4 && birthMonth.isNotBlank() && birthDay.isNotBlank()) {
+                                val month = birthMonth.padStart(2, '0')
+                                val day = birthDay.padStart(2, '0')
+                                "$birthYear-$month-$day"
+                            } else {
+                                ""
+                            }
+
+                        viewModel.saveProfile(
+                            username = name,
+                            heightText = height,
+                            weightText = weight,
+                            ageText = birthDate,
+                            email = email,
+                            phone = phone,
+                            prot_email = protEmail,
+                            prot_name = protName, // [추가] 보호자 이름도 저장
+                            gender = gender
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    height = AppFieldHeight,
+                    backgroundColor = if (
+                        (email.isNotBlank() && !isEmailVerified) ||
+                        (protEmail.isNotBlank() && !isProtEmailVerified)
+                    ) {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                    textColor = MaterialTheme.colorScheme.surface,
+                    content = {
+                        Image(
+                            painter = painterResource(R.drawable.save),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 )
             }
-
-            /* Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(
-                    if (protEmail.isNotBlank() && !isProtEmailVerified)
-                        MaterialTheme.colorScheme.surfaceVariant
-                    else MaterialTheme.colorScheme.primary
-                )
-                .clickable {
-                    if (protEmail.isNotBlank() && !isProtEmailVerified) {
-                        Toast.makeText(context, "보호자 이메일 인증 필요", Toast.LENGTH_SHORT).show()
-                        return@clickable
-                    }
-
-                    viewModel.saveProfile(
-                        username = name,
-                        heightText = height,
-                        weightText = weight,
-                        ageText = birthDate,
-                        email = email,
-                        phone = phone,
-                        prot_email = protEmail,
-                        gender = gender
-                    )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.save),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = editDone,
-                    color = MaterialTheme.colorScheme.surface,
-                    fontSize = 16.sp
-                )
-            }
-        }*/
-
-            AppButton(
-                text = editDone,
-                onClick = {
-                    if (protEmail.isNotBlank() && !isProtEmailVerified) {
-                        Toast.makeText(context, "보호자 이메일 인증 필요", Toast.LENGTH_SHORT).show()
-                        return@AppButton
-                    }
-                    viewModel.saveProfile(
-                        username = name,
-                        heightText = height,
-                        weightText = weight,
-                        ageText = birthDate,
-                        email = email,
-                        phone = phone,
-                        prot_email = protEmail,
-                        gender = gender
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                height = AppFieldHeight,
-                shape = MaterialTheme.shapes.medium,
-                backgroundColor = if (protEmail.isNotBlank() && !isProtEmailVerified)
-                    MaterialTheme.colorScheme.surfaceVariant
-                else MaterialTheme.colorScheme.primary,
-                textColor = MaterialTheme.colorScheme.surface,
-                content = {
-                    Image(
-                        painter = painterResource(R.drawable.save),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            )
-
         }
     }
 }
-
-
-/*
-Text("보호자 이메일", fontSize = 14.sp, color = Color(0xff3b566e))
-
-Row(verticalAlignment = Alignment.CenterVertically) {
-    OutlinedTextField(
-        value = protEmail,
-        onValueChange = {
-            protEmail = it
-            isProtEmailVerified = false
-            isProtEmailSent = false
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(10.dp),
-        modifier = Modifier.weight(1f),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color.Transparent,
-            unfocusedBorderColor = Color.Transparent,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
-        ),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-    )
-
-    Spacer(Modifier.width(8.dp))
-
-    Button(
-        onClick = {
-            if (protEmail.isNotBlank()) {
-
-                //  1202 임시 테스트 - 보호자이메일 aaa@aaa.com 이면 테스트 인증코드 1234
-                if (protEmail == "aaa@aaa.com") {
-                    isProtEmailSent = true
-                    isProtEmailVerified = false
-                    protEmailCode = ""
-                    Toast.makeText(context, "[테스트] 인증코드 전송됨 (코드는 1234)", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                // 실제코드
-                viewModel.sendEmailCode(protEmail)
-                isProtEmailSent = true
-                isProtEmailVerified = false
-                protEmailCode = ""
-                Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "이메일 입력", Toast.LENGTH_SHORT).show()
-            }
-        },
-        enabled = !isProtEmailVerified,
-        shape = RoundedCornerShape(10.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-        modifier = Modifier.height(56.dp)
-    ) {
-        Text(text = if (isProtEmailSent) sentText else sendText, fontSize = 14.sp)
-    }
-}
-
-if (isProtEmailSent && !isProtEmailVerified) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = "인증번호", fontSize = 14.sp, color = Color(0xff3b566e))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = protEmailCode,
-                onValueChange = { protEmailCode = it },
-                singleLine = true,
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            Spacer(Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-
-                    //  1202 임시 테스트 - 보호자이메일 aaa@aaa.com 이면 테스트 인증코드 1234
-                    if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
-                        isProtEmailVerified = true
-                        isProtEmailSent = false
-                        Toast.makeText(context, "[테스트] 보호자 이메일 인증 성공", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
-                        if (ok) {
-                            isProtEmailVerified = true
-                            isProtEmailSent = false
-                            Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                },
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.height(56.dp)
-            ) {
-                Text(text = verificationText, fontSize = 14.sp)
-            }
-        }
-    }
-}
-
-Spacer(Modifier.height(8.dp))
-
-Box(
-    modifier = Modifier
-        .fillMaxWidth()
-        .height(56.dp)
-        .clip(RoundedCornerShape(14.dp))
-        .background(
-            if (protEmail.isNotBlank() && !isProtEmailVerified)
-                MaterialTheme.colorScheme.surfaceVariant
-            else MaterialTheme.colorScheme.primary
-        )
-        .clickable {
-            if (protEmail.isNotBlank() && !isProtEmailVerified) {
-                Toast.makeText(context, "보호자 이메일 인증 필요", Toast.LENGTH_SHORT).show()
-                return@clickable
-            }
-            viewModel.saveProfile(
-                username = name,
-                heightText = height,
-                weightText = weight,
-                ageText = birthDate,
-                email = email,
-                phone = phone,
-                prot_email = protEmail,
-                gender = gender
-            )
-        },
-    contentAlignment = Alignment.Center
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Image(
-            painter = painterResource(R.drawable.save),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = editDone,
-            color = MaterialTheme.colorScheme.surface,
-            fontSize = 16.sp
-        )
-    }
-}
-}
-}
-*/

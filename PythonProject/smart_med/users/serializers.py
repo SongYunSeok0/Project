@@ -1,4 +1,3 @@
-# users/serializers.py
 from django.db import IntegrityError
 from rest_framework import serializers
 from .models import User, Gender
@@ -24,6 +23,8 @@ class UserSerializer(serializers.ModelSerializer):
             "preferences",
             "prot_email",
             "relation",
+            "provider",
+            "social_id",
             "is_active",
             "is_staff",
             "created_at",
@@ -31,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login",
         )
 
-# 1124소셜로그인용수정중
+
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -89,7 +90,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         provider = validated_data.get("provider")
         social_id = validated_data.get("socialId")
 
-        # 소셜 계정인 경우 create_user 호출 방식 변경 (이메일과 비번 필드X 프로바이더와 소셜아이디로 구분O)
+        # 소셜 계정인 경우 create_user 호출 방식 변경
         if provider and social_id:
             validated_data.pop("password", None)
             email = validated_data.pop("email", "") or None
@@ -114,74 +115,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         )
         return user
 
-"""class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        min_length=8,
-        error_messages={
-            "required": "비밀번호는 필수입니다.",
-            "blank": "비밀번호는 필수입니다."
-        }
-    )
-    email = serializers.EmailField(
-        required=True,
-        error_messages={
-            "required": "이메일은 필수입니다.",
-            "blank": "이메일은 필수입니다."
-            # "invalid": "유효한 이메일 형식이 아닙니다."
-        }
-    )
-
-
-    class Meta:
-        model = User
-        fields = (
-            "email",
-            "password",
-            "username",
-            "phone",
-            "birth_date",
-            "gender",
-            "preferences",
-            "height",
-            "weight",
-        )
-
-    def validate_email(self, v: str) -> str:
-        return (v or "").strip().lower()
-
-    def validate_phone(self, v: str) -> str:
-        if not v:
-            return None
-        return v
-
-
-    def validate_gender(self, v: str) -> str | None:
-        if v in (None, ""):
-            return None
-        m = {
-            "m": "M", "male": "M", "남": "M", "남자": "M",
-            "f": "F", "female": "F", "여": "F", "여자": "F",
-        }
-        v2 = m.get(str(v).strip().lower(), v)
-        if v2 not in dict(Gender.choices):
-            raise serializers.ValidationError("gender는 M 또는 F 중 하나여야 합니다.")
-        return v2
-
-    def create(self, validated_data):
-        email = validated_data.pop("email").lower()
-        pwd = validated_data.pop("password")
-        user = User.objects.create_user(
-            email=email,
-            password=pwd,
-            **validated_data
-        )
-        return user"""
-
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=8)
+
+    # [수정 1] prot_name은 실제 모델 필드가 아니므로 명시적으로 선언해야 값을 받을 수 있습니다.
+    prot_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
@@ -195,6 +134,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "height",
             "weight",
             "prot_email",
+            "relation",
+            "email",
+            "prot_name"  # [수정 2] 주석 해제 및 필드 추가
         )
 
     def validate_phone(self, v: str) -> str:
@@ -213,11 +155,21 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return v2
 
     def update(self, instance, validated_data):
+        # 1. 패스워드와 보호자 이름(prot_name)을 데이터에서 꺼냄
         pwd = validated_data.pop("password", None)
 
+        # [수정] 이제 fields에 등록되었으므로 validated_data에 값이 들어옵니다.
+        prot_name_input = validated_data.pop("prot_name", None)
+
+        # 2. [핵심] prot_name이 들어왔다면 DB의 'relation' 필드에 저장
+        if prot_name_input:
+            instance.relation = prot_name_input
+
+        # 3. 나머지 데이터 업데이트
         for k, v in validated_data.items():
             setattr(instance, k, v)
 
+        # 4. 비밀번호 변경 시 처리
         if pwd:
             instance.set_password(pwd)
 

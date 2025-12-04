@@ -7,6 +7,7 @@ data class UserUpdateDto(
     val gender: String? = null,
     val birth_date: String?,
     val phone: String?,
+    val prot_name: String?,
     val prot_email: String?,
     val email: String,
 )

@@ -25,9 +25,12 @@ fun UserDto.toProfile(): UserProfile {
         gender = gender,
         phone = phone,
         prot_email = prot_email,
+        // [수정] 서버 DB의 'relation' 컬럼 값을 앱의 'prot_name'으로 매핑
+        prot_name = relation,
         email = email
     )
 }
+
 fun UserProfile.toDto(): UserUpdateDto {
     return UserUpdateDto(
         username = username ?: "",
@@ -37,6 +40,8 @@ fun UserProfile.toDto(): UserUpdateDto {
         birth_date = birth_date,
         phone = phone,
         prot_email = prot_email,
+        // [수정] 앱의 'prot_name'을 서버로 전송하기 위해 DTO에 포함
+        prot_name = prot_name,
         email = email ?: ""
     )
 }
