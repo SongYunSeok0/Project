@@ -32,13 +32,13 @@ class BLERegisterViewModel @Inject constructor(
         val token = state.value.deviceToken
 
         if (ssid.isBlank() || pw.isBlank()) {
-            _state.value = state.value.copy(
+            _state.value = _state.value.copy(
                 error = "SSID 또는 비밀번호가 비어있어!"
             )
             return@launch
         }
 
-        _state.value = state.value.copy(
+        _state.value = _state.value.copy(
             loading = true,
             error = null,
             bleConnected = false,
@@ -48,7 +48,8 @@ class BLERegisterViewModel @Inject constructor(
         // 1) BLE 연결
         val connected = ble.scanAndConnectSuspend()
         if (!connected) {
-            _state.value = state.value.copy(
+            ble.disconnect()
+            _state.value = _state.value.copy(
                 loading = false,
                 error = "BLE 연결 실패"
             )
@@ -57,31 +58,26 @@ class BLERegisterViewModel @Inject constructor(
 
         _state.value = _state.value.copy(bleConnected = true)
 
-        // 2) Wi-Fi + UUID + TOKEN 전송 (ESP32 요구 형식 맞춤)
-        val json = """
-        {
-            "uuid": "$uuid",
-            "token": "$token",
-            "ssid": "$ssid",
-            "pw": "$pw"
-        }
-    """.trimIndent()
+        // 2) JSON (줄바꿈 없이)
+        val json = """{"uuid":"$uuid","token":"$token","ssid":"$ssid","pw":"$pw"}"""
 
         val sent = ble.sendConfigSuspend(json)
 
         if (!sent) {
-            _state.value = state.value.copy(
+            ble.disconnect()
+            _state.value = _state.value.copy(
                 loading = false,
                 error = "Wi-Fi 정보 전송 실패"
             )
             return@launch
         }
 
-        _state.value = state.value.copy(
+        _state.value = _state.value.copy(
             loading = false,
             configSent = true
         )
     }
+
 
 
     fun setDeviceInfo(uuid: String, token: String) {
