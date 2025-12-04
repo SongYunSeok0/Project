@@ -24,6 +24,8 @@ class UserSerializer(serializers.ModelSerializer):
             "preferences",
             "prot_email",
             "relation",
+            "provider",
+            "social_id",
             "is_active",
             "is_staff",
             "created_at",
@@ -195,6 +197,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "height",
             "weight",
             "prot_email",
+            "email"
         )
 
     def validate_phone(self, v: str) -> str:
