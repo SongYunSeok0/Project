@@ -128,6 +128,7 @@ fun SchedulerContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 
+        // ★ 화면 전체를 스크롤 가능하도록 변경
         Column(
             Modifier
                 .padding(padding)

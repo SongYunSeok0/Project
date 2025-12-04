@@ -44,7 +44,7 @@ val AuthTextLogoHeight = 96.dp
 
 
 // 기본 그림자 높이 (입력 필드, 메인 버튼)
-val ShadowElevationDefault = 1.dp
+val ShadowElevationDefault = 6.dp
 // 로그인 링크 버튼의 높은 그림자 높이
 val ShadowElevationLink = 4.dp
 

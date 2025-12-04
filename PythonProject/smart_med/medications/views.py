@@ -137,6 +137,7 @@ class PlanListView(APIView):
                                 regihistory=regi,
                                 med_name=med_name,
                                 taken_at=plan_dt,
+                                ex_taken_at=plan_dt,  # 👈 추가: 최초 예정 시간 기록
                                 use_alarm=True,
                                 meal_time="after"
                             )
@@ -180,10 +181,13 @@ class PlanListView(APIView):
                 if regi_history is None:
                     return Response({"error": "no permission"}, status=status.HTTP_400_BAD_REQUEST)
 
+            taken_at_value = to_dt(v.get("takenAt"))
+            
             plan = Plan.objects.create(
                 regihistory=regi_history,
                 med_name=v.get("medName"),
-                taken_at=to_dt(v.get("takenAt")),
+                taken_at=taken_at_value,
+                ex_taken_at=taken_at_value,  # 👈 추가: 최초 예정 시간 기록
                 meal_time=v.get("mealTime") or "before",
                 note=v.get("note"),
                 taken=to_dt(v.get("taken")),

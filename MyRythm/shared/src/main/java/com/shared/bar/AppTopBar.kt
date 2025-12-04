@@ -57,7 +57,8 @@ fun AppTopBar(
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color.White,
+            containerColor = Color(0xFFF7FDFC)
+        ,
             scrolledContainerColor = Color.White,
             titleContentColor = Color.Black
         ),

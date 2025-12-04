@@ -12,6 +12,8 @@ import com.mypage.ui.FAQScreenWrapper
 import com.mypage.ui.HeartReportScreen
 import com.mypage.ui.MediReportScreen
 import com.mypage.ui.MyPageScreen
+import com.mypage.ui.QRScanScreen
+import com.mypage.viewmodel.BLERegisterViewModel
 
 import com.mypage.viewmodel.MyPageViewModel
 
@@ -32,6 +34,7 @@ fun NavGraphBuilder.mypageNavGraph(
             onHeartClick = { nav.navigate(HeartReportRoute) },
             onFaqClick   = { nav.navigate(FAQRoute) },
             onMediClick  = { nav.navigate(MediReportRoute) },
+            onDeviceRegisterClick = { nav.navigate(QRScanRoute) },
             onLogoutClick = onLogoutClick,
             onWithdrawalSuccess = onLogoutClick
         )
@@ -56,4 +59,18 @@ fun NavGraphBuilder.mypageNavGraph(
     composable<MediReportRoute> {
         MediReportScreen(userId = userId)
     }
+
+    // QR 스캔 화면
+    composable<QRScanRoute> {
+        val bleVM: BLERegisterViewModel = hiltViewModel()
+
+        QRScanScreen(
+            onBack = { nav.navigateUp() },
+            onScanSuccess = { uuid, token ->
+                bleVM.setDeviceInfo(uuid, token)
+                nav.navigateUp()
+            }
+        )
+    }
+
 }

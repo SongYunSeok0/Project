@@ -15,15 +15,13 @@
 
 <pre>
 [스마트 약통 (Arduino/ESP32 + HX711)]
- └─ LoRa / Wi-Fi
-      ↓
-[라즈베리파이 or IoT Gateway]
- ├─ 무게 수집
- ├─ EWMA 필터링
- └─ 서버 전송 (HTTP/MQTT)
+ └─ Wi-Fi
+ ├─ 무게 수집, EWMA 필터링
+ ├─ 무게 기반 복용 판별
+ └─ 서버 전송 (HTTP)
       ↓
 [Django Backend + PostgreSQL]
- ├─ 무게 기반 복용 판별 AI
+ 
  ├─ OTC-QA (RAG 임베딩 검색)
  ├─ OCR 처방 파싱 → 스케줄 생성
  └─ FCM 알림 트리거
@@ -68,7 +66,7 @@ core/
  ├─ push (FCM)
  └─ util
 
-common/design/
+shared/
  └─ UI 컴포넌트 (TopBar / BottomBar)
 </pre>
 

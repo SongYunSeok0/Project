@@ -108,8 +108,45 @@ fun ChatbotScreen(
 
                     Spacer(Modifier.height(10.dp))
 
+<<<<<<< HEAD
                     // 채팅 메시지 렌더링 - 사용자 메시지
                     state.messages.forEach { msg ->
+=======
+                // 예시 질문 안내
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(InquiryCardQuestion)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            sideEffectReportedText,
+                            color = Color.Black,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            "$exampleText \"타이레놀 부작용 알려줘\"",
+                            color = LoginTertiary,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // 채팅 메시지 렌더링
+                state.messages.forEach { msg ->
+                    val isUser = msg.isUser
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+                    ) {
+>>>>>>> Seok
                         AppMessageCard(
                             text = msg.text,
                             isUser = msg.isUser,

@@ -1,3 +1,4 @@
+# users/views.py
 import secrets
 import traceback
 
@@ -10,6 +11,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -40,57 +42,12 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
                     if user:
                         print(f"[CustomLogin] User {user.id} logged in via /api/token/. Setting cache.")
+                        print("Access Token:", request.META.get("HTTP_AUTHORIZATION"))
                         cache.set(f"just_logged_in:{user.id}", True, timeout=60)
             except Exception as e:
                 print(f"[CustomLogin] Error setting cache: {e}")
 
         return response
-
-
-# class LoginView(APIView):
-#     authentication_classes = []
-#     permission_classes = [AllowAny]
-#
-#     def post(self, request):
-#         print("[LoginView] POST request received")  # 로그 추가
-#         identifier = (
-#                 request.data.get("email")
-#                 or request.data.get("username")
-#                 or request.data.get("id")
-#         )
-#         password = request.data.get("password") or request.data.get("pw")
-#
-#         if not identifier or not password:
-#             print("[LoginView] Missing identifier or password")  # 로그 추가
-#             return Response({"detail": "아이디/비밀번호 누락"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#         user = authenticate(request, username=identifier, password=password)
-#         if user is None:
-#             print(f"[LoginView] Authentication failed for: {identifier}")  # 로그 추가
-#             return Response({"detail": "인증 실패"}, status=status.HTTP_401_UNAUTHORIZED)
-#
-#         print(f"[LoginView] Login successful for user: {user.id} ({user.username})")  # 로그 추가
-#         refresh = RefreshToken.for_user(user)
-#
-#         # ✅ [핵심 1] 여기서 직접 보내지 않고, "방금 로그인함" 표식만 남깁니다. (유효시간 60초)
-#         cache_key = f"just_logged_in:{user.id}"
-#         cache.set(cache_key, True, timeout=60)
-#         print(f"[LoginView] Cache set: key='{cache_key}', value=True (timeout=60s)")  # 로그 추가
-#
-#         return Response(
-#             {
-#                 "message": "로그인 성공",
-#                 "access": str(refresh.access_token),
-#                 "refresh": str(refresh),
-#                 "user": {
-#                     "id": user.id,
-#                     "email": getattr(user, "email", None),
-#                     "username": user.get_username(),
-#                 },
-#             },
-#             status=status.HTTP_200_OK,
-#         )
-
 
 class SocialLoginView(APIView):
     permission_classes = [AllowAny]
@@ -283,6 +240,7 @@ class SignupView(APIView):
     def post(self, request):
         email = request.data.get("email")
 
+        # 이메일 인증 여부 확인
         if not cache.get(f"email_verified:{email}"):
             return Response({"detail": "이메일 인증이 필요합니다."}, status=400)
 
@@ -291,9 +249,11 @@ class SignupView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
+
         try:
             user = serializer.save()
         except IntegrityError as e:
+            # 중복 이메일, 중복 전화번호 등
             if "email" in str(e).lower():
                 return Response({"detail": "이미 존재하는 이메일입니다."}, status=400)
             if "phone" in str(e).lower():
@@ -305,6 +265,7 @@ class SignupView(APIView):
             print("==================================")
             return Response({"detail": str(e)}, status=400)
 
+        # 인증 완료 후 캐시 삭제
         cache.delete(f"email_verified:{email}")
         cache.delete(f"email_code:{email}")
 

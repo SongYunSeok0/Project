@@ -1,5 +1,6 @@
 package com.mypage.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.UserProfile
@@ -22,7 +23,7 @@ class MyPageViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val inquiryRepository: InquiryRepository,
     private val userRepository: ProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _events = Channel<MyPageEvent>(Channel.BUFFERED)
@@ -57,10 +58,23 @@ class MyPageViewModel @Inject constructor(
             .onSuccess { _profile.value = it }
     }
 
-    fun onLogout() = viewModelScope.launch {
+    private var isLoggingOut = false
+
+    fun logout() = viewModelScope.launch {
+        if (isLoggingOut) return@launch
+        isLoggingOut = true
+
+        Log.d("MyPageVM", "로그아웃 시작")
         runCatching { logoutUseCase() }
-            .onSuccess { _events.send(MyPageEvent.LogoutSuccess) }
-            .onFailure { _events.send(MyPageEvent.LogoutFailed) }
+            .onSuccess {
+                Log.d("MyPageVM", "로그아웃 성공")
+                _events.send(MyPageEvent.LogoutSuccess)
+            }
+            .onFailure {
+                Log.e("MyPageVM", "로그아웃 실패", it)
+                _events.send(MyPageEvent.LogoutFailed)
+            }
+            .also { isLoggingOut = false }
     }
 
     fun addInquiry(type: String, title: String, content: String) {
@@ -81,4 +95,5 @@ class MyPageViewModel @Inject constructor(
             }
             .onFailure { _events.send(MyPageEvent.WithdrawalFailed) }
     }
+
 }
