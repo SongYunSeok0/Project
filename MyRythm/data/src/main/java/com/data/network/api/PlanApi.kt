@@ -30,4 +30,14 @@ interface PlanApi {
     suspend fun deletePlan(
         @Path("id") planId: Long
     ): Response<Unit>
+
+    @POST("plan/{id}/taken/")
+    suspend fun markAsTaken(
+        @Path("id") planId: Long
+    ): Response<Unit>
+
+    @POST("plan/{id}/snooze/")
+    suspend fun snoozePlan(
+        @Path("id") planId: Long
+    ): Response<Unit>
 }
