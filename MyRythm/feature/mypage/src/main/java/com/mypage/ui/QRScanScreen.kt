@@ -11,33 +11,30 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import com.budiyev.android.codescanner.CodeScanner
 import com.budiyev.android.codescanner.CodeScannerView
 import com.budiyev.android.codescanner.DecodeCallback
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun QRScanScreen(
     onScanSuccess: (uuid: String, token: String) -> Unit,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var scanError by remember { mutableStateOf<String?>(null) }
-    var initialized by remember { mutableStateOf(false) }
 
-    // 카메라 권한
-    val cameraPermission = Manifest.permission.CAMERA
+    // 카메라 권한 요청
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (!granted) scanError = "카메라 권한이 필요해!"
         }
 
-    // 첫 진입 시 권한 요청
     LaunchedEffect(Unit) {
-        cameraLauncher.launch(cameraPermission)
+        cameraLauncher.launch(Manifest.permission.CAMERA)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -51,23 +48,27 @@ fun QRScanScreen(
                 scanner.decodeCallback = DecodeCallback { result ->
                     val raw = result.text ?: ""
 
-                    try {
-                        val uri = Uri.parse(raw)
-                        val uuid = uri.getQueryParameter("uuid") ?: ""
-                        val token = uri.getQueryParameter("token") ?: ""
+                    coroutineScope.launch(Dispatchers.Main) {
+                        try {
+                            val uri = Uri.parse(raw)
+                            val uuid = uri.getQueryParameter("uuid") ?: ""
+                            val token = uri.getQueryParameter("token") ?: ""
 
-                        if (uuid.isNotBlank() && token.isNotBlank()) {
-                            onScanSuccess(uuid, token)
-                        } else {
-                            scanError = "올바른 QR 코드가 아니야!"
+                            if (uuid.isNotBlank() && token.isNotBlank()) {
+                                onScanSuccess(uuid, token)
+                            } else {
+                                scanError = "올바른 QR 코드가 아니야!"
+                            }
+                        } catch (e: Exception) {
+                            scanError = "QR 해석 실패!"
                         }
-                    } catch (e: Exception) {
-                        scanError = "QR 해석 실패!"
                     }
                 }
 
                 scanner.setErrorCallback { error ->
-                    scanError = "카메라 초기화 실패: ${error.message ?: ""}"
+                    coroutineScope.launch(Dispatchers.Main) {
+                        scanError = "카메라 초기화 실패: ${error.message ?: ""}"
+                    }
                 }
 
                 scanner.startPreview()
@@ -95,4 +96,3 @@ fun QRScanScreen(
         }
     }
 }
-

@@ -24,6 +24,8 @@ class UserSerializer(serializers.ModelSerializer):
             "preferences",
             "prot_email",
             "relation",
+            "provider",
+            "social_id",
             "is_active",
             "is_staff",
             "created_at",
@@ -179,62 +181,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         )
         return user"""
 
-#보호자 이메일 등록 로직 추가로 주석처리
-# class UserUpdateSerializer(serializers.ModelSerializer):
-#     password = serializers.CharField(write_only=True, required=False, min_length=8)
-#
-#     class Meta:
-#         model = User
-#         fields = (
-#             "username",
-#             "phone",
-#             "password",
-#             "preferences",
-#             "birth_date",
-#             "gender",
-#             "height",
-#             "weight",
-#             "prot_email",
-#         )
-#
-#     def validate_phone(self, v: str) -> str:
-#         return _normalize_phone(v)
-#
-#     def validate_gender(self, v: str) -> str | None:
-#         if v in (None, ""):
-#             return None
-#         m = {
-#             "m": "M", "male": "M", "남": "M", "남자": "M",
-#             "f": "F", "female": "F", "여": "F", "여자": "F",
-#         }
-#         v2 = m.get(str(v).strip().lower(), v)
-#         if v2 not in dict(Gender.choices):
-#             raise serializers.ValidationError("gender는 M 또는 F 중 하나여야 합니다.")
-#         return v2
-#
-#     def update(self, instance, validated_data):
-#         pwd = validated_data.pop("password", None)
-#
-#         for k, v in validated_data.items():
-#             setattr(instance, k, v)
-#
-#         if pwd:
-#             instance.set_password(pwd)
-#
-#         try:
-#             instance.save()
-#         except IntegrityError as e:
-#             if "phone" in str(e).lower():
-#                 raise serializers.ValidationError({"phone": "이미 사용 중인 전화번호입니다."})
-#             raise
-#         return instance
-
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=8)
-
-    # [추가] 앱에서 보내는 보호자 이름('prot_name')을 받기 위한 가짜 필드
-    prot_name = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
@@ -248,8 +197,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "height",
             "weight",
             "prot_email",
-            "relation",  # [추가] 실제 DB에 저장될 필드
-            "prot_name",  # [추가] 입력받을 필드
+            "email"
         )
 
     def validate_phone(self, v: str) -> str:
@@ -268,19 +216,11 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return v2
 
     def update(self, instance, validated_data):
-        # 1. 패스워드와 보호자 이름(prot_name)을 데이터에서 꺼냄
         pwd = validated_data.pop("password", None)
-        prot_name_input = validated_data.pop("prot_name", None)
 
-        # 2. [핵심] prot_name이 들어왔다면 DB의 'relation' 필드에 저장
-        if prot_name_input:
-            instance.relation = prot_name_input
-
-        # 3. 나머지 데이터 업데이트
         for k, v in validated_data.items():
             setattr(instance, k, v)
 
-        # 4. 비밀번호 변경 시 처리
         if pwd:
             instance.set_password(pwd)
 

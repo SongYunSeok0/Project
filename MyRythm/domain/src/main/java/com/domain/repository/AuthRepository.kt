@@ -25,5 +25,8 @@ interface AuthRepository {
     suspend fun resetPassword(email: String, newPassword: String): Boolean
 
     suspend fun logout(): Result<Unit>
+
     fun getUserId(): Long
+
+    suspend fun checkEmailExists(email: String): Boolean
 }

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from celery.schedules import crontab
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -146,6 +147,8 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     ),
+
+    'UNAUTHENTICATED_USER': None,
 }
 
 #plan.task.py

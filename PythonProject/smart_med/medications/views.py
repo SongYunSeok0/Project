@@ -273,7 +273,7 @@ class TodayPlansView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-# ✅ [수정됨] PlanUpdateView (업데이트 시간 동기화 로직 포함)
+#[수정됨] PlanUpdateView (업데이트 시간 동기화 로직 포함)
 class PlanUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -294,7 +294,7 @@ class PlanUpdateView(APIView):
 
             old_taken_at = target_plan.taken_at
 
-            # ✅ 그룹 식별용 '기존 수정 시간' 저장
+            #그룹 식별용 '기존 수정 시간' 저장
             old_updated_at = target_plan.updated_at
 
             # --- 타겟 먼저 업데이트 (updated_at 갱신됨) ---
@@ -308,12 +308,12 @@ class PlanUpdateView(APIView):
                 siblings = Plan.objects.filter(
                     regihistory=target_plan.regihistory,
                     taken_at=old_taken_at,
-                    updated_at=old_updated_at  # ✅ 같은 배치(Batch)로 수정된 애들만 찾음
+                    updated_at=old_updated_at  #같은 배치(Batch)로 수정된 애들만 찾음
                 ).exclude(id=target_plan.id)
 
                 count = siblings.update(
                     taken_at=new_taken_at,
-                    # ✅ 형제들도 타겟과 똑같은 updated_at을 갖도록 강제 동기화
+                    #형제들도 타겟과 똑같은 updated_at을 갖도록 강제 동기화
                     updated_at=target_plan.updated_at
                 )
                 print(f"[Plan Update] updated_at={old_updated_at} 그룹에서 {count}개 이동됨.")

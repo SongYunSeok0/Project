@@ -249,6 +249,15 @@ class AuthRepositoryImpl @Inject constructor(
         return idStr.toLong()
     }
 
+    override suspend fun checkEmailExists(email: String): Boolean {
+        return try {
+            val response = api.checkEmailDuplicate(mapOf("email" to email))
+            response.exists
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "이메일 중복 체크 실패: ${e.message}", e)
+            throw e
+        }
+    }
 }
 
 class HttpAuthException(val code: Int, message: String?) :
