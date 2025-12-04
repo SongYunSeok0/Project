@@ -5,7 +5,9 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from firebase_admin import messaging
 from .models import Plan
-from notifications.services import send_fcm_to_token
+
+# notifications 앱의 services.py에서 초기화 함수와 전송 함수 가져오기
+from notifications.services import send_fcm_to_token, initialize_firebase
 
 User = get_user_model()
 
@@ -18,6 +20,10 @@ def test_med_alarm_view(request):
     [테스트용] tasks.py의 send_med_alarms_task 로직을 수동 실행합니다.
     현재 분(minute)에 복용해야 할 약을 찾아 환자에게 전체화면 알람(ALARM)을 보냅니다.
     """
+    # send_fcm_to_token 내부에서 initialize_firebase()가 호출되므로
+    # 여기서는 별도로 호출하지 않아도 안전하지만, 명시적으로 호출해도 무방합니다.
+    # initialize_firebase()
+
     now_utc = timezone.now()
     now_kst = timezone.localtime(now_utc)
 
@@ -67,6 +73,10 @@ def test_missed_alarm_view(request):
     [테스트용] tasks.py의 check_missed_medication 로직을 수동 실행합니다.
     30분이 지났는데 미복용(taken is NULL)인 건에 대해 보호자에게 알림을 보냅니다.
     """
+    # [수정됨] services.py의 초기화 함수 호출 (Firebase 연결 보장)
+    # 아래 로직에서 messaging.send()를 직접 쓰기 때문에 반드시 필요합니다.
+    initialize_firebase()
+
     now = timezone.now()
     now_kst = timezone.localtime(now)
 
@@ -130,6 +140,7 @@ def _process_regular_alarm(plan):
 
         if token:
             # ⭐ 핵심: type="ALARM"으로 보내서 전체 화면 알림 트리거
+            # send_fcm_to_token 내부에서 initialize_firebase()를 수행하므로 안전함
             send_fcm_to_token(
                 token=token,
                 title="💊 약 드실 시간이에요!",
@@ -181,6 +192,7 @@ def _process_missed_alarm(plan, is_force=False):
 
         # 4. FCM 전송
         if guardian and guardian.fcm_token:
+            # 직접 Message 객체를 생성할 때는 초기화가 필수 (위쪽 test_missed_alarm_view에서 호출됨)
             message = messaging.Message(
                 notification=messaging.Notification(
                     title="🚨 미복용 알림",
