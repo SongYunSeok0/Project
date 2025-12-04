@@ -34,4 +34,8 @@ interface PlanRepository {
     )
 
     suspend fun delete(userId: Long, planId: Long)
+
+    suspend fun markAsTaken(planId: Long): Result<Unit>
+
+    suspend fun snoozePlan(planId: Long): Result<Unit>
 }

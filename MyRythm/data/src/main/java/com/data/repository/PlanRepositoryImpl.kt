@@ -89,4 +89,23 @@ class PlanRepositoryImpl @Inject constructor(
         api.deletePlan(planId)
         syncPlans(userId)
     }
+
+    override suspend fun markAsTaken(planId: Long): Result<Unit> {
+        return runCatching {
+            val response = api.markAsTaken(planId)
+            if (!response.isSuccessful) {
+                throw Exception("복약 완료 실패: ${response.code()} ${response.message()}")
+            }
+        }
+    }
+
+    override suspend fun snoozePlan(planId: Long): Result<Unit> {
+        return runCatching {
+            val response = api.snoozePlan(planId)
+            if (!response.isSuccessful) {
+                throw Exception("미루기 실패: ${response.code()} ${response.message()}")
+            }
+        }
+    }
+
 }
