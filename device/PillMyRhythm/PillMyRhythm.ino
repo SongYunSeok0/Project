@@ -105,17 +105,35 @@ void loop() {
     static float lastSentBPM = 0;
     static bool lastSentTime = false;
 
-    bool needPost =
-        openedEvent ||
-        abs(currentBPM - lastSentBPM) >= 25 ||
-        (isTime != lastSentTime);
+    // POST 조건 판단
+bool needPost =
+    openedEvent ||
+    abs(currentBPM - lastSentBPM) >= 25 ||
+    (isTime != lastSentTime);
 
-    if (needPost) {
-        queuePost(openedEvent, currentBPM, isTime);
-        openedEvent = false;
-        lastSentBPM = currentBPM;
-        lastSentTime = isTime;
+static bool timeConsumed = false;
+
+if (needPost) {
+
+    // POST 보내기
+    queuePost(openedEvent, currentBPM, isTime);
+
+    // ⭐ 정해진 시간에 열린 경우 → POST 후 isTime 끄기
+    if (openedEvent && isTime && !timeConsumed) {
+        Serial.println("✔ POST sent (isOpened=true, isTime=true) → turn off isTime");
+
+        isTime = false;
+        digitalWrite(19, LOW);
+        digitalWrite(18, HIGH);
+        timeConsumed = true;
     }
+
+    // reset
+    openedEvent = false;
+    lastSentBPM = currentBPM;
+    lastSentTime = isTime;
+}
+
 
     delay(20);
 }

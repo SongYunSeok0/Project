@@ -27,7 +27,9 @@ const int THRESHOLD_OFFSET = 5;
 float currentWeight = 0;
 float prevWeight = 0;
 unsigned long lastWeightReadTime = 0;
-const unsigned long WEIGHT_READ_INTERVAL = 500;
+const unsigned long WEIGHT_READ_INTERVAL = 5000;
+
+const unsigned long OPEN_IGNORE_DURATION = 300;
 
 bool isOpened = false;
 bool openedEvent = false;
@@ -122,28 +124,48 @@ void updateBPM() {
 // ===================================================
 void checkWeight() {
     unsigned long now = millis();
+
+    // 최근 opened 이후 3초간 무게 변화 무시
+    if (isOpened && (now - openedTime < OPEN_IGNORE_DURATION)) {
+        return;
+    }
+
+    // 무게 읽기 주기 (2초)
     if (now - lastWeightReadTime < WEIGHT_READ_INTERVAL) return;
 
     currentWeight = scale.get_units();
     lastWeightReadTime = now;
 
-    float diff = prevWeight - currentWeight;
+    float diff = currentWeight - prevWeight;
+    
+    // 디버깅 출력
+    Serial.print("[WEIGHT] current=");
+    Serial.print(currentWeight);
+    Serial.print(" diff=");
+    Serial.println(diff);
+
     prevWeight = currentWeight;
 
+    // 무게 증가 -> 열림 이벤트 발생
     if (diff > 100 && !isOpened) {
         isOpened = true;
         openedEvent = true;
         openedTime = now;
 
+        Serial.println("📦 OPEN DETECTED (diff > 100)!");
+
         if (isTime) {
-            isTime = false;
-            digitalWrite(19, LOW);
-            digitalWrite(18, HIGH);
+            Serial.println("⏰ Scheduled opening at the correct time!");
         } else {
             tone(12, 1000, 800);
         }
     }
 }
+
+
+
+
+
 
 
 // ===================================================

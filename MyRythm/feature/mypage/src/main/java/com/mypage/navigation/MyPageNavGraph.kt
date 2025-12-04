@@ -93,6 +93,19 @@ fun NavGraphBuilder.mypageNavGraph(
     composable<MediReportRoute> {
         MediReportScreen(userId = userId)
     }
+
+    composable<BLERegisterRoute> { backStackEntry ->
+        val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
+        val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
+
+        BLERegisterScreen(
+            viewModel = sharedBLEVM,
+            onFinish = {
+                nav.popBackStack(MyPageRoute, false)
+            }
+        )
+    }
+
 }
 
 

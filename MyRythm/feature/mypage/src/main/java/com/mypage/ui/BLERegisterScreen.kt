@@ -97,6 +97,14 @@ private fun BLERegisterScreenUI(
             label = { Text("Wi-Fi PASSWORD") }
         )
 
+        OutlinedTextField(
+            value = state.deviceName,
+            onValueChange = viewModel::updateDeviceName,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("기기 별명(예: 약통1)") }
+        )
+
+
         if (state.loading) {
             Text("BLE 기기와 연결 중...", color = MaterialTheme.colorScheme.primary)
         }
@@ -105,7 +113,7 @@ private fun BLERegisterScreenUI(
             modifier = Modifier.fillMaxWidth(),
             onClick = { viewModel.startRegister() }
         ) {
-            Text("기기에 Wi-Fi 정보 전송")
+            Text("디바이스 등록 하기")
         }
     }
 }

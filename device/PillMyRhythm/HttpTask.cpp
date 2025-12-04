@@ -4,9 +4,9 @@
 #include "Sensors.h"
 #include "HttpTask.h"
 
-
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <ArduinoJson.h>   // ⭐ 반드시 추가!
 
 QueueHandle_t httpQueue;
 
@@ -73,8 +73,18 @@ void httpTask(void *param) {
                     String res = http.getString();
                     Serial.println("GET response: " + res);
 
-                    if (res.indexOf("\"time\":true") != -1) {
-                        httpTimeSignal = true;
+                    // ⭐ JSON 파싱으로 변경!
+                    StaticJsonDocument<128> doc;
+                    auto err = deserializeJson(doc, res);
+
+                    if (!err) {
+                        bool timeFlag = doc["time"] | false;
+                        if (timeFlag) {
+                            Serial.println("⏰ TIME SIGNAL DETECTED!");
+                            httpTimeSignal = true;
+                        }
+                    } else {
+                        Serial.println("❌ JSON Parse Error");
                     }
                 }
                 http.end();
