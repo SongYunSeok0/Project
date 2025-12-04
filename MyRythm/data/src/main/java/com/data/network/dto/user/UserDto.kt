@@ -4,7 +4,7 @@ data class UserDto(
     val id: Long,
     val uuid: String?,
     val email: String?,
-    val username: String,
+    val username: String?,
     val phone: String?,
     val birth_date: String?,
     val gender: String?,

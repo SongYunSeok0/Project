@@ -9,5 +9,5 @@ data class UserProfile(
     val gender: String?,
     val phone: String?,
     val prot_email: String?,
-    val email: String?
+    val email: String?,
 )
