@@ -55,7 +55,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         if response.status_code == 200:
             try:
-                login_id = request.data.get("username") or request.data.get("email")
+                login_id = request.data.get("id") or request.data.get("email")
                 if login_id:
                     user = User.objects.filter(username=login_id).first()
                     if not user:
@@ -106,6 +106,15 @@ class SocialLoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
 
+    @staticmethod
+    def generate_unique_username(base):
+        username = base
+        count = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base}_{count}"
+            count += 1
+        return username
+
     def post(self, request):
         provider = request.data.get("provider")
         social_id = request.data.get("socialId")
@@ -123,12 +132,19 @@ class SocialLoginView(APIView):
             })
 
         except User.DoesNotExist:
+            base_username = f"{provider}_{social_id}"
+
+            # 🔥 중복 없는 username 자동 생성
+            username = self.generate_unique_username(base_username)
+
             user = User.objects.create_user(
+                username=username,
                 email=None,
                 password=None,
                 provider=provider,
                 social_id=social_id,
             )
+
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -136,6 +152,8 @@ class SocialLoginView(APIView):
                 "refresh": str(refresh),
                 "needAdditionalInfo": True
             })
+
+
 
 
 # ===================================================================
