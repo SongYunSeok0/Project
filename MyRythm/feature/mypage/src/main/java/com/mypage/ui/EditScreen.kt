@@ -159,8 +159,7 @@ fun EditScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(scrollState) // [수정] 스크롤 기능 추가
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -418,7 +417,7 @@ fun EditScreen(
 
             // 2. 보호자 이메일 입력 및 전송
             Text("보호자 이메일", fontSize = 14.sp, color = Color(0xff3b566e))
-            Text("보호자 이메일 (선택)", fontSize = 14.sp, color = Color(0xff3b566e))
+            // Text("보호자 이메일 (선택)", fontSize = 14.sp, color = Color(0xff3b566e)) // 중복 제거
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
@@ -445,9 +444,6 @@ fun EditScreen(
                 Button(
                     onClick = {
                         if (protEmail.isNotBlank() && protName.isNotBlank()) {
-
-                            //  1202 임시 테스트
-                        if (protEmail.isNotBlank()) {
                             // 테스트 코드
                             if (protEmail == "aaa@aaa.com") {
                                 isProtEmailSent = true
@@ -457,16 +453,10 @@ fun EditScreen(
                                 return@Button
                             }
 
-                            // [수정] 실제코드: 여기서는 ViewModel 함수만 호출하고
-                            // 결과(성공/실패)는 상단의 LaunchedEffect에서 처리합니다.
+                            // [수정] 실제코드: 여기서는 ViewModel 함수만 호출
+                            // 결과(성공/실패)는 상단의 LaunchedEffect에서 처리
                             viewModel.sendEmailCode(protEmail, protName)
 
-                            // 실제 코드 (중복 체크 없이 바로 전송)
-                            viewModel.sendEmailCode(protEmail)
-                            isProtEmailSent = true
-                            isProtEmailVerified = false
-                            protEmailCode = ""
-                            Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(context, "보호자 이름과 이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
                         }
