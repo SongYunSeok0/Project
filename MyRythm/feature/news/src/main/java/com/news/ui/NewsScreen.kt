@@ -47,7 +47,6 @@ fun NewsScreen(
     val searchText = stringResource(R.string.search)
     val favoritesText = stringResource(R.string.favorites)
     val naverNewsText = stringResource(R.string.naver_news)
-    val removeFavoriteText = stringResource(R.string.remove_favorite)
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
