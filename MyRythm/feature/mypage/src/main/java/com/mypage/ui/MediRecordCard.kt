@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.domain.model.MediRecord
 import com.shared.R
+import com.shared.ui.components.AppButton
 import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.componentTheme
 import java.time.Instant
@@ -252,33 +253,15 @@ fun GroupedMediRecordCard(
             AppButton(
                 text = recordDeleteButtonText,
                 onClick = { showDeleteDialog = true },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
                 height = 48.dp,
-                backgroundColor = MaterialTheme.componentTheme.heartRateCardGradientLight,
-                textColor = MaterialTheme.componentTheme.heartRateWarning,
                 shape = MaterialTheme.shapes.large,
                 textStyle = MaterialTheme.typography.labelMedium
             )
         }
     }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
-                    .background(MaterialTheme.componentTheme.heartRateCardGradientLight)
-                    .clickable { showDeleteDialog = true }
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = recordDeleteButtonText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.componentTheme.heartRateWarning
-                )
-            }
-        }
-    }
-
     if (showDeleteDialog) {
         DeleteConfirmDialog(
             groupLabel = group.label,
@@ -376,18 +359,21 @@ private fun DeleteConfirmDialog(
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.componentTheme.heartRateWarning
+                    containerColor = MaterialTheme.colorScheme.error
                 ),
                 shape = MaterialTheme.shapes.small
             ) {
-                Text(deleteText, color = MaterialTheme.colorScheme.onPrimary)
+                Text(
+                    deleteText,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         },
         dismissButton = {
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.componentTheme.mainFeatureCardBorderStroke
+                    containerColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 shape =MaterialTheme.shapes.small
             ) {

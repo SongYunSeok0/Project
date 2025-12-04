@@ -43,6 +43,12 @@ fun NewsScreen(
     onOpenDetail: (String) -> Unit,
     viewModel: NewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
+    val searchMessage = stringResource(R.string.news_message_search)
+    val searchText = stringResource(R.string.search)
+    val favoritesText = stringResource(R.string.favorites)
+    val naverNewsText = stringResource(R.string.naver_news)
+    val removeFavoriteText = stringResource(R.string.remove_favorite)
+
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchMode by viewModel.isSearchMode.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
@@ -52,7 +58,7 @@ fun NewsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         AnimatedVisibility(visible = isSearchMode) {
             Row(
@@ -65,7 +71,13 @@ fun NewsScreen(
                 TextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = { Text("검색어를 입력하세요") },
+                    placeholder = {
+                        Text(
+                            text = searchMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
@@ -100,17 +112,23 @@ fun NewsScreen(
                         if (searchQuery.isNotBlank()) viewModel.triggerSearch()
                     },
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6AE0D9))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
                 ) {
-                    Text("검색", color = Color.White)
+                    Text(
+                        text = searchText,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.labelMedium
+                    )
                 }
             }
         }
 
         Text(
-            text = "즐겨찾기",
+            text = favoritesText,
             fontSize = 16.sp,
-            color = Color(0xFF3B566E),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
@@ -126,24 +144,23 @@ fun NewsScreen(
                     keyword = fav.keyword,
                     onClick = { viewModel.onFavoriteClick(fav.keyword) },
                     onDelete = { viewModel.removeFavorite(fav.keyword) },
-                    modifier = Modifier
-                        .size(120.dp)
+                    modifier = Modifier.size(120.dp)
                 )
             }
         }
-
 
         // -----------------------------------------------------------
         // 📰 네이버 뉴스 리스트
         // -----------------------------------------------------------
 
         Text(
-            text = "네이버 뉴스",
+            text = naverNewsText,
             fontSize = 16.sp,
-            color = Color(0xFF3B566E),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
+
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -190,8 +207,6 @@ fun NewsScreen(
 }
 
 
-/* --------------------------- UI Components --------------------------- */
-
 @Composable
 fun FavoriteBannerCard(
     keyword: String,
@@ -199,6 +214,8 @@ fun FavoriteBannerCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val removeFavoriteText = stringResource(R.string.remove_favorite)
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -232,14 +249,14 @@ fun FavoriteBannerCard(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.bookmark_remove),
-                contentDescription = "remove favorite",
-                tint = Color.White
+                contentDescription = removeFavoriteText,
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
         Text(
             text = keyword,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
@@ -248,7 +265,6 @@ fun FavoriteBannerCard(
         )
     }
 }
-
 
 
 @Composable
@@ -283,15 +299,14 @@ fun NewsCard(
         ) {
             Text(
                 text = title,
-                fontSize = 14.sp,
-                color = Color(0xFF3B566E),
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2
             )
             Text(
                 text = info,
                 fontSize = 12.sp,
-                color = Color(0xFF6F8BA4)
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

@@ -170,6 +170,9 @@
     <string name="percent_suffix">%</string>
     <string name="dose_complete">복용 완료</string>
     <string name="splashscreen">스플래시 이미지</string>
+    <string name="favorites">즐겨찾기</string>
+    <string name="remove_favorite">즐겨찾기 삭제</string>
+
 
     <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
     <string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>
@@ -189,7 +192,6 @@
     <string name="mypage_message_medi_record_delete_question">"%1$s" 처방의 모든 기록을 삭제하시겠습니까?</string>
     <string name="mypage_message_medi_record_delete_count">총 %1$d개의 복약 기록이 삭제됩니다.</string>
     <string name="mypage_message_medi_record_delete_warning">이 작업은 되돌릴 수 없습니다.</string>
-
     <string name="message_inquiry_submitted_success">문의가 등록되었습니다!</string>
     <string name="mypage_message_inquiry">• 영업일 기준 1-2일 이내에 답변드립니다.\n• 개인정보가 포함된 문의는 1:1 문의를 이용해주세요.</string>
     <string name="news_message_search">검색어를 입력하세요</string>
