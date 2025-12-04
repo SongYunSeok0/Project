@@ -135,7 +135,7 @@ class MeView(APIView):
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
-# ✅ FCM 토큰 등록용 API
+# FCM 토큰 등록용 API
 class RegisterFcmTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -153,7 +153,7 @@ class RegisterFcmTokenView(APIView):
         user.save(update_fields=["fcm_token"])
         print("[RegisterFcmTokenView] Token saved to DB")  # 로그 추가
 
-        # ✅ [핵심 2] "방금 로그인했니?" 확인 후 알림 발송
+        # [핵심 2] "방금 로그인했니?" 확인 후 알림 발송
         cache_key = f"just_logged_in:{user.id}"
         is_just_logged_in = cache.get(cache_key)
         print(f"[RegisterFcmTokenView] Checking cache key='{cache_key}'. Result: {is_just_logged_in}")  # 로그 추가

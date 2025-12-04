@@ -147,12 +147,20 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ),
 }
-from celery.schedules import crontab
 
+#plan.task.py
 # CELERY_BEAT_SCHEDULE = {
+#     # 1.환자 복용 알림 (매 분 실행)
 #     'send-med-alarms-every-minute': {
-#         'task': 'plans.tasks.send_med_alarms_task',  # 실행할 함수 경로
-#         'schedule': crontab(minute='*'),  # 매 분마다 실행
+#         'task': 'medications.tasks.send_med_alarms_task',
+#         'schedule': crontab(minute='*'),
+#     },
+#
+#     # 2.보호자 미복용 알림 (매 분 실행)
+#     # 1분마다 돌면서 "30분이 지났는데 아직 안 먹은 약" 체크
+#     'check-missed-meds-every-minute': {
+#         'task': 'medications.tasks.check_missed_medication',
+#         'schedule': crontab(minute='*'),
 #     },
 # }
 
@@ -165,8 +173,5 @@ USE_TZ = True
 STATIC_URL = "static/"
 ROOT_URLCONF = "smart_med.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 AUTH_USER_MODEL = "users.User"
