@@ -136,9 +136,11 @@ fun EditScreen(
                     Toast.makeText(context, "저장되었습니다", Toast.LENGTH_SHORT).show()
                     onDone()
                 }
+
                 EditProfileEvent.SaveFailed -> {
                     Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
                 }
+
                 EditProfileEvent.LoadFailed -> {
                     Toast.makeText(context, "프로필 불러오기 실패", Toast.LENGTH_SHORT).show()
                 }
@@ -340,20 +342,26 @@ fun EditScreen(
                                 enabled = !isEmailVerified,
                                 onClick = {
                                     if (email.isBlank()) {
-                                        Toast.makeText(context, "이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "이메일을 입력해주세요", Toast.LENGTH_SHORT)
+                                            .show()
                                         return@AppButton
                                     }
 
                                     // 실제 코드: 중복 체크 후 인증코드 전송
                                     viewModel.checkEmailDuplicate(email) { isDuplicate ->
                                         if (isDuplicate) {
-                                            Toast.makeText(context, "이미 사용 중인 이메일입니다", Toast.LENGTH_LONG).show()
+                                            Toast.makeText(
+                                                context,
+                                                "이미 사용 중인 이메일입니다",
+                                                Toast.LENGTH_LONG
+                                            ).show()
                                         } else {
                                             viewModel.sendEmailCode(email)
                                             isEmailSent = true
                                             isEmailVerified = false
                                             emailCode = ""
-                                            Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "인증코드 전송됨", Toast.LENGTH_SHORT)
+                                                .show()
                                         }
                                     }
                                 }
@@ -392,7 +400,11 @@ fun EditScreen(
                                         if (email == "test@test.com" && emailCode == "1111") {
                                             isEmailVerified = true
                                             isEmailSent = false
-                                            Toast.makeText(context, "[테스트] 이메일 인증 성공", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                "[테스트] 이메일 인증 성공",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                             return@AppButton
                                         }
 
@@ -400,9 +412,11 @@ fun EditScreen(
                                             if (ok) {
                                                 isEmailVerified = true
                                                 isEmailSent = false
-                                                Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT)
+                                                    .show()
                                             } else {
-                                                Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT)
+                                                    .show()
                                             }
                                         }
                                     }
@@ -491,7 +505,11 @@ fun EditScreen(
                                         viewModel.sendEmailCode(protEmail, protName)
 
                                     } else {
-                                        Toast.makeText(context, "보호자 이름과 이메일을 입력해주세요", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "보호자 이름과 이메일을 입력해주세요",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 }
                             )
@@ -531,9 +549,11 @@ fun EditScreen(
                                             if (ok) {
                                                 isProtEmailVerified = true
                                                 isProtEmailSent = false
-                                                Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "인증 성공", Toast.LENGTH_SHORT)
+                                                    .show()
                                             } else {
-                                                Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT)
+                                                    .show()
                                             }
                                         }
                                     }
