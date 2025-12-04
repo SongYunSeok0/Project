@@ -1,54 +1,38 @@
 import secrets
 import traceback
-
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.conf import settings
 from django.db import IntegrityError
 from django.contrib.auth import authenticate, get_user_model
+
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
 from notifications.services import send_fcm_to_token
 
-from drf_spectacular.utils import (
-    extend_schema,
-    OpenApiResponse,
-    OpenApiParameter,
-    OpenApiExample
+# Swagger docs import
+from .docs import (
+    jwt_login_docs, social_login_docs,
+    me_get_docs, me_patch_docs,
+    register_fcm_docs, send_email_code_docs,
+    verify_email_code_docs, signup_docs, withdraw_docs
 )
 
 User = get_user_model()
 
 
-# ===================================================================
-# Custom TokenObtainPairView
-# ===================================================================
+# ==========================================================
+#  JWT LOGIN
+# ==========================================================
 
-@extend_schema(
-    tags=["Auth"],
-    summary="기본 JWT 로그인",
-    description="Django SimpleJWT 기반 로그인. username 또는 email로 로그인 가능.",
-    request={
-        "application/json": {
-            "type": "object",
-            "properties": {
-                "username": {"type": "string"},
-                "password": {"type": "string"},
-            },
-            "required": ["username", "password"]
-        }
-    },
-    responses={
-        200: OpenApiResponse(description="로그인 성공"),
-        401: OpenApiResponse(description="로그인 실패")
-    }
-)
+@jwt_login_docs
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -57,9 +41,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             try:
                 login_id = request.data.get("id") or request.data.get("email")
                 if login_id:
-                    user = User.objects.filter(username=login_id).first()
-                    if not user:
-                        user = User.objects.filter(email=login_id).first()
+                    user = User.objects.filter(username=login_id).first() or \
+                           User.objects.filter(email=login_id).first()
                     if user:
                         cache.set(f"just_logged_in:{user.id}", True, timeout=60)
             except:
@@ -68,40 +51,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-# ===================================================================
-# Social Login
-# ===================================================================
+# ==========================================================
+#  SOCIAL LOGIN
+# ==========================================================
 
-@extend_schema(
-    tags=["Auth"],
-    summary="소셜 로그인",
-    description="provider + social_id 로 로그인하거나 신규 생성.",
-    request={
-        "application/json": {
-            "type": "object",
-            "properties": {
-                "provider": {"type": "string"},
-                "socialId": {"type": "string"},
-            },
-            "required": ["provider", "socialId"]
-        }
-    },
-    responses={
-        200: OpenApiResponse(
-            description="로그인 성공",
-            examples=[
-                OpenApiExample(
-                    "기존 회원",
-                    value={"access": "jwt", "refresh": "jwt", "needAdditionalInfo": False}
-                ),
-                OpenApiExample(
-                    "신규 회원",
-                    value={"access": "jwt", "refresh": "jwt", "needAdditionalInfo": True}
-                ),
-            ]
-        )
-    }
-)
+@social_login_docs
 class SocialLoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -133,8 +87,6 @@ class SocialLoginView(APIView):
 
         except User.DoesNotExist:
             base_username = f"{provider}_{social_id}"
-
-            # 🔥 중복 없는 username 자동 생성
             username = self.generate_unique_username(base_username)
 
             user = User.objects.create_user(
@@ -154,49 +106,18 @@ class SocialLoginView(APIView):
             })
 
 
+# ==========================================================
+#  MeView
+# ==========================================================
 
-
-# ===================================================================
-# MeView (GET/UPDATE)
-# ===================================================================
-
-@extend_schema(
-    tags=["User"],
-    summary="내 정보 조회",
-    responses={200: UserSerializer}
-)
-@extend_schema(
-    tags=["User"],
-    methods=["PATCH"],
-    summary="내 정보 수정",
-    request=UserUpdateSerializer,
-    responses={200: UserSerializer},
-)
+@me_get_docs
+@me_patch_docs
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         u = request.user
-        return Response({
-            "id": u.id,
-            "uuid": str(getattr(u, "uuid", "")),
-            "email": u.email,
-            "username": u.username,
-            "phone": getattr(u, "phone", ""),
-            "birth_date": getattr(u, "birth_date", ""),
-            "gender": getattr(u, "gender", ""),
-            "height": getattr(u, "height", ""),
-            "weight": getattr(u, "weight", ""),
-            "preferences": getattr(u, "preferences", {}),
-            "prot_email": getattr(u, "prot_email", ""),
-            "relation": getattr(u, "relation", ""),
-            "is_active": u.is_active,
-            "is_staff": u.is_staff,
-            "created_at": getattr(u, "created_at", ""),
-            "updated_at": getattr(u, "updated_at", ""),
-            "last_login": getattr(u, "last_login", ""),
-            "fcm_token": getattr(u, "fcm_token", ""),
-        })
+        return Response(UserSerializer(u).data)
 
     def patch(self, request):
         user = request.user
@@ -206,25 +127,11 @@ class MeView(APIView):
         return Response(UserSerializer(user).data)
 
 
-# ===================================================================
-# Register FCM Token
-# ===================================================================
+# ==========================================================
+#  Register FCM
+# ==========================================================
 
-@extend_schema(
-    tags=["User"],
-    summary="FCM 토큰 등록",
-    request={
-        "application/json": {
-            "type": "object",
-            "properties": {"fcm_token": {"type": "string"}},
-            "required": ["fcm_token"]
-        }
-    },
-    responses={
-        200: OpenApiResponse(description="등록 성공"),
-        400: OpenApiResponse(description="fcm_token 누락")
-    }
-)
+@register_fcm_docs
 class RegisterFcmTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -235,7 +142,7 @@ class RegisterFcmTokenView(APIView):
 
         user = request.user
         user.fcm_token = token
-        user.save(update_fields=["fcm_token"])
+        user.save()
 
         key = f"just_logged_in:{user.id}"
         if cache.get(key):
@@ -253,22 +160,11 @@ class RegisterFcmTokenView(APIView):
         return Response({"detail": "ok"})
 
 
-# ===================================================================
+# ==========================================================
 # Send Email Code
-# ===================================================================
+# ==========================================================
 
-@extend_schema(
-    tags=["Auth"],
-    summary="이메일 인증코드 발송",
-    request={
-        "application/json": {
-            "type": "object",
-            "properties": {"email": {"type": "string"}},
-            "required": ["email"]
-        }
-    },
-    responses={200: OpenApiResponse(description="발송 성공")}
-)
+@send_email_code_docs
 class SendEmailCodeView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -291,28 +187,11 @@ class SendEmailCodeView(APIView):
         return Response({"detail": "인증코드가 발송되었습니다."})
 
 
-# ===================================================================
+# ==========================================================
 # Verify Email Code
-# ===================================================================
+# ==========================================================
 
-@extend_schema(
-    tags=["Auth"],
-    summary="이메일 인증코드 검증",
-    request={
-        "application/json": {
-            "type": "object",
-            "properties": {
-                "email": {"type": "string"},
-                "code": {"type": "string"},
-            },
-            "required": ["email", "code"]
-        }
-    },
-    responses={
-        200: OpenApiResponse(description="인증 성공"),
-        400: OpenApiResponse(description="코드 불일치/만료")
-    }
-)
+@verify_email_code_docs
 class VerifyEmailCodeView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -320,9 +199,6 @@ class VerifyEmailCodeView(APIView):
     def post(self, request):
         email = request.data.get("email")
         code = request.data.get("code")
-
-        if not email or not code:
-            return Response({"detail": "email/code 필요"}, status=400)
 
         saved = cache.get(f"email_code:{email}")
         if saved is None:
@@ -335,19 +211,11 @@ class VerifyEmailCodeView(APIView):
         return Response({"detail": "인증 성공"})
 
 
-# ===================================================================
+# ==========================================================
 # Signup
-# ===================================================================
+# ==========================================================
 
-@extend_schema(
-    tags=["Auth"],
-    summary="회원가입",
-    request=UserCreateSerializer,
-    responses={
-        201: OpenApiResponse(description="회원가입 성공"),
-        400: OpenApiResponse(description="유효성 실패 / 인증 미완료")
-    }
-)
+@signup_docs
 class SignupView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -359,17 +227,12 @@ class SignupView(APIView):
             return Response({"detail": "이메일 인증이 필요합니다."}, status=400)
 
         serializer = UserCreateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         try:
             user = serializer.save()
-        except IntegrityError as e:
-            if "email" in str(e).lower():
-                return Response({"detail": "이미 존재하는 이메일입니다."}, status=400)
-            if "phone" in str(e).lower():
-                return Response({"detail": "이미 존재하는 전화번호입니다."}, status=400)
-            return Response({"detail": "회원가입 오류"}, status=400)
+        except IntegrityError:
+            return Response({"detail": "중복된 이메일 또는 전화번호"}, status=400)
 
         cache.delete(f"email_verified:{email}")
         cache.delete(f"email_code:{email}")
@@ -377,15 +240,11 @@ class SignupView(APIView):
         return Response({"message": "회원가입 성공", "user_id": user.id}, status=201)
 
 
-# ===================================================================
+# ==========================================================
 # Withdrawal
-# ===================================================================
+# ==========================================================
 
-@extend_schema(
-    tags=["User"],
-    summary="회원 탈퇴",
-    responses={200: OpenApiResponse(description="탈퇴 완료")}
-)
+@withdraw_docs
 class WithdrawalView(APIView):
     permission_classes = [IsAuthenticated]
 

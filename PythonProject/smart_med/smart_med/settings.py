@@ -74,11 +74,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "utils.middleware.RequestLoggingMiddleware",
+    "smart_med.utils.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-MIDDLEWARE.insert(0, "utils.middleware.DisableChunkedMiddleware")
+MIDDLEWARE.insert(0, "smart_med.utils.middleware.DisableChunkedMiddleware")
+
 
 # === CELERY 설정 ===
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")

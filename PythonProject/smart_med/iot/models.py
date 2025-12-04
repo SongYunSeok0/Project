@@ -22,7 +22,9 @@ def generate_device_uuid():
 class Device(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="iot_devices",
     )
 
@@ -81,13 +83,3 @@ class IntakeStatus(models.TextChoices):
     WRONG = "wrong", "오복용"
     MISSED = "missed", "미복용"
     NONE = "none", "이벤트 아님"
-
-
-def generate_device_token():
-    """64글자짜리 안전한 랜덤 토큰 생성"""
-    return secrets.token_hex(32)  # 32바이트 → 64 hex 문자열
-
-
-def generate_device_uuid():
-    """디바이스 고유 UUID 생성"""
-    return secrets.token_hex(8)  # 16 hex 문자열 (간단한 UUID)

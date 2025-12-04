@@ -9,22 +9,32 @@ app = Celery('smart_med')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
+# ======================================================
+#                CELERY BEAT SCHEDULE
+# ======================================================
+
 app.conf.beat_schedule = {
-    # 약 복용 알림
-    "send-med-alarms-every-minute": {
+
+    # --------------------------------------------------
+    # Medication / 복약 알림 관련 작업
+    # --------------------------------------------------
+
+    "medication_send_alarms_every_minute": {
         "task": "medications.tasks.send_med_alarms_task",
-        "schedule": crontab(minute="*"),  # 매 분
+        "schedule": crontab(minute="*"),  # 매 분 실행
     },
 
-    # IoT 복약 시간 체크
-    "check-medication-every-minute": {
+    "medication_check_time_window": {
         "task": "iot.tasks.check_medication_schedule",
-        "schedule": crontab(minute="*"),
+        "schedule": crontab(minute="*"),  # 매 분 실행
     },
 
-    # IoT 기기에게 "지금 약 먹을 시간인지" 신호 주기
-    "check-medication-time-window": {
+    # --------------------------------------------------
+    # IoT Device / IoT 장치 폴링 신호 전송
+    # --------------------------------------------------
+
+    "iot_send_is_time_signal_every_30s": {
         "task": "iot.tasks.check_schedule_and_push_is_time",
-        "schedule": 30,  # 30초
+        "schedule": 30,  # 30초 간격 실행
     },
 }

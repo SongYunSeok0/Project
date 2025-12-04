@@ -42,4 +42,6 @@ urlpatterns = [
     path('api/rag/', include('rag.urls')),
     path('api/health/', include('health.urls')),
     path('test-alarm/', test_med_alarm_view, name='test_alarm'),
+    path("api/med/", include("medications.urls")),
+
 ]
