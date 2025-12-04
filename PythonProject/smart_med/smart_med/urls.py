@@ -25,6 +25,6 @@ urlpatterns = [
     path('api/rag/', include('rag.urls')),
     path('api/health/', include('health.urls')),
     #postman 테스트용
-    # path('test-alarm/', test_med_alarm_view, name='test_alarm'),
-    # path('test-mebokyoung/',test_missed_alarm_view, name='test_mebokyoung'),
+    path('test-alarm/', test_med_alarm_view, name='test_alarm'),
+    path('test-mebokyoung/',test_missed_alarm_view, name='test_mebokyoung'),
 ]
