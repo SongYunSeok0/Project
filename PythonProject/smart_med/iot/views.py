@@ -11,6 +11,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from pathlib import Path
+
+from utils.make_qr import create_qr
 from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
 
@@ -143,8 +145,15 @@ class RegisterDeviceView(APIView):
 class QRCodeView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, chip_id):
-        filename = create_qr_for_chip(chip_id)
+    def get(self, request, device_uuid):
+        # DB에서 해당 UUID 기기 찾기
+        try:
+            device = Device.objects.get(device_uuid=device_uuid)
+        except Device.DoesNotExist:
+            return Response({"error": "Device not found"}, status=404)
+
+        # QR 생성 (uuid + token)
+        filename = create_qr(device.device_uuid, device.device_token)
         filepath = Path(filename)
 
         if not filepath.exists():

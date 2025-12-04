@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from celery.schedules import crontab
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -147,14 +148,7 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ),
 }
-from celery.schedules import crontab
 
-# CELERY_BEAT_SCHEDULE = {
-#     'send-med-alarms-every-minute': {
-#         'task': 'plans.tasks.send_med_alarms_task',  # 실행할 함수 경로
-#         'schedule': crontab(minute='*'),  # 매 분마다 실행
-#     },
-# }
 
 # i18n
 LANGUAGE_CODE = "ko-kr"
