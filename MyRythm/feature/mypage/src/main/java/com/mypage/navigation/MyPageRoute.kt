@@ -9,3 +9,5 @@ import kotlinx.serialization.Serializable
 @Serializable data object MediReportRoute
 @Serializable data object FAQRoute
 @Serializable data object QRScanRoute
+@Serializable data object BLERegisterRoute
+

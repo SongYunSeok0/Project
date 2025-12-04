@@ -1,37 +1,45 @@
 package com.mypage.ui
 
 import android.Manifest
-import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
-import com.budiyev.android.codescanner.CodeScanner
-import com.budiyev.android.codescanner.CodeScannerView
-import com.budiyev.android.codescanner.DecodeCallback
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 
 @Composable
 fun QRScanScreen(
     onScanSuccess: (uuid: String, token: String) -> Unit,
     onBack: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var alreadyScanned by remember { mutableStateOf(false) }
     var scanError by remember { mutableStateOf<String?>(null) }
 
     // 카메라 권한 요청
-    val cameraLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) scanError = "카메라 권한이 필요해!"
-        }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) scanError = "카메라 권한이 필요해!"
+    }
 
     LaunchedEffect(Unit) {
         cameraLauncher.launch(Manifest.permission.CAMERA)
@@ -42,40 +50,97 @@ fun QRScanScreen(
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
-                val scannerView = CodeScannerView(ctx)
-                val scanner = CodeScanner(ctx, scannerView)
+                val previewView = PreviewView(ctx)
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
-                scanner.decodeCallback = DecodeCallback { result ->
-                    val raw = result.text ?: ""
+                cameraProviderFuture.addListener({
 
-                    coroutineScope.launch(Dispatchers.Main) {
-                        try {
-                            val uri = Uri.parse(raw)
-                            val uuid = uri.getQueryParameter("uuid") ?: ""
-                            val token = uri.getQueryParameter("token") ?: ""
+                    val cameraProvider = cameraProviderFuture.get()
 
-                            if (uuid.isNotBlank() && token.isNotBlank()) {
-                                onScanSuccess(uuid, token)
-                            } else {
-                                scanError = "올바른 QR 코드가 아니야!"
-                            }
-                        } catch (e: Exception) {
-                            scanError = "QR 해석 실패!"
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+
+                    // ★ ML Kit 옵션 (이게 가장 안정적)
+                    val scannerOptions = BarcodeScannerOptions.Builder()
+                        .setBarcodeFormats(
+                            com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE
+                        )
+                        .build()
+
+                    val scanner = BarcodeScanning.getClient(scannerOptions)
+
+                    val analysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                        .build()
+
+                    analysis.setAnalyzer(
+                        ContextCompat.getMainExecutor(ctx)
+                    ) { imageProxy ->
+
+                        if (alreadyScanned) {
+                            imageProxy.close()
+                            return@setAnalyzer
                         }
-                    }
-                }
 
-                scanner.setErrorCallback { error ->
-                    coroutineScope.launch(Dispatchers.Main) {
-                        scanError = "카메라 초기화 실패: ${error.message ?: ""}"
-                    }
-                }
+                        val mediaImage = imageProxy.image ?: run {
+                            imageProxy.close(); return@setAnalyzer
+                        }
 
-                scanner.startPreview()
-                scannerView
+                        val image = InputImage.fromMediaImage(
+                            mediaImage,
+                            imageProxy.imageInfo.rotationDegrees
+                        )
+
+                        scanner.process(image)
+                            .addOnSuccessListener { barcodes ->
+                                for (barcode in barcodes) {
+                                    val raw = barcode.rawValue ?: continue
+
+                                    Log.d("QR", "🔥 RAW = $raw")
+
+                                    val uuid = Regex("uuid=([^&]+)").find(raw)?.groupValues?.get(1) ?: ""
+                                    val token = Regex("token=([^&]+)").find(raw)?.groupValues?.get(1) ?: ""
+
+                                    Log.d("QR", "🔥 UUID = $uuid")
+                                    Log.d("QR", "🔥 TOKEN = $token")
+
+                                    if (uuid.isNotBlank() && token.isNotBlank()) {
+                                        alreadyScanned = true
+                                        onScanSuccess(uuid, token)
+                                    }
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("QR", "MLKit Error: ${e.message}")
+                                scanError = "QR 인식 실패: ${e.message}"
+                            }
+                            .addOnCompleteListener {
+                                imageProxy.close()
+                            }
+                    }
+
+                    try {
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            analysis
+                        )
+                    } catch (e: Exception) {
+                        scanError = "카메라 실행 실패: ${e.message}"
+                        Log.e("QR", "Camera bind error", e)
+                    }
+
+                }, ContextCompat.getMainExecutor(ctx))
+
+                previewView
             }
         )
 
+        // UI : 뒤로가기 버튼
         Text(
             text = "뒤로가기",
             color = Color.White,
@@ -85,6 +150,7 @@ fun QRScanScreen(
                 .clickable { onBack() }
         )
 
+        // UI : 에러 텍스트
         scanError?.let {
             Text(
                 it,

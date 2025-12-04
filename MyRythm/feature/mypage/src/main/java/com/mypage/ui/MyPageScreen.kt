@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,16 +47,6 @@ fun MyPageScreen(
     val bleState by bleViewModel.state.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showDeviceDialog by remember { mutableStateOf(false) }
-
-    // ============================================================
-    // ⭐ QRScanScreen → MyPage 복귀 후 deviceUUID/deviceToken 들어오면 팝업 자동 오픈
-    // ============================================================
-    LaunchedEffect(bleState.deviceUUID, bleState.deviceToken) {
-        if (bleState.deviceUUID.isNotBlank() && bleState.deviceToken.isNotBlank()) {
-            showDeviceDialog = true
-        }
-    }
 
     // BLE 상태 변화 → 토스트 표시
     LaunchedEffect(bleState.bleConnected, bleState.configSent, bleState.error) {
@@ -134,59 +122,6 @@ fun MyPageScreen(
             MenuItem(stringResource(R.string.logout)) { viewModel.logout() }
             MenuItem("회원 탈퇴") { showDeleteDialog = true }
         }
-    }
-
-    // ==================== BLE 기기 등록 다이얼로그 ====================
-    if (showDeviceDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeviceDialog = false },
-            title = { Text("기기 등록") },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Wi-Fi 정보를 입력하면\n기기에 BLE로 전송됩니다.")
-
-                    OutlinedTextField(
-                        value = bleState.ssid,
-                        onValueChange = { bleViewModel.updateSSID(it) },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Wi-Fi SSID") }
-                    )
-
-                    OutlinedTextField(
-                        value = bleState.pw,
-                        onValueChange = { bleViewModel.updatePW(it) },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Wi-Fi Password") }
-                    )
-
-                    if (bleState.loading) {
-                        Text("기기 연결 중...", color = Color.Gray, fontSize = 13.sp)
-                    }
-                }
-            },
-            confirmButton = {
-                Text(
-                    text = "등록하기",
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .clickable {
-                            bleViewModel.startRegister()
-                            showDeviceDialog = false
-                        }
-                )
-            },
-            dismissButton = {
-                Text(
-                    text = "취소",
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .clickable { showDeviceDialog = false }
-                )
-            }
-        )
     }
 
     // ==================== 회원 탈퇴 다이얼로그 ====================

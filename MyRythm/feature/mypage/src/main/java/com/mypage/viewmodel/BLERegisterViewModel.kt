@@ -28,6 +28,8 @@ class BLERegisterViewModel @Inject constructor(
     fun startRegister() = viewModelScope.launch {
         val ssid = state.value.ssid
         val pw = state.value.pw
+        val uuid = state.value.deviceUUID
+        val token = state.value.deviceToken
 
         if (ssid.isBlank() || pw.isBlank()) {
             _state.value = state.value.copy(
@@ -36,7 +38,6 @@ class BLERegisterViewModel @Inject constructor(
             return@launch
         }
 
-        // loading 시작
         _state.value = state.value.copy(
             loading = true,
             error = null,
@@ -54,13 +55,18 @@ class BLERegisterViewModel @Inject constructor(
             return@launch
         }
 
-        // 연결 성공
-        _state.value = state.value.copy(
-            bleConnected = true
-        )
+        _state.value = _state.value.copy(bleConnected = true)
 
-        // 2) Wi-Fi 정보 전송
-        val json = """{"ssid":"$ssid","password":"$pw"}"""
+        // 2) Wi-Fi + UUID + TOKEN 전송 (ESP32 요구 형식 맞춤)
+        val json = """
+        {
+            "uuid": "$uuid",
+            "token": "$token",
+            "ssid": "$ssid",
+            "pw": "$pw"
+        }
+    """.trimIndent()
+
         val sent = ble.sendConfigSuspend(json)
 
         if (!sent) {
@@ -71,12 +77,13 @@ class BLERegisterViewModel @Inject constructor(
             return@launch
         }
 
-        // 전송 성공
         _state.value = state.value.copy(
             loading = false,
             configSent = true
         )
     }
+
+
     fun setDeviceInfo(uuid: String, token: String) {
         _state.value = _state.value.copy(
             deviceUUID = uuid,
