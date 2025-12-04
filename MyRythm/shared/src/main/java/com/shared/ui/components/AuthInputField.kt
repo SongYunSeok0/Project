@@ -205,7 +205,9 @@ fun AuthGenderDropdown(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(authColors.authSurface)
         ) {
             Box(
                 modifier = Modifier.background(authColors.authSurface)

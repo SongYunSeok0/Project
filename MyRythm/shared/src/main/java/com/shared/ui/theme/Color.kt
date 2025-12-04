@@ -29,6 +29,14 @@ val NewsCard = Color(0x33FFEF6C)
 val HealthInsightCard = Color(0x666AC0E0)
 val MainFeatureCardBorderStroke = Color(0xfff3f4f6)
 val AppTransparent = Color.Transparent
+val HeartRateCardGradientLight = Color(0xFFFFE8E8)
+val HeartRateCardGradientDark = Color(0xFFFFD5D5)
+val HeartRateLowColor = Color(0xFF3B82F6)
+val HeartRateNormalColor = Color(0xFF16A34A)
+val HeartRateWarningColor = Color(0xFFEF4444)
+val CompletionCautionColor = Color(0xFFF59E0B)
+
+
 
 
 // 로그인프로세스
