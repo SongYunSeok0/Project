@@ -144,7 +144,8 @@ def _process_regular_alarm(plan):
             send_fcm_to_token(
                 token=token,
                 title="💊 약 드실 시간이에요!",
-                body=f"{user.username}님, [{plan.med_name}] 복용 시간입니다. ({plan_time_str})",
+                # [수정] plan.med_name 대신 regihistory.label 사용
+                body=f"{user.username}님, [{plan.regihistory.label}] 복용 시간입니다. ({plan_time_str})",
                 data={
                     "type": "ALARM",  # 앱에서 AlarmActivity를 띄우는 신호
                     "plan_id": str(plan.id),
