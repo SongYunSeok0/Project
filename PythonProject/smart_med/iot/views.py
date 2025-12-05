@@ -4,7 +4,8 @@ from pathlib import Path
 from django.db import transaction
 from django.http import FileResponse
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from smart_med.utils.time_utils import to_ms, from_ms, parse_ts
+from smart_med.utils.data_utils import to_bool
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -16,46 +17,6 @@ from health.models import HeartRate
 from smart_med.utils.make_qr import create_qr
 
 from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
-
-
-# ============================
-# 공용 Boolean 파서
-# ============================
-def to_bool(v):
-    if isinstance(v, bool):
-        return v
-    if v is None:
-        return False
-    return str(v).lower() in {"1", "true", "yes", "y"}
-
-
-# ============================
-# 공용 timestamp 파서
-# ============================
-def parse_ts(v):
-    """
-    지원:
-    - 1700000000000 (ms)
-    - 2025-12-04T12:00:00Z (ISO)
-    - None → now()
-    """
-    if v is None:
-        return timezone.now()
-
-    if isinstance(v, (int, float)):
-        # ms 단위로 전달됨
-        return timezone.make_aware(
-            timezone.datetime.fromtimestamp(v / 1000.0)
-        )
-
-    if isinstance(v, str):
-        dt = parse_datetime(v)
-        if dt is not None:
-            if timezone.is_naive(dt):
-                dt = timezone.make_aware(dt)
-            return dt
-
-    return timezone.now()
 
 
 # ==========================================
@@ -87,6 +48,7 @@ def ingest(request):
     # --------------------------
     # Payload 파싱
     # --------------------------
+
     is_opened = to_bool(p.get("is_opened") or p.get("isOpened"))
     is_time = to_bool(p.get("is_time") or p.get("isTime"))
     bpm_raw = p.get("bpm") or p.get("Bpm")

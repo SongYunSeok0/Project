@@ -3,7 +3,8 @@ from django.utils import timezone
 import datetime
 
 from .models import RegiHistory, Plan
-from smart_med.utils.time_utils import to_ms
+from smart_med.utils.time_utils import to_ms, from_ms
+
 
 #  Plan 조회용 Serializer
 class PlanSerializer(serializers.ModelSerializer):

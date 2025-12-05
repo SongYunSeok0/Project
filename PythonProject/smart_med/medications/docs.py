@@ -23,7 +23,6 @@ regi_list_docs = extend_schema(
 regi_create_docs = extend_schema(
     tags=["RegiHistory"],
     summary="등록 이력 생성",
-    description="RegiHistoryCreateSerializer 기준으로 새로운 이력을 생성합니다.",
     request=RegiHistoryCreateSerializer,
     responses={
         201: RegiHistorySerializer,
@@ -40,9 +39,8 @@ regi_create_docs = extend_schema(
 regi_update_docs = extend_schema(
     tags=["RegiHistory"],
     summary="등록 이력 수정",
-    description="특정 RegiHistory를 부분 수정합니다.",
     request=RegiHistoryCreateSerializer,
-    parameters=[OpenApiParameter("pk", int, OpenApiParameter.PATH)],
+    parameters=[OpenApiParameter("pk", int, location=OpenApiParameter.PATH)],
     responses={
         200: RegiHistorySerializer,
         404: OpenApiResponse(description="not found"),
@@ -52,9 +50,9 @@ regi_update_docs = extend_schema(
 regi_delete_docs = extend_schema(
     tags=["RegiHistory"],
     summary="등록 이력 삭제",
-    parameters=[OpenApiParameter("pk", int, OpenApiParameter.PATH)],
+    parameters=[OpenApiParameter("pk", int, location=OpenApiParameter.PATH)],
     responses={
-        204: OpenApiResponse(description="삭제 성공"),
+        204: None,
         404: OpenApiResponse(description="not found"),
     },
 )
@@ -65,7 +63,7 @@ regi_delete_docs = extend_schema(
 plan_list_docs = extend_schema(
     tags=["Plan"],
     summary="플랜 목록 조회",
-    description="사용자의 전체 복약 일정을 반환합니다.",
+    description="사용자의 전체 복약 플랜을 반환합니다.",
     responses={200: PlanSerializer(many=True)},
 )
 
@@ -124,22 +122,25 @@ plan_create_docs = extend_schema(
 plan_delete_docs = extend_schema(
     tags=["Plan"],
     summary="플랜 삭제",
-    parameters=[OpenApiParameter("pk", int, OpenApiParameter.PATH)],
-    responses={204: None, 404: OpenApiResponse(description="not found")},
+    parameters=[OpenApiParameter("pk", int, location=OpenApiParameter.PATH)],
+    responses={
+        204: None,
+        404: OpenApiResponse(description="not found"),
+    },
 )
 
 plan_today_docs = extend_schema(
     tags=["Plan"],
     summary="오늘의 복약 일정 조회",
-    description="오늘 날짜 기준으로 pending / taken / missed 포함한 플랜 리스트 반환.",
+    description="오늘 날짜의 pending/taken/missed 포함한 플랜 리스트를 반환합니다.",
     responses={200: PlanSerializer(many=True)},
 )
 
 plan_update_docs = extend_schema(
     tags=["Plan"],
     summary="플랜 수정",
-    description="특정 일정의 takenAt 변경 시 같은 그룹도 자동 이동됩니다.",
-    parameters=[OpenApiParameter("pk", int, OpenApiParameter.PATH)],
+    description="takenAt 변경 시 동일 그룹 일정도 자동 업데이트됩니다.",
+    parameters=[OpenApiParameter("pk", int, location=OpenApiParameter.PATH)],
     request={
         "application/json": {
             "type": "object",
@@ -147,11 +148,54 @@ plan_update_docs = extend_schema(
                 "takenAt": {"type": "integer"},
                 "medName": {"type": "string"},
                 "useAlarm": {"type": "boolean"},
-            }
+            },
         }
     },
     responses={
         200: PlanSerializer,
         404: OpenApiResponse(description="not found")
+    }
+)
+
+# ============================
+# Mark as Taken
+# ============================
+mark_as_taken_docs = extend_schema(
+    tags=["Plan"],
+    summary="복약 완료 처리",
+    parameters=[OpenApiParameter("plan_id", int, location=OpenApiParameter.PATH)],
+    responses={
+        200: OpenApiResponse(
+            response={
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string"},
+                    "taken_time": {"type": "string", "format": "date-time"},
+                },
+            }
+        ),
+        404: OpenApiResponse(description="not found")
+    }
+)
+
+# ============================
+# Snooze
+# ============================
+snooze_docs = extend_schema(
+    tags=["Plan"],
+    summary="복약 알림을 30분 뒤로 미루기",
+    parameters=[OpenApiParameter("plan_id", int, location=OpenApiParameter.PATH)],
+    responses={
+        200: OpenApiResponse(
+            response={
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string"},
+                    "new_taken_at": {"type": "string", "format": "date-time"},
+                },
+            }
+        ),
+        400: OpenApiResponse(description="이미 복약됨"),
+        404: OpenApiResponse(description="not found"),
     }
 )

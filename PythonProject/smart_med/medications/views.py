@@ -21,9 +21,9 @@ from .serializers import (
 from .docs import (
     regi_list_docs, regi_create_docs, regi_update_docs, regi_delete_docs,
     plan_list_docs, plan_create_docs, plan_delete_docs,
-    plan_today_docs, plan_update_docs
+    plan_today_docs, plan_update_docs,
+    mark_as_taken_docs, snooze_docs
 )
-
 
 # ============================================================
 # ✔ RegiHistory (CRUD)
@@ -35,7 +35,10 @@ class RegiHistoryListCreateView(APIView):
 
     @regi_create_docs
     def post(self, request):
-        ser = RegiHistoryCreateSerializer(data=request.data, context={"request": request})
+        ser = RegiHistoryCreateSerializer(
+            data=request.data,
+            context={"request": request}
+        )
         ser.is_valid(raise_exception=True)
         obj = ser.save()
         return Response(RegiHistorySerializer(obj).data, status=201)
@@ -73,7 +76,7 @@ class RegiHistoryDeleteView(APIView):
 
 
 # ============================================================
-# ✔ Plan (GET / POST 단건 + 스마트 일정 생성 통합)
+# ✔ Plan (GET / POST 단건 + 스마트 일정 생성)
 # ============================================================
 
 @plan_list_docs
@@ -102,7 +105,6 @@ class PlanListView(APIView):
             if not regi:
                 return Response({"error": "RegiHistory not found"}, status=404)
 
-            # 날짜 파싱
             try:
                 current_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
             except:
@@ -121,11 +123,9 @@ class PlanListView(APIView):
                     hour, minute = map(int, t.split(":"))
                     dt = datetime.datetime.combine(current_date, datetime.time(hour, minute))
 
-                    # timezone aware
                     if timezone.is_naive(dt):
                         dt = timezone.make_aware(dt, timezone.get_current_timezone())
 
-                    # 과거 시간 건너뛰기
                     if dt <= now:
                         continue
 
@@ -142,7 +142,6 @@ class PlanListView(APIView):
 
                 current_date += datetime.timedelta(days=1)
 
-            # updated_at 통일
             if created_plans:
                 sync = timezone.now()
                 Plan.objects.filter(id__in=[p.id for p in created_plans]).update(updated_at=sync)
@@ -234,7 +233,7 @@ class TodayPlansView(APIView):
 
 
 # ============================================================
-# ✔ Plan Update (시간 이동 + 그룹 이동 + 수정 동기화)
+# ✔ Plan Update
 # ============================================================
 
 @plan_update_docs
@@ -248,9 +247,6 @@ class PlanUpdateView(APIView):
 
         data = request.data
 
-        # ------------------------------------------------------------
-        # takenAt 업데이트
-        # ------------------------------------------------------------
         if "takenAt" in data:
             raw = data["takenAt"]
 
@@ -263,8 +259,10 @@ class PlanUpdateView(APIView):
             old_updated = plan.updated_at
 
             plan.taken_at = new_dt
-            if "medName" in data: plan.med_name = data["medName"]
-            if "useAlarm" in data: plan.use_alarm = data["useAlarm"]
+            if "medName" in data:
+                plan.med_name = data["medName"]
+            if "useAlarm" in data:
+                plan.use_alarm = data["useAlarm"]
             plan.save()
 
             siblings = Plan.objects.filter(
@@ -279,8 +277,10 @@ class PlanUpdateView(APIView):
             )
 
         else:
-            if "medName" in data: plan.med_name = data["medName"]
-            if "useAlarm" in data: plan.use_alarm = data["useAlarm"]
+            if "medName" in data:
+                plan.med_name = data["medName"]
+            if "useAlarm" in data:
+                plan.use_alarm = data["useAlarm"]
             plan.save()
 
         return Response(PlanSerializer(plan).data, status=200)
@@ -290,6 +290,7 @@ class PlanUpdateView(APIView):
 # ✔ 복약 완료
 # ============================================================
 
+@mark_as_taken_docs
 class MarkAsTakenView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -312,6 +313,7 @@ class MarkAsTakenView(APIView):
 # ✔ 미루기 (30분 뒤로)
 # ============================================================
 
+@snooze_docs
 class SnoozeMedicationView(APIView):
     permission_classes = [IsAuthenticated]
 
