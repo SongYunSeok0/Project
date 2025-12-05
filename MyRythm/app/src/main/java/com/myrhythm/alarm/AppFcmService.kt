@@ -28,7 +28,9 @@ class AppFcmService : FirebaseMessagingService() {
     override fun onMessageReceived(msg: RemoteMessage) {
         // ⭐ 디버깅용 로그
         Log.e(tag, "========================================")
+        Log.e(tag, "FCM 메시지 수신됨!")
         Log.e(tag, "FCM 데이터 전체: ${msg.data}")
+        Log.e(tag, "FCM notification: ${msg.notification}")
         Log.e(tag, "========================================")
 
         // data payload 우선 사용 (notification 필드가 없으므로 data가 필수)
@@ -42,20 +44,23 @@ class AppFcmService : FirebaseMessagingService() {
             // 풀스크린 알림 - 환자 복약 알림
             "ALARM", "med_alarm" -> {
                 val planId = msg.data["plan_id"] ?: ""
-                if (planId.isEmpty()) return
 
-                Log.i(tag, "복약 알람 처리 - planId: $planId")
-                // ⭐ msg.data 전체를 넘김
-                sendFullScreenAlarm(title, body, planId, false, msg.data)
+                if (planId.isNotEmpty()) {
+                    Log.i(tag, "복약 알람 처리 - planId: $planId")
+                    sendFullScreenAlarm(title, body, planId, false, msg.data)
+                } else {
+                    Log.i(tag, "planId 없음 - 일반 알림으로 전환")
+                    sendNormalNotification(title, body)
+                }
             }
 
             // 풀스크린 알림 - 보호자 미복용 알림
             "missed_alarm" -> {
                 val planId = msg.data["plan_id"] ?: ""
-                if (planId.isEmpty()) return
 
-                Log.i(tag, "미복용 알람 처리 - planId: $planId")
-                // ⭐ msg.data 전체를 넘김
+                Log.e(tag, "🚨 missed_alarm 수신! planId=$planId")
+
+                // 🔥 planId가 없어도 보호자 화면은 표시해야 함
                 sendFullScreenAlarm(title, body, planId, true, msg.data)
             }
 
@@ -65,6 +70,7 @@ class AppFcmService : FirebaseMessagingService() {
             }
 
             else -> {
+                Log.w(tag, "알 수 없는 타입: $messageType, 일반 알림 처리")
                 sendNormalNotification(title, body)
             }
         }
@@ -79,38 +85,54 @@ class AppFcmService : FirebaseMessagingService() {
         messageBody: String,
         planId: String,
         isGuardian: Boolean,
-        dataMap: Map<String, String> // 추가된 파라미터
+        dataMap: Map<String, String>
     ) {
-        Log.i(tag, "풀스크린 알람 생성 - planId: $planId, 보호자: $isGuardian")
+        Log.e(tag, "========================================")
+        Log.e(tag, "🔥 풀스크린 알람 생성 시작!")
+        Log.e(tag, "planId: $planId")
+        Log.e(tag, "isGuardian: $isGuardian")
+        Log.e(tag, "dataMap: $dataMap")
+        Log.e(tag, "========================================")
 
         val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            // 🔥 새 태스크로 시작 + 기존 태스크 클리어
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
 
-            // 1. 필수 ID 넣기
-            putExtra("PLAN_ID", planId.toLongOrNull() ?: 0L)
+            // 1. 필수 데이터
+            val planIdLong = planId.toLongOrNull() ?: 0L
+            putExtra("PLAN_ID", planIdLong)
+            putExtra("plan_id", planIdLong) // 둘 다 넣기
 
             // 2. 타입 지정
             if (isGuardian) {
                 putExtra("type", "missed_alarm")
+                putExtra("is_guardian", "true")
+            } else {
+                putExtra("type", "ALARM")
             }
 
-            // 3. ⭐ [핵심 수정] 서버에서 받은 나머지 데이터(user_name, med_name 등)를 모두 Intent에 넣음
+            // 3. 🔥 서버에서 받은 모든 데이터 추가
             for ((key, value) in dataMap) {
                 putExtra(key, value)
+                Log.d(tag, "Intent에 추가: $key = $value")
             }
+        }
+
+        // 🔥 고유한 requestCode 사용 (보호자/환자 구분)
+        val requestCode = if (isGuardian) {
+            System.currentTimeMillis().toInt()
+        } else {
+            planId.hashCode()
         }
 
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,
-            planId.hashCode(),
+            requestCode,
             fullScreenIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val channelId = "alarm_channel"
-        // 알림음 설정 (TYPE_ALARM 권장)
         val alarmSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
         val notification = NotificationCompat.Builder(this, channelId)
@@ -141,12 +163,27 @@ class AppFcmService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(planId.hashCode(), notification)
-        Log.i(tag, "풀스크린 알람 전송 완료 (데이터 포함됨)")
+        val notificationId = if (isGuardian) {
+            System.currentTimeMillis().toInt()
+        } else {
+            planId.hashCode()
+        }
+
+        notificationManager.notify(notificationId, notification)
+
+        Log.e(tag, "🔥 풀스크린 알람 notify 완료! (notificationId=$notificationId)")
+
+        // 🔥 추가: 바로 Activity 실행 시도 (앱이 포그라운드에 있을 때 대비)
+        try {
+            fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(fullScreenIntent)
+            Log.e(tag, "🔥 AlarmActivity 직접 실행 시도 완료!")
+        } catch (e: Exception) {
+            Log.e(tag, "🔥 AlarmActivity 직접 실행 실패: ${e.message}")
+        }
     }
 
     private fun sendNormalNotification(title: String, messageBody: String) {
-        // ... (기존과 동일)
         Log.i(tag, "일반 알림 생성: title=$title")
 
         val intent = Intent(this, MainActivity::class.java).apply {
