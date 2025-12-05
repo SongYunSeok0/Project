@@ -11,5 +11,6 @@ data class RegiHistoryEntity(
     val regiType: String,
     val label: String?,
     val issuedDate: String?,
-    val useAlarm: Boolean
+    val useAlarm: Boolean,
+    val deviceId: String?
 )

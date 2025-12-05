@@ -9,5 +9,6 @@ fun RegiHistoryResponse.toModel() = RegiHistory(
     regiType = regiType,
     label = label,
     issuedDate = issuedDate,
-    useAlarm = useAlarm
+    useAlarm = useAlarm,
+    deviceId = deviceId
 )

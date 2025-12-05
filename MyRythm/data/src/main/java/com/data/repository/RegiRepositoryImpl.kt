@@ -29,13 +29,15 @@ class RegiRepositoryImpl @Inject constructor(
         regiType: String,
         label: String?,
         issuedDate: String?,
-        useAlarm: Boolean
+        useAlarm: Boolean,
+        deviceId: String?
     ): Long {
         val req = RegiHistoryRequest(
             regiType = regiType,
             label = label,
             issuedDate = issuedDate,
-            useAlarm = useAlarm
+            useAlarm = useAlarm,
+            deviceId = deviceId
         )
 
         val res = regiHistoryApi.createRegiHistory(req)
@@ -46,7 +48,8 @@ class RegiRepositoryImpl @Inject constructor(
             regiType = res.regiType,
             label = res.label,
             issuedDate = res.issuedDate,
-            useAlarm = res.useAlarm
+            useAlarm = res.useAlarm,
+            deviceId = res.deviceId
         )
         regiHistoryDao.insert(entity)
 
@@ -62,7 +65,8 @@ class RegiRepositoryImpl @Inject constructor(
                     regiType = row.regiType,
                     label = row.label,
                     issuedDate = row.issuedDate,
-                    useAlarm = row.useAlarm
+                    useAlarm = row.useAlarm,
+                    deviceId = row.deviceId
                 )
             }
         }
@@ -72,7 +76,8 @@ class RegiRepositoryImpl @Inject constructor(
             regiType = regi.regiType,
             label = regi.label,
             issuedDate = regi.issuedDate,
-            useAlarm = regi.useAlarm
+            useAlarm = regi.useAlarm,
+            deviceId = regi.deviceId
         )
 
         regiHistoryApi.updateRegiHistory(regi.id, req)
@@ -83,7 +88,8 @@ class RegiRepositoryImpl @Inject constructor(
             regiType = regi.regiType,
             label = regi.label,
             issuedDate = regi.issuedDate,
-            useAlarm = regi.useAlarm
+            useAlarm = regi.useAlarm,
+            deviceId = regi.deviceId
         )
         regiHistoryDao.insert(entity)
     }
@@ -114,7 +120,7 @@ class RegiRepositoryImpl @Inject constructor(
                 regihistoryId = res.regihistoryId,
                 medName = res.medName,
                 takenAt = res.takenAt,
-                exTakenAt = res.exTakenAt,  // 👈 추가
+                exTakenAt = res.exTakenAt,
                 mealTime = res.mealTime,
                 note = res.note,
                 taken = res.taken,
@@ -133,7 +139,7 @@ class RegiRepositoryImpl @Inject constructor(
                     regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
-                    exTakenAt = row.exTakenAt,  // 👈 추가
+                    exTakenAt = row.exTakenAt,
                     mealTime = row.mealTime,
                     note = row.note,
                     taken = row.taken,
@@ -150,7 +156,7 @@ class RegiRepositoryImpl @Inject constructor(
                     regihistoryId = row.regihistoryId,
                     medName = row.medName,
                     takenAt = row.takenAt,
-                    exTakenAt = row.exTakenAt,  // 👈 추가
+                    exTakenAt = row.exTakenAt,
                     mealTime = row.mealTime,
                     note = row.note,
                     taken = row.taken,
@@ -179,7 +185,8 @@ class RegiRepositoryImpl @Inject constructor(
                 regiType = res.regiType,
                 label = res.label,
                 issuedDate = res.issuedDate,
-                useAlarm = res.useAlarm
+                useAlarm = res.useAlarm,
+                deviceId = res.deviceId
             )
         }
 
@@ -192,7 +199,7 @@ class RegiRepositoryImpl @Inject constructor(
                 regihistoryId = res.regihistoryId,
                 medName = res.medName,
                 takenAt = res.takenAt,
-                exTakenAt = res.exTakenAt,  // 👈 추가
+                exTakenAt = res.exTakenAt,
                 mealTime = res.mealTime,
                 note = res.note,
                 taken = res.taken,
