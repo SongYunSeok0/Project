@@ -103,18 +103,15 @@ class AlarmActivity : ComponentActivity() {
                 GuardianScreen(
                     username = uiState.username,
                     medicineLabel = uiState.medicineLabel,
-                    takenAtTime = uiState.takenAtTime,
-                    mealTime = uiState.mealTime,
-                    note = uiState.note,
-                    onStop = {
-                        Log.i(tag, "보호자 화면 - 확인 버튼 클릭")
-                        stopAlarmAndFinish()
-                    },
-                    onDismiss = {
-                        Log.i(tag, "알람 끄기 버튼 클릭")
+                    patientPhone= uiState.phoneNumber,
+                    onClose = {
                         stopAlarmAndFinish()
                     }
                 )
+//                username: String,
+//                medicineLabel: String,
+//                patientPhone: String,
+//                onClose: () -> Unit
             } else {
                 // 환자 화면
                 Log.d(tag, "UI: 환자 화면 표시")

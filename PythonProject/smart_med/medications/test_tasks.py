@@ -94,7 +94,7 @@ def test_missed_alarm_view(request):
     now_kst = timezone.localtime(now)
 
     # 1. 검색 범위: 30분 전 ~ 24시간 전
-    end_time = now - timedelta(minutes=1)
+    end_time = now - timedelta(minutes=30)
     start_time = now - timedelta(days=1)
 
     print(f"\n=== [TEST Missed] 미복용(보호자) 체크 시작 ({now_kst.strftime('%H:%M')}) ===")
