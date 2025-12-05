@@ -10,7 +10,8 @@ interface RegiRepository {
         regiType: String,
         label: String?,
         issuedDate: String?,
-        useAlarm: Boolean
+        useAlarm: Boolean,
+        deviceId: String? = null
     ): Long
 
     fun getRegiHistories(): Flow<List<RegiHistory>>

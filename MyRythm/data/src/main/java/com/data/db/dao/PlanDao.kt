@@ -16,6 +16,9 @@ interface PlanDao {
     @Query("SELECT * FROM `plan` WHERE regihistoryId = :regihistoryId")
     fun getByRegiHistory(regihistoryId: Long): Flow<List<PlanEntity>>
 
+    @Query("SELECT * FROM `plan` WHERE id = :planId")  // ⭐ plan으로 통일
+    fun getPlanById(planId: Long): Flow<PlanEntity?>
+
     @Query(
         """
         SELECT `plan`.* 
