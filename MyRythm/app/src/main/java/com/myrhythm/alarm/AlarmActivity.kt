@@ -32,28 +32,39 @@ class AlarmActivity : ComponentActivity() {
 
         Log.i(tag, "onCreate 호출!")
 
+        // 0. 디버깅용: 받은 모든 데이터 로그 출력
+        intent.extras?.let { bundle ->
+            for (key in bundle.keySet()) {
+                Log.d(tag, "Intent Key: $key, Value: ${bundle.get(key)}")
+            }
+        }
+
         // 1. 화면 깨우기 & 잠금화면 위로 설정
         turnScreenOnAndKeyguard()
 
-        // 2. Intent 데이터 수신 - ⭐ plan_id만 받기
-        currentPlanId = intent.getLongExtra("PLAN_ID", 0L)
+        // 2. Intent 데이터 수신 - ⭐ 안전하게 받기 (String/Long, 대소문자 모두 체크)
+        currentPlanId = getSafePlanId()
 
         Log.i(tag, "받은 데이터 - planId: $currentPlanId")
 
         if (currentPlanId == 0L) {
-            Log.e(tag, "유효하지 않은 planId!")
+            Log.e(tag, "유효하지 않은 planId! (0L)")
             Toast.makeText(this, "알람 데이터 오류", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // 보호자 여부 확인
-        val type = intent.getStringExtra("type") ?: "ALARM"
-        val isGuardian = type == "missed_alarm"
+        // ⭐ 보호자 여부 확인 로직 강화
+        // 서버에서 "type": "missed_alarm"과 "is_guardian": "true"를 보냄
+        val type = intent.getStringExtra("type")
+        val isGuardianParam = intent.getStringExtra("is_guardian")
 
-        Log.i(tag, "보호자 모드: $isGuardian")
+        // type이 missed_alarm 이거나, is_guardian이 "true"이면 보호자 모드
+        val isGuardian = (type == "missed_alarm") || (isGuardianParam == "true")
 
-        // 3. ⭐ 데이터 로드 - plan_id만 전달
+        Log.i(tag, "보호자 모드 판정: $isGuardian (type=$type, is_guardian=$isGuardianParam)")
+
+        // 3. 데이터 로드 - plan_id만 전달
         viewModel.loadData(currentPlanId)
 
         // 4. 소리 재생
@@ -86,25 +97,27 @@ class AlarmActivity : ComponentActivity() {
         setContent {
             val uiState by viewModel.uiState.collectAsState()
 
-//            if (isGuardian) {
-//                // 보호자 화면
-//                GuardianScreen(
-//                    username = uiState.username,
-//                    medicineLabel = uiState.medicineLabel,
-//                    takenAtTime = uiState.takenAtTime,
-//                    mealTime = uiState.mealTime,
-//                    note = uiState.note,
-//                    onStop = {
-//                        Log.i(tag, "보호자 화면 - 확인 버튼 클릭")
-//                        stopAlarmAndFinish()
-//                    },
-//                      onDismiss = {
-//                          Log.i(tag, "알람 끄기 버튼 클릭")
-//                          stopAlarmAndFinish()
-//                      }
-//                )
-//            } else {
+            if (isGuardian) {
+                // ⭐ 보호자 화면
+                Log.d(tag, "UI: 보호자 화면 표시")
+                GuardianScreen(
+                    username = uiState.username,
+                    medicineLabel = uiState.medicineLabel,
+                    takenAtTime = uiState.takenAtTime,
+                    mealTime = uiState.mealTime,
+                    note = uiState.note,
+                    onStop = {
+                        Log.i(tag, "보호자 화면 - 확인 버튼 클릭")
+                        stopAlarmAndFinish()
+                    },
+                    onDismiss = {
+                        Log.i(tag, "알람 끄기 버튼 클릭")
+                        stopAlarmAndFinish()
+                    }
+                )
+            } else {
                 // 환자 화면
+                Log.d(tag, "UI: 환자 화면 표시")
                 PatientScreen(
                     username = uiState.username,
                     medicineLabel = uiState.medicineLabel,
@@ -126,7 +139,22 @@ class AlarmActivity : ComponentActivity() {
                     }
                 )
             }
-        //}
+        }
+    }
+
+    // FCM 데이터(String)와 내부 Intent(Long) 호환을 위한 안전한 ID 추출 함수
+    private fun getSafePlanId(): Long {
+        // 1. Long 타입으로 시도 ("PLAN_ID")
+        var id = intent.getLongExtra("PLAN_ID", 0L)
+        if (id != 0L) return id
+
+        // 2. Long 타입으로 시도 ("plan_id") - 소문자 키
+        id = intent.getLongExtra("plan_id", 0L)
+        if (id != 0L) return id
+
+        // 3. String 타입으로 받아서 변환 시도 (FCM data payload는 주로 String임)
+        val idStr = intent.getStringExtra("plan_id") ?: intent.getStringExtra("PLAN_ID")
+        return idStr?.toLongOrNull() ?: 0L
     }
 
     private fun turnScreenOnAndKeyguard() {
