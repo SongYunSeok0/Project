@@ -12,14 +12,8 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.myrhythm.MainActivity
-import com.shared.R // R 파일 경로 수정 (프로젝트 패키지에 맞춤)
+import com.shared.R
 import dagger.hilt.android.AndroidEntryPoint
-// import com.data.core.push.FcmTokenStore
-// import com.data.core.push.PushManager
-// import com.domain.usecase.push.RegisterFcmTokenUseCase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -27,86 +21,117 @@ class AppFcmService : FirebaseMessagingService() {
 
     private val tag = "FCM_SERVICE"
 
-    // Hilt나 UseCase가 없다면 주석 처리 후 사용하세요
-    // @Inject
-    // lateinit var registerFcmTokenUseCase: RegisterFcmTokenUseCase
-
     override fun onNewToken(token: String) {
         Log.i(tag, "onNewToken: $token")
-
-        // 토큰 저장 및 서버 전송 로직
-        // PushManager.fcmToken = token
-        // FcmTokenStore(this).saveToken(token)
-
-        /*
-        CoroutineScope(Dispatchers.IO).launch {
-            runCatching {
-                registerFcmTokenUseCase(token)
-            }.onFailure {
-                Log.e(tag, "서버에 토큰 등록 실패", it)
-            }
-        }
-        */
+        // 토큰 서버 전송 로직...
     }
 
     override fun onMessageReceived(msg: RemoteMessage) {
+        // 1. 기본 알림 데이터
         val title = msg.notification?.title ?: msg.data["title"] ?: "알림"
         val body = msg.notification?.body ?: msg.data["body"] ?: ""
 
-        // ⭐ 메시지 타입 확인 (서버에서 "type": "ALARM" 보내야 함)
+        // 2. 메시지 타입 확인
         val messageType = msg.data["type"] ?: "NORMAL"
 
-        Log.i(tag, "onMessageReceived title=$title body=$body type=$messageType")
+        // 3. ⭐ [핵심] 추가 데이터 추출 (서버에서 보낸 키값과 일치해야 함)
+        val planId = msg.data["plan_id"] ?: ""
+        val username = msg.data["user_name"] ?: ""        // 예: 홍길동
+        val medicineLabel = msg.data["med_name"] ?: ""    // 예: 타이레놀
+        val takenAtTime = msg.data["taken_at"] ?: ""      // 예: 09:00
+        val mealTime = msg.data["meal_time"] ?: ""        // 예: 식후 30분
+        val note = msg.data["note"] ?: ""                 // 예: 물과 함께
+        val isGuardian = msg.data["is_guardian"] ?: "false"
 
-        // 타입에 따라 다른 알림 표시
+        Log.i(tag, "onMessageReceived: type=$messageType, planId=$planId")
+
+        // 4. 타입에 따라 분기
         when (messageType) {
-            "ALARM", "med_alarm" -> sendFullScreenAlarm(title, body)  // 전체 화면 알람
-            else -> sendNotification(title, body)                     // 일반 알림
+            "ALARM", "med_alarm" -> {
+                // 환자 정시 알림 (전체 화면)
+                sendFullScreenAlarm(
+                    title, body,
+                    planId, username, medicineLabel, takenAtTime, mealTime, note,
+                    isGuardian
+                )
+            }
+            "missed_alarm" -> {
+                // 보호자 미복용 알림 (전체 화면)
+                sendFullScreenAlarm(
+                    title, body,
+                    planId, username, medicineLabel, takenAtTime, mealTime, note,
+                    "true" // 보호자 강제 지정
+                )
+            }
+            else -> sendNotification(title, body)
         }
     }
 
     /**
-     * ⭐ [핵심] 전체 화면 알람 (화면 깨우기 + 잠금화면 위에 표시)
+     * ⭐ 파라미터 대폭 추가: 화면 구성에 필요한 데이터들
      */
-    private fun sendFullScreenAlarm(title: String, messageBody: String) {
-        // AlarmActivity를 띄우는 Intent
+    private fun sendFullScreenAlarm(
+        title: String,
+        messageBody: String,
+        planId: String,
+        username: String,
+        medicineLabel: String,
+        takenAtTime: String,
+        mealTime: String,
+        note: String,
+        isGuardianString: String
+    ) {
+        // AlarmActivity를 띄우는 Intent 생성
         val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
-            // 이 플래그들이 중요합니다
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+            // 기본 정보
             putExtra("title", title)
             putExtra("body", messageBody)
+
+            // ⭐ [핵심] 화면 표시에 필요한 상세 데이터 전달
+            putExtra("plan_id", planId)
+            putExtra("user_name", username)
+            putExtra("med_name", medicineLabel)
+            putExtra("taken_at", takenAtTime)
+            putExtra("meal_time", mealTime)
+            putExtra("note", note)
+            putExtra("is_guardian", isGuardianString)
+
+            if (isGuardianString == "true") {
+                putExtra("type", "missed_alarm")
+            }
         }
 
-        // Android 12(S) 이상은 FLAG_IMMUTABLE 필수
+        // PendingIntent 생성 (planId.hashCode()로 구분하여 덮어쓰기 방지)
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,
-            System.currentTimeMillis().toInt(),
+            planId.hashCode(),
             fullScreenIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val channelId = "alarm_channel"  // 알람 전용 채널
+        val channelId = "alarm_channel"
         val alarmSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification) // 아이콘이 없으면 ic_launcher 등으로 변경
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(messageBody)
-            .setPriority(NotificationCompat.PRIORITY_MAX)  // 중요도 MAX (헤드업 알림 등)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setSound(alarmSoundUri)
             .setAutoCancel(true)
-            .setFullScreenIntent(fullScreenPendingIntent, true)  // ⭐ 여기가 핵심: 잠금화면 위로 띄움
+            .setFullScreenIntent(fullScreenPendingIntent, true) // 잠금화면 위로 표시
             .setContentIntent(fullScreenPendingIntent)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // 오레오(8.0) 이상 채널 생성
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
                 "복약 알람",
-                NotificationManager.IMPORTANCE_HIGH // 소리 울리고 배너 뜸
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "약 복용 시간 알람"
                 enableVibration(true)
@@ -119,19 +144,16 @@ class AppFcmService : FirebaseMessagingService() {
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 
-    /**
-     * 기존 일반 알림
-     */
     private fun sendNotification(title: String, messageBody: String) {
+        // 일반 알림 로직 (기존 유지)
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val channelId = "default_channel_id" // strings.xml 리소스 사용 권장
+        val channelId = "default_channel_id"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
@@ -144,16 +166,10 @@ class AppFcmService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "기본 알림",
-                NotificationManager.IMPORTANCE_HIGH
-            )
+            val channel = NotificationChannel(channelId, "기본 알림", NotificationManager.IMPORTANCE_HIGH)
             notificationManager.createNotificationChannel(channel)
         }
-
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 }
