@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.componentTheme
 
 @Composable
@@ -85,7 +86,7 @@ fun AppInputField(
                 if (!outlined) Modifier.border(1.dp, outlineColor, shape)
                 else Modifier
             )
-            .then(if (height != null) Modifier.height(height) else Modifier),
+            .then(if (height != null) Modifier.height(AppFieldHeight) else Modifier),
 
         shape = shape,
         singleLine = singleLine,

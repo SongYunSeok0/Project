@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shared.ui.theme.AppTheme
 
 /**
  * 선택 가능한 버튼 (AuthPrimaryButton 스타일과 최대한 유사)
@@ -63,7 +64,7 @@ fun AppSelectableButton(
     selectedTextColor: Color = MaterialTheme.colorScheme.primary,
     unselectedTextColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     borderColor: Color = MaterialTheme.colorScheme.primary,
-    useClickEffect: Boolean = true
+    useClickEffect: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -97,7 +98,7 @@ fun AppSelectableButton(
 
 // 일반적인 버튼. 사이즈는 조절 필요, 클릭하는 순간 컬러 바뀌는 이펙트만 있음,
 // isCircle = true 클릭 시 원형버튼 / 기본 사각 버튼
-@Composable
+/*@Composable
 fun AppButton(
     text: String = "",
     onClick: () -> Unit,
@@ -107,6 +108,7 @@ fun AppButton(
     shape: Shape = MaterialTheme.shapes.small,
     isCircle: Boolean = false,
     backgroundColor: Color? = null,
+    enabled: Boolean = true,
     textColor: Color? = null,
     textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     useClickEffect: Boolean = true,
@@ -166,7 +168,95 @@ fun AppButton(
             }
         }
     }
+}*/
+// 일반적인 버튼. 사이즈는 조절 필요, 클릭하는 순간 컬러 바뀌는 이펙트만 있음,
+// isCircle = true 클릭 시 원형버튼 / 기본 사각 버튼
+@Composable
+fun AppButton(
+    text: String = "",
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    width: Dp? = null,
+    height: Dp? = null,
+    shape: Shape = MaterialTheme.shapes.small,
+    isCircle: Boolean = false,
+    backgroundColor: Color? = null,
+    enabled: Boolean = true,
+    textColor: Color? = null,
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
+    useClickEffect: Boolean = true,
+    isOutlined: Boolean = false,
+    outlineColor: Color = MaterialTheme.colorScheme.primary,
+    content: (@Composable () -> Unit)? = null
+) {
+    AppTheme {
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+
+        val defaultBackground = backgroundColor ?: MaterialTheme.colorScheme.primary
+        val defaultTextColor = textColor ?: MaterialTheme.colorScheme.onPrimary
+
+        // 🔹 아웃라인이면 배경색은 배경색(흰색)
+        val baseBackground =
+            if (isOutlined) MaterialTheme.colorScheme.background else defaultBackground
+
+        val finalBackground = when {
+            !enabled -> baseBackground.copy(alpha = 0.38f) // 비활성화 시 투명도 조절
+            useClickEffect && isPressed -> defaultBackground.copy(alpha = 0.7f) // 클릭 시 효과
+            else -> baseBackground
+        }
+
+        val finalShape =
+            if (isCircle) RoundedCornerShape(50)
+            else shape
+
+        val finalTextColor = when {
+            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            isOutlined -> textColor ?: outlineColor
+            else -> defaultTextColor
+        }
+
+        Surface(
+            color = finalBackground,
+            shape = finalShape,
+            border = if (isOutlined) BorderStroke(1.5.dp, outlineColor) else null,
+            modifier = modifier
+                .then(if (height != null) Modifier.height(height) else Modifier)
+                .then(if (width != null) Modifier.width(width) else Modifier)
+                .clickable(
+                    enabled = enabled,
+                    interactionSource = interactionSource,
+                    indication = null
+                ) { onClick() }
+        ) {
+            Box(
+                modifier = modifier,
+                contentAlignment = Alignment.Center
+            ) {
+                if (content != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        content()
+                        if (text.isNotEmpty()) Spacer(Modifier.width(6.dp))
+                        if (text.isNotEmpty()) {
+                            Text(
+                                text,
+                                color = finalTextColor,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = text,
+                        color = finalTextColor,
+                        style = textStyle
+                    )
+                }
+            }
+        }
+    }
 }
+
 
 // chip 버튼
 @Composable
@@ -194,9 +284,9 @@ fun AppTagButton(
     val finalBackground = when {
         useFilterChipStyle -> {
             if (selected)
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
             else
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         }
         useClickEffect && isPressed -> {
             defaultBackground.copy(alpha = 0.7f)
@@ -217,9 +307,9 @@ fun AppTagButton(
     val finalTextColor = when {
         useFilterChipStyle -> {
             if (selected)
-                MaterialTheme.colorScheme.primary          // 선택 글씨색
+                MaterialTheme.colorScheme.onSurface          // 선택 글씨색
             else
-                MaterialTheme.colorScheme.surfaceVariant   // 미선택 글씨색
+                MaterialTheme.colorScheme.outline.copy(0.7f)   // 미선택 글씨색
         }
         else -> defaultTextColor
     }

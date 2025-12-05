@@ -35,6 +35,7 @@ val HeartRateLowColor = Color(0xFF3B82F6)
 val HeartRateNormalColor = Color(0xFF16A34A)
 val HeartRateWarningColor = Color(0xFFEF4444)
 val CompletionCautionColor = Color(0xFFF59E0B)
+val BookMarkColor = Color(0xFFFFC107)
 
 
 

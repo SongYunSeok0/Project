@@ -50,6 +50,7 @@ data class ComponentThemeColor(
     val heartRateNormal: Color,
     val heartRateWarning: Color,
     val completionCaution: Color,
+    val bookMarkColor: Color,
     )
 
 val LoginThemeColors = LoginThemeColor(
@@ -97,6 +98,7 @@ val ComponentThemeColors = ComponentThemeColor(
     heartRateNormal = HeartRateNormalColor,
     heartRateWarning = HeartRateWarningColor,
     completionCaution = CompletionCautionColor,
+    bookMarkColor = BookMarkColor,
     )
 
 // Login Local

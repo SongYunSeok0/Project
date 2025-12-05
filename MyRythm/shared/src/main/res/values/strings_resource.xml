@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="label"> *</string>
     <string name="default_notification_channel_id">default_channel_나중에바꿈</string>
     <string name="auth_id">아이디</string>
     <string name="auth_password">비밀번호</string>
@@ -35,6 +36,8 @@
     <string name="female">여성</string>
     <string name="email">이메일</string>
     <string name="guardianemail">보호자 이메일</string>
+    <string name="guardianname">보호자 이름</string>
+
     <string name="name">이름</string>
     <string name="birth">생년월일</string>
     <string name="birth_example">(예: 2000-10-10)</string>
@@ -106,7 +109,7 @@
     <string name="uncategorized">미분류</string>
     <string name="dose_count">복용 횟수</string>
     <string name="dose_record">복용 횟수</string>
-
+    <string name="bookmark">북마크</string>
     <string name="refresh">새로고침</string>
     <string name="normal">정상</string>
     <string name="low">낮음</string>
@@ -117,6 +120,7 @@
     <string name="user">님</string>
     <string name="cm">cm</string>
     <string name="kg">kg</string>
+    <string name="time_colon">:</string>
     <string name="editpage">내 정보 수정</string>
     <string name="heartrate">심박수</string>
     <string name="medicationinsight">복약 그래프</string>
@@ -172,8 +176,33 @@
     <string name="splashscreen">스플래시 이미지</string>
     <string name="favorites">즐겨찾기</string>
     <string name="remove_favorite">즐겨찾기 삭제</string>
+    <string name="medi_record">복약 기록</string>
+    <string name="device_register">기기 등록</string>
+    <string name="withdrawal">회원 탈퇴</string>
+    <string name="wifi_ssid">Wi-Fi SSID</string>
+    <string name="wifi_password">Wi-Fi Password</string>
+    <string name="wifi_connecting">기기 연결 중...</string>
+    <string name="register">등록하기</string>
+    <string name="withdrawal_confirm">탈퇴하기</string>
+    <string name="photo">사진</string>
+    <string name="detail_title">복용 상세</string>
+    <string name="regi_label">처방명</string>
+    <string name="med_name_label">약 이름</string>
+    <string name="meal_time_label">식사 관계</string>
+    <string name="memo_label">메모</string>
+    <string name="alarm_off">알람해제</string>
+    <string name="alarm_label">알람</string>
 
 
+    <string name="mypage_message_withdrawal_title">정말 탈퇴하시겠습니까?</string>
+    <string name="mypage_message_withdrawal">회원 탈퇴 시 모든 데이터가 삭제되며 복구가 불가능합니다.</string>
+    <string name="mypage_message_device_register">Wi-Fi 정보를 입력하면\n기기에 BLE로 전송됩니다.</string>
+    <string name="mypage_message_wifi_config_sent">Wi-Fi 정보 전송 완료!</string>
+    <string name="mypage_message_wifi_ble_connected_success">기기와 BLE 연결 성공!</string>
+    <string name="mypage_message_logout_success">로그아웃 되었습니다.</string>
+    <string name="mypage_message_logout_failed">로그아웃에 실패했습니다.</string>
+    <string name="mypage_message_withdrawal_success">회원 탈퇴가 완료되었습니다.</string>
+    <string name="mypage_message_withdrawal_failed">탈퇴 처리에 실패했습니다.</string>
     <string name="auth_message_password_missing">비밀번호를 잊으셨나요?</string>
     <string name="auth_message_testlogin">테스트 로그인으로 즉시 이동합니다.</string>
     <string name="auth_message_code_sent">인증번호가 전송되었습니다. 테스트 코드는 0000 입니다</string>
@@ -207,6 +236,25 @@
     <string name="scheduler_message_dose_all_completed">모든 복약을 완료했습니다</string>
     <string name="scheduler_message_dose_good_progress">좋습니다. 나머지도 잊지 마세요</string>
     <string name="scheduler_message_dose_low_progress">복약 주기를 지키면 리포트 정확도가 올라갑니다</string>
+    <string name="mypage_message_profile_info_notice">⚠️ 필수 정보를 입력해주세요.\n이름, 전화번호, 성별, 이메일은 한번만 입력 가능합니다.</string>
+
+    <string name="verification_success">인증 성공</string>
+    <string name="verification_failed">인증 실패</string>
+    <string name="save_failed">저장 실패</string>
+
+
+    <string name="mypage_message_saved">저장되었습니다</string>
+    <string name="mypage_message_code_sent">인증코드 전송됨</string>
+    <string name="mypage_message_email_duplicate">이미 사용 중인 이메일입니다</string>
+    <string name="mypage_message_enter_name">이름을 입력해주세요</string>
+    <string name="mypage_message_enter_phone">전화번호를 입력해주세요</string>
+    <string name="mypage_message_select_gender">성별을 선택해주세요</string>
+    <string name="mypage_message_enter_email">이메일을 입력해주세요</string>
+    <string name="mypage_message_email_verification_required">이메일 인증이 필요합니다</string>
+    <string name="mypage_message_enter_guardian_info">보호자 이름과 이메일을 입력해주세요</string>
+    <string name="mypage_message_guardian_verification_required">보호자 이메일 인증 필요</string>
+
+    <string name="error_profile_load_failed">프로필 불러오기 실패</string>
 
     <string name="auth_error_id_pw_blank">ID와 비밀번호를 입력해주세요.</string>
     <string name="auth_error_phone_blank">전화번호를 입력하세요</string>
@@ -220,13 +268,12 @@
     <string name="scheduler_error_recognition_no_result_title">영역 인식 결과 없음</string>
     <string name="scheduler_error_recognition_no_text_detail">선택한 영역에서 텍스트를 찾지 못했습니다.\n영역을 다시 지정하세요.</string>
     <string name="mypage_error_no_heart_history">"아직 심박수 기록이 없어요.</string>
+    <string name="mypage_error_qr_permission_required">카메라 권한이 필요합니다.</string>
+    <string name="mypage_error_qr_invalid_code">올바른 QR 코드가 아닙니다.</string>
+    <string name="mypage_error_qr_decode_failed">QR 해석 실패!</string>
+    <string name="mypage_error_qr_camera_init_failed">카메라 초기화 실패: %1$s</string>
 
 
-    <string name="detail_title">복용 상세</string>
-    <string name="regi_label">처방명</string>
-    <string name="med_name_label">약 이름</string>
-    <string name="meal_time_label">식사 관계</string>
-    <string name="memo_label">메모</string>
-    <string name="alarm_off">알람해제</string>
-    <string name="alarm_label">알람</string>
+
+
 </resources>

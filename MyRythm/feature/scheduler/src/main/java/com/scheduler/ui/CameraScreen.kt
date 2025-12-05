@@ -28,6 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shared.R
 import com.scheduler.ocr.CameraActivity
+import com.shared.ui.components.AppButton
+import com.shared.ui.theme.AppFieldHeight
+import com.shared.ui.theme.AppTheme
+import com.shared.ui.theme.authTheme
 import java.io.File
 import java.io.FileOutputStream
 
@@ -38,134 +42,137 @@ fun CameraScreen(
     onOpenOcr: (String) -> Unit = {},
     onOpenRegi: () -> Unit = {},
 ) {
-    val photoGuideText = stringResource(R.string.photo_guide)
-    val photoCaptureButtonText = stringResource(R.string.photo_capture_button)
-    val photoSelectFromGallery = stringResource(R.string.photo_select_from_gallery)
-    val manualEntry = stringResource(R.string.manual_entry)
-    val guideCaptureBrightAreaMessage = stringResource(R.string.scheduler_message_guide_capture_bright_area)
-    val guideCaptureCheckClarityMessage = stringResource(R.string.scheduler_message_guide_capture_check_clarity)
+    AppTheme {
+        val photoGuideText = stringResource(R.string.photo_guide)
+        val photoCaptureButtonText = stringResource(R.string.photo_capture_button)
+        val photoSelectFromGallery = stringResource(R.string.photo_select_from_gallery)
+        val manualEntry = stringResource(R.string.manual_entry)
+        val guideCaptureBrightAreaMessage = stringResource(R.string.scheduler_message_guide_capture_bright_area)
+        val guideCaptureCheckClarityMessage = stringResource(R.string.scheduler_message_guide_capture_check_clarity)
 
-    val context = LocalContext.current
+        val context = LocalContext.current
 
-    val takePhotoLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val path = result.data?.getStringExtra("imagePath") ?: return@rememberLauncherForActivityResult
+        val takePhotoLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val path = result.data?.getStringExtra("imagePath")
+                    ?: return@rememberLauncherForActivityResult
+                onOpenOcr(path)
+            }
+        }
+
+        val galleryPicker = rememberLauncherForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            uri ?: return@rememberLauncherForActivityResult
+            val path = copyUriToCache(context, uri) ?: return@rememberLauncherForActivityResult
             onOpenOcr(path)
         }
-    }
 
-    val galleryPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri ?: return@rememberLauncherForActivityResult
-        val path = copyUriToCache(context, uri) ?: return@rememberLauncherForActivityResult
-        onOpenOcr(path)
-    }
-
-    Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(inner)
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Spacer(Modifier.height(5.dp))
-
+        Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFE4F5F4))
-                    .padding(16.dp)
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(inner)
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text(
-                    photoGuideText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp)
-                Image(
-                    painter = painterResource(id = R.drawable.example),
-                    contentDescription = null,
+                Spacer(Modifier.height(5.dp))
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Text(guideCaptureBrightAreaMessage, color = Color(0xFF6F8BA4), fontSize = 14.sp)
-                Text(guideCaptureCheckClarityMessage, color = Color(0xFF6F8BA4), fontSize = 14.sp)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                    onClick = { takePhotoLauncher.launch(Intent(context, CameraActivity::class.java)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .shadow(1.dp, RoundedCornerShape(14.dp)),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor =  MaterialTheme.colorScheme.primary)
+                        .clip(MaterialTheme.shapes.large)
+                        .background(MaterialTheme.authTheme.authBackground.copy(0.2f))
+                        .padding(20.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.camera),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = ColorFilter.tint(Color.White)
+                    Text(
+                        photoGuideText,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.labelLarge,
                     )
-                    Spacer(Modifier.width(12.dp))
-                    Text(photoCaptureButtonText, color = Color.White, fontSize = 16.sp)
+                    Image(
+                        painter = painterResource(id = R.drawable.example),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(MaterialTheme.shapes.medium),
+                        contentScale = ContentScale.Crop
+                    )
+                    Text(
+                        guideCaptureBrightAreaMessage,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        guideCaptureCheckClarityMessage,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
 
-                // 갤러리
-                OutlinedButton(
-                    onClick = { galleryPicker.launch("image/*") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .shadow(1.dp, RoundedCornerShape(14.dp)),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    border = BorderStroke(1.66.dp,  MaterialTheme.colorScheme.primary)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.upload),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = ColorFilter.tint( MaterialTheme.colorScheme.primary)
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(photoSelectFromGallery, fontSize = 16.sp)
-                }
+                Spacer(Modifier.height(10.dp))
 
-                Button(
-                    onClick = onOpenRegi,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .shadow(1.dp, RoundedCornerShape(14.dp)),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor =  MaterialTheme.colorScheme.primary)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.camera),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = ColorFilter.tint(Color.White)
+                    AppButton(
+                        text = photoCaptureButtonText,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(AppFieldHeight),
+                        onClick = {
+                            takePhotoLauncher.launch(Intent(context, CameraActivity::class.java))
+                        },
+                        content = {
+                            Image(
+                                painter = painterResource(R.drawable.camera),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                            )
+                        }
                     )
-                    Spacer(Modifier.width(12.dp))
-                    Text(manualEntry, color = Color.White, fontSize = 16.sp)
+                    // 갤러리
+                    AppButton(
+                        text = photoSelectFromGallery,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(AppFieldHeight),
+                        isOutlined = true,
+                        onClick = { galleryPicker.launch("image/*") },
+                        content = {
+                            Image(
+                                painter = painterResource(R.drawable.upload),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                            )
+                        }
+                    )
+                    AppButton(
+                        text = manualEntry,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(AppFieldHeight),
+                        onClick = onOpenRegi,
+                        content = {
+                            Image(
+                                painter = painterResource(R.drawable.camera),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = ColorFilter.tint(Color.White)
+                            )
+                        }
+                    )
                 }
             }
         }
@@ -180,9 +187,3 @@ private fun copyUriToCache(context: Context, uri: Uri): String? = try {
     }
     outFile.absolutePath
 } catch (_: Exception) { null }
-
-@Preview(widthDp = 392, heightDp = 917, showBackground = true, backgroundColor = 0xFFFFFFFF)
-@Composable
-private fun CameraScreenPreview() {
-    CameraScreen()
-}

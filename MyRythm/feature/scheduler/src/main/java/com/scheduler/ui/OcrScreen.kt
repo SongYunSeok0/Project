@@ -1,21 +1,33 @@
 package com.scheduler.ui
 
 import android.view.ViewGroup
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import com.shared.R
 import com.scheduler.ocr.OcrCropView
+import com.shared.R
+import com.shared.ui.components.AppButton
+import com.shared.ui.theme.AppFieldHeight
 
 @Composable
 fun OcrScreen(
@@ -36,9 +48,22 @@ fun OcrScreen(
     if (showNoResult) {
         AlertDialog(
             onDismissRequest = { showNoResult = false },
-            confirmButton = { TextButton(onClick = { showNoResult = false }) { Text(confirmText) } },
-            title = { Text(errorRecognitionNoResultTitle) },
-            text  = { Text(errorRecognitionNoTextDetail) }
+            confirmButton = {
+                AppButton(
+                    text = confirmText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    onClick = { showNoResult = false }
+                )
+            },
+            title = { Text(errorRecognitionNoResultTitle,) },
+            text  = {
+                Text(
+                    errorRecognitionNoTextDetail,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         )
     }
 
@@ -54,8 +79,8 @@ fun OcrScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFF3F4F6))
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
@@ -72,43 +97,37 @@ fun OcrScreen(
             }
 
             // 확인 버튼
-            Button(
+            AppButton(
+                text = guideConfirmRecognitionAreaMessage,
+                textStyle = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(AppFieldHeight),
                 onClick = {
                     viewRef?.setOnOcrParsed { list ->
                         if (list.isEmpty()) {
                             showNoResult = true
                         } else {
-                            val names    = list.map { it.first }
+                            val names = list.map { it.first }
                             val maxTimes = list.mapNotNull { it.second }.maxOrNull()?.coerceIn(1, 6)
-                            val maxDays  = list.mapNotNull { it.third  }.maxOrNull()?.coerceAtLeast(1)
+                            val maxDays = list.mapNotNull { it.third }.maxOrNull()?.coerceAtLeast(1)
                             onConfirm(names, maxTimes, maxDays)
                         }
                     }
-                    viewRef?.runOcr { }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White
-                )
-            ) { Text(guideConfirmRecognitionAreaMessage) }
+                    viewRef?.runOcr {}
+                }
+            )
 
             // 다시 촬영 버튼
-            OutlinedButton(
-                onClick = onRetake,
+            AppButton(
+                text = photoRecaptureButtonText,
+                textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) { Text(photoRecaptureButtonText) }
+                    .height(AppFieldHeight),
+                isOutlined = true,
+                onClick = onRetake
+            )
         }
     }
 }
