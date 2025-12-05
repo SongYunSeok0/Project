@@ -11,14 +11,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import com.shared.R
 
 @Composable
-fun GuardianScreen(onStop: () -> Unit) {
+fun GuardianScreen(
+    username: String,
+    medicineLabel: String,
+    patientPhone: String,
+    onClose: () -> Unit
+) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -26,10 +38,8 @@ fun GuardianScreen(onStop: () -> Unit) {
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 🔼 위쪽 공간 (살짝만)
         Spacer(modifier = Modifier.height(100.dp))
 
-        // 🔼 약 + 글씨 영역을 위쪽에 고정하려면 weight를 제거하고 패딩만 둬라
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
@@ -37,30 +47,83 @@ fun GuardianScreen(onStop: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.pill),
                 contentDescription = null,
-                modifier = Modifier.size(200.dp) // 크기를 키워도 전체가 내려가지 않음
+                modifier = Modifier.size(200.dp)
             )
 
             Spacer(Modifier.height(20.dp))
 
+            // 안내 문구
             Text(
-                "약 드실 시간이에요!",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                text = "복약 여부 미확인",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A202C)
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(40.dp))
 
             Text(
-                "복약 시간입니다",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal
+                text = buildAnnotatedString {
+                    // username 강조
+                    pushStyle(
+                        SpanStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp   // 강조 글씨 크기
+                        )
+                    )
+                    append(username)
+                    pop()
+
+                    append(" 님의 ")
+
+                    // medicineLabel 강조
+                    pushStyle(
+                        SpanStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp   // 강조 글씨 크기
+                        )
+                    )
+                    append(medicineLabel)
+                    pop()
+                },
+                fontSize = 20.sp,  // 기본 글씨 크기
+                color = Color(0xFF2D3748)
+            )
+            Text(
+                text = "복용 여부가 아직 확인되지 않았습니다.",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF2D3748)
+            )
+            Text(
+                text = "확인이 필요합니다.",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF2D3748)
             )
         }
 
-        Spacer(Modifier.height(100.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = onStop,
+            onClick = {
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:$patientPhone")
+                }
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+        ) {
+            Text("$username 에게 전화하기", fontSize = 18.sp, color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onClose,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
@@ -68,13 +131,20 @@ fun GuardianScreen(onStop: () -> Unit) {
                 containerColor = Color(0xFFFF6B6B)
             )
         ) {
-            Text("알람 끄기", fontSize = 18.sp)
+            Text("닫기", fontSize = 18.sp, color = Color.White)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun GuardianScreenPreview() {
-    GuardianScreen(onStop = {})
+    GuardianScreen(
+        username = "홍길동",
+        medicineLabel = "타이레놀 500mg",
+        patientPhone = "01066232352",
+        onClose = {}
+    )
 }

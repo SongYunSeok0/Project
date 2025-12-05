@@ -97,7 +97,6 @@ class AlarmViewModel @Inject constructor(
 
                                 userId = history.userId
 
-                                // deviceId 체크 및 업데이트
                                 val isOwnDevice = history.deviceId == null
 
                                 val label = history.label
@@ -135,9 +134,13 @@ class AlarmViewModel @Inject constructor(
                     Log.e(tag, "User 찾음")
                     Log.e(tag, "  - user.id: ${user.id}")
                     Log.e(tag, "  - user.username: ${user.username}")
+                    Log.e(tag, "  - user.phoneNumber: ${user.phone}") // 필드명 맞게 조정
 
                     _uiState.update {
-                        it.copy(username = user.username ?: "사용자")
+                        it.copy(
+                            username = user.username ?: "사용자",
+                            phoneNumber = user.phone ?: ""   // ← 전화번호 저장
+                        )
                     }
 
                     Log.e(tag, "User 정보 업데이트 완료")
@@ -151,6 +154,7 @@ class AlarmViewModel @Inject constructor(
                 Log.e(tag, "  - takenAtTime: '${_uiState.value.takenAtTime}'")
                 Log.e(tag, "  - mealTime: '${_uiState.value.mealTime}'")
                 Log.e(tag, "  - note: '${_uiState.value.note}'")
+                Log.e(tag, "  - phoneNumber: '${_uiState.value.phoneNumber}'")
                 Log.e(tag, "  - isOwnDevice: ${_uiState.value.isOwnDevice}")
                 Log.e(tag, "========================================")
 
@@ -214,5 +218,6 @@ data class AlarmUiState(
     val takenAtTime: String = "",
     val mealTime: String = "",
     val note: String = "",
-    val isOwnDevice: Boolean = true
+    val isOwnDevice: Boolean = true,
+    val phoneNumber: String = ""
 )
