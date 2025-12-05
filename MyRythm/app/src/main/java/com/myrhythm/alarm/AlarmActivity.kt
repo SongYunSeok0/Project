@@ -104,28 +104,28 @@ class AlarmActivity : ComponentActivity() {
 //                      }
 //                )
 //            } else {
-                // 환자 화면
-                PatientScreen(
-                    username = uiState.username,
-                    medicineLabel = uiState.medicineLabel,
-                    takenAtTime = uiState.takenAtTime,
-                    mealTime = uiState.mealTime,
-                    note = uiState.note,
-                    isOwnDevice = uiState.isOwnDevice,
-                    onStop = {
-                        Log.i(tag, "환자 화면 - 복용 완료 버튼 클릭")
-                        viewModel.markAsTaken(currentPlanId)
-                    },
-                    onSnooze = {
-                        Log.i(tag, "환자 화면 - 미루기 버튼 클릭")
-                        viewModel.snooze(currentPlanId)
-                    },
-                    onDismiss = {
-                        Log.i(tag, "알람 끄기 버튼 클릭")
-                        stopAlarmAndFinish()
-                    }
-                )
-            }
+            // 환자 화면
+            PatientScreen(
+                username = uiState.username,
+                medicineLabel = uiState.medicineLabel,
+                takenAtTime = uiState.takenAtTime,
+                mealTime = uiState.mealTime,
+                note = uiState.note,
+                isOwnDevice = uiState.isOwnDevice,
+                onStop = {
+                    Log.i(tag, "환자 화면 - 복용 완료 버튼 클릭")
+                    viewModel.markAsTaken(currentPlanId)
+                },
+                onSnooze = {
+                    Log.i(tag, "환자 화면 - 미루기 버튼 클릭")
+                    viewModel.snooze(currentPlanId)
+                },
+                onDismiss = {
+                    Log.i(tag, "알람 끄기 버튼 클릭")
+                    stopAlarmAndFinish()
+                }
+            )
+        }
         //}
     }
 
