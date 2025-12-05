@@ -20,6 +20,7 @@ data class PlanEntity(
     val regihistoryId: Long?,
     val medName: String,
     val takenAt: Long?,
+    val exTakenAt: Long?,
     val mealTime: String?,
     val note: String?,
     val taken: Long?,

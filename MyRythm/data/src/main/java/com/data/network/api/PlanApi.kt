@@ -26,8 +26,18 @@ interface PlanApi {
         @Body body: PlanUpdateRequest
     ): PlanResponse
 
-//    @DELETE("medplan/{id}/delete/")
+    @DELETE("med/plan/{id}/delete/")
     suspend fun deletePlan(
+        @Path("id") planId: Long
+    ): Response<Unit>
+
+    @POST("med/plan/{id}/taken/")
+    suspend fun markAsTaken(
+        @Path("id") planId: Long
+    ): Response<Unit>
+
+    @POST("med/plan/{id}/snooze/")
+    suspend fun snoozePlan(
         @Path("id") planId: Long
     ): Response<Unit>
 }

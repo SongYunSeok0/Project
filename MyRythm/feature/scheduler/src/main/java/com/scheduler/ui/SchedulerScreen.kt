@@ -1,6 +1,7 @@
 package com.scheduler.ui
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,8 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.scheduler.viewmodel.PlanViewModel
 import com.shared.R
+import com.shared.navigation.MainRoute
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
@@ -57,11 +60,19 @@ data class MedItem(
 @Composable
 fun SchedulerScreen(
     userId: Long,
+    navController: NavController,
     vm: PlanViewModel = hiltViewModel(),
     onOpenRegi: () -> Unit = {}
 ) {
     val ui by vm.uiState.collectAsState()
     val items by vm.itemsByDate.collectAsState(initial = emptyMap())
+
+    BackHandler {
+        navController.navigate(MainRoute) {
+            popUpTo(MainRoute) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
 
     LaunchedEffect(userId) {
         if (userId > 0L) vm.load(userId)
@@ -435,9 +446,7 @@ private fun DetailRow(label: String, value: String) {
     }
 }
 
-// ─────────────────────────────────────────────
 //  Helpers
-// ─────────────────────────────────────────────
 private fun weekRangeOf(anchor: LocalDate): List<LocalDate> {
     val start = anchor.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
     return (0..6).map { start.plusDays(it.toLong()) }

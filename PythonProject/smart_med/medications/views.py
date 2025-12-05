@@ -1,7 +1,9 @@
 from rest_framework.views import APIView
+# decorators 임포트 제거 (클래스형 뷰에서는 불필요)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 import datetime
@@ -23,6 +25,7 @@ def to_ms(dt):
     if timezone.is_naive(dt):
         dt = timezone.make_aware(dt, datetime.timezone.utc)
     return int(dt.timestamp() * 1000)
+
 
 def to_dt(ms):
     if not ms:
@@ -137,6 +140,7 @@ class PlanListView(APIView):
                                 regihistory=regi,
                                 med_name=med_name,
                                 taken_at=plan_dt,
+                                ex_taken_at=plan_dt,  # 👈 추가: 최초 예정 시간 기록
                                 use_alarm=True,
                                 meal_time="after"
                             )
@@ -180,10 +184,13 @@ class PlanListView(APIView):
                 if regi_history is None:
                     return Response({"error": "no permission"}, status=status.HTTP_400_BAD_REQUEST)
 
+            taken_at_value = to_dt(v.get("takenAt"))
+
             plan = Plan.objects.create(
                 regihistory=regi_history,
                 med_name=v.get("medName"),
-                taken_at=to_dt(v.get("takenAt")),
+                taken_at=taken_at_value,
+                ex_taken_at=taken_at_value,  # 👈 추가: 최초 예정 시간 기록
                 meal_time=v.get("mealTime") or "before",
                 note=v.get("note"),
                 taken=to_dt(v.get("taken")),
@@ -191,39 +198,6 @@ class PlanListView(APIView):
             )
 
             return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
-
-
-# Plan GET + POST
-# class PlanListView(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request):
-#         plans = Plan.objects.filter(regihistory__user=request.user)
-#         return Response(PlanSerializer(plans, many=True).data, status=status.HTTP_200_OK)
-#
-#     def post(self, request):
-#         ser = PlanCreateIn(data=request.data)
-#         ser.is_valid(raise_exception=True)
-#         v = ser.validated_data
-#
-#         regi_history = None
-#         rid = v.get("regihistoryId")
-#         if rid is not None:
-#             regi_history = RegiHistory.objects.filter(id=rid, user=request.user).first()
-#             if regi_history is None:
-#                 return Response({"error": "no permission"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#         plan = Plan.objects.create(
-#             regihistory=regi_history,
-#             med_name=v.get("medName"),
-#             taken_at=to_dt(v.get("takenAt")),
-#             meal_time=v.get("mealTime") or "before",
-#             note=v.get("note"),
-#             taken=to_dt(v.get("taken")),
-#             use_alarm=v.get("useAlarm", True),
-#         )
-#
-#         return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
 
 
 # Plan DELETE
@@ -269,7 +243,7 @@ class TodayPlansView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-# ✅ [수정됨] PlanUpdateView (업데이트 시간 동기화 로직 포함)
+# [수정됨] PlanUpdateView (업데이트 시간 동기화 로직 포함)
 class PlanUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -290,7 +264,7 @@ class PlanUpdateView(APIView):
 
             old_taken_at = target_plan.taken_at
 
-            # ✅ 그룹 식별용 '기존 수정 시간' 저장
+            # 그룹 식별용 '기존 수정 시간' 저장
             old_updated_at = target_plan.updated_at
 
             # --- 타겟 먼저 업데이트 (updated_at 갱신됨) ---
@@ -304,12 +278,12 @@ class PlanUpdateView(APIView):
                 siblings = Plan.objects.filter(
                     regihistory=target_plan.regihistory,
                     taken_at=old_taken_at,
-                    updated_at=old_updated_at  # ✅ 같은 배치(Batch)로 수정된 애들만 찾음
+                    updated_at=old_updated_at  # 같은 배치(Batch)로 수정된 애들만 찾음
                 ).exclude(id=target_plan.id)
 
                 count = siblings.update(
                     taken_at=new_taken_at,
-                    # ✅ 형제들도 타겟과 똑같은 updated_at을 갖도록 강제 동기화
+                    # 형제들도 타겟과 똑같은 updated_at을 갖도록 강제 동기화
                     updated_at=target_plan.updated_at
                 )
                 print(f"[Plan Update] updated_at={old_updated_at} 그룹에서 {count}개 이동됨.")
@@ -321,3 +295,52 @@ class PlanUpdateView(APIView):
             target_plan.save()
 
         return Response(PlanSerializer(target_plan).data, status=status.HTTP_200_OK)
+
+
+# 1. 복약 완료 처리 (CBV 변경)
+class MarkAsTakenView(APIView):
+    """
+    해당 Plan을 '복약 완료' 처리합니다.
+    (taken 필드에 현재 시간 기록 -> 알람 추적 제외됨)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, plan_id):
+        plan = get_object_or_404(Plan, id=plan_id)
+
+        # 이미 먹었는지 확인
+        if plan.taken:
+            return Response({"message": "이미 복약 완료된 약입니다."}, status=status.HTTP_200_OK)
+
+        # 복약 시간 기록
+        plan.taken = timezone.now()
+        plan.save()
+
+        return Response({
+            "message": "복약 완료 처리되었습니다.",
+            "taken_time": plan.taken
+        }, status=status.HTTP_200_OK)
+
+
+# 2. 복약 미루기 (CBV 변경)
+class SnoozeMedicationView(APIView):
+    """
+    해당 Plan의 복용 예정 시간(taken_at)을 30분 뒤로 미룹니다.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, plan_id):
+        plan = get_object_or_404(Plan, id=plan_id)
+
+        # 이미 먹은 약은 미룰 수 없음
+        if plan.taken:
+            return Response({"error": "이미 복약한 약입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 30분 뒤로 업데이트
+        plan.taken_at = plan.taken_at + datetime.timedelta(minutes=30)
+        plan.save()
+
+        return Response({
+            "message": "알림이 30분 뒤로 미루어졌습니다.",
+            "new_taken_at": plan.taken_at
+        }, status=status.HTTP_200_OK)

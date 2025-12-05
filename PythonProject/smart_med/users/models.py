@@ -141,14 +141,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-class FcmToken(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    token = models.CharField(max_length=300)
-    updated_at = models.DateTimeField(auto_now=True)
+#fcm user테이블 속성으로 추가해서 삭제
+# class FcmToken(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     token = models.CharField(max_length=300)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-class EmailVerification(models.Model):
-    email = models.EmailField(unique=True)
-    code = models.CharField(max_length=6)
-    is_verified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    expire_at = models.DateTimeField()
+#이메일인증 캐싱처리로 삭제
+# class EmailVerification(models.Model):
+#     email = models.EmailField(unique=True)
+#     code = models.CharField(max_length=6)
+#     is_verified = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     expire_at = models.DateTimeField()

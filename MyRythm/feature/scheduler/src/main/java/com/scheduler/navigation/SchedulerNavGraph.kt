@@ -19,7 +19,7 @@ fun NavGraphBuilder.schedulerNavGraph(nav: NavHostController) {
         val uid = route.userId
         Log.e("SchedulerRoute", "uid = $uid")
 
-        SchedulerScreen(userId = uid.toLong())
+        SchedulerScreen(userId = uid.toLong(), nav)
     }
 
     composable<RegiRoute> { backStackEntry ->

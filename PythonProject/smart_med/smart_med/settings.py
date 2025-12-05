@@ -147,8 +147,25 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     ),
+
+    'UNAUTHENTICATED_USER': None,
 }
 
+#plan.task.py
+# CELERY_BEAT_SCHEDULE = {
+#     # 1.환자 복용 알림 (매 분 실행)
+#     'send-med-alarms-every-minute': {
+#         'task': 'medications.tasks.send_med_alarms_task',
+#         'schedule': crontab(minute='*'),
+#     },
+#
+#     # 2.보호자 미복용 알림 (매 분 실행)
+#     # 1분마다 돌면서 "30분이 지났는데 아직 안 먹은 약" 체크
+#     'check-missed-meds-every-minute': {
+#         'task': 'medications.tasks.check_missed_medication',
+#         'schedule': crontab(minute='*'),
+#     },
+# }
 
 # i18n
 LANGUAGE_CODE = "ko-kr"
@@ -159,8 +176,5 @@ USE_TZ = True
 STATIC_URL = "static/"
 ROOT_URLCONF = "smart_med.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 AUTH_USER_MODEL = "users.User"
