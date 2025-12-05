@@ -63,25 +63,4 @@ class SensorData(models.Model):
 
     def __str__(self):
         return f"SensorData {self.device.id} @ {self.collected_at}"
-
-
-import secrets
-from django.db import models
-
-
-
-class IntakeStatus(models.TextChoices):
-    TAKEN = "taken", "정상 복용"
-    WRONG = "wrong", "오복용"
-    MISSED = "missed", "미복용"
-    NONE = "none", "이벤트 아님"
-
-
-def generate_device_token():
-    """64글자짜리 안전한 랜덤 토큰 생성"""
-    return secrets.token_hex(32)  # 32바이트 → 64 hex 문자열
-
-
-def generate_device_uuid():
-    """디바이스 고유 UUID 생성"""
-    return secrets.token_hex(8)  # 16 hex 문자열 (간단한 UUID)
+    
