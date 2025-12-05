@@ -8,6 +8,10 @@ import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
 import com.data.network.api.ChatbotApi
 import com.data.network.api.HeartRateApi
+import com.data.network.api.StepApi
+import com.data.network.api.RegiHistoryApi
+import com.data.network.api.DeviceApi            // ★ 추가
+
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -23,34 +27,43 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
-import com.data.network.api.StepApi
-import com.data.network.api.RegiHistoryApi
-
 
 // ---- Qualifiers ----
-@Qualifier annotation class UserRetrofit
-@Qualifier annotation class NewsRetrofit
-@Qualifier annotation class MapRetrofit
+@Qualifier
+annotation class UserRetrofit
+@Qualifier
+annotation class NewsRetrofit
+@Qualifier
+annotation class MapRetrofit
 
-@Qualifier annotation class UserOkHttp
-@Qualifier annotation class NewsOkHttp
-@Qualifier annotation class MapOkHttp
+@Qualifier
+annotation class UserOkHttp
+@Qualifier
+annotation class NewsOkHttp
+@Qualifier
+annotation class MapOkHttp
 
-@Qualifier annotation class NewsAuth
-@Qualifier annotation class MapAuth
+@Qualifier
+annotation class NewsAuth
+@Qualifier
+annotation class MapAuth
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
     // ---- Common ----
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun provideLogging(): HttpLoggingInterceptor =
         HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun provideMoshi(): Moshi =
-        Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+        Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
 
     private fun OkHttpClient.Builder.commonTimeouts() = apply {
         connectTimeout(15, TimeUnit.SECONDS)
@@ -60,7 +73,9 @@ object NetworkModule {
     }
 
     // ---- Auth Interceptors (API Key) ----
-    @Provides @Singleton @NewsAuth
+    @Provides
+    @Singleton
+    @NewsAuth
     fun provideNewsAuthInterceptor(): Interceptor = Interceptor { chain ->
         val req = chain.request().newBuilder()
             .addHeader("X-Naver-Client-Id", BuildConfig.NAVER_NEWS_CLIENT_ID)
@@ -69,7 +84,9 @@ object NetworkModule {
         chain.proceed(req)
     }
 
-    @Provides @Singleton @MapAuth
+    @Provides
+    @Singleton
+    @MapAuth
     fun provideMapAuthInterceptor(): Interceptor = Interceptor { chain ->
         val req = chain.request().newBuilder()
             .addHeader("X-NCP-APIGW-API-KEY-ID", BuildConfig.NAVER_MAP_CLIENT_ID)
@@ -79,7 +96,9 @@ object NetworkModule {
     }
 
     // ---- OkHttp per API ----
-    @Provides @Singleton @UserOkHttp
+    @Provides
+    @Singleton
+    @UserOkHttp
     fun provideUserOkHttp(
         logging: HttpLoggingInterceptor,
         authHeaderInterceptor: AuthHeaderInterceptor
@@ -88,10 +107,11 @@ object NetworkModule {
             .commonTimeouts()
             .addInterceptor(authHeaderInterceptor) // Bearer
             .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
-
             .build()
 
-    @Provides @Singleton @NewsOkHttp
+    @Provides
+    @Singleton
+    @NewsOkHttp
     fun provideNewsOkHttp(
         logging: HttpLoggingInterceptor,
         @NewsAuth newsAuth: Interceptor
@@ -100,10 +120,11 @@ object NetworkModule {
             .commonTimeouts()
             .addInterceptor(newsAuth)
             .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
-
             .build()
 
-    @Provides @Singleton @MapOkHttp
+    @Provides
+    @Singleton
+    @MapOkHttp
     fun provideMapOkHttp(
         logging: HttpLoggingInterceptor,
         @MapAuth mapAuth: Interceptor
@@ -112,28 +133,42 @@ object NetworkModule {
             .commonTimeouts()
             .addInterceptor(mapAuth)
             .addInterceptor(logging.setLevel(HttpLoggingInterceptor.Level.HEADERS))
-
             .build()
 
     // ---- Retrofit per API ----
-    @Provides @Singleton @UserRetrofit
-    fun provideUserRetrofit(@UserOkHttp ok: OkHttpClient, moshi: Moshi): Retrofit =
+    @Provides
+    @Singleton
+    @UserRetrofit
+    fun provideUserRetrofit(
+        @UserOkHttp ok: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit =
         Retrofit.Builder()
             .baseUrl(BuildConfig.BACKEND_BASE_URL)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(ok)
             .build()
 
-    @Provides @Singleton @NewsRetrofit
-    fun provideNewsRetrofit(@NewsOkHttp ok: OkHttpClient, moshi: Moshi): Retrofit =
+    @Provides
+    @Singleton
+    @NewsRetrofit
+    fun provideNewsRetrofit(
+        @NewsOkHttp ok: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit =
         Retrofit.Builder()
             .baseUrl(BuildConfig.NAVER_NEWS_BASE_URL)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(ok)
             .build()
 
-    @Provides @Singleton @MapRetrofit
-    fun provideMapRetrofit(@MapOkHttp ok: OkHttpClient, moshi: Moshi): Retrofit =
+    @Provides
+    @Singleton
+    @MapRetrofit
+    fun provideMapRetrofit(
+        @MapOkHttp ok: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit =
         Retrofit.Builder()
             .baseUrl(BuildConfig.NAVER_MAP_BASE_URL)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
@@ -141,20 +176,23 @@ object NetworkModule {
             .build()
 
     // ---- APIs ----
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun provideUserApi(@UserRetrofit retrofit: Retrofit): UserApi =
         retrofit.create(UserApi::class.java)
 
-
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun provideMapApi(@MapRetrofit retrofit: Retrofit): MapApi =
         retrofit.create(MapApi::class.java)
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun providePlanApi(@UserRetrofit retrofit: Retrofit): PlanApi =
         retrofit.create(PlanApi::class.java)
 
-    @Provides @Singleton
+    @Provides
+    @Singleton
     fun provideChatbotApi(@UserRetrofit retrofit: Retrofit): ChatbotApi =
         retrofit.create(ChatbotApi::class.java)
 
@@ -167,15 +205,22 @@ object NetworkModule {
     @Singleton
     fun provideRegiHistoryApi(
         @UserRetrofit retrofit: Retrofit
-    ): RegiHistoryApi = retrofit.create(RegiHistoryApi::class.java)
-    //건강
+    ): RegiHistoryApi =
+        retrofit.create(RegiHistoryApi::class.java)
+
+    // 건강
     @Provides
     fun provideHealthApi(@UserRetrofit retrofit: Retrofit): HeartRateApi =
         retrofit.create(HeartRateApi::class.java)
-
 
     @Provides
     @Singleton
     fun provideStepApi(@UserRetrofit retrofit: Retrofit): StepApi =
         retrofit.create(StepApi::class.java)
+
+    // ★ IoT Device API
+    @Provides
+    @Singleton
+    fun provideDeviceApi(@UserRetrofit retrofit: Retrofit): DeviceApi =
+        retrofit.create(DeviceApi::class.java)
 }

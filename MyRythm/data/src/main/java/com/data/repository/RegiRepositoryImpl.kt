@@ -30,14 +30,14 @@ class RegiRepositoryImpl @Inject constructor(
         label: String?,
         issuedDate: String?,
         useAlarm: Boolean,
-        deviceId: String?
+        device: Long?
     ): Long {
         val req = RegiHistoryRequest(
             regiType = regiType,
             label = label,
             issuedDate = issuedDate,
             useAlarm = useAlarm,
-            deviceId = deviceId
+            device = device
         )
 
         val res = regiHistoryApi.createRegiHistory(req)
@@ -49,7 +49,7 @@ class RegiRepositoryImpl @Inject constructor(
             label = res.label,
             issuedDate = res.issuedDate,
             useAlarm = res.useAlarm,
-            deviceId = res.deviceId
+            device = res.device
         )
         regiHistoryDao.insert(entity)
 
@@ -66,7 +66,7 @@ class RegiRepositoryImpl @Inject constructor(
                     label = row.label,
                     issuedDate = row.issuedDate,
                     useAlarm = row.useAlarm,
-                    deviceId = row.deviceId
+                    device = row.device
                 )
             }
         }
@@ -77,7 +77,7 @@ class RegiRepositoryImpl @Inject constructor(
             label = regi.label,
             issuedDate = regi.issuedDate,
             useAlarm = regi.useAlarm,
-            deviceId = regi.deviceId
+            device = regi.device
         )
 
         regiHistoryApi.updateRegiHistory(regi.id, req)
@@ -89,7 +89,7 @@ class RegiRepositoryImpl @Inject constructor(
             label = regi.label,
             issuedDate = regi.issuedDate,
             useAlarm = regi.useAlarm,
-            deviceId = regi.deviceId
+            device = regi.device
         )
         regiHistoryDao.insert(entity)
     }
@@ -98,13 +98,12 @@ class RegiRepositoryImpl @Inject constructor(
         regiHistoryApi.deleteRegiHistory(id)
         regiHistoryDao.deleteById(id)
     }
-
-    override suspend fun createPlans(regihistoryId: Long, list: List<Plan>) {
+    override suspend fun createPlans(regihistoryId: Long?, list: List<Plan>) {
         val entities = mutableListOf<PlanEntity>()
 
         for (plan in list) {
             val req = PlanCreateRequest(
-                regihistoryId = regihistoryId,
+                regihistoryId = regihistoryId,      // PlanCreateRequest 도 Long? 이라 호환됨
                 medName = plan.medName,
                 takenAt = plan.takenAt,
                 mealTime = plan.mealTime,
@@ -117,7 +116,7 @@ class RegiRepositoryImpl @Inject constructor(
 
             entities += PlanEntity(
                 id = res.id,
-                regihistoryId = res.regihistoryId,
+                regihistoryId = res.regihistoryId,  // 서버에서 오는 값 사용
                 medName = res.medName,
                 takenAt = res.takenAt,
                 exTakenAt = res.exTakenAt,
@@ -130,6 +129,7 @@ class RegiRepositoryImpl @Inject constructor(
 
         planDao.insertAll(entities)
     }
+
 
     override fun observeAllPlans(userId: Long): Flow<List<Plan>> =
         planDao.getAllByUser(userId).map { list ->
@@ -165,19 +165,13 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    /** 🔥 새로 추가된 sync(userId) 구현 */
     override suspend fun syncRegiHistories(userId: Long) = withContext(Dispatchers.IO) {
+        val remoteRegi = regiHistoryApi.getRegiHistories()
+        val remotePlans = planApi.getPlans()
 
-        // 1. 서버에서 최신 데이터 가져오기
-        val remoteRegi = regiHistoryApi.getRegiHistories()   // List<RegiHistoryResponse>
-        val remotePlans = planApi.getPlans()                 // List<PlanResponse>
-
-        // 2. 기존 userId 데이터 삭제
-        //    regihistory와 plan 모두 삭제됨
         db.regiHistoryDao().deleteAllByUser(userId = userId)
         db.planDao().deleteAllByUser(userId = userId)
 
-        // 3. 최신 RegiHistory 저장
         val regiEntities = remoteRegi.map { res ->
             RegiHistoryEntity(
                 id = res.id,
@@ -186,13 +180,11 @@ class RegiRepositoryImpl @Inject constructor(
                 label = res.label,
                 issuedDate = res.issuedDate,
                 useAlarm = res.useAlarm,
-                deviceId = res.deviceId
+                device = res.device
             )
         }
-
         regiHistoryDao.insertAll(regiEntities)
 
-        // 4. 최신 Plan 저장
         val planEntities = remotePlans.map { res ->
             PlanEntity(
                 id = res.id,
@@ -206,7 +198,6 @@ class RegiRepositoryImpl @Inject constructor(
                 useAlarm = res.useAlarm
             )
         }
-
         planDao.insertAll(planEntities)
     }
 }

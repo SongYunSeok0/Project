@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from iot.models import Device
 from django.utils import timezone
 import datetime
 
@@ -65,7 +66,7 @@ class PlanCreateSerializer(serializers.ModelSerializer):
 
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)
-    exTakenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)  # 👈 추가
+    exTakenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     mealTime = serializers.CharField(source="meal_time", required=False, allow_null=True)
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     taken = serializers.IntegerField(write_only=True, required=False, allow_null=True)
@@ -77,7 +78,7 @@ class PlanCreateSerializer(serializers.ModelSerializer):
             "regihistoryId",
             "medName",
             "takenAt",
-            "exTakenAt",  # 👈 추가
+            "exTakenAt",
             "mealTime",
             "note",
             "taken",
@@ -95,12 +96,12 @@ class PlanCreateSerializer(serializers.ModelSerializer):
 
         # ms -> datetime 변환
         taken_at = validated_data.pop("takenAt", None)
-        ex_taken_at = validated_data.pop("exTakenAt", None)  # 👈 추가
+        ex_taken_at = validated_data.pop("exTakenAt", None)
         taken = validated_data.pop("taken", None)
 
         if taken_at:
             validated_data["taken_at"] = from_ms(taken_at)
-        if ex_taken_at:  # 👈 추가
+        if ex_taken_at:
             validated_data["ex_taken_at"] = from_ms(ex_taken_at)
         if taken:
             validated_data["taken"] = from_ms(taken)
@@ -112,7 +113,8 @@ class PlanCreateSerializer(serializers.ModelSerializer):
 class RegiHistorySerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="user.id", read_only=True)
     useAlarm = serializers.BooleanField(source="use_alarm")
-
+    # 🔹 device FK를 그대로 노출 (기본적으로 PK 값으로 직렬화됨)
+    #   JSON: "device": 3 형식
     class Meta:
         model = RegiHistory
         fields = [
@@ -122,12 +124,20 @@ class RegiHistorySerializer(serializers.ModelSerializer):
             "label",
             "issued_date",
             "useAlarm",
+            "device",      # ← 여기서부터는 전부 device 로 통일
         ]
 
 
 #  RegiHistory 생성 Serializer
 class RegiHistoryCreateSerializer(serializers.ModelSerializer):
     useAlarm = serializers.BooleanField(source="use_alarm", required=False, default=True)
+    # 🔹 클라이언트에서 "device": 3 으로 보내면 받는 필드
+    #   (모델의 device FK와 같은 이름, 같은 의미)
+    device = serializers.IntegerField(
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = RegiHistory
@@ -136,8 +146,22 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
             "label",
             "issued_date",
             "useAlarm",
+            "device",
         ]
 
     def create(self, validated_data):
         user = self.context["request"].user
-        return RegiHistory.objects.create(user=user, **validated_data)
+
+        # device는 모델 필드명이기도 하지만, 여기서는 int PK로 들어온다고 보고 직접 처리
+        device_id = validated_data.pop("device", None)
+        device = None
+        if device_id is not None:
+            device = Device.objects.filter(id=device_id, user=user).first()
+            if device is None:
+                raise serializers.ValidationError({"device": "유효하지 않은 기기입니다."})
+
+        return RegiHistory.objects.create(
+            user=user,
+            device=device,
+            **validated_data
+        )

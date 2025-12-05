@@ -1,6 +1,6 @@
 package com.domain.model
 
 data class Device(
-    val uuid: String,
-    val createdAt: String
+    val id: Long,
+    val name: String
 )

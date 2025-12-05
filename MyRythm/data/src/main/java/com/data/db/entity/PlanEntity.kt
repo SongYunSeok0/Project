@@ -1,19 +1,11 @@
+// data/src/main/java/com/data/db/entity/PlanEntity.kt
 package com.data.db.entity
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-@Entity(
-    tableName = "plan",
-    foreignKeys = [
-        ForeignKey(
-            entity = RegiHistoryEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["regihistoryId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["regihistoryId"])]
-)
+@Entity(tableName = "plan")
 data class PlanEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Long,
@@ -26,4 +18,3 @@ data class PlanEntity(
     val taken: Long?,
     val useAlarm: Boolean
 )
-

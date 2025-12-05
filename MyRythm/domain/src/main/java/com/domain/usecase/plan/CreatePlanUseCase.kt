@@ -1,28 +1,37 @@
 package com.domain.usecase.plan
 
-import com.domain.repository.PlanRepository
+import com.domain.model.Plan
+import com.domain.repository.RegiRepository
 import javax.inject.Inject
 
 class CreatePlanUseCase @Inject constructor(
-    private val repository: PlanRepository
+    private val repository: RegiRepository
 ) {
     suspend operator fun invoke(
         regihistoryId: Long?,
         medName: String,
-        takenAt: Long,
+        takenAt: Long?,
         mealTime: String?,
         note: String?,
         taken: Long?,
         useAlarm: Boolean
     ) {
-        repository.create(
+        repository.createPlans(
             regihistoryId = regihistoryId,
-            medName = medName,
-            takenAt = takenAt,
-            mealTime = mealTime,
-            note = note,
-            taken = taken,
-            useAlarm = useAlarm
+            list = listOf(
+                Plan(
+                    id = 0L,
+                    regihistoryId = regihistoryId,
+                    medName = medName,
+                    takenAt = takenAt,
+                    mealTime = mealTime,
+                    note = note,
+                    taken = taken,
+                    exTakenAt = takenAt,
+                    useAlarm = useAlarm
+                )
+            )
         )
+
     }
 }

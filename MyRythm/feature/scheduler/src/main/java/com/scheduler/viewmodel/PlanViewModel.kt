@@ -6,7 +6,7 @@ import com.domain.model.Plan
 import com.domain.model.RegiHistory
 import com.domain.usecase.plan.CreatePlanUseCase
 import com.domain.usecase.plan.DeletePlanUseCase
-import com.domain.usecase.plan.GetPlansUseCase
+import com.domain.usecase.plan.GetPlanUseCase
 import com.domain.usecase.plan.RefreshPlansUseCase
 import com.domain.usecase.plan.UpdatePlanUseCase
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
@@ -22,7 +22,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlanViewModel @Inject constructor(
-    private val getPlansUseCase: GetPlansUseCase,
+    private val getPlansUseCase: GetPlanUseCase,
     private val createPlanUseCase: CreatePlanUseCase,
     private val updatePlanUseCase: UpdatePlanUseCase,
     private val deletePlanUseCase: DeletePlanUseCase,

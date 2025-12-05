@@ -7,5 +7,5 @@ data class RegiHistory(
     val label: String?,
     val issuedDate: String?,
     val useAlarm: Boolean,
-    val deviceId: String?,
+    val device: Long?
 )

@@ -93,11 +93,11 @@ class AlarmViewModel @Inject constructor(
                                 Log.e(tag, "  - history.id: ${history.id}")
                                 Log.e(tag, "  - history.userId: ${history.userId}")
                                 Log.e(tag, "  - history.label: ${history.label}")
-                                Log.e(tag, "  - history.deviceId: ${history.deviceId}")
+                                Log.e(tag, "  - history.device: ${history.device}")
 
                                 userId = history.userId
 
-                                val isOwnDevice = history.deviceId == null
+                                val isOwnDevice = history.device == null
 
                                 val label = history.label
                                 if (!label.isNullOrBlank()) {
@@ -114,7 +114,7 @@ class AlarmViewModel @Inject constructor(
                                     }
                                 }
 
-                                Log.e(tag, "isOwnDevice: $isOwnDevice (deviceId가 null이면 true)")
+                                Log.e(tag, "isOwnDevice: $isOwnDevice (device null이면 true)")
                                 Log.e(tag, "RegiHistory 정보 업데이트 완료")
                             } else {
                                 Log.e(tag, "RegiHistory를 찾을 수 없음 - regihistoryId: $regihistoryId")
