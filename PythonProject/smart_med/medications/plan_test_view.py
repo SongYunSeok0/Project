@@ -199,7 +199,12 @@ def _process_missed_alarm(plan, is_force=False):
                 notification=messaging.Notification(
                     title="🚨 미복용 알림",
                     body=f"{patient.username}님이 [{plan.med_name}] 약을 아직 복용하지 않았습니다."
-                ),
+                ), data={  # 🔥 여기 추가
+                "type": "missed_alarm",
+                "plan_id": str(plan.id),
+                "user_name": patient.username,
+                "med_name": plan.med_name,
+            },
                 token=guardian.fcm_token,
             )
             messaging.send(message)
