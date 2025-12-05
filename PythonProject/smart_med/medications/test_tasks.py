@@ -13,17 +13,16 @@ User = get_user_model()
 
 
 # ====================================================
-# 1. [View] 환자 정시 복용 알림 postman용 테스트 (그룹화 적용)
+# 1. [View] 환자 정시 복용 알림 postman용 테스트
 # ====================================================
 def test_med_alarm_view(request):
     """
     [테스트용] tasks.py의 send_med_alarms_task 로직을 수동 실행합니다.
     현재 분(minute)에 복용해야 할 약을 찾아 환자에게 전체화면 알람(ALARM)을 보냅니다.
-    (동일 처방, 동일 시간은 그룹화하여 1건만 발송)
     """
-
-    # Firebase 초기화 (안전장치)
-    initialize_firebase()
+    # send_fcm_to_token 내부에서 initialize_firebase()가 호출되므로
+    # 여기서는 별도로 호출하지 않아도 안전하지만, 명시적으로 호출해도 무방합니다.
+    # initialize_firebase()
 
     now_utc = timezone.now()
     now_kst = timezone.localtime(now_utc)
@@ -41,59 +40,48 @@ def test_med_alarm_view(request):
         taken_at__lt=end_time
     ).select_related('regihistory__user')
 
-    # 3. ⭐ [핵심] 그룹화 로직 적용
-    grouped_plans = {}
-    for plan in targets:
-        # 같은 유저, 같은 처방(그룹), 같은 시간이라면 하나로 묶음
-        key = (plan.regihistory.user.id, plan.regihistory.id, plan.taken_at)
-
-        # 딕셔너리에 없으면 최초 등록 (이 녀석이 대표가 됨)
-        if key not in grouped_plans:
-            grouped_plans[key] = plan
-
-    # 4. 결과 로그 초기화
-    total_raw_count = targets.count()
-    total_group_count = len(grouped_plans)
-
+    # 3. 결과 로그 초기화
     result_log = [
         f"<b>서버 시간(KST):</b> {now_kst.strftime('%Y-%m-%d %H:%M:%S')}<br>",
-        f"<b>검색 범위(UTC):</b> {start_time.strftime('%H:%M')} ~ {end_time.strftime('%H:%M')}<br>",
-        f"<b>검색된 약 개수:</b> {total_raw_count}개 → <b>그룹화 후:</b> {total_group_count}건<hr>"
+        f"<b>검색 범위(UTC):</b> {start_time.strftime('%H:%M')} ~ {end_time.strftime('%H:%M')}<hr>"
     ]
 
     count = 0
+    total_count = targets.count()
 
-    if total_group_count == 0:
+    if total_count == 0:
         msg = "⚠️ 현재 시간에 복용해야 할 약이 없습니다."
         print(msg)
         result_log.append(msg)
     else:
-        # 5. 그룹별 대표 플랜으로 알림 전송
-        for plan in grouped_plans.values():
+        # 4. 개별 처리 로직 호출
+        for plan in targets:
             success, log_msg = _process_regular_alarm(plan)
             result_log.append(log_msg)
             if success:
                 count += 1
 
-    print(f"=== [TEST Regular] 종료: {count}건 전송 (그룹화 적용됨) ===\n")
-    return _build_response("🔔 환자 정시 알림 테스트 (그룹화)", now_kst, count, total_group_count, result_log)
+    print(f"=== [TEST Regular] 종료: {count}건 전송 ===\n")
+    return _build_response("🔔 환자 정시 알림 테스트", now_kst, count, total_count, result_log)
 
 
 # ====================================================
-# 2. [View] 보호자 미복용 알림 테스트 (30분 지연) - 그룹화 적용됨
+# 2. [View] 보호자 미복용 알림 테스트 (30분 지연)
 # ====================================================
 def test_missed_alarm_view(request):
     """
     [테스트용] tasks.py의 check_missed_medication 로직을 수동 실행합니다.
     30분이 지났는데 미복용(taken is NULL)인 건에 대해 보호자에게 알림을 보냅니다.
-    (동일 처방, 동일 시간은 그룹화하여 1건만 발송)
     """
+    # [수정됨] services.py의 초기화 함수 호출 (Firebase 연결 보장)
+    # 아래 로직에서 messaging.send()를 직접 쓰기 때문에 반드시 필요합니다.
     initialize_firebase()
 
     now = timezone.now()
     now_kst = timezone.localtime(now)
 
     # 1. 검색 범위: 30분 전 ~ 24시간 전
+    # end_time = now - timedelta(minutes=30)
     end_time = now - timedelta(minutes=30)
     start_time = now - timedelta(days=1)
 
@@ -105,45 +93,32 @@ def test_missed_alarm_view(request):
         taken__isnull=True
     ).select_related('regihistory__user')
 
-    # 3. ⭐ [추가됨] 미복용 알림 그룹화 로직 적용
-    grouped_missed_plans = {}
-    for plan in missed_plans:
-        # Key: (유저ID, 처방ID, 복용예정시간)
-        # 같은 시간에 먹어야 하는 약들은 하나의 알림으로 취급
-        key = (plan.regihistory.user.id, plan.regihistory.id, plan.taken_at)
-
-        if key not in grouped_missed_plans:
-            grouped_missed_plans[key] = plan
-
-    # 4. 결과 로그 초기화
-    total_raw_count = missed_plans.count()
-    total_group_count = len(grouped_missed_plans)
-
+    # 3. 결과 로그 초기화
     result_log = [
         f"<b>서버 시간(KST):</b> {now_kst.strftime('%Y-%m-%d %H:%M:%S')}<br>",
-        f"<b>검색 범위:</b> 30분 전 ~ 24시간 전<br>",
-        f"<b>검색된 미복용 약 개수:</b> {total_raw_count}개 → <b>그룹화 후(전송 대상):</b> {total_group_count}건<hr>"
+        f"<b>검색 범위:</b> 30분 전 ~ 24시간 전<hr>"
     ]
 
     count = 0
+    total_count = missed_plans.count()
 
     # URL 파라미터 ?force=true 가 있으면 캐시 무시하고 강제 전송
     is_force = request.GET.get('force') == 'true'
 
-    if total_group_count == 0:
+    if total_count == 0:
         msg = "✅ 미복용 상태인 건이 없거나, 아직 30분이 지나지 않았습니다."
         print(msg)
         result_log.append(msg)
     else:
-        # 5. 그룹별 대표 플랜으로 알림 전송 (반복 대상 변경: missed_plans -> grouped_missed_plans.values())
-        for plan in grouped_missed_plans.values():
+        # 4. 개별 처리 로직 호출
+        for plan in missed_plans:
             success, log_msg = _process_missed_alarm(plan, is_force)
             result_log.append(log_msg)
             if success:
                 count += 1
 
-    print(f"=== [TEST Missed] 종료: {count}건 전송 (그룹화 적용됨) ===\n")
-    return _build_response("🚨 미복용 알림(보호자) 테스트", now_kst, count, total_group_count, result_log)
+    print(f"=== [TEST Missed] 종료: {count}건 전송 ===\n")
+    return _build_response("🚨 미복용 알림(보호자) 테스트", now_kst, count, total_count, result_log)
 
 
 # ====================================================
@@ -164,33 +139,21 @@ def _process_regular_alarm(plan):
         # 한국 시간 변환 (로그 및 메시지용)
         plan_time_str = timezone.localtime(plan.taken_at).strftime('%H:%M')
 
-        # 그룹명(처방명) 사용. 없으면 약 이름 사용
-        label = plan.regihistory.label if plan.regihistory and plan.regihistory.label else plan.med_name
-
         if token:
             # ⭐ 핵심: type="ALARM"으로 보내서 전체 화면 알림 트리거
             # send_fcm_to_token 내부에서 initialize_firebase()를 수행하므로 안전함
-
-            # AppFcmService에서 필요한 상세 정보들 추가
-            data_payload = {
-                "type": "ALARM",
-                "plan_id": str(plan.id),
-                "click_action": "FLUTTER_NOTIFICATION_CLICK",
-                # 상세 정보 추가
-                "user_name": user.username,
-                "med_name": label,  # 약 이름 대신 그룹명 전달
-                "taken_at": plan_time_str,
-                "meal_time": plan.meal_time or "",
-                "note": plan.note or ""
-            }
-
             send_fcm_to_token(
                 token=token,
                 title="💊 약 드실 시간이에요!",
-                body=f"{user.username}님, [{label}] 복용 시간입니다. ({plan_time_str})",
-                data=data_payload
+                # [수정] plan.med_name 대신 regihistory.label 사용
+                body=f"{user.username}님, [{plan.regihistory.label}] 복용 시간입니다. ({plan_time_str})",
+                data={
+                    "type": "ALARM",  # 앱에서 AlarmActivity를 띄우는 신호
+                    "plan_id": str(plan.id),
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                }
             )
-            log = f"✅ <b>[전송 성공]</b> {user.username} / {label} ({plan_time_str})"
+            log = f"✅ <b>[전송 성공]</b> {user.username} / {plan.med_name} ({plan_time_str})"
             print(log)
             return True, log
         else:
@@ -211,10 +174,9 @@ def _process_missed_alarm(plan, is_force=False):
     """
     try:
         # 1. Redis 중복 체크
-        # 그룹화된 경우 대표 Plan ID 하나만 체크하면, 나머지 같은 그룹은 자연스럽게 처리된 것으로 간주됩니다.
         cache_key = f"missed_noti_sent:{plan.id}"
         if cache.get(cache_key) and not is_force:
-            msg = f"⏭️ [스킵] Plan {plan.id} (그룹 대표): 이미 알림 전송됨 (Redis 캐시)"
+            msg = f"⏭️ [스킵] Plan {plan.id}: 이미 알림 전송됨 (Redis 캐시)"
             print(msg)
             return False, msg
 
@@ -230,34 +192,27 @@ def _process_missed_alarm(plan, is_force=False):
         # 3. 보호자 유저 조회 (앱 사용자일 경우)
         guardian = User.objects.filter(email=guardian_email).first()
 
-        label = plan.regihistory.label if plan.regihistory and plan.regihistory.label else plan.med_name
-        plan_time_str = timezone.localtime(plan.taken_at).strftime('%H:%M')
-
         # 4. FCM 전송
         if guardian and guardian.fcm_token:
             # 직접 Message 객체를 생성할 때는 초기화가 필수 (위쪽 test_missed_alarm_view에서 호출됨)
             message = messaging.Message(
-                data={
-                    "type": "missed_alarm",
-                    "plan_id": str(plan.id),
-                    "user_name": patient.username,
-                    "med_name": label,
-                    "taken_at": plan_time_str,
-                    "is_guardian": "true"
-                },
                 notification=messaging.Notification(
                     title="🚨 미복용 알림",
-                    body=f"{patient.username}님이 [{label}] 약을 아직 복용하지 않았습니다."
-                ),
+                    body=f"{patient.username}님이 [{plan.med_name}] 약을 아직 복용하지 않았습니다."
+                ), data={  # 🔥 여기 추가
+                "type": "missed_alarm",
+                "plan_id": str(plan.id),
+                "user_name": patient.username,
+                "med_name": plan.med_name,
+            },
                 token=guardian.fcm_token,
             )
             messaging.send(message)
 
             # 5. 캐시 저장 (24시간 동안 유효)
-            # 대표 플랜 ID를 저장하여 다음 실행 시 동일 그룹(동일 처방, 동일 시간)의 중복 전송 방지
             cache.set(cache_key, "True", timeout=86400)
 
-            log = f"🚀 <b>[전송 성공]</b> 환자:{patient.username} → 보호자:{guardian_email} (Plan {plan.id})"
+            log = f"🚀 <b>[전송 성공]</b> 환자:{patient.username} → 보호자:{guardian_email}"
             print(log)
             return True, log
         else:
@@ -278,7 +233,7 @@ def _build_response(title, now_kst, success_count, total_count, logs):
     html_content = [
         f"<h1>{title} 결과</h1>",
         f"<p><b>서버 시간(KST):</b> {now_kst.strftime('%Y-%m-%d %H:%M:%S')}</p>",
-        f"<p><b>전송 성공:</b> {success_count}건 / 전체 {total_count}건 (그룹화됨)</p>",
+        f"<p><b>전송 성공:</b> {success_count}건 / 전체 {total_count}건</p>",
         f"<hr>",
         f"<br>".join(logs)
     ]

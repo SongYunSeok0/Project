@@ -31,8 +31,9 @@ class AppFcmService : FirebaseMessagingService() {
         Log.e(tag, "FCM 데이터 전체: ${msg.data}")
         Log.e(tag, "========================================")
 
-        val title = msg.notification?.title ?: msg.data["title"] ?: "알림"
-        val body = msg.notification?.body ?: msg.data["body"] ?: ""
+        // data payload 우선 사용 (notification 필드가 없으므로 data가 필수)
+        val title = msg.data["title"] ?: msg.notification?.title ?: "알림"
+        val body = msg.data["body"] ?: msg.notification?.body ?: ""
         val messageType = msg.data["type"] ?: "NORMAL"
 
         Log.i(tag, "FCM 수신: type=$messageType, title=$title")
@@ -41,35 +42,28 @@ class AppFcmService : FirebaseMessagingService() {
             // 풀스크린 알림 - 환자 복약 알림
             "ALARM", "med_alarm" -> {
                 val planId = msg.data["plan_id"] ?: ""
-
-                if (planId.isEmpty()) {
-                    Log.e(tag, "planId 누락!")
-                    return
-                }
+                if (planId.isEmpty()) return
 
                 Log.i(tag, "복약 알람 처리 - planId: $planId")
-                sendFullScreenAlarm(title, body, planId, isGuardian = false)
+                // ⭐ msg.data 전체를 넘김
+                sendFullScreenAlarm(title, body, planId, false, msg.data)
             }
 
             // 풀스크린 알림 - 보호자 미복용 알림
             "missed_alarm" -> {
                 val planId = msg.data["plan_id"] ?: ""
-
-                if (planId.isEmpty()) {
-                    Log.e(tag, "planId 누락!")
-                    return
-                }
+                if (planId.isEmpty()) return
 
                 Log.i(tag, "미복용 알람 처리 - planId: $planId")
-                sendFullScreenAlarm(title, body, planId, isGuardian = true)
+                // ⭐ msg.data 전체를 넘김
+                sendFullScreenAlarm(title, body, planId, true, msg.data)
             }
 
-            // 일반 알림 - 로그인, 공지사항 등
+            // 일반 알림
             "login_success", "notice", "NORMAL" -> {
                 sendNormalNotification(title, body)
             }
 
-            // 기타 타입은 일반 알림으로 처리
             else -> {
                 sendNormalNotification(title, body)
             }
@@ -78,29 +72,33 @@ class AppFcmService : FirebaseMessagingService() {
 
     /**
      * 풀스크린 알림 (복약 알림)
-     * - 화면 자동으로 켜짐
-     * - AlarmActivity 실행
-     * - 알람음 재생
+     * ⭐ dataMap 파라미터 추가: 서버에서 받은 모든 텍스트 데이터를 Intent에 넣기 위함
      */
     private fun sendFullScreenAlarm(
         title: String,
         messageBody: String,
         planId: String,
-        isGuardian: Boolean
+        isGuardian: Boolean,
+        dataMap: Map<String, String> // 추가된 파라미터
     ) {
         Log.i(tag, "풀스크린 알람 생성 - planId: $planId, 보호자: $isGuardian")
 
-        // AlarmActivity를 실행할 Intent
         val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
 
-            // ⭐ 대문자로 통일!
+            // 1. 필수 ID 넣기
             putExtra("PLAN_ID", planId.toLongOrNull() ?: 0L)
 
+            // 2. 타입 지정
             if (isGuardian) {
                 putExtra("type", "missed_alarm")
+            }
+
+            // 3. ⭐ [핵심 수정] 서버에서 받은 나머지 데이터(user_name, med_name 등)를 모두 Intent에 넣음
+            for ((key, value) in dataMap) {
+                putExtra(key, value)
             }
         }
 
@@ -112,6 +110,7 @@ class AppFcmService : FirebaseMessagingService() {
         )
 
         val channelId = "alarm_channel"
+        // 알림음 설정 (TYPE_ALARM 권장)
         val alarmSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
         val notification = NotificationCompat.Builder(this, channelId)
@@ -122,13 +121,12 @@ class AppFcmService : FirebaseMessagingService() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setSound(alarmSoundUri)
             .setAutoCancel(true)
-            .setFullScreenIntent(fullScreenPendingIntent, true) // 핵심: 잠금화면 위로 표시
+            .setFullScreenIntent(fullScreenPendingIntent, true) // 잠금화면 위로 즉시 실행
             .setContentIntent(fullScreenPendingIntent)
             .build()
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Android O 이상: 알림 채널 생성
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -144,16 +142,11 @@ class AppFcmService : FirebaseMessagingService() {
         }
 
         notificationManager.notify(planId.hashCode(), notification)
-        Log.i(tag, "풀스크린 알람 전송 완료")
+        Log.i(tag, "풀스크린 알람 전송 완료 (데이터 포함됨)")
     }
 
-    /**
-     * 일반 알림 (작업표시줄)
-     * - 화면 안 켜짐
-     * - MainActivity로 이동
-     * - 일반 알림음
-     */
     private fun sendNormalNotification(title: String, messageBody: String) {
+        // ... (기존과 동일)
         Log.i(tag, "일반 알림 생성: title=$title")
 
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -182,7 +175,6 @@ class AppFcmService : FirebaseMessagingService() {
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Android O 이상: 알림 채널 생성
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,

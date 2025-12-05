@@ -26,7 +26,7 @@ fun PatientScreen(
     takenAtTime: String,
     mealTime: String,
     note: String,
-    isOwnDevice: Boolean = true,
+    isOwnDevice: Boolean,
     onStop: () -> Unit,
     onSnooze: () -> Unit = {},
     onDismiss: () -> Unit = {}
@@ -212,6 +212,7 @@ fun PatientScreenPreview() {
         mealTime = "식후 30분",
         note = "물과 함께 복용",
         onStop = {},
-        onSnooze = {}
+        onSnooze = {},
+        isOwnDevice = true
     )
 }

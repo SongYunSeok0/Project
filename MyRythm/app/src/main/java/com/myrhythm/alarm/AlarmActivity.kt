@@ -13,8 +13,8 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
-import com.myrhythm.alarm.ui.PatientScreen
 import com.myrhythm.alarm.ui.GuardianScreen
+import com.myrhythm.alarm.ui.PatientScreen
 import com.myrhythm.viewmodel.AlarmViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -32,7 +32,7 @@ class AlarmActivity : ComponentActivity() {
 
         Log.i(tag, "onCreate 호출!")
 
-        // 0. 디버깅용: 받은 모든 데이터 로그 출력
+        // 0. 디버깅용: 받은 모든 Intent Extra 로그 출력
         intent.extras?.let { bundle ->
             for (key in bundle.keySet()) {
                 Log.d(tag, "Intent Key: $key, Value: ${bundle.get(key)}")
@@ -42,35 +42,35 @@ class AlarmActivity : ComponentActivity() {
         // 1. 화면 깨우기 & 잠금화면 위로 설정
         turnScreenOnAndKeyguard()
 
-        // 2. Intent 데이터 수신 - ⭐ 안전하게 받기 (String/Long, 대소문자 모두 체크)
+        // 2. Plan ID 파싱 (PLAN_ID / plan_id 모두 대응)
         currentPlanId = getSafePlanId()
 
-        Log.i(tag, "받은 데이터 - planId: $currentPlanId")
+        // 3. 보호자 여부 판정 (FCM data / Intent "type" 기준)
+        val type = intent.getStringExtra("type") ?: "ALARM"
+        val isGuardian = (type == "missed_alarm")
 
-        if (currentPlanId == 0L) {
-            Log.e(tag, "유효하지 않은 planId! (0L)")
+        Log.i(tag, "보호자 모드 판정: $isGuardian (type=$type)")
+        Log.i(tag, "받은 Plan ID: $currentPlanId")
+
+        // 4. 유효성 검사
+        //    - 환자 모드: planId 필수
+        //    - 보호자 모드: planId 없어도(0L) 화면은 띄울 수 있음
+        if (currentPlanId == 0L && !isGuardian) {
+            Log.e(tag, "유효하지 않은 planId! (0L) - 환자 모드이므로 종료")
             Toast.makeText(this, "알람 데이터 오류", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // ⭐ 보호자 여부 확인 로직 강화
-        // 서버에서 "type": "missed_alarm"과 "is_guardian": "true"를 보냄
-        val type = intent.getStringExtra("type")
-        val isGuardianParam = intent.getStringExtra("is_guardian")
+        // 5. 데이터 로드 (Plan ID가 있을 때만)
+        if (currentPlanId != 0L) {
+            viewModel.loadData(currentPlanId)
+        }
 
-        // type이 missed_alarm 이거나, is_guardian이 "true"이면 보호자 모드
-        val isGuardian = (type == "missed_alarm") || (isGuardianParam == "true")
-
-        Log.i(tag, "보호자 모드 판정: $isGuardian (type=$type, is_guardian=$isGuardianParam)")
-
-        // 3. 데이터 로드 - plan_id만 전달
-        viewModel.loadData(currentPlanId)
-
-        // 4. 소리 재생
+        // 6. 알람 소리 재생
         playAlarmSound()
 
-        // 5. 이벤트 관찰
+        // 7. ViewModel 이벤트 관찰
         lifecycleScope.launch {
             viewModel.eventFlow.collect { event ->
                 when (event) {
@@ -82,6 +82,7 @@ class AlarmActivity : ComponentActivity() {
                         ).show()
                         stopAlarmAndFinish()
                     }
+
                     is AlarmViewModel.AlarmEvent.Error -> {
                         Toast.makeText(
                             this@AlarmActivity,
@@ -93,28 +94,42 @@ class AlarmActivity : ComponentActivity() {
             }
         }
 
-        // 6. UI 표시 (Compose)
+        // 8. UI 표시 (Compose)
         setContent {
             val uiState by viewModel.uiState.collectAsState()
 
             if (isGuardian) {
-                // ⭐ 보호자 화면
-                Log.d(tag, "UI: 보호자 화면 표시")
+                // 🔵 보호자 화면
+                val intentUserName = intent.getStringExtra("user_name")
+                val intentMedName = intent.getStringExtra("med_name")
+
+                // Intent 데이터 우선 사용 → 없으면 ViewModel 값 → 그래도 없으면 기본값
+                val displayUsername =
+                    if (!intentUserName.isNullOrBlank()) intentUserName else uiState.username
+                val displayMedName =
+                    if (!intentMedName.isNullOrBlank()) intentMedName else uiState.medicineLabel
+
+                // 전화번호는 DB 기반 (없으면 빈 문자열)
+                val displayPhone = uiState.phoneNumber
+
+                Log.d(
+                    tag,
+                    "UI: 보호자 화면 표시 - 환자: $displayUsername / 약: $displayMedName / phone: $displayPhone"
+                )
+
                 GuardianScreen(
-                    username = uiState.username,
-                    medicineLabel = uiState.medicineLabel,
-                    patientPhone= uiState.phoneNumber,
+                    username = displayUsername,
+                    medicineLabel = displayMedName,
+                    patientPhone = displayPhone,
                     onClose = {
+                        Log.i(tag, "보호자 화면 - 닫기 버튼 클릭")
                         stopAlarmAndFinish()
                     }
                 )
-//                username: String,
-//                medicineLabel: String,
-//                patientPhone: String,
-//                onClose: () -> Unit
             } else {
-                // 환자 화면
+                // 🟢 환자 화면
                 Log.d(tag, "UI: 환자 화면 표시")
+
                 PatientScreen(
                     username = uiState.username,
                     medicineLabel = uiState.medicineLabel,
@@ -131,7 +146,7 @@ class AlarmActivity : ComponentActivity() {
                         viewModel.snooze(currentPlanId)
                     },
                     onDismiss = {
-                        Log.i(tag, "알람 끄기 버튼 클릭")
+                        Log.i(tag, "환자 화면 - 알람 끄기 버튼 클릭")
                         stopAlarmAndFinish()
                     }
                 )
@@ -139,24 +154,22 @@ class AlarmActivity : ComponentActivity() {
         }
     }
 
-    // FCM 데이터(String)와 내부 Intent(Long) 호환을 위한 안전한 ID 추출 함수
+    /**
+     * Intent 에서 PLAN_ID / plan_id 를 안전하게 읽는 헬퍼
+     */
     private fun getSafePlanId(): Long {
-        // 1. Long 타입으로 시도 ("PLAN_ID")
         var id = intent.getLongExtra("PLAN_ID", 0L)
         if (id != 0L) return id
 
-        // 2. Long 타입으로 시도 ("plan_id") - 소문자 키
         id = intent.getLongExtra("plan_id", 0L)
         if (id != 0L) return id
 
-        // 3. String 타입으로 받아서 변환 시도 (FCM data payload는 주로 String임)
         val idStr = intent.getStringExtra("plan_id") ?: intent.getStringExtra("PLAN_ID")
         return idStr?.toLongOrNull() ?: 0L
     }
 
     private fun turnScreenOnAndKeyguard() {
         Log.i(tag, "화면 깨우기 시작")
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -167,7 +180,6 @@ class AlarmActivity : ComponentActivity() {
             )
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         Log.i(tag, "화면 깨우기 완료")
     }
 
@@ -186,9 +198,7 @@ class AlarmActivity : ComponentActivity() {
 
     private fun stopAlarmAndFinish() {
         Log.i(tag, "알람 정지 및 종료")
-
         ringtone?.stop()
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             finishAndRemoveTask()
         } else {
