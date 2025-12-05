@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.shared.R
 
 @Composable
-fun AlarmScreen(onStop: () -> Unit) {
+fun GuardianScreen(onStop: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -27,7 +27,7 @@ fun AlarmScreen(onStop: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 🔼 위쪽 공간 (살짝만)
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(100.dp))
 
         // 🔼 약 + 글씨 영역을 위쪽에 고정하려면 weight를 제거하고 패딩만 둬라
         Column(
@@ -37,7 +37,7 @@ fun AlarmScreen(onStop: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.pill),
                 contentDescription = null,
-                modifier = Modifier.size(120.dp) // 크기를 키워도 전체가 내려가지 않음
+                modifier = Modifier.size(200.dp) // 크기를 키워도 전체가 내려가지 않음
             )
 
             Spacer(Modifier.height(20.dp))
@@ -57,7 +57,7 @@ fun AlarmScreen(onStop: () -> Unit) {
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))  // 🔽 아래 영역을 밀어버리는 역할
+        Spacer(Modifier.height(100.dp))
 
         Button(
             onClick = onStop,
@@ -75,6 +75,6 @@ fun AlarmScreen(onStop: () -> Unit) {
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun AlarmScreenPreview() {
-    AlarmScreen(onStop = {})
+fun GuardianScreenPreview() {
+    GuardianScreen(onStop = {})
 }
