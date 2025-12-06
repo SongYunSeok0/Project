@@ -1,11 +1,10 @@
 # iot/views.py
+
 import secrets
 from pathlib import Path
 from django.db import transaction
 from django.http import FileResponse
 from django.utils import timezone
-from smart_med.utils.time_utils import to_ms, from_ms, parse_ts
-from smart_med.utils.data_utils import to_bool
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -14,23 +13,23 @@ from rest_framework.views import APIView
 
 from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
+
+from smart_med.utils.time_utils import to_ms, from_ms, parse_ts
+from smart_med.utils.data_utils import to_bool
 from smart_med.utils.make_qr import create_qr
 
 from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
 
 
-# ==========================================
-# Ingest API
-# ==========================================
+# ---------------------------------------------------------
+# 디바이스가 상태 센서 데이터를 서버로 업로드하는 ingest API
+# ---------------------------------------------------------
 @ingest_docs
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def ingest(request):
     p = request.data
 
-    # --------------------------
-    # Header 인증 (CommandView와 동일하게)
-    # --------------------------
     uuid = request.headers.get("X-DEVICE-UUID")
     token = request.headers.get("X-DEVICE-TOKEN")
 
@@ -45,24 +44,12 @@ def ingest(request):
     if device.device_token != token:
         return Response({"error": "invalid token"}, status=401)
 
-    # --------------------------
-    # Payload 파싱
-    # --------------------------
-
     is_opened = to_bool(p.get("is_opened") or p.get("isOpened"))
     is_time = to_bool(p.get("is_time") or p.get("isTime"))
     bpm_raw = p.get("bpm") or p.get("Bpm")
-
-    timestamp = parse_ts(
-        p.get("timestamp") or p.get("collected_at")
-    )
-
-    # user 보정 (등록되지 않은 기기면 user_id = None)
+    timestamp = parse_ts(p.get("timestamp") or p.get("collected_at"))
     user_id = device.user_id
 
-    # --------------------------
-    # Status 판정
-    # --------------------------
     if is_time and is_opened:
         status_code = IntakeStatus.TAKEN
     elif not is_time and is_opened:
@@ -72,9 +59,6 @@ def ingest(request):
     else:
         status_code = IntakeStatus.NONE
 
-    # --------------------------
-    # DB 저장
-    # --------------------------
     with transaction.atomic():
         SensorData.objects.create(
             device=device,
@@ -85,7 +69,6 @@ def ingest(request):
             status=status_code,
         )
 
-        # BPM 저장
         if bpm_raw is not None:
             try:
                 bpm = int(bpm_raw)
@@ -98,7 +81,6 @@ def ingest(request):
             except:
                 pass
 
-    # 마지막 통신 시간 갱신
     device.last_connected_at = timezone.now()
     device.save(update_fields=["last_connected_at"])
 
@@ -114,9 +96,9 @@ def ingest(request):
     })
 
 
-# ==========================================
-# Command Polling
-# ==========================================
+# ---------------------------------------------------------
+# IoT 기기가 명령을 가져가는 Command Polling API
+# ---------------------------------------------------------
 @command_docs
 class CommandView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -139,9 +121,9 @@ class CommandView(APIView):
         return Response({"time": True})
 
 
-# ==========================================
-# QR Code
-# ==========================================
+# ---------------------------------------------------------
+# 특정 디바이스의 QR 코드 이미지를 반환하는 API
+# ---------------------------------------------------------
 @qr_docs
 class QRCodeView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -160,9 +142,9 @@ class QRCodeView(APIView):
         return FileResponse(open(filepath, "rb"), content_type="image/png")
 
 
-# ==========================================
-# Register Device
-# ==========================================
+# ---------------------------------------------------------
+# 현재 로그인한 사용자 계정에 기기를 등록(연결)하는 API
+# ---------------------------------------------------------
 @register_device_docs
 class RegisterDeviceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -183,7 +165,6 @@ class RegisterDeviceView(APIView):
         if device.device_token != token:
             return Response({"error": "invalid token"}, status=401)
 
-        # user 연결
         device.user = request.user
         if device_name:
             device.device_name = device_name
@@ -196,3 +177,14 @@ class RegisterDeviceView(APIView):
             "device_name": device.device_name,
             "user_id": request.user.id
         })
+
+
+# ---------------------------------------------------------
+# 현재 로그인한 사용자가 등록한 IoT 기기 목록을 반환하는 API
+# ---------------------------------------------------------
+class MyDeviceListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        devices = Device.objects.filter(user=request.user).values("id", "device_name")
+        return Response(list(devices))

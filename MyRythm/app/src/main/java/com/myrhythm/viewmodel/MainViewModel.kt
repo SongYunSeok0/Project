@@ -10,7 +10,7 @@ import com.domain.model.RegiHistory
 import com.domain.repository.PlanRepository
 import com.domain.repository.RegiRepository
 import com.domain.sharedvm.MainVMContract
-import com.domain.usecase.plan.GetPlansUseCase
+import com.domain.usecase.plan.GetPlanUseCase
 import com.domain.usecase.plan.UpdatePlanUseCase
 import com.domain.usecase.push.GetFcmTokenUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -29,7 +30,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val getPlansUseCase: GetPlansUseCase,
+    private val getPlansUseCase: GetPlanUseCase,
     private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase,
     private val tokenStore: TokenStore,
     private val updatePlanUseCase: UpdatePlanUseCase,
@@ -39,27 +40,21 @@ class MainViewModel @Inject constructor(
     private val planRepo: PlanRepository,
 ) : ViewModel(), MainVMContract {
 
-    // 다음 복용 시간 ("HH:mm")
     private val _nextTime = MutableStateFlow<String?>(null)
     val nextTime = _nextTime.asStateFlow()
 
-    // 다음 약 라벨
     private val _nextLabel = MutableStateFlow<String?>(null)
     override val nextLabel = _nextLabel.asStateFlow()
 
-    // 남은 시간 ("00:12")
     private val _remainText = MutableStateFlow<String?>(null)
     override val remainText = _remainText.asStateFlow()
 
-    // 다음 복용할 Plan
     private val _nextPlan = MutableStateFlow<Plan?>(null)
     override val nextPlan = _nextPlan.asStateFlow()
 
-    // RegiHistory와 Plan을 모두 보관
     private val _histories = MutableStateFlow<List<RegiHistory>>(emptyList())
     private val _plans = MutableStateFlow<List<Plan>>(emptyList())
 
-    // 미리보기 연장 시간
     private val _previewExtendMinutes = MutableStateFlow(0)
     override val previewExtendMinutes = _previewExtendMinutes.asStateFlow()
 
@@ -80,12 +75,18 @@ class MainViewModel @Inject constructor(
             if (userId != null && userId > 0) {
                 viewModelScope.launch {
                     Log.d("MainVM", "동기화 시작")
-                    syncData(userId)
 
-                    // 👇 Flow에서 실제 데이터가 올 때까지 기다리기
+                    val syncOk = syncData(userId)
+                    Log.d("MainVM", "동기화 완료, 성공 여부 = $syncOk")
+
+                    if (!syncOk) {
+                        Log.e("MainVM", "동기화 실패 → load() 생략")
+                        return@launch
+                    }
+
                     Log.d("MainVM", "첫 데이터 대기 중...")
-                    getPlansUseCase(userId).first()  // 첫 번째 emit 대기
-                    getRegiHistoriesUseCase().first()  // 첫 번째 emit 대기
+                    getPlansUseCase(userId).first()
+                    getRegiHistoriesUseCase().first()
 
                     Log.d("MainVM", "데이터 확인 완료, load 시작")
                     load(userId)
@@ -103,21 +104,38 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun syncData(userId: Long) {
-        viewModelScope.launch {
-            try {
-                regiRepo.syncRegiHistories(userId)
-                planRepo.syncPlans(userId)
-            } catch (e: Exception) {
-                Log.e("MainVM", "동기화 실패", e)
-            }
+    /**
+     * 동기화: suspend + HttpException 요약 로그
+     */
+    private suspend fun syncData(userId: Long): Boolean {
+        return try {
+            Log.d("MainVM", "syncData 호출 - userId=$userId")
+
+            regiRepo.syncRegiHistories(userId)
+            planRepo.syncPlans(userId)
+
+            Log.d("MainVM", "syncData 성공")
+            true
+        } catch (e: HttpException) {
+            val code = e.code()
+            val raw = e.response()?.errorBody()?.string()
+            val head = raw?.take(800) // 너무 긴 Django HTML을 처음 800자만 출력
+            Log.e(
+                "MainVM",
+                "동기화 실패 (HttpException) code=$code head=$head",
+                e
+            )
+            false
+        } catch (e: Exception) {
+            Log.e("MainVM", "동기화 실패 (기타 예외)", e)
+            false
         }
     }
 
     private fun startTimeUpdater() {
         viewModelScope.launch {
             while (true) {
-                updateRemainTime()  // 👈 먼저 즉시 실행
+                updateRemainTime()
                 kotlinx.coroutines.delay(1_000L)
             }
         }
@@ -141,30 +159,24 @@ class MainViewModel @Inject constructor(
         _remainText.value = String.format("%02d:%02d", hours, mins)
     }
 
-
-    // RegiHistory 먼저 로딩
     private fun load(userId: Long) {
-        // RegiHistory 구독
         getRegiHistoriesUseCase()
             .onEach { histories ->
-                Log.d("MainVM", "RegiHistory 업데이트: ${histories.size}개") // 👈 추가
+                Log.d("MainVM", "RegiHistory 업데이트: ${histories.size}개")
                 _histories.value = histories
                 updateNextPlan(_plans.value, histories)
             }
             .launchIn(viewModelScope)
 
-        // Plan 구독
         getPlansUseCase(userId)
             .onEach { plans ->
-                Log.d("MainVM", "Plan 업데이트: ${plans.size}개") // 👈 추가
+                Log.d("MainVM", "Plan 업데이트: ${plans.size}개")
                 _plans.value = plans
                 updateNextPlan(plans, _histories.value)
             }
             .launchIn(viewModelScope)
     }
 
-
-    // 약 시간 연장 적용
     override suspend fun extendPlanMinutesSuspend(minutes: Int): Boolean {
         val plan = _nextPlan.value ?: return false
         val oldTime = plan.takenAt ?: return false
@@ -175,12 +187,10 @@ class MainViewModel @Inject constructor(
             ?.toLongOrNull()
             ?: return false
 
-        // ✅ 같은 시간대의 모든 Plan 찾기
         val samePlans = _plans.value.filter {
             it.takenAt == oldTime && it.taken == null
         }
 
-        // ✅ 모든 Plan 업데이트
         var allSuccess = true
         samePlans.forEach { p ->
             val updated = p.copy(takenAt = newTime)
@@ -191,7 +201,6 @@ class MainViewModel @Inject constructor(
         return allSuccess
     }
 
-    // 약 복용 완료 처리
     override fun finishPlan() {
         val plan = _nextPlan.value ?: return
         val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull() ?: return
@@ -201,13 +210,11 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             updatePlanUseCase(userId, updated)
-            // load는 자동으로 Flow에서 업데이트됨
         }
     }
 
-    // 다음 복용 일정 계산
     private fun updateNextPlan(plans: List<Plan>, histories: List<RegiHistory>) {
-        Log.d("MainVM", "updateNextPlan 호출 - plans: ${plans.size}, histories: ${histories.size}") // 👈 로그 추가
+        Log.d("MainVM", "updateNextPlan 호출 - plans: ${plans.size}, histories: ${histories.size}")
 
         val now = System.currentTimeMillis()
 
@@ -219,12 +226,11 @@ class MainViewModel @Inject constructor(
             }
             .minByOrNull { it.takenAt!! }
 
-        Log.d("MainVM", "다음 복용: $next") // 👈 로그 추가
+        Log.d("MainVM", "다음 복용: $next")
 
         _nextPlan.value = next
 
         if (next != null) {
-            // ✅ 수정: regihistoryId로 매칭되는 history를 직접 찾기
             val matchedHistory = histories.find { it.id == next.regihistoryId }
             val label = matchedHistory?.label ?: "복용 알림"
 
@@ -247,7 +253,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // FCM 토큰 등록
     private fun initFcmToken() {
         viewModelScope.launch {
             val token = getFcmTokenUseCase()

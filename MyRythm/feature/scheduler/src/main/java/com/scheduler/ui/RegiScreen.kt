@@ -26,10 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.domain.model.Device
 import com.domain.model.Plan
 import com.scheduler.viewmodel.RegiViewModel
+import com.shared.R
 import java.text.SimpleDateFormat
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -69,6 +70,7 @@ fun RegiScreen(
                     Toast.makeText(context, "등록이 완료되었습니다!", Toast.LENGTH_SHORT).show()
                     onCompleted()
                 }
+
                 "등록 실패" ->
                     Toast.makeText(context, "등록에 실패했습니다.", Toast.LENGTH_SHORT).show()
             }
@@ -78,6 +80,15 @@ fun RegiScreen(
     LaunchedEffect(regihistoryId) {
         viewModel.initRegi(regihistoryId)
     }
+
+    // IoT 기기 로드
+    LaunchedEffect(Unit) {
+        viewModel.loadMyDevices()
+    }
+
+    // ViewModel에서 도메인 Device 리스트 받기
+    val devices by viewModel.devices.collectAsState()
+    var selectedDevice by remember { mutableStateOf<Long?>(null) }
 
     val diseaseText = stringResource(R.string.disease)
     val supplementText = stringResource(R.string.supplement)
@@ -149,7 +160,6 @@ fun RegiScreen(
         }
     }
 
-    // 탭 변경 시 기본값
     LaunchedEffect(tab) {
         if (!initialized) return@LaunchedEffect
         intakeTimes.clear()
@@ -162,14 +172,14 @@ fun RegiScreen(
         }
     }
 
-    // dose 바뀔 때 intakeTimes 길이 맞추기
     LaunchedEffect(dose) {
         if (intakeTimes.size < dose) {
             repeat(dose - intakeTimes.size) { intakeTimes.add("") }
         } else if (intakeTimes.size > dose) {
             repeat(intakeTimes.size - dose) {
                 intakeTimes.removeAt(intakeTimes.lastIndex)
-            }        }
+            }
+        }
     }
 
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
@@ -183,7 +193,6 @@ fun RegiScreen(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             // 탭
             TabRow(
                 selectedTabIndex = if (tab == RegiTab.DISEASE) 0 else 1,
@@ -348,6 +357,17 @@ fun RegiScreen(
                 )
             }
 
+            // IoT 기기 선택 드롭다운
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("연동할 IoT 기기", color = SectionTitle)
+
+                DeviceDropdown(
+                    devices = devices,
+                    selectedDevice = selectedDevice,
+                    onSelectedChange = { selectedDevice = it }
+                )
+            }
+
             // 알람
             Column {
                 Text("알람 설정", color = SectionTitle)
@@ -450,7 +470,8 @@ fun RegiScreen(
                         label = label,
                         issuedDate = startDay,
                         useAlarm = useAlarm,
-                        plans = plans
+                        plans = plans,
+                        device = selectedDevice
                     )
                 },
                 modifier = Modifier
@@ -604,5 +625,74 @@ private fun SegChip(text: String, selected: Boolean, modifier: Modifier, onClick
             text,
             color = if (selected) Color.White else Color(0xFF6F8BA4)
         )
+    }
+}
+
+/* IoT 기기 선택 드롭다운 (도메인 Device 사용) */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeviceDropdown(
+    devices: List<Device>,
+    selectedDevice: Long?,
+    onSelectedChange: (Long?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val selectedLabel = remember(devices, selectedDevice) {
+        devices.firstOrNull { it.id == selectedDevice }?.name
+    }
+
+    val label = when {
+        devices.isEmpty() -> "연결된 기기 없음"
+        selectedLabel != null -> selectedLabel
+        else -> "기기를 선택하세요"
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            if (devices.isNotEmpty()) {
+                expanded = !expanded
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        TextField(
+            value = label,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            enabled = devices.isNotEmpty(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            colors = ExposedDropdownMenuDefaults.textFieldColors()
+        )
+
+        if (devices.isNotEmpty()) {
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("연동하지 않음") },
+                    onClick = {
+                        onSelectedChange(null)
+                        expanded = false
+                    }
+                )
+
+                devices.forEach { device ->
+                    DropdownMenuItem(
+                        text = { Text(device.name) },
+                        onClick = {
+                            onSelectedChange(device.id)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }

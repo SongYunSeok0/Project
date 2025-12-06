@@ -4,6 +4,7 @@ package com.data.di
 import com.data.repository.AuthRepositoryImpl
 import com.data.repository.BLERepositoryImpl
 import com.data.repository.ChatbotRepositoryImpl
+import com.data.repository.DeviceRepositoryImpl
 import com.data.repository.FavoriteRepositoryImpl
 import com.data.repository.HeartRateRepositoryImpl
 import com.data.repository.InquiryRepositoryImpl
@@ -17,6 +18,7 @@ import com.data.repository.UserRepositoryImpl
 import com.domain.repository.AuthRepository
 import com.domain.repository.BLERepository
 import com.domain.repository.ChatbotRepository
+import com.domain.repository.DeviceRepository
 import com.domain.repository.FavoriteRepository
 import com.domain.repository.HeartRateRepository
 import com.domain.repository.InquiryRepository
@@ -82,4 +84,8 @@ abstract class DataRepositoryBindsModule {
 
     @Binds
     abstract fun bindBLERepository(impl: BLERepositoryImpl): BLERepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDeviceRepository(impl: DeviceRepositoryImpl): DeviceRepository
 }

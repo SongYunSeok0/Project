@@ -2,8 +2,8 @@ import time
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-MODEL_PATH = r"C:\Users\user\Desktop\qwen_sft\merged_qwen25-3b-med"
-#MODEL_PATH = r"C:\Users\s\Desktop\qwen_sft\merged_qwen25-3b-med"
+#MODEL_PATH = r"C:\Users\user\Desktop\qwen_sft\merged_qwen25-3b-med"
+MODEL_PATH = r"C:\Users\s\Desktop\qwen_sft\merged_qwen25-3b-med"
 
 _tokenizer = None
 _model = None

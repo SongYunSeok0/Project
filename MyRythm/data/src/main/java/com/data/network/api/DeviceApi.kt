@@ -3,6 +3,8 @@ package com.data.network.api
 import com.data.network.dto.device.RegisterDeviceRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
+import com.data.network.dto.device.DeviceDto
+import retrofit2.http.GET
 
 interface DeviceApi {
 
@@ -11,4 +13,6 @@ interface DeviceApi {
     suspend fun registerDevice(
         @Body request: RegisterDeviceRequest
     )
+    @GET("devices/")
+    suspend fun getMyDevices(): List<DeviceDto>
 }

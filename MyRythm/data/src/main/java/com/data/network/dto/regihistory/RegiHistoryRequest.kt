@@ -9,5 +9,5 @@ data class RegiHistoryRequest(
     @Json(name = "label") val label: String?,
     @Json(name = "issued_date") val issuedDate: String?,
     @Json(name = "useAlarm") val useAlarm: Boolean,
-    @Json(name = "device_id") val deviceId: String?
+    @Json(name = "device") val device: Long?
 )
