@@ -12,11 +12,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Device, SensorData, IntakeStatus
+from .models import Device, SensorData, IntakeStatus, generate_device_uuid, generate_device_token
 from health.models import HeartRate
 from smart_med.utils.make_qr import create_qr
 
-from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
+from .docs import ingest_docs, command_docs, register_device_docs
 
 
 # ==========================================
@@ -140,27 +140,6 @@ class CommandView(APIView):
 
 
 # ==========================================
-# QR Code
-# ==========================================
-@qr_docs
-class QRCodeView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def get(self, request, device_uuid):
-        try:
-            device = Device.objects.get(device_uuid=device_uuid)
-        except Device.DoesNotExist:
-            return Response({"error": "Device not found"}, status=404)
-
-        filepath = Path(create_qr(device.device_uuid, device.device_token))
-
-        if not filepath.exists():
-            return Response({"error": "QR not found"}, status=404)
-
-        return FileResponse(open(filepath, "rb"), content_type="image/png")
-
-
-# ==========================================
 # Register Device
 # ==========================================
 @register_device_docs
@@ -195,4 +174,33 @@ class RegisterDeviceView(APIView):
             "device_uuid": device.device_uuid,
             "device_name": device.device_name,
             "user_id": request.user.id
+        })
+
+
+class CreateDeviceView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # 1) uuid/token 자동 생성
+        uuid = generate_device_uuid()
+        token = generate_device_token()
+
+        # 2) Device DB 생성
+        device = Device.objects.create(
+            device_uuid=uuid,
+            device_token=token,
+        )
+
+        # 3) QR 코드 생성
+        qr_path = create_qr(uuid, token)
+
+        # 4) 접근 가능한 URL로 변환
+        qr_url = f"/media/qr/{uuid}.png"
+
+        return Response({
+            "device_id": device.id,
+            "device_uuid": uuid,
+            "device_token": token,
+            "qr_url": qr_url,
+            "qr_file": qr_path,
         })

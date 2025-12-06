@@ -1,48 +1,83 @@
-version: "3.9"
-
 services:
   web:
-    build: .
+    build:
+      context: .
+      target: web
     container_name: django_web
     command: >
       sh -c "python manage.py migrate &&
-             gunicorn smart_med.wsgi:application --bind 0.0.0.0:8000"
+      gunicorn smart_med.asgi:application -k uvicorn.workers.UvicornWorker --workers 4 --preload --timeout 60 --bind 0.0.0.0:8000"
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"
+      - "C:/Users/user/Desktop/qwen_sft:/models"
     ports:
       - "8000:8000"
     env_file:
       - .env
     depends_on:
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
 
   celery:
-    build: .
+    build:
+      context: .
+      target: celery
     container_name: celery_worker
-    command: celery -A smart_med worker --loglevel=info
+    command: >
+      sh -c "
+        sleep 10 &&
+        celery -A smart_med worker --loglevel=info
+      "
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"
-      - "C:/Users/user/Desktop/qwen_sft:/models"
     env_file:
       - .env
     depends_on:
-      - redis
-      - web
+      web:
+        condition: service_started
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
 
   celery_beat:
-    build: .
+    build:
+      context: .
+      target: celery_beat
     container_name: celery_beat
-    command: celery -A smart_med beat --loglevel=info
+    command: >
+      sh -c "
+        sleep 10 &&
+        celery -A smart_med beat --loglevel=info
+      "
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"
     env_file:
       - .env
     depends_on:
-      - redis
-      - web
+      web:
+        condition: service_started
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: postgres_server
+    environment:
+      POSTGRES_DB: RNB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7
@@ -50,12 +85,5 @@ services:
     ports:
       - "6379:6379"
 
-  nginx:
-    image: nginx:latest
-    container_name: nginx_server
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - web
+volumes:
+  pgdata:

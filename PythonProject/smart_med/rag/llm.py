@@ -2,8 +2,8 @@ import time
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-MODEL_PATH = r"C:\Users\user\Desktop\qwen_sft\merged_qwen25-3b-med"
-#MODEL_PATH = r"C:\Users\s\Desktop\qwen_sft\merged_qwen25-3b-med"
+#MODEL_PATH = r"C:\Users\user\Desktop\qwen_sft\merged_qwen25-3b-med"
+MODEL_PATH = "/models/merged_qwen25-3b-med"
 
 _tokenizer = None
 _model = None
@@ -18,7 +18,6 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def _load_model():
     global _tokenizer, _model
 
-    # 이미 한 번 로드됐으면 다시 로드 안 함
     if _model is not None and _tokenizer is not None:
         return _tokenizer, _model
 
@@ -28,30 +27,29 @@ def _load_model():
     _tokenizer = AutoTokenizer.from_pretrained(
         MODEL_PATH,
         trust_remote_code=True,
+        local_files_only=True,   # ← 추가
     )
 
-    # pad_token 없으면 eos로 맞춰 두기 (generate 시 경고 방지)
     if _tokenizer.pad_token is None:
         _tokenizer.pad_token = _tokenizer.eos_token
 
     if DEVICE == "cuda":
-        # GPU + float16
         _model = AutoModelForCausalLM.from_pretrained(
             MODEL_PATH,
             dtype=torch.float16,
             trust_remote_code=True,
+            local_files_only=True,  # ← 추가
         ).to(DEVICE)
     else:
-        # CPU 환경이면 float32
         _model = AutoModelForCausalLM.from_pretrained(
             MODEL_PATH,
             dtype=torch.float32,
             trust_remote_code=True,
+            local_files_only=True,  # ← 추가
         )
 
-    _model.eval()  # 추론 모드
+    _model.eval()
 
-    # 실제로 어디에 올라갔는지 확인용 로그
     try:
         any_param = next(_model.parameters())
         print(f"Qwen device: {any_param.device}, dtype: {any_param.dtype}")
@@ -60,6 +58,7 @@ def _load_model():
 
     print(f"Qwen 로드 완료, elapsed={time.time() - t0:.2f}s")
     return _tokenizer, _model
+
 
 
 def _build_alpaca_prompt(instruction: str) -> str:

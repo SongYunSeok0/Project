@@ -16,6 +16,7 @@ django-environ
 # === Async Tasks ===
 celery
 redis
+django-celery-results
 
 # === Notifications ===
 firebase-admin
@@ -26,9 +27,12 @@ pytesseract
 
 # === Utilities ===
 requests
+qrcode[pil]
 
+# === AI / RAG ===
 pgvector
 sentence-transformers
+
+# === Web Server ===
 gunicorn
-django-celery-results
-qrcode[pil]
+uvicorn[standard]
