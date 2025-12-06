@@ -114,6 +114,10 @@ class BLERegisterViewModel @Inject constructor(
         )
     }
 
+    fun resetAll() {
+        _state.value = BLERegisterState()
+    }
+
 }
 
 

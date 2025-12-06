@@ -23,27 +23,53 @@ void setup() {
     digitalWrite(GREEN_LED, LOW);
     noTone(BUZZER);
 
+    // ---------------------------------
+    // 🔧 저장된 설정 로드
+    // ---------------------------------
     DeviceConfig::load();
 
+    Serial.println("===== STORED DEVICE CONFIG =====");
+
+    Serial.print("UUID: ");
+    Serial.println(DeviceConfig::uuid);
+    
+    Serial.print("TOKEN: ");
+    Serial.println(DeviceConfig::token);
+    
+    Serial.print("SSID: ");
+    Serial.println(DeviceConfig::ssid);
+    
+    Serial.print("PW: ");
+    Serial.println(DeviceConfig::pw);
+    
+    Serial.println("================================");
+    
+
+    // ---------------------------------
+    // 등록 여부 확인
+    // ---------------------------------
     if (!DeviceConfig::isRegistered()) {
         Serial.println("🔵 등록 필요 → BLE 등록 모드");
         startBLEConfig();
         return;
     }
-    
+
+    // ---------------------------------
+    // WiFi 정보 확인
+    // ---------------------------------
     if (!DeviceConfig::hasWiFiInfo()) {
         Serial.println("⚠ WiFi 정보 없음 → BLE 등록 필요");
         startBLEConfig();
         return;
     }
-    
+
     Serial.println("🟢 등록됨 → WiFi 연결 시도");
     connectWiFi();
     initSensors();
     initHttpTask();
     SlotLED::init();
-
 }
+
 
 
 void loop() {
