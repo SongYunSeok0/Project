@@ -32,8 +32,6 @@ class RegiHistory(models.Model):
     # 병명 (기존 disase_name)
     label = models.CharField(
         max_length=100,
-        blank=True,
-        null=True,
         verbose_name="병명"
     )
     # 발행 날짜
@@ -62,9 +60,7 @@ class Plan(models.Model):
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     regihistory = models.ForeignKey(
         RegiHistory,
-        on_delete=models.CASCADE,
-        null=True,  # ← 필수!!
-        blank=True  # ← 필수!!
+        on_delete=models.CASCADE
     )
 
     med_name = models.CharField(null=True, max_length=120)
