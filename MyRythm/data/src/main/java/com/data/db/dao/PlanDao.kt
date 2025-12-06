@@ -1,6 +1,10 @@
+// data/src/main/java/com/data/db/dao/PlanDao.kt
 package com.data.db.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.data.db.entity.PlanEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -16,12 +20,13 @@ interface PlanDao {
     @Query("SELECT * FROM `plan` WHERE regihistoryId = :regihistoryId")
     fun getByRegiHistory(regihistoryId: Long): Flow<List<PlanEntity>>
 
-    @Query("SELECT * FROM `plan` WHERE id = :planId")  // ⭐ plan으로 통일
+    @Query("SELECT * FROM `plan` WHERE id = :planId")
     fun getPlanById(planId: Long): Flow<PlanEntity?>
 
+    // 🔹 regihistory.userId 를 기준으로 join
     @Query(
         """
-        SELECT `plan`.* 
+        SELECT `plan`.*
         FROM `plan`
         INNER JOIN `regihistory`
             ON `plan`.regihistoryId = `regihistory`.id
@@ -34,7 +39,8 @@ interface PlanDao {
         """
         DELETE FROM `plan`
         WHERE regihistoryId IN (
-            SELECT id FROM `regihistory` WHERE userId = :userId
+            SELECT id FROM `regihistory`
+            WHERE userId = :userId
         )
         """
     )

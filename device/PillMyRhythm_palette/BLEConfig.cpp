@@ -28,15 +28,23 @@ class ConfigCallbacks : public BLECharacteristicCallbacks {
         String v = ch->getValue();
         if (v.length() == 0) return;
 
-        Serial.println("📩 BLE 설정 JSON 수신:");
+        Serial.println("📩 BLE 설정 JSON 원본 수신:");
         Serial.println(v);
 
         StaticJsonDocument<256> doc;
         auto err = deserializeJson(doc, v);
         if (err) {
-            Serial.println("❌ JSON 파싱 실패");
+            Serial.print("❌ JSON 파싱 실패: ");
+            Serial.println(err.f_str());
             return;
         }
+
+        // ⭐ 파싱된 값 상세 출력
+        Serial.println("🔍 파싱된 BLE 설정 내용:");
+        Serial.print("  uuid  = "); Serial.println(doc["uuid"].as<String>());
+        Serial.print("  token = "); Serial.println(doc["token"].as<String>());
+        Serial.print("  ssid  = "); Serial.println(doc["ssid"].as<String>());
+        Serial.print("  pw    = "); Serial.println(doc["pw"].as<String>());
 
         // ⭐ 기존 등록 정보 삭제
         Serial.println("🧹 기존 DeviceConfig 초기화");
@@ -50,11 +58,13 @@ class ConfigCallbacks : public BLECharacteristicCallbacks {
 
         DeviceConfig::save();
 
-        Serial.println("✔ BLE 설정 저장 완료!");
+        Serial.println("💾 DeviceConfig 저장 완료!");
+        Serial.println("🟢 BLE 설정 완료 → 재부팅 준비됨");
 
         bleConfigDone = true;
     }
 };
+
 
 void startBLEConfig() {
     Serial.println("🔵 BLE 등록 모드 시작");

@@ -31,10 +31,4 @@ object DataRepositoryProvidesModule {
     fun provideMapRepository(api: MapApi): MapRepository =
         MapRepositoryImpl(getMapDataRemote = { api.getMapData() })
 
-    @Provides
-    @Singleton
-    fun provideDeviceRepository(
-        api: DeviceApi
-    ): DeviceRepository = DeviceRepositoryImpl(api)
-
 }

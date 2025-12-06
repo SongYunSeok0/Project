@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from django.utils import timezone
-import datetime
+from iot.models import Device
 
 from .models import RegiHistory, Plan
 from smart_med.utils.time_utils import to_ms, from_ms
@@ -10,7 +9,11 @@ from smart_med.utils.time_utils import to_ms, from_ms
 class PlanSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     regihistoryId = serializers.SerializerMethodField()
-    regihistory_label = serializers.CharField(source="regihistory.label", read_only=True, default=None)
+    regihistory_label = serializers.CharField(
+        source="regihistory.label",
+        read_only=True,
+        default=None
+    )
     medName = serializers.CharField(source="med_name")
     takenAt = serializers.SerializerMethodField()
     exTakenAt = serializers.SerializerMethodField()
@@ -34,24 +37,30 @@ class PlanSerializer(serializers.ModelSerializer):
         ]
 
     def get_regihistoryId(self, obj):
+        # 정석적으로는 항상 존재하지만, 방어적으로 처리
         return obj.regihistory.id if obj.regihistory else None
 
     def get_takenAt(self, obj):
-        return to_ms(obj.taken_at)
+        # taken_at 이 None 일 수 있으므로 방어
+        return to_ms(obj.taken_at) if obj.taken_at is not None else None
 
     def get_exTakenAt(self, obj):
-        return to_ms(obj.ex_taken_at)
+        return to_ms(obj.ex_taken_at) if obj.ex_taken_at is not None else None
 
     def get_taken(self, obj):
-        return to_ms(obj.taken)
+        return to_ms(obj.taken) if obj.taken is not None else None
 
 
 #  Plan 생성용 입력 Serializer (Raw 입력)
 class PlanCreateIn(serializers.Serializer):
-    regihistoryId = serializers.IntegerField(required=False, allow_null=True)
+    # RegiHistory는 반드시 있어야 한다고 가정 → 필수
+    regihistoryId = serializers.IntegerField(required=True, allow_null=False)
 
     medName = serializers.CharField()
-    takenAt = serializers.IntegerField(required=False, allow_null=True)
+
+    # 복용 예정 시간은 필수 (비워두면 400 발생)
+    takenAt = serializers.IntegerField(required=True, allow_null=False)
+
     mealTime = serializers.CharField(required=False, allow_null=True)
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     taken = serializers.IntegerField(required=False, allow_null=True)
@@ -64,12 +73,38 @@ class PlanCreateSerializer(serializers.ModelSerializer):
     regihistoryId = serializers.IntegerField(write_only=True)
 
     medName = serializers.CharField(source="med_name")
-    takenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)
-    exTakenAt = serializers.IntegerField(write_only=True, required=False, allow_null=True)  # 👈 추가
-    mealTime = serializers.CharField(source="meal_time", required=False, allow_null=True)
-    note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    taken = serializers.IntegerField(write_only=True, required=False, allow_null=True)
-    useAlarm = serializers.BooleanField(source="use_alarm", required=False, default=True)
+
+    # 여기서도 takenAt을 필수로 강제
+    takenAt = serializers.IntegerField(
+        write_only=True,
+        required=True,
+        allow_null=False,
+    )
+    exTakenAt = serializers.IntegerField(
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    mealTime = serializers.CharField(
+        source="meal_time",
+        required=False,
+        allow_null=True
+    )
+    note = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+    taken = serializers.IntegerField(
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    useAlarm = serializers.BooleanField(
+        source="use_alarm",
+        required=False,
+        default=True
+    )
 
     class Meta:
         model = Plan
@@ -77,7 +112,7 @@ class PlanCreateSerializer(serializers.ModelSerializer):
             "regihistoryId",
             "medName",
             "takenAt",
-            "exTakenAt",  # 👈 추가
+            "exTakenAt",
             "mealTime",
             "note",
             "taken",
@@ -94,16 +129,20 @@ class PlanCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"regihistoryId": "RegiHistory not found"})
 
         # ms -> datetime 변환
-        taken_at = validated_data.pop("takenAt", None)
-        ex_taken_at = validated_data.pop("exTakenAt", None)  # 👈 추가
-        taken = validated_data.pop("taken", None)
+        taken_at_ms = validated_data.pop("takenAt", None)
+        ex_taken_at_ms = validated_data.pop("exTakenAt", None)
+        taken_ms = validated_data.pop("taken", None)
 
-        if taken_at:
-            validated_data["taken_at"] = from_ms(taken_at)
-        if ex_taken_at:  # 👈 추가
-            validated_data["ex_taken_at"] = from_ms(ex_taken_at)
-        if taken:
-            validated_data["taken"] = from_ms(taken)
+        # takenAt은 필수
+        if taken_at_ms is None:
+            raise serializers.ValidationError({"takenAt": "복용 예정 시간은 필수입니다."})
+
+        validated_data["taken_at"] = from_ms(taken_at_ms)
+
+        if ex_taken_at_ms is not None:
+            validated_data["ex_taken_at"] = from_ms(ex_taken_at_ms)
+        if taken_ms is not None:
+            validated_data["taken"] = from_ms(taken_ms)
 
         return Plan.objects.create(regihistory=regi, **validated_data)
 
@@ -113,6 +152,7 @@ class RegiHistorySerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="user.id", read_only=True)
     useAlarm = serializers.BooleanField(source="use_alarm")
 
+    # device FK를 그대로 노출 (PK 값으로 직렬화됨) → JSON: "device": 3
     class Meta:
         model = RegiHistory
         fields = [
@@ -122,12 +162,36 @@ class RegiHistorySerializer(serializers.ModelSerializer):
             "label",
             "issued_date",
             "useAlarm",
+            "device",   # JSON: "device": <device_pk>
         ]
 
 
 #  RegiHistory 생성 Serializer
 class RegiHistoryCreateSerializer(serializers.ModelSerializer):
-    useAlarm = serializers.BooleanField(source="use_alarm", required=False, default=True)
+    useAlarm = serializers.BooleanField(
+        source="use_alarm",
+        required=False,
+        default=True
+    )
+
+    # label 은 모델에서 NOT NULL, blank=False 이므로 기본적으로 필수이지만
+    # 에러 메시지를 명확히 하기 위해 한 번 더 명시
+    label = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        allow_null=False,
+        error_messages={
+            "blank": "병명은 필수입니다.",
+            "null": "병명은 필수입니다.",
+        }
+    )
+
+    # 클라이언트에서 "device": 3 으로 보내면 받는 필드
+    device = serializers.IntegerField(
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = RegiHistory
@@ -136,8 +200,22 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
             "label",
             "issued_date",
             "useAlarm",
+            "device",
         ]
 
     def create(self, validated_data):
         user = self.context["request"].user
-        return RegiHistory.objects.create(user=user, **validated_data)
+
+        # device는 int PK로 들어옴 → 실제 Device FK로 매핑
+        device_id = validated_data.pop("device", None)
+        device = None
+        if device_id is not None:
+            device = Device.objects.filter(id=device_id, user=user).first()
+            if device is None:
+                raise serializers.ValidationError({"device": "유효하지 않은 기기입니다."})
+
+        return RegiHistory.objects.create(
+            user=user,
+            device=device,
+            **validated_data
+        )

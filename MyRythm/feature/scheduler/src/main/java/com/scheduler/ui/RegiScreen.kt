@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.domain.model.Device
 import com.domain.model.Plan
 import com.scheduler.viewmodel.RegiViewModel
 import com.shared.ui.components.AppButton
@@ -114,6 +115,19 @@ fun RegiScreen(
         viewModel.initRegi(regihistoryId)
     }
 
+    // IoT 기기 로드
+    LaunchedEffect(Unit) {
+        viewModel.loadMyDevices()
+    }
+
+    // ViewModel에서 도메인 Device 리스트 받기
+    val devices by viewModel.devices.collectAsState()
+    var selectedDevice by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(regihistoryId) {
+        viewModel.initRegi(regihistoryId)
+    }
+
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
 
     var disease by remember { mutableStateOf("") }
@@ -165,7 +179,6 @@ fun RegiScreen(
         }
     }
 
-    // 탭 변경 시 기본값
     LaunchedEffect(tab) {
         if (!initialized) return@LaunchedEffect
         intakeTimes.clear()
@@ -178,7 +191,6 @@ fun RegiScreen(
         }
     }
 
-    // dose 바뀔 때 intakeTimes 길이 맞추기
     LaunchedEffect(dose) {
         if (intakeTimes.size < dose) {
             repeat(dose - intakeTimes.size) { intakeTimes.add("") }
@@ -199,7 +211,6 @@ fun RegiScreen(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             // 탭
             TabRow(
                 selectedTabIndex = if (tab == RegiTab.DISEASE) 0 else 1,
@@ -383,6 +394,17 @@ fun RegiScreen(
                 )
             }
 
+            // IoT 기기 선택 드롭다운
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("연동할 IoT 기기", color = MaterialTheme.colorScheme.onSurface)
+
+                DeviceDropdown(
+                    devices = devices,
+                    selectedDevice = selectedDevice,
+                    onSelectedChange = { selectedDevice = it }
+                )
+            }
+
             // 알람
             Column {
                 Text(
@@ -493,7 +515,8 @@ fun RegiScreen(
                         label = label,
                         issuedDate = startDay,
                         useAlarm = useAlarm,
-                        plans = plans
+                        plans = plans,
+                        device = selectedDevice
                     )
                 },
                 modifier = Modifier
@@ -677,6 +700,75 @@ private fun DateBox(
                 color = if (value.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(14.dp)
             )
+        }
+    }
+}
+
+/* IoT 기기 선택 드롭다운 (도메인 Device 사용) */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeviceDropdown(
+    devices: List<Device>,
+    selectedDevice: Long?,
+    onSelectedChange: (Long?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val selectedLabel = remember(devices, selectedDevice) {
+        devices.firstOrNull { it.id == selectedDevice }?.name
+    }
+
+    val label = when {
+        devices.isEmpty() -> "연결된 기기 없음"
+        selectedLabel != null -> selectedLabel
+        else -> "기기를 선택하세요"
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            if (devices.isNotEmpty()) {
+                expanded = !expanded
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        TextField(
+            value = label,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            enabled = devices.isNotEmpty(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            colors = ExposedDropdownMenuDefaults.textFieldColors()
+        )
+
+        if (devices.isNotEmpty()) {
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("연동하지 않음") },
+                    onClick = {
+                        onSelectedChange(null)
+                        expanded = false
+                    }
+                )
+
+                devices.forEach { device ->
+                    DropdownMenuItem(
+                        text = { Text(device.name) },
+                        onClick = {
+                            onSelectedChange(device.id)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
