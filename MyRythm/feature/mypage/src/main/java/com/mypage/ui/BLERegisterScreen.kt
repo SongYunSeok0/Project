@@ -115,5 +115,15 @@ private fun BLERegisterScreenUI(
         ) {
             Text("디바이스 등록 하기")
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+            onClick = { viewModel.resetFields() }
+        ) {
+            Text("정보 초기화")
+        }
     }
 }

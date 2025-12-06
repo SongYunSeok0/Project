@@ -1,5 +1,6 @@
 package com.mypage.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.data.device.BLEManager
@@ -55,11 +56,6 @@ class BLERegisterViewModel @Inject constructor(
             return@launch
         }
 
-        if (ssid.isBlank() || pw.isBlank()) {
-            _state.value = _state.value.copy(error = "SSID 또는 비밀번호가 비어있어!")
-            return@launch
-        }
-
         _state.value = _state.value.copy(
             loading = true,
             error = null
@@ -91,6 +87,8 @@ class BLERegisterViewModel @Inject constructor(
         }
 
         val json = """{"uuid":"$uuid","token":"$token","ssid":"$ssid","pw":"$pw"}"""
+        Log.d("BLE_REGISTER", "Send JSON → $json")
+
         val sent = ble.sendConfigSuspend(json)
 
         if (!sent) {
@@ -107,6 +105,15 @@ class BLERegisterViewModel @Inject constructor(
             configSent = true
         )
     }
+
+    fun resetFields() {
+        _state.value = _state.value.copy(
+            ssid = "",
+            pw = "",
+            deviceName = ""
+        )
+    }
+
 }
 
 

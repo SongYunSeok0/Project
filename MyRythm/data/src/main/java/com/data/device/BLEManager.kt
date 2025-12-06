@@ -36,6 +36,9 @@ class BLEManager @Inject constructor(
     private val serviceUUID = UUID.fromString("12345678-1234-1234-1234-1234567890ab")
     private val characteristicUUID = UUID.fromString("abcd1234-5678-90ab-cdef-1234567890ab")
 
+    // =============================================================
+    // 🔥 1) 스캔 단계 로그 강화
+    // =============================================================
     @SuppressLint("MissingPermission")
     fun scanAndConnect(
         onConnected: () -> Unit,
@@ -57,7 +60,6 @@ class BLEManager @Inject constructor(
             return
         }
 
-        // 🚨 setLegacy(true) 절대 쓰면 안 됨 → 스캔 자체가 무효 처리됨
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
@@ -112,43 +114,61 @@ class BLEManager @Inject constructor(
             )
         }
 
+    // =============================================================
+    // 🔥 2) BLE 전송 JSON을 그대로 출력하는 핵심
+    // =============================================================
     @SuppressLint("MissingPermission")
     fun sendConfigJson(json: String, onDone: () -> Unit) {
 
+        Log.d("BLE-SEND", "📦 전송 준비된 JSON: $json")
+
         val gatt = bluetoothGatt ?: run {
-            Log.e("BLE", "❌ GATT 없음 → 전송 실패")
+            Log.e("BLE-SEND", "❌ GATT 없음 → 전송 실패")
             onDone()
             return
         }
 
         val service = gatt.getService(serviceUUID) ?: run {
-            Log.e("BLE", "❌ Service 없음")
+            Log.e("BLE-SEND", "❌ Service 없음")
             onDone()
             return
         }
 
         val ch = service.getCharacteristic(characteristicUUID) ?: run {
-            Log.e("BLE", "❌ Characteristic 없음")
+            Log.e("BLE-SEND", "❌ Characteristic 없음")
             onDone()
             return
         }
 
-        ch.value = json.toByteArray()
+        val bytes = json.toByteArray()
+
+        Log.d("BLE-SEND", "📩 JSON → ByteArray length=${bytes.size}")
+        Log.d("BLE-SEND", "📩 Raw bytes=${bytes.joinToString()}")
+
+        ch.value = bytes
 
         @Suppress("DEPRECATION")
-        gatt.writeCharacteristic(ch)
+        val result = gatt.writeCharacteristic(ch)
 
-        Log.d("BLE", "📩 JSON 전송 완료 → $json")
+        Log.d("BLE-SEND", "📤 writeCharacteristic() 결과: $result")
+
         onDone()
     }
 
+    // =============================================================
+    // 🔥 3) suspend 버전도 로그 포함
+    // =============================================================
     suspend fun sendConfigSuspend(json: String): Boolean =
         suspendCancellableCoroutine { cont ->
             sendConfigJson(json) { cont.resume(true) }
         }
 
+    // =============================================================
+    // 🔥 4) disconnect 로그
+    // =============================================================
     @SuppressLint("MissingPermission")
     fun disconnect() {
+        Log.d("BLE", "🔌 disconnect() 실행 — GATT 닫힘")
         bluetoothGatt?.close()
         bluetoothGatt = null
     }
