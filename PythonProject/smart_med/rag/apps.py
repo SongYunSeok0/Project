@@ -7,9 +7,5 @@ class RagConfig(AppConfig):
     name = "rag"
 
     def ready(self):
-        return
+        pass  # 모델 미리 로딩 제거
 
-
-class HealthConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "health"

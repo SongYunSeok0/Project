@@ -79,56 +79,48 @@ def _build_alpaca_prompt(instruction: str) -> str:
 """
 
 def generate_answer(instruction: str) -> str:
-    """
-    외부에서 쓰는 메인 함수.
-    RAG에서 만들어준 instruction(프롬프트)을 받아서
-    Qwen으로 답변을 생성한다.
-    """
-    tokenizer, model = _load_model()
+    try:
+        tokenizer, model = _load_model()
 
-    alpaca_prompt = _build_alpaca_prompt(instruction)
+        alpaca_prompt = _build_alpaca_prompt(instruction)
 
-    # 토크나이즈 시 입력 길이 강하게 제한
-    inputs = tokenizer(
-        alpaca_prompt,
-        return_tensors="pt",
-        truncation=True,
-        max_length=MAX_PROMPT_TOKENS,
-    )
-
-    # 입력 텐서를 모델이 올라간 device로 이동
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
-
-    input_len = inputs["input_ids"].shape[1]
-
-    t0 = time.time()
-    with torch.inference_mode():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=MAX_NEW_TOKENS,
-            do_sample=False,              # greedy
-            num_beams=1,                  # beam search 안 씀
-            use_cache=True,
-            eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.pad_token_id,
+        inputs = tokenizer(
+            alpaca_prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_PROMPT_TOKENS,
         )
-    gen_elapsed = time.time() - t0
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
-    # 입력 이후에 생성된 토큰만 사용
-    output_ids = outputs[0]
-    generated_ids = output_ids[input_len:]
+        input_len = inputs["input_ids"].shape[1]
 
-    print(
-        f"[LLM] input_tokens={input_len}, "
-        f"output_tokens={len(generated_ids)}, "
-        f"elapsed={gen_elapsed:.2f}s"
-    )
+        t0 = time.time()
+        with torch.inference_mode():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=MAX_NEW_TOKENS,
+                do_sample=False,
+                num_beams=1,
+                use_cache=True,
+                eos_token_id=tokenizer.eos_token_id,
+                pad_token_id=tokenizer.pad_token_id,
+            )
 
-    if len(generated_ids) == 0:
-        return ""
+        gen_elapsed = time.time() - t0
+        print(f"[LLM] generate elapsed={gen_elapsed:.2f}s")
 
-    answer = tokenizer.decode(generated_ids, skip_special_tokens=True)
-    return answer.strip()
+        generated_ids = outputs[0][input_len:]
+        return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+
+    except Exception as e:
+        print("🔥🔥🔥 LLM ERROR OCCURRED 🔥🔥🔥")
+        print("Error:", e)
+        import traceback
+        traceback.print_exc()
+
+        return "현재 AI 응답 생성 중 오류가 발생했습니다."
+
+
 
 
 def preload_qwen():

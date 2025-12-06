@@ -3,5 +3,5 @@ from .views import DrugRAGView, RAGTaskResultView
 
 urlpatterns = [
     path("drug/", DrugRAGView.as_view()),
-    path("task/<str:task_id>/", RAGTaskResultView.as_view()),
+    path("result/<str:task_id>/", RAGTaskResultView.as_view()),
 ]

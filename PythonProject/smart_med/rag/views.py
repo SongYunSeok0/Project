@@ -1,5 +1,7 @@
 # rag/views.py
 import time
+import traceback
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -19,12 +21,14 @@ class DrugRAGView(APIView):
 
     def post(self, request):
         question = request.data.get("question")
-        mode = request.data.get("mode", "async")  # celery할때 sync -> async
+        mode = request.data.get("mode", "async")
 
         if not question:
             return Response({"detail": "question 필드가 필요합니다."}, status=400)
 
-        # 비동기 모드 (Celery)
+        # -------------------------------
+        # 1) 비동기 Celery 모드
+        # -------------------------------
         if mode == "async":
             task = run_rag_task.delay(question)
             return Response(
@@ -32,9 +36,12 @@ class DrugRAGView(APIView):
                 status=202,
             )
 
-        # 동기 모드 (즉시 RAG 처리)
+        # -------------------------------
+        # 2) 동기 모드 (즉시 RAG 실행)
+        # -------------------------------
         try:
             start = time.time()
+
             chunks = retrieve_top_chunks(question, k=5)
             answer = build_answer(question, chunks)
 
@@ -42,12 +49,18 @@ class DrugRAGView(APIView):
             print(f"[SYNC-RAG] q='{question[:30]}' elapsed={elapsed:.2f}s")
 
         except Exception as e:
+            print("🔥🔥🔥 RAG 처리 중 예외 발생 🔥🔥🔥")
+            print("Error:", e)
+            traceback.print_exc()  # ★ 중요: 실제 에러를 로그에 출력
+
             return Response(
                 {"detail": "RAG 처리 중 오류", "error": str(e)},
                 status=500
             )
 
-        # 응답 형식 Celery와 동일하게 통일
+        # -------------------------------
+        # 3) 정상 응답
+        # -------------------------------
         return Response(
             {
                 "status": "done",
@@ -67,7 +80,6 @@ class DrugRAGView(APIView):
             },
             status=200
         )
-
 
 class RAGTaskResultView(APIView):
     """

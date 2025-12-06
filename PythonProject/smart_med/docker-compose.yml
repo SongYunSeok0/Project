@@ -6,7 +6,7 @@ services:
     container_name: django_web
     command: >
       sh -c "python manage.py migrate &&
-      gunicorn smart_med.asgi:application -k uvicorn.workers.UvicornWorker --workers 4 --preload --timeout 60 --bind 0.0.0.0:8000"
+      gunicorn smart_med.asgi:application -k uvicorn.workers.UvicornWorker --workers 1 --preload --timeout 60 --bind 0.0.0.0:8000"
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"
@@ -34,6 +34,7 @@ services:
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"
+      - "C:/Users/user/Desktop/qwen_sft:/models"
     env_file:
       - .env
     depends_on:
@@ -57,6 +58,7 @@ services:
     volumes:
       - .:/app
       - "C:/Users/user/Desktop/secret:/run/secrets"
+      - "C:/Users/user/Desktop/qwen_sft:/models"
     env_file:
       - .env
     depends_on:
