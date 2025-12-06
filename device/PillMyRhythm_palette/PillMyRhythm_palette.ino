@@ -23,30 +23,28 @@ void setup() {
     digitalWrite(GREEN_LED, LOW);
     noTone(BUZZER);
 
-    // ------------------------------------
-    // 기존 설정 불러오기
-    // ------------------------------------
     DeviceConfig::load();
 
-    // ------------------------------------
-    // 등록 여부 판단 (BLE 설정 필요)
-    // ------------------------------------
     if (!DeviceConfig::isRegistered()) {
         Serial.println("🔵 등록 필요 → BLE 등록 모드");
         startBLEConfig();
         return;
     }
-
-    // ------------------------------------
-    // WiFi + Sensors + HTTP 시작
-    // ------------------------------------
+    
+    if (!DeviceConfig::hasWiFiInfo()) {
+        Serial.println("⚠ WiFi 정보 없음 → BLE 등록 필요");
+        startBLEConfig();
+        return;
+    }
+    
     Serial.println("🟢 등록됨 → WiFi 연결 시도");
-
     connectWiFi();
     initSensors();
     initHttpTask();
-    SlotLED::init();     // ⭐ 슬롯 LED 초기화
+    SlotLED::init();
+
 }
+
 
 void loop() {
     // -------------------------------------------------
