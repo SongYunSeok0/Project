@@ -184,6 +184,7 @@
     <string name="wifi_ssid">Wi-Fi SSID</string>
     <string name="wifi_password">Wi-Fi Password</string>
     <string name="wifi_connecting">기기 연결 중...</string>
+    <string name="ble_wifi_connecting">BLE 기기와 연결 중...</string>
     <string name="register">등록하기</string>
     <string name="withdrawal_confirm">탈퇴하기</string>
     <string name="photo">사진</string>
@@ -205,6 +206,13 @@
     <string name="scheduler_message_registration_failed">등록에 실패했습니다.</string>
     <string name="scheduler_message_enter_memo">메모를 입력하세요</string>
 
+    <string name="device_wifi_title">기기 Wi-Fi 설정</string>
+    <string name="device_name">기기 별명(예: 약통1)</string>
+    <string name="device_register_button">디바이스 등록하기</string>
+    <string name="device_reset">정보 초기화</string>
+    <string name="device_uuid">UUID: %1$s</string>
+    <string name="device_token">TOKEN: %1$s</string>
+    <string name="mypage_message_ble_permission_required">BLE 권한이 필요해요!</string>
 
 
     <string name="mypage_message_withdrawal_title">정말 탈퇴하시겠습니까?</string>

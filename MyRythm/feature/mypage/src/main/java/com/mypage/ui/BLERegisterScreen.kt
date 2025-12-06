@@ -9,10 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
 import com.mypage.viewmodel.BLERegisterViewModel
+import com.shared.ui.components.AppButton
+import com.shared.ui.components.AppInputField
 
 @Composable
 fun BLERegisterScreen(
@@ -56,10 +60,19 @@ private fun BLERegisterScreenUI(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
+    val ssidText = stringResource(R.string.wifi_ssid)
+    val wifiPasswordText = stringResource(R.string.wifi_password)
+    val bleConnectingText = stringResource(R.string.ble_wifi_connecting)
+    val deviceWifiText = stringResource(R.string.device_wifi_title)
+    val deviceNameText = stringResource(R.string.device_name)
+    val devicerRgisterText = stringResource(R.string.device_register_button)
+    val deviceResetText = stringResource(R.string.device_reset)
+    val wifiConfigSentMessage = stringResource(R.string.mypage_message_wifi_config_sent)
+
     // BLE 연결/전송 완료 시 페이지 종료
     LaunchedEffect(state.configSent) {
         if (state.configSent) {
-            Toast.makeText(context, "Wi-Fi 정보 전송 완료!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, wifiConfigSentMessage, Toast.LENGTH_SHORT).show()
             onFinish()
         }
     }
@@ -78,52 +91,63 @@ private fun BLERegisterScreenUI(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
-        Text("기기 Wi-Fi 설정", style = MaterialTheme.typography.headlineSmall, color = Color.Black)
+        Text(
+            deviceWifiText,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
 
         Text("UUID: ${state.deviceUUID}", color = Color.Black)
         Text("TOKEN: ${state.deviceToken}", color = Color.Black)
 
-        OutlinedTextField(
+        AppInputField(
             value = state.ssid,
             onValueChange = viewModel::updateSSID,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Wi-Fi SSID") }
+            label = ssidText,
+            outlined = true,
+            singleLine = true
         )
 
-        OutlinedTextField(
+        AppInputField(
             value = state.pw,
             onValueChange = viewModel::updatePW,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Wi-Fi PASSWORD") }
+            label = wifiPasswordText,
+            outlined = true,
+            singleLine = true
         )
 
-        OutlinedTextField(
+        AppInputField(
             value = state.deviceName,
             onValueChange = viewModel::updateDeviceName,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("기기 별명(예: 약통1)") }
+            label = deviceNameText,
+            outlined = true,
+            singleLine = true
         )
 
-
         if (state.loading) {
-            Text("BLE 기기와 연결 중...", color = MaterialTheme.colorScheme.primary)
+            Text(
+                bleConnectingText,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelSmall
+            )
         }
 
-        Button(
+        AppButton(
+            text = devicerRgisterText,
+            height = 48.dp,
             modifier = Modifier.fillMaxWidth(),
             onClick = { viewModel.startRegister() }
-        ) {
-            Text("디바이스 등록 하기")
-        }
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
+        AppButton(
+            text = deviceResetText,
+            height = 48.dp,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+            textColor = MaterialTheme.colorScheme.onSurface,
             onClick = { viewModel.resetFields() }
-        ) {
-            Text("정보 초기화")
-        }
+        )
     }
 }

@@ -65,7 +65,6 @@ fun ChatbotScreen(
     AppTheme {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) { inner ->
             Box(
                 modifier = Modifier
