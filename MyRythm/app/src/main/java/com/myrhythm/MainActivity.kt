@@ -16,6 +16,7 @@ import com.myrhythm.splash.SplashViewModel
 import com.myrhythm.ui.theme.MyRhythmTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

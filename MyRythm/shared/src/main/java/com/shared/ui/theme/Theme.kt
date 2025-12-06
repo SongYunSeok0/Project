@@ -1,11 +1,13 @@
 package com.shared.ui.theme
 
 import android.app.Activity
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
@@ -38,20 +40,6 @@ fun AppTheme(
 ) {
     // 라이트 테마 ColorScheme 사용
     val colorScheme = LightColorScheme
-
-    // 상태 표시줄(Status Bar) 색상 및 아이콘 밝기 설정
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            // 상태 표시줄 배경색을 앱의 배경색으로 설정
-            window.statusBarColor = colorScheme.primaryContainer.toArgb()
-
-            // 상태 표시줄 콘텐츠(아이콘/텍스트)를 어둡게 설정 (밝은 배경용)
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-        }
-    }
-
 
     // 커스텀 테마 토큰을 CompositionLocalProvider를 통해 제공
     CompositionLocalProvider(
