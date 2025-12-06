@@ -4,7 +4,9 @@ package com.scheduler.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
@@ -24,20 +27,22 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.domain.model.Plan
 import com.scheduler.viewmodel.RegiViewModel
+import com.shared.ui.components.AppButton
+import com.shared.ui.components.AppInputField
+import com.shared.ui.components.AppSelectableButton
+import com.shared.ui.theme.AppFieldHeight
+import com.shared.ui.theme.AppTheme
 import java.text.SimpleDateFormat
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.*
-
-private val CardBg = Color(0xFFF9FAFB)
-private val SectionTitle = Color(0xFF3B566E)
-private val Hint = Color(0x800A0A0A)
 
 private enum class RegiTab { DISEASE, SUPPLEMENT }
 
@@ -60,25 +65,6 @@ fun RegiScreen(
     onCompleted: () -> Unit = {},
     regihistoryId: Long? = null,
 ) {
-    val context = LocalContext.current
-
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { msg ->
-            when (msg) {
-                "등록 완료" -> {
-                    Toast.makeText(context, "등록이 완료되었습니다!", Toast.LENGTH_SHORT).show()
-                    onCompleted()
-                }
-                "등록 실패" ->
-                    Toast.makeText(context, "등록에 실패했습니다.", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    LaunchedEffect(regihistoryId) {
-        viewModel.initRegi(regihistoryId)
-    }
-
     val diseaseText = stringResource(R.string.disease)
     val supplementText = stringResource(R.string.supplement)
     val diseaseNameText = stringResource(R.string.disease_name)
@@ -97,6 +83,36 @@ fun RegiScreen(
     val registrationComplete = stringResource(R.string.registration_complete)
     val cancelText = stringResource(R.string.cancel)
     val confirmText = stringResource(R.string.confirm)
+    val alarmSettingText = stringResource(R.string.alarm_setting)
+    val alarmOnText = stringResource(R.string.isalarm_on)
+    val alarmOffText = stringResource(R.string.isalarm_off)
+    val countPerDayText = stringResource(R.string.count_per_day)
+    val registrationSuccessMessage = stringResource(R.string.scheduler_message_registration_success)
+    val registrationFailedMessage = stringResource(R.string.scheduler_message_registration_failed)
+    val enterDiseaseNameMessage = stringResource(R.string.scheduler_message_disease_name)
+    val enterSupplementNameMessage = stringResource(R.string.scheduler_message_supplement_name)
+    val enterMedicationNameMessage = stringResource(R.string.scheduler_message_medication_name)
+    val enterMemoMessage = stringResource(R.string.scheduler_message_enter_memo)
+
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { msg ->
+            when (msg) {
+                "등록 완료" -> {
+                    Toast.makeText(context, registrationSuccessMessage, Toast.LENGTH_SHORT).show()
+                    onCompleted()
+                }
+
+                "등록 실패" ->
+                    Toast.makeText(context, registrationFailedMessage, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    LaunchedEffect(regihistoryId) {
+        viewModel.initRegi(regihistoryId)
+    }
 
     var tab by remember { mutableStateOf(RegiTab.DISEASE) }
 
@@ -169,11 +185,11 @@ fun RegiScreen(
         } else if (intakeTimes.size > dose) {
             repeat(intakeTimes.size - dose) {
                 intakeTimes.removeAt(intakeTimes.lastIndex)
-            }        }
+            }
+        }
     }
 
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { inner ->
-
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -187,23 +203,28 @@ fun RegiScreen(
             // 탭
             TabRow(
                 selectedTabIndex = if (tab == RegiTab.DISEASE) 0 else 1,
-                containerColor = Color.Transparent,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
                 indicator = { pos ->
                     TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(pos[if (tab == RegiTab.DISEASE) 0 else 1]),
                         height = 3.dp,
                         color = MaterialTheme.colorScheme.primary
                     )
-                }
+                },
+                divider = {}
             ) {
                 Tab(
                     selected = tab == RegiTab.DISEASE,
                     onClick = { tab = RegiTab.DISEASE },
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.surfaceVariant,
                     text = { Text(diseaseText) }
                 )
                 Tab(
                     selected = tab == RegiTab.SUPPLEMENT,
                     onClick = { tab = RegiTab.SUPPLEMENT },
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.surfaceVariant,
                     text = { Text(supplementText) }
                 )
             }
@@ -211,26 +232,24 @@ fun RegiScreen(
             // 병명 / 영양제
             if (tab == RegiTab.DISEASE) {
                 Column {
-                    Text(diseaseNameText, color = SectionTitle)
-                    OutlinedTextField(
+                    Text(diseaseNameText, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.height(8.dp))
+                    AppInputField(
                         value = disease,
                         onValueChange = { disease = it },
-                        placeholder = { Text("병명을 입력하세요") },
+                        label = enterDiseaseNameMessage,
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             } else {
                 Column {
-                    Text(supplementNameText, color = SectionTitle)
-                    OutlinedTextField(
+                    Text(supplementNameText, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.height(8.dp))
+                    AppInputField(
                         value = supplement,
                         onValueChange = { supplement = it },
-                        placeholder = { Text("영양제 이름을 입력하세요") },
+                        label = enterSupplementNameMessage,
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -238,15 +257,15 @@ fun RegiScreen(
             // 약 이름 리스트
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(medicationNameText, color = SectionTitle)
-
+                    Text(medicationNameText, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.height(4.dp))
                     meds.forEachIndexed { idx, value ->
-                        OutlinedTextField(
+                        AppInputField(
                             value = value,
                             onValueChange = { meds[idx] = it },
-                            placeholder = { Text("약 이름을 입력하세요") },
+                            label = enterMedicationNameMessage,
                             singleLine = true,
-                            trailingIcon = {
+                            trailingContent = {
                                 if (idx == meds.lastIndex)
                                     IconButton(onClick = { meds.add("") }) {
                                         Icon(Icons.Default.Add, contentDescription = null)
@@ -255,21 +274,22 @@ fun RegiScreen(
                                     IconButton(onClick = { meds.removeAt(idx) }) {
                                         Icon(Icons.Default.Close, contentDescription = null)
                                     }
-                            },
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            }
                         )
                     }
                 }
             }
 
+            Spacer(Modifier.height(4.dp))
+
             // 복용 횟수
             Column {
-                Text(doseDailyCount, color = SectionTitle)
+                Text(doseDailyCount, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary.copy(0.1f))
                         .height(48.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -282,8 +302,8 @@ fun RegiScreen(
                     Spacer(Modifier.weight(1f))
 
                     Text(
-                        text = "${dose}회",
-                        fontSize = 18.sp
+                        text = "${dose}$countPerDayText",
+                        style = MaterialTheme.typography.labelLarge,
                     )
 
                     Spacer(Modifier.weight(1f))
@@ -296,17 +316,19 @@ fun RegiScreen(
                 }
             }
 
+            Spacer(Modifier.height(4.dp))
+
             // 복용 시간
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(doseTime, color = SectionTitle)
+                Text(doseTime, color = MaterialTheme.colorScheme.onSurface)
                 intakeTimes.forEachIndexed { i, t ->
-                    TimeInputRow("${i + 1}회", t) { new -> intakeTimes[i] = new }
+                    TimeInputRow("${i + 1}$countPerDayText", t) { new -> intakeTimes[i] = new }
                 }
             }
-
+            Spacer(Modifier.height(4.dp))
             // 기간
             Column {
-                Text(dosePeriod, color = SectionTitle)
+                Text(dosePeriod, color = MaterialTheme.colorScheme.onSurface)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     DateBox(startDateText, startDay, Modifier.weight(1f)) {
                         showStart = true
@@ -320,37 +342,53 @@ fun RegiScreen(
             // 식사 관계
             if (tab == RegiTab.DISEASE) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(mealRelationText, color = SectionTitle)
+                    Text(mealRelationText, color = MaterialTheme.colorScheme.onSurface)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SegChip(mealRelationBefore, mealRelation == "before", Modifier.weight(1f)) {
-                            mealRelation = "before"
-                        }
-                        SegChip(mealRelationAfter, mealRelation == "after", Modifier.weight(1f)) {
-                            mealRelation = "after"
-                        }
-                        SegChip(mealRelationIrrelevant, mealRelation == "none", Modifier.weight(1f)) {
-                            mealRelation = "none"
-                        }
+                        AppSelectableButton(
+                            text = mealRelationBefore,
+                            selected = mealRelation == "before",
+                            onClick = { mealRelation = "before" },
+                            modifier = Modifier.weight(1f),
+                            height = 44.dp
+                        )
+
+                        AppSelectableButton(
+                            text = mealRelationAfter,
+                            selected = mealRelation == "after",
+                            onClick = { mealRelation = "after" },
+                            modifier = Modifier.weight(1f),
+                            height = 44.dp
+                        )
+
+                        AppSelectableButton(
+                            text = mealRelationIrrelevant,
+                            selected = mealRelation == "none",
+                            onClick = { mealRelation = "none" },
+                            modifier = Modifier.weight(1f),
+                            height = 44.dp
+                        )
                     }
                 }
             }
 
             // 메모
             Column {
-                Text(memoNotesText, color = SectionTitle)
-                OutlinedTextField(
+                Text(memoNotesText, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(8.dp))
+                AppInputField(
                     value = memo,
                     onValueChange = { memo = it },
-                    placeholder = { Text("메모를 입력하세요") },
-                    minLines = 3,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    label = enterMemoMessage,
+                    maxLines = 3
                 )
             }
 
             // 알람
             Column {
-                Text("알람 설정", color = SectionTitle)
+                Text(
+                    alarmSettingText,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -358,13 +396,18 @@ fun RegiScreen(
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
                 ) {
-                    Text(if (useAlarm) "알람 켜짐" else "알람 꺼짐")
+                    Text(
+                        if (useAlarm) alarmOnText else alarmOffText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                     Switch(checked = useAlarm, onCheckedChange = { useAlarm = it })
                 }
             }
 
             // 등록 버튼
-            Button(
+            AppButton(
+                text = registrationComplete,
+                textStyle = MaterialTheme.typography.bodyLarge,
                 onClick = {
 
                     val regiType = if (tab == RegiTab.DISEASE) "disease" else "supplement"
@@ -455,16 +498,9 @@ fun RegiScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .shadow(4.dp, RoundedCornerShape(14.dp)),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(registrationComplete, color = Color.White, fontSize = 16.sp)
-            }
-
+                    .height(AppFieldHeight),
+                shape = MaterialTheme.shapes.medium
+            )
             Spacer(Modifier.height(20.dp))
         }
     }
@@ -476,15 +512,25 @@ fun RegiScreen(
         DatePickerDialog(
             onDismissRequest = { showStart = false },
             confirmButton = {
-                Button(onClick = {
-                    state.selectedDateMillis?.let { startDay = dateFmt.format(Date(it)) }
-                    showStart = false
-                }) { Text(confirmText, color = Color.White) }
+                AppButton(
+                    text = confirmText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    onClick = {
+                        state.selectedDateMillis?.let { startDay = dateFmt.format(Date(it)) }
+                        showStart = false
+                    }
+                )
             },
             dismissButton = {
-                OutlinedButton(onClick = { showStart = false }) {
-                    Text(cancelText)
-                }
+                AppButton(
+                    text = cancelText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { showStart = false }
+                )
             }
         ) { DatePicker(state = state) }
     }
@@ -496,17 +542,35 @@ fun RegiScreen(
         DatePickerDialog(
             onDismissRequest = { showEnd = false },
             confirmButton = {
-                Button(onClick = {
-                    state.selectedDateMillis?.let { endDay = dateFmt.format(Date(it)) }
-                    showEnd = false
-                }) { Text(confirmText, color = Color.White) }
+                AppButton(
+                    text = confirmText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    onClick = {
+                        state.selectedDateMillis?.let { endDay = dateFmt.format(Date(it)) }
+                        showEnd = false
+                    }
+                )
             },
             dismissButton = {
-                OutlinedButton(onClick = { showEnd = false }) {
-                    Text(cancelText)
-                }
+                AppButton(
+                    text = cancelText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(0.3f),
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = { showEnd = false }
+                )
             }
-        ) { DatePicker(state = state) }
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                DatePicker(state = state)
+            }
+        }
     }
 }
 
@@ -517,6 +581,8 @@ fun TimeInputRow(
     value: String,
     onChange: (String) -> Unit
 ) {
+    val timeExampleText = stringResource(R.string.time_example)
+
     var showPicker by remember { mutableStateOf(false) }
 
     val initialHour = value.split(":").getOrNull(0)?.toIntOrNull() ?: 12
@@ -533,28 +599,47 @@ fun TimeInputRow(
             }
         )
     }
-
     Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AppFieldHeight),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(label, modifier = Modifier.width(48.dp))
+        ) {
+        Box(
+            modifier = Modifier
+                .width(48.dp)
+                .fillMaxHeight()
+                .clip(MaterialTheme.shapes.large)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        Spacer(Modifier.width(8.dp))
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color.White)
+                .weight(1f)
+                .fillMaxHeight()
+                .clip(MaterialTheme.shapes.large)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = MaterialTheme.shapes.large
+                )
+                .background(MaterialTheme.colorScheme.background)
                 .clickable { showPicker = true }
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = if (value.isBlank()) "예: 08:00" else value,
-                color = if (value.isBlank()) Hint else Color.Black,
-                fontSize = 16.sp
+                text = if (value.isBlank()) timeExampleText else value,
+                color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
     }
@@ -569,40 +654,29 @@ private fun DateBox(
     onClick: () -> Unit,
 ) {
     val selectText = stringResource(R.string.select)
+
     Column(modifier = modifier) {
-        Text(label, color = Color(0xFF6F8BA4), fontSize = 12.sp)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Spacer(Modifier.height(8.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(CardBg)
+                .height(AppFieldHeight)
+                .clip(MaterialTheme.shapes.large)
+                .background(MaterialTheme.colorScheme.primary.copy(0.1f))
                 .clickable { onClick() },
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
                 text = value.ifBlank { selectText },
-                color = if (value.isNotBlank()) Color.Black else Hint,
+                color = if (value.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(14.dp)
             )
         }
-    }
-}
-
-/* Segmented Chip */
-@Composable
-private fun SegChip(text: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    Box(
-        modifier = modifier
-            .height(44.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (selected) MaterialTheme.colorScheme.primary else CardBg)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text,
-            color = if (selected) Color.White else Color(0xFF6F8BA4)
-        )
     }
 }

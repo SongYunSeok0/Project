@@ -92,7 +92,6 @@ fun SchedulerScreen(
     )
 }
 
-
 //  내부 Content
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -350,6 +349,7 @@ fun MedDetailDialog(
     val regiLabel = stringResource(R.string.regi_label)
     val medNameLabel = stringResource(R.string.med_name_label)
     val mealTimeLabel = stringResource(R.string.meal_time_label)
+    val noMemoLabel = stringResource(R.string.no_memo)
     val memoLabel = stringResource(R.string.memo_label)
     val alarmLabel = stringResource(R.string.alarm_label)
     val closeText = stringResource(R.string.close)
@@ -374,7 +374,7 @@ fun MedDetailDialog(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()) // 스크롤 가능하게
+                    .verticalScroll(rememberScrollState())
             ) {
                 Text(
                     detailTitle,
@@ -409,7 +409,7 @@ fun MedDetailDialog(
                 }
 
                 DetailRow(mealTimeLabel, mealTimeText)
-                DetailRow(memoLabel, item.memo ?: "-")
+                DetailRow(memoLabel, item.memo ?: noMemoLabel)
 
                 Spacer(Modifier.height(16.dp))
 

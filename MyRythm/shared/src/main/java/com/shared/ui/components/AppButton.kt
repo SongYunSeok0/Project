@@ -98,79 +98,6 @@ fun AppSelectableButton(
 
 // 일반적인 버튼. 사이즈는 조절 필요, 클릭하는 순간 컬러 바뀌는 이펙트만 있음,
 // isCircle = true 클릭 시 원형버튼 / 기본 사각 버튼
-/*@Composable
-fun AppButton(
-    text: String = "",
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    width: Dp? = null,
-    height: Dp? = null,
-    shape: Shape = MaterialTheme.shapes.small,
-    isCircle: Boolean = false,
-    backgroundColor: Color? = null,
-    enabled: Boolean = true,
-    textColor: Color? = null,
-    textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
-    useClickEffect: Boolean = true,
-    content: (@Composable () -> Unit)? = null
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val defaultBackground = backgroundColor ?: MaterialTheme.colorScheme.primary
-    val defaultTextColor = textColor ?: MaterialTheme.colorScheme.onPrimary
-
-    val finalBackground = if (useClickEffect && isPressed) {
-        defaultBackground.copy(alpha = 0.7f)
-    } else {
-        defaultBackground
-    }
-
-    val finalShape =
-        if (isCircle) RoundedCornerShape(50)
-        else shape
-
-    Surface(
-        color = finalBackground,
-        shape = finalShape,
-        modifier = modifier
-            .then(
-                if (height != null) Modifier.height(height) else Modifier
-            )
-            .then(
-                if (width != null) Modifier.width(width) else Modifier
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null
-            ) { onClick() }
-    ) {
-        Box(
-            modifier = modifier,
-            contentAlignment = Alignment.Center
-        ) {
-            if (content != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    content()
-
-                    if (text.isNotEmpty()) Spacer(Modifier.width(6.dp))
-
-                    if (text.isNotEmpty()) {
-                        Text(text, color = defaultTextColor, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-            } else {
-                Text(
-                    text = text,
-                    color = defaultTextColor,
-                    style = textStyle
-                )
-            }
-        }
-    }
-}*/
-// 일반적인 버튼. 사이즈는 조절 필요, 클릭하는 순간 컬러 바뀌는 이펙트만 있음,
-// isCircle = true 클릭 시 원형버튼 / 기본 사각 버튼
 @Composable
 fun AppButton(
     text: String = "",
@@ -196,7 +123,6 @@ fun AppButton(
         val defaultBackground = backgroundColor ?: MaterialTheme.colorScheme.primary
         val defaultTextColor = textColor ?: MaterialTheme.colorScheme.onPrimary
 
-        // 🔹 아웃라인이면 배경색은 배경색(흰색)
         val baseBackground =
             if (isOutlined) MaterialTheme.colorScheme.background else defaultBackground
 

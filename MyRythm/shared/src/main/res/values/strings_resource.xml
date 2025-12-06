@@ -56,6 +56,7 @@
     <string name="verification">인증</string>
     <string name="scheduler">스케줄러</string>
     <string name="step">걸음수</string>
+    <string name="recent_step">최근 7일 걸음수</string>
     <string name="rate">최근 심박 수</string>
     <string name="timeremainder">복용까지 남은 시간</string>
     <string name="map">지도</string>
@@ -103,6 +104,7 @@
     <string name="rate_description">심박수 선 아이콘</string>
     <string name="bpm">BPM</string>
     <string name="no_bpm">--</string>
+    <string name="no_memo">-</string>
     <string name="record_delete">기록 삭제</string>
     <string name="record_delete_button">기록 삭제하기</string>
     <string name="delete">삭제</string>
@@ -192,6 +194,17 @@
     <string name="memo_label">메모</string>
     <string name="alarm_off">알람해제</string>
     <string name="alarm_label">알람</string>
+    <string name="verification_success">인증 성공</string>
+    <string name="verification_failed">인증 실패</string>
+    <string name="save_failed">저장 실패</string>
+
+    <string name="alarm_setting">알람 설정</string>
+    <string name="isalarm_on">알람 켜짐</string>
+    <string name="isalarm_off">알람 꺼짐</string>
+    <string name="scheduler_message_registration_success">등록이 완료되었습니다!</string>
+    <string name="scheduler_message_registration_failed">등록에 실패했습니다.</string>
+    <string name="scheduler_message_enter_memo">메모를 입력하세요</string>
+
 
 
     <string name="mypage_message_withdrawal_title">정말 탈퇴하시겠습니까?</string>
@@ -238,9 +251,9 @@
     <string name="scheduler_message_dose_low_progress">복약 주기를 지키면 리포트 정확도가 올라갑니다</string>
     <string name="mypage_message_profile_info_notice">⚠️ 필수 정보를 입력해주세요.\n이름, 전화번호, 성별, 이메일은 한번만 입력 가능합니다.</string>
 
-    <string name="verification_success">인증 성공</string>
-    <string name="verification_failed">인증 실패</string>
-    <string name="save_failed">저장 실패</string>
+
+
+
 
 
     <string name="mypage_message_saved">저장되었습니다</string>

@@ -9,14 +9,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.domain.model.DailyStep
+import com.shared.R
 import com.shared.ui.components.SimpleBarChart
 
 @Composable
 fun HealthInsightScreen(
     weeklySteps: List<DailyStep>
 ) {
+    val healthInsightText = stringResource(R.string.healthinsight)
+    val recentStepText = stringResource(R.string.recent_step)
+
+
     val values = weeklySteps.map { it.steps }
     val labels = weeklySteps.map { day ->
         if (day.date.length >= 5) {
@@ -25,21 +32,20 @@ fun HealthInsightScreen(
             day.date
         }
     }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(20.dp)
     ) {
         Text(
-            text = "건강 인사이트",
-            style = MaterialTheme.typography.titleLarge
+            text = healthInsightText,
+            style = MaterialTheme.typography.headlineMedium
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "최근 7일 걸음수",
+            text = recentStepText,
             style = MaterialTheme.typography.titleMedium
         )
 
