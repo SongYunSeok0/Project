@@ -13,6 +13,6 @@ interface DeviceApi {
     suspend fun registerDevice(
         @Body request: RegisterDeviceRequest
     )
-    @GET("devices/")
+    @GET("iot/devices/")
     suspend fun getMyDevices(): List<DeviceDto>
 }

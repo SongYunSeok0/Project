@@ -8,7 +8,7 @@ import com.domain.repository.DeviceRepository
 import javax.inject.Inject
 
 class DeviceRepositoryImpl @Inject constructor(
-    private val api: DeviceApi
+    private val api: DeviceApi,
     private val deviceApi: DeviceApi
 ) : DeviceRepository {
 
@@ -24,6 +24,7 @@ class DeviceRepositoryImpl @Inject constructor(
                 device_name = name
             )
         )
+    }
     override suspend fun getMyDevices(): List<Device> {
         val response = deviceApi.getMyDevices() // List<DeviceDto>
         return response.map { it.toDomain() }
