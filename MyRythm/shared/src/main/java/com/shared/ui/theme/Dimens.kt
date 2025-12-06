@@ -29,16 +29,13 @@ val PaddingLarge = 24.dp
 val PaddingExtraLarge = 32.dp
 val IconSizeStandard = 24.dp
 
+// 화면의 기본 입력 필드 사이즈
+val AppFieldHeight = 56.dp
 
 // <스플래시+로그인+회원가입 등> Auth
-
-// 인증화면의 기본 입력 필드 사이즈
-val AuthFieldWidth = 318.dp
-val AuthFieldHeight = 56.dp
-
 // 인증 화면의 기본 입력 필드 글씨 사이즈는 16.dp 정도
 val AuthSpacingVertical = 15.dp                     // 입력 필드 및 버튼 간의 기본 간격
-val AuthButtonHeight  = AuthFieldHeight             // 인증 프로세스의 버튼 높이 = 입력필드 높이
+val AuthButtonHeight  = AppFieldHeight             // 인증 프로세스의 버튼 높이 = 입력필드 높이
 
 // 로고+글씨 둘 다 쓰는 경우의 로고 이미지 크기
 val AuthLogoSize = 180.dp

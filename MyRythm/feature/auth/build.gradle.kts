@@ -68,6 +68,7 @@ dependencies {
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+
     ksp(libs.room.compiler)
 
     implementation("androidx.compose.material:material-icons-extended")
@@ -87,4 +88,6 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.play.services.auth)
     implementation("androidx.credentials:credentials:1.2.0")
+
+    implementation(libs.accompanist.systemuicontroller)
 }

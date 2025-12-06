@@ -125,7 +125,8 @@ fun NewInquiryForm(
                 label = title_Message,
                 singleLine = true,
                 maxLines = 1,
-                useFloatingLabel = true
+                useFloatingLabel = true,
+                outlined = true
             )
 
             Text(
@@ -139,7 +140,8 @@ fun NewInquiryForm(
                 onValueChange = { content = it },
                 label = content_Message,
                 height = 150.dp,
-                useFloatingLabel = true
+                useFloatingLabel = true,
+                outlined = true
             )
 
             // 이미지 첨부 (3번 ImageAttachmentSection 컴포넌트) -> 1201

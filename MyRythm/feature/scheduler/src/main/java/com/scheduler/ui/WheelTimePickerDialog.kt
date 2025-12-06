@@ -12,9 +12,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shared.R
+import com.shared.ui.components.AppButton
+import com.shared.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 private val ITEM_HEIGHT = 50.dp          // 한 줄 높이
@@ -30,44 +35,69 @@ fun WheelTimePickerDialog(
     var selectedHour by remember { mutableStateOf(hour) }
     var selectedMinute by remember { mutableStateOf(minute) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 30.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                WheelSelector(
-                    range = (0..23).toList(),
-                    initial = hour,
-                    onSelect = { selectedHour = it }
-                )
+    val confirmText = stringResource(R.string.confirm)
+    val cancelText = stringResource(R.string.cancel)
+    val colonText = stringResource(R.string.time_colon)
 
-                Text(
-                    text = ":",
-                    fontSize = 35.sp,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
 
-                WheelSelector(
-                    range = (0..59).toList(),
-                    initial = minute,
-                    onSelect = { selectedMinute = it }
+    AppTheme {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            text = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 30.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    WheelSelector(
+                        range = (0..23).toList(),
+                        initial = hour,
+                        onSelect = { selectedHour = it }
+                    )
+
+                    Text(
+                        text = colonText,
+                        fontSize = 35.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+
+                    WheelSelector(
+                        range = (0..59).toList(),
+                        initial = minute,
+                        onSelect = { selectedMinute = it }
+                    )
+                }
+            },
+            confirmButton = {
+                AppButton(
+                    text = confirmText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    onClick = {
+                        onConfirm(
+                            String.format(
+                                "%02d:%02d",
+                                selectedHour,
+                                selectedMinute
+                            )
+                        )
+                    }
+                )
+            },
+            dismissButton = {
+                AppButton(
+                    text = cancelText,
+                    height = 40.dp,
+                    width = 70.dp,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    onClick = onDismiss
                 )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                onConfirm(String.format("%02d:%02d", selectedHour, selectedMinute))
-            }) { Text("확인") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("취소") }
-        }
-    )
+        )
+    }
 }
 
 @Composable
@@ -131,7 +161,7 @@ private fun WheelSelector(
                         color = if (isSelected)
                             MaterialTheme.colorScheme.primary
                         else
-                            Color.Black.copy(alpha = 0.4f)
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 }
             }

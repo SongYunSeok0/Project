@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -46,6 +47,10 @@ import com.shared.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.snapshotFlow
+import com.shared.ui.components.AppButton
+import com.shared.ui.components.AppInputField
+import com.shared.ui.components.AppTagButton
+import com.shared.ui.theme.AppFieldHeight
 
 
 @OptIn(ExperimentalNaverMapApi::class, ExperimentalMaterial3Api::class)
@@ -186,61 +191,60 @@ fun MapScreen(
                 .zIndex(1f)
                 .fillMaxWidth()
         ) {
-            // 검색창 + 버튼
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
+
+            // 검색창 + 버튼 1203 디자인적용
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AppInputField(
                     value = uiState.searchQuery,
                     onValueChange = viewModel::updateSearchQuery,
-                    placeholder = { Text(searchMessage) },
+                    label = searchMessage,
                     singleLine = true,
                     modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF38B6B2),
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor = Color(0xFF38B6B2)
-                    )
+                        .weight(1f),
+                    height = AppFieldHeight
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Button(
+                AppButton(
+                    text = searchText,
+                    textStyle = MaterialTheme.typography.labelLarge,
+                    shape = MaterialTheme.shapes.medium,
                     onClick = {
                         focusManager.clearFocus(force = true)
                         val center = uiState.mapCenter ?: uiState.myLocation
                         viewModel.searchAround(center)
                     },
-                    shape = ButtonDefaults.shape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF6AE0D9)
-                    )
-                ) {
-                    Text(searchText, color = Color.White)
-                }
+                    modifier = Modifier
+                        .height(AppFieldHeight)
+                        .widthIn(min = 90.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // 병원/약국 토글 칩
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = uiState.selectedChip == "병원",
+                AppTagButton(
+                    label = hospitalText,
                     onClick = { viewModel.onModeChange("병원") },
-                    label = { Text(hospitalText) }
+                    selected = uiState.selectedChip == "병원",
+                    useFilterChipStyle = true
                 )
 
-                FilterChip(
+                AppTagButton(
+                    label = pharmacyText,
                     selected = uiState.selectedChip == "약국",
                     onClick = { viewModel.onModeChange("약국") },
-                    label = { Text(pharmacyText) }
+                    useFilterChipStyle = true
                 )
             }
         }
 
-        // "이 위치에서 검색" 칩
+        // "이 위치에서 검색" 칩 - 디자인은 mapbottomsheet~파일에
         SearchHereChip(
             visible = uiState.showSearchHere &&
                     (uiState.mapCenter != null || uiState.myLocation != null),

@@ -29,7 +29,7 @@ import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.components.AuthTextButton
-import com.shared.ui.theme.AuthFieldHeight
+import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -222,7 +222,7 @@ fun LoginScreen(
                             contentDescription = kakaoLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(AuthFieldHeight)
+                                .height(AppFieldHeight)
                                 .clip(MaterialTheme.shapes.medium)
                                 .clickable {
                                     Log.e("LoginScreen", "🟡 ========== 카카오 버튼 클릭 ==========")
@@ -244,7 +244,7 @@ fun LoginScreen(
                             contentDescription = googleLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(AuthFieldHeight)
+                                .height(AppFieldHeight)
                                 .clip(MaterialTheme.shapes.medium)
                                 .clickable {
                                     Log.e("LoginScreen", "🔵 ========== 구글 버튼 클릭 ==========")

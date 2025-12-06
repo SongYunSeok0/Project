@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 // Color, Type, Shape를 통합하여 최종 MaterialTheme 컴포저블을 제공하는 메인 테마 파일.
 
@@ -23,10 +24,12 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color.Black,
     secondary = Secondary,
     onSurfaceVariant = OnSurfaceVariant,
-    surfaceVariant = Color.Gray,
+    surfaceVariant = SurfaceVariant,
+    primaryContainer = Color.Transparent,
     // 오류 팝업
     error = Color.Red,
-    onError = Color.White
+    onError = Color.White,
+    outline = BorderGray
 )
 
 @Composable
@@ -42,12 +45,13 @@ fun AppTheme(
         SideEffect {
             val window = (view.context as Activity).window
             // 상태 표시줄 배경색을 앱의 배경색으로 설정
-            window.statusBarColor = colorScheme.background.toArgb()
+            window.statusBarColor = colorScheme.primaryContainer.toArgb()
 
             // 상태 표시줄 콘텐츠(아이콘/텍스트)를 어둡게 설정 (밝은 배경용)
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
     }
+
 
     // 커스텀 테마 토큰을 CompositionLocalProvider를 통해 제공
     CompositionLocalProvider(
