@@ -13,8 +13,8 @@ QueueHandle_t httpQueue;
 
 bool httpTimeSignal = false;
 
-const char* postUrl = "http://192.168.0.154:8000/api/iot/ingest/";
-const char* getUrl  = "http://192.168.0.154:8000/api/iot/alerts/commands/";
+const char* postUrl = "http://192.168.0.237:8000/api/iot/ingest/";
+const char* getUrl  = "http://192.168.0.237:8000/api/iot/alerts/commands/";
 
 typedef struct {
     bool doPost;
