@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from iot.models import Device
+
 
 # 등록 이력(기존 Prescription)
 class RegiHistory(models.Model):
@@ -16,6 +18,15 @@ class RegiHistory(models.Model):
     regi_type = models.CharField(
         max_length=50,
         verbose_name="등록 유형 (영양제/병원약)"
+    )
+
+    device = models.ForeignKey(
+        Device,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="regi_histories", # Device 입장에서 연결된 약들을 찾을 때 사용 (device.regi_histories.all())
+        verbose_name="연동 기기"
     )
 
     # 병명 (기존 disase_name)
@@ -34,15 +45,6 @@ class RegiHistory(models.Model):
     )
     # 알람 여부
     use_alarm = models.BooleanField(default=True)
-
-    device = models.ForeignKey(
-        "iot.Device",
-        on_delete=models.SET_NULL,  # 기기가 삭제되어도 이력은 남김
-        null=True,
-        blank=True,
-        related_name='histories',
-        verbose_name="연동된 기기"
-    )
 
     class Meta:
         db_table = "regihistory"

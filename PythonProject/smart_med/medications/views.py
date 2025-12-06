@@ -1,13 +1,15 @@
+# med/views.py
 from rest_framework.views import APIView
-# decorators 임포트 제거 (클래스형 뷰에서는 불필요)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_or_404
+
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.shortcuts import get_object_or_404
 import datetime
 
+from smart_med.utils.time_utils import to_ms, from_ms
 from .models import RegiHistory, Plan
 from .serializers import (
     RegiHistorySerializer,
@@ -16,79 +18,82 @@ from .serializers import (
     PlanCreateIn,
 )
 
+from .docs import (
+    regi_list_docs, regi_create_docs, regi_update_docs, regi_delete_docs,
+    plan_list_docs, plan_create_docs, plan_delete_docs,
+    plan_today_docs, plan_update_docs,
+    mark_as_taken_docs, snooze_docs
+)
 
-def to_ms(dt):
-    if dt is None:
-        return None
-    if isinstance(dt, datetime.date) and not isinstance(dt, datetime.datetime):
-        dt = datetime.datetime.combine(dt, datetime.time.min)
-    if timezone.is_naive(dt):
-        dt = timezone.make_aware(dt, datetime.timezone.utc)
-    return int(dt.timestamp() * 1000)
+# ============================================================
+# ✔ RegiHistory (CRUD)
+# ============================================================
 
-
-def to_dt(ms):
-    if not ms:
-        return None
-    return datetime.datetime.fromtimestamp(ms / 1000, tz=datetime.timezone.utc)
-
-
-# RegiHistory GET + POST
+@regi_list_docs
 class RegiHistoryListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @regi_create_docs
+    def post(self, request):
+        ser = RegiHistoryCreateSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+        ser.is_valid(raise_exception=True)
+        obj = ser.save()
+        return Response(RegiHistorySerializer(obj).data, status=201)
+
     def get(self, request):
         rows = RegiHistory.objects.filter(user=request.user).order_by("-id")
-        return Response(RegiHistorySerializer(rows, many=True).data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        ser = RegiHistoryCreateSerializer(data=request.data, context={"request": request})
-        ser.is_valid(raise_exception=True)
-        regi = ser.save()
-        return Response(RegiHistorySerializer(regi).data, status=status.HTTP_201_CREATED)
+        return Response(RegiHistorySerializer(rows, many=True).data)
 
 
-# RegiHistory PATCH
+@regi_update_docs
 class RegiHistoryUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        regi = RegiHistory.objects.filter(id=pk, user=request.user).first()
-        if regi is None:
-            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        obj = RegiHistory.objects.filter(id=pk, user=request.user).first()
+        if not obj:
+            return Response({"error": "not found"}, status=404)
 
-        ser = RegiHistoryCreateSerializer(regi, data=request.data, partial=True, context={"request": request})
+        ser = RegiHistoryCreateSerializer(obj, data=request.data, partial=True)
         ser.is_valid(raise_exception=True)
         ser.save()
-        return Response(RegiHistorySerializer(regi).data, status=status.HTTP_200_OK)
+        return Response(RegiHistorySerializer(obj).data)
 
 
-# RegiHistory DELETE
+@regi_delete_docs
 class RegiHistoryDeleteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
         row = RegiHistory.objects.filter(id=pk, user=request.user).first()
-        if row is None:
-            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        if not row:
+            return Response({"error": "not found"}, status=404)
         row.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=204)
 
 
-# ✅ [수정] PlanListView (GET: 조회, POST: 단건 등록 + 스마트 일괄 등록 통합)
+# ============================================================
+# ✔ Plan (GET / POST 단건 + 스마트 일정 생성)
+# ============================================================
+
+@plan_list_docs
 class PlanListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         plans = Plan.objects.filter(regihistory__user=request.user)
-        return Response(PlanSerializer(plans, many=True).data, status=status.HTTP_200_OK)
+        return Response(PlanSerializer(plans, many=True).data)
 
+    @plan_create_docs
     def post(self, request):
         data = request.data
 
-        # =================================================================
-        # [Case 1] 스마트 일괄 등록
-        # =================================================================
+        # ============================================================
+        # Case 1: 스마트 일정 일괄 등록
+        # ============================================================
         if "times" in data and isinstance(data["times"], list):
             rid = data.get("regihistoryId")
             start_date_str = data.get("startDate")
@@ -100,119 +105,103 @@ class PlanListView(APIView):
             if not regi:
                 return Response({"error": "RegiHistory not found"}, status=404)
 
-            # 날짜 파싱
             try:
                 current_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
             except:
-                print(f"[Plan Create] 날짜 파싱 실패 또는 없음: {start_date_str}, 오늘 날짜로 대체합니다.")
-                current_date = timezone.now().date()
+                current_date = timezone.localdate()
 
             now = timezone.now()
-            print(f"✅ [DEBUG] 서버 현재 시간(now): {now} (Timezone: {timezone.get_current_timezone()})")
-
-            total_count = duration * len(times)
-            created_count = 0
             created_plans = []
+            total_target = duration * len(times)
+            count = 0
 
-            max_loop_days = duration * 3
-            days_looped = 0
-
-            while created_count < total_count and days_looped < max_loop_days:
-                for t_str in sorted(times):
-                    if created_count >= total_count:
+            while count < total_target:
+                for t in sorted(times):
+                    if count >= total_target:
                         break
 
-                    try:
-                        hour, minute = map(int, t_str.split(":"))
-                        # 날짜 + 시간 결합
-                        plan_dt = datetime.datetime.combine(current_date, datetime.time(hour, minute))
+                    hour, minute = map(int, t.split(":"))
+                    dt = datetime.datetime.combine(current_date, datetime.time(hour, minute))
 
-                        # Timezone 처리 (Asia/Seoul 등으로 변환)
-                        if timezone.is_naive(plan_dt):
-                            plan_dt = timezone.make_aware(plan_dt, timezone.get_current_timezone())
+                    if timezone.is_naive(dt):
+                        dt = timezone.make_aware(dt, timezone.get_current_timezone())
 
-                        # 디버깅용 로그
-                        # print(f"👉 [Check] {plan_dt} > {now} ? {plan_dt > now}")
-
-                        # ⭐ [핵심 로직] 현재 시간보다 미래인 경우에만 생성
-                        if plan_dt > now:
-                            p = Plan.objects.create(
-                                regihistory=regi,
-                                med_name=med_name,
-                                taken_at=plan_dt,
-                                ex_taken_at=plan_dt,  # 👈 추가: 최초 예정 시간 기록
-                                use_alarm=True,
-                                meal_time="after"
-                            )
-                            created_plans.append(p)
-                            created_count += 1
-                        else:
-                            # 이미 지난 시간은 스킵 (로그 확인용)
-                            print(f"⏭️ [SKIP] 과거 시간 스킵됨: {plan_dt}")
-
-                    except Exception as e:
-                        print(f"⚠️ [ERROR] 시간 처리 중 오류: {e}")
+                    if dt <= now:
                         continue
 
-                current_date += datetime.timedelta(days=1)
-                days_looped += 1
+                    p = Plan.objects.create(
+                        regihistory=regi,
+                        med_name=med_name,
+                        taken_at=dt,
+                        ex_taken_at=dt,
+                        meal_time="after",
+                        use_alarm=True,
+                    )
+                    created_plans.append(p)
+                    count += 1
 
-            # created_at/updated_at 그룹화 (생략 가능하나 유지)
+                current_date += datetime.timedelta(days=1)
+
             if created_plans:
-                sync_time = timezone.now()
-                Plan.objects.filter(id__in=[p.id for p in created_plans]).update(updated_at=sync_time)
+                sync = timezone.now()
+                Plan.objects.filter(id__in=[p.id for p in created_plans]).update(updated_at=sync)
                 for p in created_plans:
-                    p.updated_at = sync_time
+                    p.updated_at = sync
 
             return Response({
-                "message": f"총 {created_count}개의 스마트 일정이 생성되었습니다.",
+                "message": f"{len(created_plans)}개의 스마트 일정이 생성되었습니다.",
                 "plans": PlanSerializer(created_plans, many=True).data
-            }, status=status.HTTP_201_CREATED)
+            }, status=201)
 
-        # =================================================================
-        # [Case 2] 기존 단건 등록 (변동 없음)
-        # =================================================================
-        else:
-            ser = PlanCreateIn(data=data)
-            ser.is_valid(raise_exception=True)
-            v = ser.validated_data
+        # ============================================================
+        # Case 2: 단건 등록
+        # ============================================================
+        ser = PlanCreateIn(data=data)
+        ser.is_valid(raise_exception=True)
+        v = ser.validated_data
 
-            regi_history = None
-            rid = v.get("regihistoryId")
-            if rid is not None:
-                regi_history = RegiHistory.objects.filter(id=rid, user=request.user).first()
-                if regi_history is None:
-                    return Response({"error": "no permission"}, status=status.HTTP_400_BAD_REQUEST)
+        regi = RegiHistory.objects.filter(id=v["regihistoryId"], user=request.user).first()
+        if not regi:
+            return Response({"error": "no permission"}, status=400)
 
-            taken_at_value = to_dt(v.get("takenAt"))
+        dt = from_ms(v.get("takenAt"))
 
-            plan = Plan.objects.create(
-                regihistory=regi_history,
-                med_name=v.get("medName"),
-                taken_at=taken_at_value,
-                ex_taken_at=taken_at_value,  # 👈 추가: 최초 예정 시간 기록
-                meal_time=v.get("mealTime") or "before",
-                note=v.get("note"),
-                taken=to_dt(v.get("taken")),
-                use_alarm=v.get("useAlarm", True),
-            )
+        plan = Plan.objects.create(
+            regihistory=regi,
+            med_name=v.get("medName"),
+            taken_at=dt,
+            ex_taken_at=dt,
+            meal_time=v.get("mealTime") or "before",
+            note=v.get("note"),
+            taken=from_ms(v.get("taken")),
+            use_alarm=v.get("useAlarm", True),
+        )
 
-            return Response(PlanSerializer(plan).data, status=status.HTTP_201_CREATED)
+        return Response(PlanSerializer(plan).data, status=201)
 
 
-# Plan DELETE
+# ============================================================
+# ✔ Plan DELETE
+# ============================================================
+
+@plan_delete_docs
 class PlanDeleteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
         plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
-        if plan is None:
-            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        if not plan:
+            return Response({"error": "not found"}, status=404)
+
         plan.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=204)
 
 
-# Today plans
+# ============================================================
+# ✔ 오늘 복약 일정 조회
+# ============================================================
+
+@plan_today_docs
 class TodayPlansView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -229,7 +218,7 @@ class TodayPlansView(APIView):
 
         result = []
         for p in plans:
-            if p.taken is not None:
+            if p.taken:
                 status_str = "taken"
             elif now > p.taken_at + datetime.timedelta(hours=1):
                 status_str = "missed"
@@ -240,107 +229,104 @@ class TodayPlansView(APIView):
             item["status"] = status_str
             result.append(item)
 
-        return Response(result, status=status.HTTP_200_OK)
+        return Response(result)
 
 
-# [수정됨] PlanUpdateView (업데이트 시간 동기화 로직 포함)
+# ============================================================
+# ✔ Plan Update
+# ============================================================
+
+@plan_update_docs
 class PlanUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        target_plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
-        if not target_plan:
-            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
+        if not plan:
+            return Response({"error": "not found"}, status=404)
 
         data = request.data
 
         if "takenAt" in data:
-            raw_taken_at = data["takenAt"]
-            if isinstance(raw_taken_at, (int, float)):
-                # 타임스탬프 처리 (tz=datetime.timezone.utc 사용)
-                new_taken_at = datetime.datetime.fromtimestamp(raw_taken_at / 1000.0, tz=datetime.timezone.utc)
+            raw = data["takenAt"]
+
+            if isinstance(raw, (int, float)):
+                new_dt = datetime.datetime.fromtimestamp(raw / 1000, tz=datetime.timezone.utc)
             else:
-                new_taken_at = parse_datetime(raw_taken_at)
+                new_dt = parse_datetime(raw)
 
-            old_taken_at = target_plan.taken_at
+            old_dt = plan.taken_at
+            old_updated = plan.updated_at
 
-            # 그룹 식별용 '기존 수정 시간' 저장
-            old_updated_at = target_plan.updated_at
+            plan.taken_at = new_dt
+            if "medName" in data:
+                plan.med_name = data["medName"]
+            if "useAlarm" in data:
+                plan.use_alarm = data["useAlarm"]
+            plan.save()
 
-            # --- 타겟 먼저 업데이트 (updated_at 갱신됨) ---
-            target_plan.taken_at = new_taken_at
-            if "medName" in data: target_plan.med_name = data["medName"]
-            if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
-            target_plan.save()
+            siblings = Plan.objects.filter(
+                regihistory=plan.regihistory,
+                taken_at=old_dt,
+                updated_at=old_updated
+            ).exclude(id=plan.id)
 
-            # --- 같은 그룹(형제들) 찾아서 동기화 ---
-            if old_taken_at and target_plan.regihistory:
-                siblings = Plan.objects.filter(
-                    regihistory=target_plan.regihistory,
-                    taken_at=old_taken_at,
-                    updated_at=old_updated_at  # 같은 배치(Batch)로 수정된 애들만 찾음
-                ).exclude(id=target_plan.id)
-
-                count = siblings.update(
-                    taken_at=new_taken_at,
-                    # 형제들도 타겟과 똑같은 updated_at을 갖도록 강제 동기화
-                    updated_at=target_plan.updated_at
-                )
-                print(f"[Plan Update] updated_at={old_updated_at} 그룹에서 {count}개 이동됨.")
+            siblings.update(
+                taken_at=new_dt,
+                updated_at=plan.updated_at
+            )
 
         else:
-            # 시간 변경 없는 경우
-            if "medName" in data: target_plan.med_name = data["medName"]
-            if "useAlarm" in data: target_plan.use_alarm = data["useAlarm"]
-            target_plan.save()
+            if "medName" in data:
+                plan.med_name = data["medName"]
+            if "useAlarm" in data:
+                plan.use_alarm = data["useAlarm"]
+            plan.save()
 
-        return Response(PlanSerializer(target_plan).data, status=status.HTTP_200_OK)
+        return Response(PlanSerializer(plan).data, status=200)
 
 
-# 1. 복약 완료 처리 (CBV 변경)
+# ============================================================
+# ✔ 복약 완료
+# ============================================================
+
+@mark_as_taken_docs
 class MarkAsTakenView(APIView):
-    """
-    해당 Plan을 '복약 완료' 처리합니다.
-    (taken 필드에 현재 시간 기록 -> 알람 추적 제외됨)
-    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, plan_id):
-        plan = get_object_or_404(Plan, id=plan_id)
+        plan = get_object_or_404(Plan, id=plan_id, regihistory__user=request.user)
 
-        # 이미 먹었는지 확인
         if plan.taken:
-            return Response({"message": "이미 복약 완료된 약입니다."}, status=status.HTTP_200_OK)
+            return Response({"message": "이미 복약 완료됨"}, status=200)
 
-        # 복약 시간 기록
         plan.taken = timezone.now()
         plan.save()
 
         return Response({
-            "message": "복약 완료 처리되었습니다.",
+            "message": "복약 완료 처리됨",
             "taken_time": plan.taken
-        }, status=status.HTTP_200_OK)
+        }, status=200)
 
 
-# 2. 복약 미루기 (CBV 변경)
+# ============================================================
+# ✔ 미루기 (30분 뒤로)
+# ============================================================
+
+@snooze_docs
 class SnoozeMedicationView(APIView):
-    """
-    해당 Plan의 복용 예정 시간(taken_at)을 30분 뒤로 미룹니다.
-    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, plan_id):
-        plan = get_object_or_404(Plan, id=plan_id)
+        plan = get_object_or_404(Plan, id=plan_id, regihistory__user=request.user)
 
-        # 이미 먹은 약은 미룰 수 없음
         if plan.taken:
-            return Response({"error": "이미 복약한 약입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "이미 복약됨"}, status=400)
 
-        # 30분 뒤로 업데이트
         plan.taken_at = plan.taken_at + datetime.timedelta(minutes=30)
         plan.save()
 
         return Response({
-            "message": "알림이 30분 뒤로 미루어졌습니다.",
+            "message": "복약 알림이 30분 뒤로 미뤄졌습니다.",
             "new_taken_at": plan.taken_at
-        }, status=status.HTTP_200_OK)
+        }, status=200)

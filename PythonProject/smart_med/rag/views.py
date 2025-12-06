@@ -19,14 +19,12 @@ class DrugRAGView(APIView):
 
     def post(self, request):
         question = request.data.get("question")
-        mode = request.data.get("mode", "async")  # default = async
+        mode = request.data.get("mode", "async")  # celery할때 sync -> async
 
         if not question:
             return Response({"detail": "question 필드가 필요합니다."}, status=400)
 
-        # ---------------------------
-        # 🔹 1. 비동기 모드 (Celery)
-        # ---------------------------
+        # 비동기 모드 (Celery)
         if mode == "async":
             task = run_rag_task.delay(question)
             return Response(
@@ -34,9 +32,7 @@ class DrugRAGView(APIView):
                 status=202,
             )
 
-        # ---------------------------
-        # 🔹 2. 동기 모드 (즉시 RAG 처리)
-        # ---------------------------
+        # 동기 모드 (즉시 RAG 처리)
         try:
             start = time.time()
             chunks = retrieve_top_chunks(question, k=5)
@@ -55,6 +51,7 @@ class DrugRAGView(APIView):
         return Response(
             {
                 "status": "done",
+                "question": question,
                 "result": {
                     "answer": answer,
                     "contexts": [

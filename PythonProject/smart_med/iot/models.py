@@ -20,21 +20,29 @@ def generate_device_uuid():
 
 
 class Device(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="iot_devices")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="iot_devices",
+    )
 
     device_uuid = models.CharField(max_length=64, unique=True, default=generate_device_uuid)
     device_token = models.CharField(max_length=128, default=generate_device_token)
 
-    chip_id = models.CharField(max_length=64, unique=True, null=True, blank=True)  # ⭐ 추가해야 함
-
-    device_name = models.CharField(max_length=10, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     last_connected_at = models.DateTimeField(null=True, blank=True)
+    device_name=models.CharField(
+        max_length=10,
+        null=True,
+        blank=True
+    )
+
 
     class Meta:
         db_table = "iot_device"
         unique_together = ('user', 'device_name')
-
 
     def __str__(self):
         return f"Device {self.device_uuid} for {self.user.email}"
@@ -63,4 +71,15 @@ class SensorData(models.Model):
 
     def __str__(self):
         return f"SensorData {self.device.id} @ {self.collected_at}"
-    
+
+
+import secrets
+from django.db import models
+
+
+
+class IntakeStatus(models.TextChoices):
+    TAKEN = "taken", "정상 복용"
+    WRONG = "wrong", "오복용"
+    MISSED = "missed", "미복용"
+    NONE = "none", "이벤트 아님"

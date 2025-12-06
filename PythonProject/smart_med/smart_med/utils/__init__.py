@@ -1,0 +1,1 @@
+from .make_qr import create_qr

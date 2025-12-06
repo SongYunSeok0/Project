@@ -6,7 +6,7 @@ from .views import (
     PlanListView,
     PlanUpdateView,
     PlanDeleteView,
-    TodayPlansView, MarkAsTakenView, SnoozeMedicationView,
+    MarkAsTakenView, SnoozeMedicationView,
 )
 
 urlpatterns = [

@@ -7,6 +7,8 @@ interface PlanRepository {
 
     fun observePlans(userId: Long): Flow<List<Plan>>
 
+    fun getPlanById(planId: Long): Flow<Plan?>
+
     suspend fun syncPlans(userId: Long)
 
     suspend fun create(

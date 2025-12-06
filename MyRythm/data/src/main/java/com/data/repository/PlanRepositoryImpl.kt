@@ -27,6 +27,12 @@ class PlanRepositoryImpl @Inject constructor(
             list.map { it.toDomainLocal() }
         }
 
+    override fun getPlanById(planId: Long): Flow<Plan?> {
+        return dao.getPlanById(planId)
+            .map { entity -> entity?.toDomainLocal() }
+    }
+
+
     override suspend fun syncPlans(userId: Long) = withContext(Dispatchers.IO) {
         val remotePlans = api.getPlans()
         val domainPlans = remotePlans.map { it.toDomain() }

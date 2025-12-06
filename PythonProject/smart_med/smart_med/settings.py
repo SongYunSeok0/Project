@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",
-    "drf_yasg",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     "corsheaders",
     "django_extensions",
     "django_celery_results",
@@ -73,11 +74,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "utils.middleware.RequestLoggingMiddleware",
+    "smart_med.utils.middleware.RequestLoggingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-MIDDLEWARE.insert(0, "utils.middleware.DisableChunkedMiddleware")
+MIDDLEWARE.insert(0, "smart_med.utils.middleware.DisableChunkedMiddleware")
+
 
 # === CELERY 설정 ===
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
@@ -147,25 +149,37 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     ),
-
-    'UNAUTHENTICATED_USER': None,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-#plan.task.py
-# CELERY_BEAT_SCHEDULE = {
-#     # 1.환자 복용 알림 (매 분 실행)
-#     'send-med-alarms-every-minute': {
-#         'task': 'medications.tasks.send_med_alarms_task',
-#         'schedule': crontab(minute='*'),
-#     },
-#
-#     # 2.보호자 미복용 알림 (매 분 실행)
-#     # 1분마다 돌면서 "30분이 지났는데 아직 안 먹은 약" 체크
-#     'check-missed-meds-every-minute': {
-#         'task': 'medications.tasks.check_missed_medication',
-#         'schedule': crontab(minute='*'),
-#     },
-# }
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Smart Medication Care API",
+    "DESCRIPTION": "MyRythm API 명세서",
+    "VERSION": "1.0.0",
+    # 스키마 포함 여부
+    "SERVE_INCLUDE_SCHEMA": False,
+    # Request/Response 분리
+    "COMPONENT_SPLIT_REQUEST": True,
+    # 공통 에러 Response 생성
+    "DEFAULT_GENERATE_ERROR_RESPONSE": True,
+    # 사용할 수 있는 VALID 옵션
+    "SCHEMA_PATH_PREFIX": "/api",
+    # JWT Auth 표시
+    "AUTHENTICATION_WHITELIST": [],
+    # 태그 정의
+    "TAGS": [
+        {"name": "Auth", "description": "로그인 · 회원가입 · 이메일 인증 · 소셜 로그인"},
+        {"name": "User", "description": "사용자 정보 조회 및 수정, FCM, 회원탈퇴"},
+        {"name": "Health", "description": "심박수 · 걸음수 건강 데이터"},
+        {"name": "IoT", "description": "IoT 기기 연동 · 센서 데이터 수집 · 명령 전달"},
+        {"name": "RAG", "description": "약학 RAG 검색 · 비동기 작업 조회"},
+        {"name": "RegiHistory", "description": "처방/영양제 등록 이력 관리"},
+        {"name": "Plan", "description": "복약 일정 생성 · 수정 · 삭제 · 스마트 일정 생성"},
+        {"name": "Notification", "description": "FCM 알림 기능"},
+    ],
+}
+
+
 
 # i18n
 LANGUAGE_CODE = "ko-kr"
@@ -176,5 +190,8 @@ USE_TZ = True
 STATIC_URL = "static/"
 ROOT_URLCONF = "smart_med.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 AUTH_USER_MODEL = "users.User"
