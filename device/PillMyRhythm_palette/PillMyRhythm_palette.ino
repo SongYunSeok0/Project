@@ -106,13 +106,23 @@ void loop() {
     SlotLED::resetIfTimeout();
 
     // -------------------------------------------------
-    // GET 명령 처리 (time:true)
+    // 🔵 (1) 시리얼 입력으로 time:true 테스트
+    // -------------------------------------------------
+    if (Serial.available()) {
+        char c = Serial.read();
+        if (c == 't') {
+            Serial.println("📡 SERIAL: time:true RECEIVED → SlotLED::nextSlot()");
+            SlotLED::nextSlot();
+        }
+    }
+
+    // -------------------------------------------------
+    // 🔵 (2) 서버 GET 응답에서 time:true 받은 경우
     // -------------------------------------------------
     if (httpTimeSignal) {
         httpTimeSignal = false;
 
         isTime = true;
-
         digitalWrite(RED_LED, LOW);
         digitalWrite(GREEN_LED, HIGH);
 
@@ -120,8 +130,9 @@ void loop() {
 
         extern unsigned long greenStart;
         greenStart = millis();
-    }
 
+        SlotLED::nextSlot();    // SLOT 이동
+    }
     // GET 요청 주기
     static unsigned long lastGetSend = 0;
     if (millis() - lastGetSend >= 10000) {
