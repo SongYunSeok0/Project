@@ -74,7 +74,8 @@ fun UserDto.toProfile(): UserProfile {
         phone = phone,
         prot_name = null,
         prot_email = prot_email,
-        email = email
+        email = email,
+        isStaff = is_staff
     )
 }
 
@@ -113,6 +114,7 @@ fun UserEntity.toProfile(): UserProfile {
         phone = phone,
         prot_email = protPhone,
         prot_name = null,
-        email = email
+        email = email,
+        isStaff = isStaff
     )
 }

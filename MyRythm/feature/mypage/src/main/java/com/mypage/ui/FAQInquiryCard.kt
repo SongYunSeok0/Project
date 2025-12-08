@@ -1,3 +1,4 @@
+// mypage/ui/InquiryCard.kt
 package com.mypage.ui
 
 import androidx.compose.foundation.BorderStroke
@@ -35,31 +36,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.shared.R
 import com.domain.model.Inquiry
+import com.domain.model.InquiryComment
 import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.componentTheme
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-// FAQScreen.kt 에서 사용되는 문의 내역+답변 카드 컴포넌트
-// 해당 컴포넌트는 디자인 용도, Inquiry 모델은 도메인레이어로 분리
-
-/*
-:domain 모듈의 데이터클래스
-
-data class Inquiry(
-    val id: Int = 0,
-    val type: String,
-    val title: String,
-    val content: String,
-    val answer: String? = null
-)
- */
-
-// enum 클래스에 답변 블록 표시 여부 속성 추가
 enum class InquiryStatus(val text: String, val showAnswerBlock: Boolean) {
     UNANSWERED("미답변", false),
     ANSWERED("답변완료", true)
 }
 
-// enum 내부의 문자열은 건드리지 말고 문자열 리소스 매핑, 이후 ui엔 status.toDisplayText() 사용
 @Composable
 fun InquiryStatus.toDisplayText(): String {
     return when (this) {
@@ -78,20 +66,21 @@ fun InquiryCard(
     val downIcon = R.drawable.down_chevron
     val chatIcon = R.drawable.faqchat
 
-    // answer 필드로 상태 판단
-    val status = if (inquiry.answer.isNullOrBlank()) {
-        InquiryStatus.UNANSWERED
-    } else {
+    // 🔥 isAnswered 필드로 상태 판단
+    val status = if (inquiry.isAnswered) {
         InquiryStatus.ANSWERED
+    } else {
+        InquiryStatus.UNANSWERED
     }
 
     val statusColor = when (status) {
         InquiryStatus.UNANSWERED -> MaterialTheme.colorScheme.surfaceVariant
         InquiryStatus.ANSWERED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    // 날짜는 기본값 (추후 domain에 필드 추가 가능, 현재는 임의 설정)
-    val questionDate = "2025/11/03"
-    val answerDate = "2025/11/04"
+
+    // 🔥 날짜 포맷팅
+    val questionDate = inquiry.createdAt?.let { formatDate(it) } ?: "-"
+    val answerDate = inquiry.comments.firstOrNull()?.createdAt?.let { formatDate(it) } ?: "-"
 
     val faqIcon = stringResource(R.string.faqicon)
     val expandText = stringResource(R.string.expand)
@@ -113,7 +102,6 @@ fun InquiryCard(
             ) { expanded = !expanded }
             .padding(16.dp)
     ) {
-        // 카드 상단 Row: 아이콘 + 제목 / 상태
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -125,9 +113,8 @@ fun InquiryCard(
                 modifier = Modifier.size(24.dp)
             )
 
-            Spacer(modifier = Modifier.width(10.dp)) // 아이콘과 제목 사이 간격
+            Spacer(modifier = Modifier.width(10.dp))
 
-            // 제목 + 답변/미답변 + 업/다운 아이콘
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
@@ -142,14 +129,13 @@ fun InquiryCard(
                     softWrap = false,
                     modifier = Modifier
                         .weight(1f, fill = false)
-                        .padding(end = 30.dp) // 제목의 글자수 길어지면 ... 처리용 간격
+                        .padding(end = 30.dp)
                 )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // 답변/미답변
                     Text(
                         text = status.toDisplayText(),
                         color = when (status) {
@@ -159,7 +145,6 @@ fun InquiryCard(
                         style = MaterialTheme.typography.bodyLarge
                     )
 
-                    // 업/다운 아이콘
                     Image(
                         painter = painterResource(if (expanded) upIcon else downIcon),
                         contentDescription = if (expanded) collapseText else expandText,
@@ -168,11 +153,11 @@ fun InquiryCard(
                 }
             }
         }
-        // 확장된 내용 (마크다운 형태로 표시 예정)
+
         if (expanded) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 질문 블록 (항상 표시)
+            // 질문 블록
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -194,7 +179,6 @@ fun InquiryCard(
                     )
                 }
 
-                // 질문 블록 날짜 우측 상단 고정
                 Text(
                     text = questionDate,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -203,9 +187,12 @@ fun InquiryCard(
                 )
             }
 
-            // 답변 블록 표시 여부는 enum 속성에서 결정
-            if (status.showAnswerBlock && !inquiry.answer.isNullOrBlank()) {
+            // 🔥 답변 블록 (comments가 있을 때만 표시)
+            if (status.showAnswerBlock && inquiry.comments.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // 🔥 첫 번째 댓글만 표시 (또는 모든 댓글 표시 가능)
+                val firstAnswer = inquiry.comments.first()
 
                 Box(
                     modifier = Modifier
@@ -222,13 +209,12 @@ fun InquiryCard(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = inquiry.answer!!,
+                            text = firstAnswer.content,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
 
-                    // 답변 블록 날짜 우측 상단 고정
                     Text(
                         text = answerDate,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -241,6 +227,17 @@ fun InquiryCard(
     }
 }
 
+// 🔥 날짜 포맷팅 함수
+private fun formatDate(dateTimeString: String): String {
+    return try {
+        val instant = Instant.parse(dateTimeString)
+        val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+        instant.atZone(ZoneId.systemDefault()).format(formatter)
+    } catch (e: Exception) {
+        dateTimeString
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun InquiryCardPreview() {
@@ -249,23 +246,45 @@ private fun InquiryCardPreview() {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 미답변
             InquiryCard(
                 inquiry = Inquiry(
                     id = 1,
+                    userId = 1,
+                    username = "사용자1",
                     type = "일반 문의",
                     title = "테스트 문의",
                     content = "문의 내용입니다",
-                    answer = null
+                    isAnswered = false,
+                    createdAt = "2025-11-03T10:00:00Z",
+                    commentCount = 0,
+                    comments = emptyList()
                 )
             )
 
+            // 답변 완료
             InquiryCard(
                 inquiry = Inquiry(
                     id = 2,
+                    userId = 1,
+                    username = "사용자2",
                     type = "버그 신고",
                     title = "답변 완료된 문의",
                     content = "문의 내용입니다",
-                    answer = "답변 내용입니다"
+                    isAnswered = true,
+                    createdAt = "2025-11-03T10:00:00Z",
+                    commentCount = 1,
+                    comments = listOf(
+                        InquiryComment(
+                            id = 1,
+                            inquiryId = 2,
+                            userId = 999,
+                            username = "관리자",
+                            content = "답변 내용입니다",
+                            createdAt = "2025-11-04T14:00:00Z",
+                            isStaff = true
+                        )
+                    )
                 )
             )
         }
