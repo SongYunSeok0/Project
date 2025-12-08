@@ -58,6 +58,7 @@ ui = "1.9.5"
 accompanistSystemuicontroller = "0.36.0"
 
 mpandroidchart = "v3.1.0"
+vico = "1.15.0"
 
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -173,6 +174,10 @@ accompanist-systemuicontroller = { group = "com.google.accompanist", name = "acc
 
 mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidchart", version.ref = "mpandroidchart" }
 
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -221,4 +226,10 @@ camerax = [
     "androidx-camera-view",
     "androidx-camera-video",
     "androidx-camera-extensions"
+]
+
+vico = [
+    "vico-compose",
+    "vico-compose-m3",
+    "vico-core"
 ]

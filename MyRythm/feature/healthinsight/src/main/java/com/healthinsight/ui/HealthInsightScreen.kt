@@ -9,34 +9,43 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.domain.model.DailyStep
 import com.domain.usecase.health.DailyHeartRateUI
 import com.domain.usecase.plan.MedicationDelayUI
 import com.healthinsight.ui.components.HealthBarChart
+import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
-import com.shared.ui.theme.componentTheme
-import kotlin.math.abs
 
 @Composable
 fun HealthInsightScreen(
     viewModel: HealthInsightViewModel = hiltViewModel()
 ) {
-    val weeklySteps by viewModel.weeklySteps.collectAsState()
-    val weeklyHeartRates by viewModel.weeklyHeartRates.collectAsState()
-    val medicationDelays by viewModel.medicationDelays.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-
+    val weeklySteps by viewModel.weeklySteps.collectAsStateWithLifecycle()
+    val weeklyHeartRates by viewModel.weeklyHeartRates.collectAsStateWithLifecycle()
+    val medicationDelays by viewModel.medicationDelays.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
         viewModel.loadAll()
+    }
+
+    LaunchedEffect(weeklyHeartRates) {
+        println("UI received ${weeklyHeartRates.size} days of heart rate data")
+        weeklyHeartRates.forEach { day ->
+            println("UI: ${day.date} - ${day.measurements.size} measurements")
+        }
     }
 
     HealthInsightContent(
         weeklySteps = weeklySteps,
         weeklyHeartRates = weeklyHeartRates,
         medicationDelays = medicationDelays,
-        isLoading = isLoading
+        isLoading = isLoading,
+        onInsertTestData = { viewModel.insertTestData() }
     )
 }
 
@@ -45,7 +54,8 @@ private fun HealthInsightContent(
     weeklySteps: List<DailyStep>,
     weeklyHeartRates: List<DailyHeartRateUI>,
     medicationDelays: List<MedicationDelayUI>,
-    isLoading: Boolean
+    isLoading: Boolean,
+    onInsertTestData: () -> Unit
 ) {
     if (isLoading) {
         Box(
@@ -62,15 +72,24 @@ private fun HealthInsightContent(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "건강 인사이트",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.componentTheme.heartRateNormal
-            )
+            // 🔥 개발용 테스트 버튼 (배포 시 제거)
+            Button(
+                onClick = onInsertTestData,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2196F3)
+                )
+            ) {
+                Text("걸음수 테스트 데이터 삽입")
+            }
 
-            StepsCard(weeklySteps)
-            HeartRateCard(weeklyHeartRates)
             MedicationDelayCard(medicationDelays)
+            if (weeklyHeartRates.isNotEmpty()) {
+                HeartRateCard(weeklyHeartRates)
+            }
+            if (weeklySteps.isNotEmpty()) {
+                StepsCard(weeklySteps)
+            }
         }
     }
 }
@@ -81,54 +100,65 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.componentTheme.healthInsightCard
+            containerColor = Color.White
         ),
-        border = BorderStroke(1.dp, MaterialTheme.componentTheme.mainFeatureCardBorderStroke),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
-                text = "최근 7일 걸음수",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.componentTheme.stepCard
+                text = "🚶 최근 7일 걸음수",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.Black
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (weeklySteps.isEmpty()) {
                 Text(
                     text = "데이터가 없습니다",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.componentTheme.dividerColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
             } else {
                 val values = weeklySteps.map { it.steps }
                 val labels = weeklySteps.map { day ->
-                    if (day.date.length >= 5) day.date.takeLast(5) else day.date
+                    val parts = day.date.split("-")
+                    if (parts.size >= 3) "${parts[1]}/${parts[2]}"
+                    else day.date.takeLast(5)
                 }
+
+                val stepColors = listOf(
+                    Color(0xFF2196F3),
+                    Color(0xFF1E88E5),
+                    Color(0xFF1976D2),
+                )
 
                 HealthBarChart(
                     values = values,
                     labels = labels,
-                    barColor = MaterialTheme.componentTheme.stepCard,
-                    axisColor = MaterialTheme.componentTheme.dividerColor
+                    barColors = stepColors,
+                    axisColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    valueUnit = ""
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 val avgSteps = values.average().toInt()
                 val maxSteps = values.maxOrNull() ?: 0
 
-                Text(
-                    text = "평균: ${avgSteps}걸음 · 최고: ${maxSteps}걸음",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.componentTheme.dividerColor
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem("평균", "${String.format("%,d", avgSteps)}걸음", Color(0xFF2196F3))
+                    StatItem("최고", "${String.format("%,d", maxSteps)}걸음", Color(0xFF1976D2))
+                }
             }
         }
     }
@@ -140,57 +170,66 @@ private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.componentTheme.healthInsightCard
+            containerColor = Color.White
         ),
-        border = BorderStroke(1.dp, MaterialTheme.componentTheme.mainFeatureCardBorderStroke),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
-                text = "최근 7일 평균 심박수",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.componentTheme.heartRateNormal
+                text = "❤️ 최근 7일 심박수 추이",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.Black
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (weeklyHeartRates.isEmpty()) {
                 Text(
                     text = "데이터가 없습니다",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.componentTheme.dividerColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
             } else {
-                val avgValues = weeklyHeartRates.map { day ->
-                    if (day.measurements.isNotEmpty()) day.measurements.average().toInt() else 0
+                val measurements = weeklyHeartRates.map { day ->
+                    day.measurements
                 }
 
                 val labels = weeklyHeartRates.map { day ->
-                    if (day.date.length >= 5) day.date.takeLast(5) else day.date
+                    val parts = day.date.split("-")
+                    if (parts.size >= 3) "${parts[1]}/${parts[2]}"
+                    else day.date.takeLast(5)
                 }
 
-                HealthBarChart(
-                    values = avgValues,
+                HealthLineChart(
+                    measurements = measurements,
                     labels = labels,
-                    barColor = MaterialTheme.componentTheme.rateCard,
-                    axisColor = MaterialTheme.componentTheme.dividerColor
+                    lineColor = Color(0xFFE91E63),
+                    valueUnit = ""
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                val totalMeasurements = weeklyHeartRates.sumOf { it.measurements.size }
-                val avgBpm = avgValues.filter { it > 0 }.average().toInt()
+                val allMeasurements = weeklyHeartRates.flatMap { it.measurements }
+                val avgBpm = if (allMeasurements.isNotEmpty()) {
+                    allMeasurements.average().toInt()
+                } else 0
+                val maxBpm = allMeasurements.maxOrNull() ?: 0
+                val minBpm = allMeasurements.minOrNull() ?: 0
 
-                Text(
-                    text = "평균: ${avgBpm}bpm · 측정 횟수: ${totalMeasurements}회",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.componentTheme.dividerColor
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem("평균", "${avgBpm}bpm", Color(0xFFE91E63))
+                    StatItem("최고", "${maxBpm}bpm", Color(0xFFD81B60))
+                    StatItem("최저", "${minBpm}bpm", Color(0xFFC2185B))
+                }
             }
         }
     }
@@ -202,87 +241,238 @@ private fun MedicationDelayCard(medicationDelays: List<MedicationDelayUI>) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.componentTheme.healthInsightCard
+            containerColor = Color.White
         ),
-        border = BorderStroke(1.dp, MaterialTheme.componentTheme.mainFeatureCardBorderStroke),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text(
-                text = "복약 시간 준수도",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.componentTheme.completionCaution
+                text = "💊 복약 시간 준수도",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.Black
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (medicationDelays.isEmpty()) {
                 Text(
                     text = "데이터가 없습니다",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.componentTheme.dividerColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
             } else {
-                val groupedByDate = medicationDelays.groupBy { it.date }
-                val sortedDates = groupedByDate.keys.sorted()
-
-                val labels = sortedDates.map { date ->
-                    if (date.length >= 5) date.takeLast(5) else date
-                }
-
-                val avgDailyDelays: List<Double> = sortedDates.map { date ->
-                    val dayDelays = groupedByDate[date].orEmpty().map { it.delayMinutes }
-                    if (dayDelays.isEmpty()) 0.0 else dayDelays.average()
-                }
-
-                HealthBarChart(
-                    values = avgDailyDelays,
-                    labels = labels,
-                    barColor = MaterialTheme.componentTheme.completionCaution,
-                    axisColor = MaterialTheme.componentTheme.dividerColor,
-                    isDelayChart = true
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 val allDelayMinutes = medicationDelays.map { it.delayMinutes }
-                val overallAvgDelay = allDelayMinutes.average()
                 val onTimeCount = allDelayMinutes.count { it in -5..5 }
-                val onTimeRate =
-                    (onTimeCount.toFloat() / allDelayMinutes.size.toFloat() * 100f).toInt()
+                val onTimeRate = (onTimeCount.toFloat() / allDelayMinutes.size * 100).toInt()
+                val overallAvgDelay = allDelayMinutes.average()
 
-                val avgOfDailyAvgDelayAbs =
-                    if (avgDailyDelays.isEmpty()) 0.0
-                    else avgDailyDelays.map { abs(it) }.average()
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF5F5F5)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "전체 정시 복용률",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "$onTimeRate%",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = when {
+                                    onTimeRate >= 90 -> Color(0xFF66BB6A)
+                                    onTimeRate >= 70 -> Color(0xFFFF9800)
+                                    else -> Color(0xFFEF5350)
+                                }
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "평균 지연",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "${if (overallAvgDelay > 0) "+" else ""}%.1f분".format(overallAvgDelay),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        text = "하루 평균 지연(절대값): %.1f분".format(avgOfDailyAvgDelayAbs),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.componentTheme.dividerColor
+                Spacer(modifier = Modifier.height(20.dp))
+
+                val groupedByMed = medicationDelays.groupBy { it.label }
+
+                groupedByMed.entries.forEachIndexed { index, (medName, delays) ->
+                    MedicationChart(
+                        medName = medName,
+                        delays = delays
                     )
-                    Text(
-                        text = "전체 평균 지연: ${
-                            if (overallAvgDelay > 0)
-                                "+%.1f".format(overallAvgDelay)
-                            else
-                                "%.1f".format(overallAvgDelay)
-                        }분",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.componentTheme.dividerColor
-                    )
-                    Text(
-                        text = "정시 복용률(회차 기준): $onTimeRate% ($onTimeCount/${allDelayMinutes.size}회)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.componentTheme.completionCaution
-                    )
+
+                    if (index < groupedByMed.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MedicationChart(
+    medName: String,
+    delays: List<MedicationDelayUI>
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "🔹 $medName",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Text(
+                text = "${delays.size}회",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val groupedByDate = delays.groupBy { it.date }
+        val sortedDates = groupedByDate.keys.sorted()
+
+        val labels = sortedDates.map { date ->
+            val parts = date.split("-")
+            if (parts.size >= 3) "${parts[1]}/${parts[2]}"
+            else date.takeLast(5)
+        }
+
+        val avgDailyDelays: List<Double> = sortedDates.map { date ->
+            val dayDelays = groupedByDate[date].orEmpty().map { it.delayMinutes }
+            if (dayDelays.isEmpty()) 0.0 else dayDelays.average()
+        }
+
+        val avgDelay = delays.map { it.delayMinutes }.average()
+        val medicationColors = when {
+            avgDelay <= 5 -> listOf(
+                Color(0xFF66BB6A),
+                Color(0xFF81C784),
+                Color(0xFF4CAF50)
+            )
+            avgDelay <= 15 -> listOf(
+                Color(0xFFFFB74D),
+                Color(0xFFFF9800),
+                Color(0xFFFFA726)
+            )
+            else -> listOf(
+                Color(0xFFEF5350),
+                Color(0xFFE57373),
+                Color(0xFFD32F2F)
+            )
+        }
+
+        HealthBarChart(
+            values = avgDailyDelays,
+            labels = labels,
+            barColors = medicationColors,
+            axisColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            isDelayChart = true,
+            valueUnit = "분"
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val onTimeCount = delays.count { it.delayMinutes in -5..5 }
+        val onTimeRate = (onTimeCount.toFloat() / delays.size * 100).toInt()
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "평균 지연",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "${if (avgDelay > 0) "+" else ""}%.1f분".format(avgDelay),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "정시 복용률",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "$onTimeRate%",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = when {
+                        onTimeRate >= 90 -> Color(0xFF66BB6A)
+                        onTimeRate >= 70 -> Color(0xFFFF9800)
+                        else -> Color(0xFFEF5350)
+                    }
+                )
+            }
+        }
+
+        Divider(
+            modifier = Modifier.padding(top = 16.dp),
+            color = Color(0xFFE0E0E0),
+            thickness = 1.dp
+        )
+    }
+}
+
+@Composable
+private fun StatItem(
+    label: String,
+    value: String,
+    color: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            color = color
+        )
     }
 }

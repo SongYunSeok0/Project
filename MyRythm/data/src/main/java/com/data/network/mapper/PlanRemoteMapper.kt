@@ -10,6 +10,7 @@ fun PlanResponse.toDomain(): Plan =
     Plan(
         id = id,
         regihistoryId = regihistoryId,
+        regihistoryLabel = regihistoryLabel,
         medName = medName,
         takenAt = takenAt,
         exTakenAt = exTakenAt,

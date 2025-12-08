@@ -54,12 +54,17 @@ interface PlanDao {
         INNER JOIN `regihistory`
             ON `plan`.regihistoryId = `regihistory`.id
         WHERE `regihistory`.userId = :userId
-        AND `plan`.taken = 1
+        AND `plan`.taken IS NOT NULL
         AND `plan`.takenTime IS NOT NULL
         AND `plan`.exTakenAt IS NOT NULL
-        AND `plan`.exTakenAt >= :timestamp
+        AND `plan`.exTakenAt >= :startTime
+        AND `plan`.exTakenAt <= :endTime
         ORDER BY `plan`.exTakenAt DESC
         """
     )
-    suspend fun getRecentTakenPlans(userId: Long, timestamp: Long): List<PlanEntity>
+    suspend fun getRecentTakenPlans(
+        userId: Long,
+        startTime: Long,
+        endTime: Long
+    ): List<PlanEntity>
 }

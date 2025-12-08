@@ -10,6 +10,7 @@ data class PlanEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Long,
     val regihistoryId: Long?,
+    val regihistoryLabel: String?,
     val medName: String,
     val takenAt: Long?,
     val exTakenAt: Long?,

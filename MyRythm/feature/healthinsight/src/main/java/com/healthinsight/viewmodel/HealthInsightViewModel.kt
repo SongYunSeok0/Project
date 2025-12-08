@@ -6,6 +6,7 @@ import com.domain.model.DailyStep
 import com.domain.usecase.health.DailyHeartRateUI
 import com.domain.usecase.health.GetWeeklyHeartRatesUseCase
 import com.domain.usecase.health.GetWeeklyStepsUseCase
+import com.domain.usecase.step.InsertDummyStepsUseCase
 import com.domain.usecase.plan.GetMedicationDelaysUseCase
 import com.domain.usecase.plan.MedicationDelayUI
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class HealthInsightViewModel @Inject constructor(
     private val getWeeklyStepsUseCase: GetWeeklyStepsUseCase,
     private val getWeeklyHeartRatesUseCase: GetWeeklyHeartRatesUseCase,
-    private val getMedicationDelaysUseCase: GetMedicationDelaysUseCase
+    private val getMedicationDelaysUseCase: GetMedicationDelaysUseCase,
+    private val insertDummyStepsUseCase: InsertDummyStepsUseCase
 ) : ViewModel() {
 
     private val _weeklySteps = MutableStateFlow<List<DailyStep>>(emptyList())
@@ -60,6 +62,13 @@ class HealthInsightViewModel @Inject constructor(
     private fun loadMedicationDelays() {
         viewModelScope.launch {
             _medicationDelays.value = getMedicationDelaysUseCase()
+        }
+    }
+
+    fun insertTestData() {
+        viewModelScope.launch {
+            insertDummyStepsUseCase()
+            loadWeeklySteps()
         }
     }
 }

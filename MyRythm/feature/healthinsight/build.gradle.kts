@@ -61,4 +61,8 @@ dependencies {
     implementation(libs.bundles.test)
 
     implementation(libs.androidx.material3)
+
+    implementation(libs.mpandroidchart)
+
+    implementation(libs.bundles.vico)
 }

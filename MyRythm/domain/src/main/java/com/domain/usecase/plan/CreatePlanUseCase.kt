@@ -9,6 +9,7 @@ class CreatePlanUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         regihistoryId: Long?,
+        regihistoryLabel: String?,
         medName: String,
         takenAt: Long?,
         mealTime: String?,
@@ -22,6 +23,7 @@ class CreatePlanUseCase @Inject constructor(
                 Plan(
                     id = 0L,
                     regihistoryId = regihistoryId,
+                    regihistoryLabel = regihistoryLabel,
                     medName = medName,
                     takenAt = takenAt,
                     mealTime = mealTime,
@@ -33,6 +35,5 @@ class CreatePlanUseCase @Inject constructor(
                 )
             )
         )
-
     }
 }
