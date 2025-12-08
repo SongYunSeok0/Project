@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.scheduler.viewmodel.PlanViewModel
 import com.shared.R
@@ -42,18 +43,18 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 
 // 데이터 모델
-enum class IntakeStatus { DONE, SCHEDULED }
+enum class IntakeStatus { DONE, SCHEDULED, MISSED }
+
 data class MedItem(
-    val planIds: List<Long>,          // 여러 Plan의 ID 리스트
+    val planIds: List<Long>,
     val label: String,
-    val medNames: List<String>,       // 여러 약 이름 리스트
+    val medNames: List<String>,
     val time: String,
     val mealTime: String?,
     val memo: String?,
     val useAlarm: Boolean,
     val status: IntakeStatus
 )
-
 
 //  외부에서 호출되는 Screen
 @Composable
@@ -63,9 +64,9 @@ fun SchedulerScreen(
     vm: PlanViewModel = hiltViewModel(),
     onOpenRegi: () -> Unit = {}
 ) {
-    val ui by vm.uiState.collectAsState()
-    val items by vm.itemsByDate.collectAsState(initial = emptyMap())
-    val isDeviceUser by vm.isDeviceUser.collectAsState()
+    val ui by vm.uiState.collectAsStateWithLifecycle()
+    val items by vm.itemsByDate.collectAsStateWithLifecycle()
+    val isDeviceUser by vm.isDeviceUser.collectAsStateWithLifecycle()
 
     BackHandler {
         navController.navigate(MainRoute) {
@@ -87,10 +88,15 @@ fun SchedulerScreen(
             planIds.forEach { planId ->
                 vm.toggleAlarm(userId, planId, newValue)
             }
+        },
+        onMarkTaken = { planIds ->
+            // 한 카드에 묶인 모든 Plan을 복용 완료 처리
+            planIds.forEach { planId ->
+                vm.markAsTaken(userId, planId)
+            }
         }
     )
 }
-
 
 //  내부 Content
 @OptIn(ExperimentalFoundationApi::class)
@@ -100,7 +106,8 @@ fun SchedulerContent(
     clock: Clock = Clock.systemDefaultZone(),
     resetKey: Any? = null,
     isDeviceUser: Boolean = false,
-    onToggleAlarm: (List<Long>, Boolean) -> Unit = { _, _ -> }
+    onToggleAlarm: (List<Long>, Boolean) -> Unit = { _, _ -> },
+    onMarkTaken: (List<Long>) -> Unit = {}          // 🔥 복용 완료 콜백 추가
 ) {
     val monthSuffix = stringResource(R.string.month_suffix)
     val weekSuffix = stringResource(R.string.week_suffix)
@@ -108,6 +115,10 @@ fun SchedulerContent(
     val upcomingText = stringResource(R.string.status_upcoming)
     val alarmOffText = stringResource(R.string.alarm_off)
     val emptyMessage = stringResource(R.string.scheduler_message_schedule_empty)
+
+    // 상태 텍스트
+    val doneText = stringResource(R.string.status_done)
+    val missedText = stringResource(R.string.status_missed)
 
     val today = remember(clock) { LocalDate.now(clock) }
     var weekAnchor by remember { mutableStateOf(today) }
@@ -141,7 +152,6 @@ fun SchedulerContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
 
-        // ★ 화면 전체를 스크롤 가능하도록 변경
         Column(
             Modifier
                 .padding(padding)
@@ -162,7 +172,6 @@ fun SchedulerContent(
             ) {
                 Box(Modifier.width(48.dp))
 
-                // 가운데 주차 타이틀
                 Text(
                     title,
                     modifier = Modifier.weight(1f),
@@ -171,13 +180,10 @@ fun SchedulerContent(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // 오른쪽 "오늘" 버튼
                 TextButton(
                     onClick = {
-                        // 오늘 날짜로 이동
                         selectedDay = today
                         weekAnchor = today
-
                         scope.launch {
                             pagerState.animateScrollToPage(startPage)
                         }
@@ -240,8 +246,8 @@ fun SchedulerContent(
                         val bg = when {
                             isToday && isSelected -> MaterialTheme.colorScheme.primary
                             isToday -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            isSelected -> MaterialTheme.componentTheme.bookMarkColor  // 북마크 색
-                            else -> MaterialTheme.colorScheme.secondary               // 기본 날짜 배경
+                            isSelected -> MaterialTheme.componentTheme.bookMarkColor
+                            else -> MaterialTheme.colorScheme.secondary
                         }
 
                         Box(
@@ -252,8 +258,10 @@ fun SchedulerContent(
                                 .clickable {
                                     selectedDay = day
 
-                                    val todayWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
-                                    val dayWeekStart = day.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                                    val todayWeekStart =
+                                        today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                                    val dayWeekStart =
+                                        day.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
 
                                     val diffWeeks = java.time.temporal.ChronoUnit.WEEKS
                                         .between(todayWeekStart, dayWeekStart)
@@ -273,8 +281,10 @@ fun SchedulerContent(
                                 text = "${day.dayOfMonth}",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.Normal,
-                                color = if (isSelected || isToday) MaterialTheme.colorScheme.onSurface
-                                else MaterialTheme.colorScheme.outline
+                                color = if (isSelected || isToday)
+                                    MaterialTheme.colorScheme.onSurface
+                                else
+                                    MaterialTheme.colorScheme.outline
                             )
                         }
                     }
@@ -304,13 +314,32 @@ fun SchedulerContent(
                     )
                 } else {
                     dayItems.sortedBy { it.time }.forEach { item ->
+
+                        val dotColor = when (item.status) {
+                            IntakeStatus.DONE ->
+                                MaterialTheme.colorScheme.primary
+                            IntakeStatus.MISSED ->
+                                MaterialTheme.colorScheme.error
+                            IntakeStatus.SCHEDULED ->
+                                MaterialTheme.colorScheme.surfaceVariant
+                        }
+
+                        val statusText = when (item.status) {
+                            IntakeStatus.DONE   -> doneText
+                            IntakeStatus.MISSED -> missedText
+                            IntakeStatus.SCHEDULED ->
+                                if (item.useAlarm) upcomingText else alarmOffText
+                        }
+
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 12.dp)
                                 .clickable { selectedItem = item },
                             shape = MaterialTheme.shapes.extraLarge,
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.background
+                            ),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
 
@@ -326,10 +355,7 @@ fun SchedulerContent(
                                         Modifier
                                             .size(10.dp)
                                             .clip(CircleShape)
-                                            .background(
-                                                if (item.status == IntakeStatus.DONE) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.surfaceVariant
-                                            )
+                                            .background(dotColor)
                                     )
                                     Spacer(Modifier.width(12.dp))
                                     Column {
@@ -347,7 +373,7 @@ fun SchedulerContent(
                                 }
 
                                 Text(
-                                    if (item.useAlarm) upcomingText else alarmOffText,
+                                    text = statusText,
                                     color = MaterialTheme.colorScheme.outline,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontSize = 12.sp
@@ -369,6 +395,10 @@ fun SchedulerContent(
             onToggleAlarm = { newValue ->
                 onToggleAlarm(item.planIds, newValue)
                 selectedItem = item.copy(useAlarm = newValue)
+            },
+            onMarkTaken = {
+                onMarkTaken(item.planIds)
+                selectedItem = null
             }
         )
     }
@@ -379,7 +409,8 @@ fun MedDetailDialog(
     item: MedItem,
     onDismiss: () -> Unit,
     onToggleAlarm: (Boolean) -> Unit,
-    isDeviceUser: Boolean = false
+    isDeviceUser: Boolean = false,
+    onMarkTaken: (() -> Unit)? = null       // 복용 완료 처리 콜백
 ) {
     val detailTitle = stringResource(R.string.detail_title)
     val regiLabel = stringResource(R.string.regi_label)
@@ -389,27 +420,34 @@ fun MedDetailDialog(
     val alarmLabel = stringResource(R.string.alarm_label)
     val closeText = stringResource(R.string.close)
 
-    val mealTimeText = when(item.mealTime) {
+    val mealTimeText = when (item.mealTime) {
         "before" -> stringResource(R.string.meal_relation_before)
         "after" -> stringResource(R.string.meal_relation_after)
         "none" -> stringResource(R.string.meal_relation_irrelevant)
         else -> "-"
     }
 
+    // 🔒 알림 스위치: SCHEDULED 상태에서만 켤/끌 수 있음
+    //  - 기기 연동 사용자(isDeviceUser)는 항상 비활성화
+    val alarmSwitchEnabled =
+        !isDeviceUser && item.status == IntakeStatus.SCHEDULED
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor =MaterialTheme.colorScheme.background),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.background
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .heightIn(max = 600.dp) // 최대 높이 제한
+                .heightIn(max = 600.dp)
         ) {
             Column(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()) // 스크롤 가능하게
+                    .verticalScroll(rememberScrollState())
             ) {
                 Text(
                     detailTitle,
@@ -419,10 +457,8 @@ fun MedDetailDialog(
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
-                DetailRow(regiLabel,item.label)
-
+                DetailRow(regiLabel, item.label)
                 DetailMedNames(medNameLabel, item.medNames)
-
                 DetailRow(mealTimeLabel, mealTimeText)
                 DetailRow(memoLabel, item.memo ?: "-")
 
@@ -440,27 +476,54 @@ fun MedDetailDialog(
                     )
                     Switch(
                         checked = item.useAlarm,
-                        enabled = !isDeviceUser,
+                        enabled = alarmSwitchEnabled,
                         onCheckedChange = {
-                            if (!isDeviceUser) {
+                            if (alarmSwitchEnabled) {
                                 onToggleAlarm(it)
                             }
                         }
-
                     )
                 }
 
                 Spacer(Modifier.height(20.dp))
 
-                AppButton(
-                    text = closeText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(AppFieldHeight),
-                    shape = MaterialTheme.shapes.medium,
-                    onClick = onDismiss
-                )
-
+                if (item.status == IntakeStatus.MISSED ||
+                    item.status == IntakeStatus.SCHEDULED) {
+                    // 🔹 미복용 / 예정 일정: 복용 완료 + 닫기 버튼 나란히
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AppButton(
+                            text = "복용 완료",
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(AppFieldHeight),
+                            shape = MaterialTheme.shapes.medium,
+                            onClick = {
+                                onMarkTaken?.invoke()
+                            }
+                        )
+                        AppButton(
+                            text = closeText,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(AppFieldHeight),
+                            shape = MaterialTheme.shapes.medium,
+                            onClick = onDismiss
+                        )
+                    }
+                } else {
+                    // 🔹 DONE: 닫기만 전체 폭
+                    AppButton(
+                        text = closeText,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(AppFieldHeight),
+                        shape = MaterialTheme.shapes.medium,
+                        onClick = onDismiss
+                    )
+                }
             }
         }
     }
@@ -524,20 +587,16 @@ private fun DetailMedNames(label: String, medNames: List<String>) {
     }
 }
 
-//  Helpers
+// Helpers
 private fun weekRangeOf(anchor: LocalDate): List<LocalDate> {
     val start = anchor.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
     return (0..6).map { start.plusDays(it.toLong()) }
 }
 
-
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 fun Preview_SchedulerContent_Full() {
-
     AppTheme {
-
-        // ---- 데모 날짜/아이템 구성 ----
         val today = LocalDate.now()
 
         val demoItems = mapOf(
@@ -561,27 +620,25 @@ fun Preview_SchedulerContent_Full() {
                     memo = null,
                     useAlarm = false,
                     status = IntakeStatus.DONE
-                )
-            ),
-            today.plusDays(1) to listOf(
+                ),
                 MedItem(
                     planIds = listOf(3L),
-                    label = "유산균",
-                    medNames = listOf("락토핏", "듀오락"),
-                    time = "07:30",
-                    mealTime = "none",
-                    memo = "아침 물과 함께",
+                    label = "혈압약",
+                    medNames = listOf("암로디핀 5mg"),
+                    time = "21:00",
+                    mealTime = "after",
+                    memo = null,
                     useAlarm = true,
-                    status = IntakeStatus.SCHEDULED
+                    status = IntakeStatus.MISSED
                 )
             )
         )
 
-        // ---- 콘텐츠 호출 ----
         SchedulerContent(
             itemsByDate = demoItems,
             resetKey = 0,
-            onToggleAlarm = { _, _ -> }
+            onToggleAlarm = { _, _ -> },
+            onMarkTaken = { _ -> }
         )
     }
 }

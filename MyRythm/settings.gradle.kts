@@ -30,9 +30,9 @@ include(
     ":feature:mypage",
     ":feature:news",
     ":feature:scheduler",
-    ":feature:chatbot"
+    ":feature:chatbot",
+    ":feature:healthinsight"
 )
 include(":data")
 include(":domain")
 include(":shared")
-include(":feature:healthinsight")

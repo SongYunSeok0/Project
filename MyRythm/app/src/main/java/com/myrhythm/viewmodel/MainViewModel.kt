@@ -15,6 +15,8 @@ import com.domain.usecase.plan.UpdatePlanUseCase
 import com.domain.usecase.push.GetFcmTokenUseCase
 import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
+import com.domain.usecase.plan.MarkMedTakenUseCase
+import com.domain.usecase.plan.RefreshPlansUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +38,8 @@ class MainViewModel @Inject constructor(
     private val updatePlanUseCase: UpdatePlanUseCase,
     private val getFcmTokenUseCase: GetFcmTokenUseCase,
     private val registerFcmTokenUseCase: RegisterFcmTokenUseCase,
+    private val markMedTakenUseCase: MarkMedTakenUseCase,
+    private val refreshPlansUseCase: RefreshPlansUseCase,
     private val regiRepo: RegiRepository,
     private val planRepo: PlanRepository,
 ) : ViewModel(), MainVMContract {
@@ -188,7 +192,7 @@ class MainViewModel @Inject constructor(
             ?: return false
 
         val samePlans = _plans.value.filter {
-            it.takenAt == oldTime && it.taken == null
+            it.takenAt == oldTime && it.taken != true  // 🔥 수정
         }
 
         var allSuccess = true
@@ -203,13 +207,46 @@ class MainViewModel @Inject constructor(
 
     override fun finishPlan() {
         val plan = _nextPlan.value ?: return
-        val userId = JwtUtils.extractUserId(tokenStore.current().access)?.toLongOrNull() ?: return
-
-        val now = System.currentTimeMillis()
-        val updated = plan.copy(taken = now)
+        val userId = JwtUtils
+            .extractUserId(tokenStore.current().access)
+            ?.toLongOrNull()
+            ?: return
 
         viewModelScope.launch {
-            updatePlanUseCase(userId, updated)
+            // 🔥 같은 시간대(takenAt)의 모든 미복용 Plan 찾기
+            val targetTime = plan.takenAt
+            val samePlans = _plans.value.filter {
+                it.takenAt == targetTime && it.taken != true  // 🔥 수정
+            }
+
+            Log.d("MainVM", "finishPlan - 같은 시간대 약 ${samePlans.size}개 찾음")
+            samePlans.forEach { p ->
+                Log.d("MainVM", "  - Plan ${p.id}: ${p.medName}")
+            }
+
+            // 🔥 모든 Plan 복용 완료 처리
+            var allSuccess = true
+            samePlans.forEach { p ->
+                val result = markMedTakenUseCase(p.id)
+                result.onSuccess {
+                    Log.d("MainVM", "Plan ${p.id} (${p.medName}) 복용 완료 처리 성공")
+                }.onFailure { e ->
+                    Log.e("MainVM", "Plan ${p.id} (${p.medName}) 복용 완료 처리 실패", e)
+                    allSuccess = false
+                }
+            }
+
+            if (!allSuccess) {
+                Log.e("MainVM", "일부 Plan 처리 실패")
+            }
+
+            // 🔥 서버 상태를 로컬(Room)로 동기화 → Flow 갱신
+            runCatching {
+                refreshPlansUseCase(userId)
+                Log.d("MainVM", "동기화 완료")
+            }.onFailure { e ->
+                Log.e("MainVM", "finishPlan 동기화 실패", e)
+            }
         }
     }
 
@@ -222,7 +259,7 @@ class MainViewModel @Inject constructor(
             .filter {
                 it.takenAt != null &&
                         it.takenAt!! >= now &&
-                        it.taken == null
+                        it.taken != true  // 🔥 수정 (null 또는 false 모두 미복용)
             }
             .minByOrNull { it.takenAt!! }
 

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.ksp)
 }
@@ -41,6 +42,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":domain"))
+    implementation(project(":shared"))
+
     implementation(libs.bundles.compose.library)
     implementation(libs.compose.animation)
     implementation(libs.androidx.navigation.compose)
@@ -48,8 +52,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.core)
 
-    implementation(project(":domain"))
-    implementation(project(":shared"))
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -59,4 +61,8 @@ dependencies {
     implementation(libs.bundles.test)
 
     implementation(libs.androidx.material3)
+
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.core)
 }

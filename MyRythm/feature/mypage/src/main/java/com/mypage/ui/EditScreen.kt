@@ -7,15 +7,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mypage.viewmodel.EditProfileEvent
 import com.mypage.viewmodel.EditProfileViewModel
@@ -27,6 +24,14 @@ import com.shared.ui.components.AuthGenderDropdown
 import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.AppTheme
 
+// 🔥 소셜 로그인 username인지 확인
+private fun isSocialUsername(username: String?): Boolean {
+    if (username.isNullOrBlank()) return false
+    return username.startsWith("kakao_") ||
+            username.startsWith("google_") ||
+            username.startsWith("naver_")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditScreen(
@@ -37,8 +42,17 @@ fun EditScreen(
 ) {
     val profile by viewModel.profile.collectAsState()
 
-    // 소셜 로그인 판단
-    val isSocialLogin = profile?.username.isNullOrBlank() || profile?.phone.isNullOrBlank()
+    // 🔥 실제 정보가 등록되었는지 확인
+    val hasRealName = !profile?.username.isNullOrBlank() && !isSocialUsername(profile?.username)
+    val hasRealPhone = !profile?.phone.isNullOrBlank()
+    val hasRealGender = !profile?.gender.isNullOrBlank()
+    val hasRealEmail = !profile?.email.isNullOrBlank()
+    val hasValidBirth = profile?.birth_date?.let {
+        Regex("""^\d{4}-\d{2}-\d{2}$""").matches(it)
+    } ?: false
+
+    // 🔥 소셜 로그인 안내 카드 표시 여부
+    val showSocialNotice = !hasRealName || !hasRealPhone || !hasRealGender
 
     var name by remember { mutableStateOf("") }
     var height by remember { mutableStateOf("") }
@@ -54,25 +68,13 @@ fun EditScreen(
 
     // 보호자 관련 상태
     var protEmail by remember { mutableStateOf("") }
-    var protName by remember { mutableStateOf("") } // [추가] 보호자 이름
+    var protName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-
-    // 각 필드 등록 여부
-    val hasName = !profile?.username.isNullOrBlank()
-    val hasPhone = !profile?.phone.isNullOrBlank()
-    val hasGender = !profile?.gender.isNullOrBlank()
-    val hasEmail = !profile?.email.isNullOrBlank()
-    val hasValidBirth = profile?.birth_date?.let {
-        Regex("""^\d{4}-\d{2}-\d{2}$""").matches(it)
-    } ?: false
 
     // 보호자 이메일 인증 상태
     var isProtEmailVerified by remember { mutableStateOf(false) }
     var isProtEmailSent by remember { mutableStateOf(false) }
     var protEmailCode by remember { mutableStateOf("") }
-
-    // 스크롤 상태
-    val scrollState = rememberScrollState()
 
     // 이메일 인증 상태
     var isEmailVerified by remember { mutableStateOf(false) }
@@ -98,7 +100,7 @@ fun EditScreen(
             phone = it.phone ?: ""
             gender = it.gender ?: ""
             protEmail = it.prot_email ?: ""
-            protName = it.prot_name ?: "" // [추가] 서버 프로필에 prot_name 필드가 있다면 여기서 초기화
+            protName = it.prot_name ?: ""
             email = it.email ?: ""
             isProtEmailVerified = !it.prot_email.isNullOrBlank()
             isEmailVerified = !it.email.isNullOrBlank()
@@ -177,8 +179,8 @@ fun EditScreen(
             verticalArrangement = Arrangement.spacedBy(30.dp)
         ) {
 
-            // 소셜 로그인 안내
-            if (isSocialLogin) {
+            // 🔥 소셜 로그인 안내 (실제 정보가 없을 때만 표시)
+            if (showSocialNotice) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -196,8 +198,8 @@ fun EditScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                // 이름
-                if (hasName) {
+                // 🔥 이름 - 실제 이름이 등록되면 읽기 전용
+                if (hasRealName) {
                     AppInputField(
                         value = name,
                         onValueChange = {},
@@ -280,16 +282,15 @@ fun EditScreen(
                             outlined = true,
                             singleLine = true,
                             modifier = Modifier.weight(1f),
-
                             keyboardType = KeyboardType.Number
                         )
                     }
                 }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // 성별
-                if (hasGender) {
+                // 🔥 성별 - 등록되면 읽기 전용
+                if (hasRealGender) {
                     AppInputField(
                         value = gender,
                         onValueChange = {},
@@ -306,11 +307,10 @@ fun EditScreen(
                     )
                 }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-
-            // 이메일 (소셜 로그인만 입력 가능)
-                if (hasEmail) {
+                // 🔥 이메일 - 등록되면 읽기 전용
+                if (hasRealEmail) {
                     AppInputField(
                         value = email,
                         onValueChange = {},
@@ -401,13 +401,13 @@ fun EditScreen(
                                                 isEmailSent = false
                                                 Toast.makeText(
                                                     context,
-                                                    verificationFailedText,
+                                                    verificationSuccessText,
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             } else {
                                                 Toast.makeText(
                                                     context,
-                                                    verificationSuccessText,
+                                                    verificationFailedText,
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             }
@@ -419,8 +419,8 @@ fun EditScreen(
                     }
                 }
 
-                // 전화번호
-                if (hasPhone) {
+                // 🔥 전화번호 - 등록되면 읽기 전용
+                if (hasRealPhone) {
                     AppInputField(
                         value = phone,
                         onValueChange = {},
@@ -442,12 +442,11 @@ fun EditScreen(
                 // --- 보호자 정보 섹션 ---
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
-                    // 1. [추가] 보호자 이름 입력 필드
+                    // 보호자 이름 입력 필드
                     AppInputField(
                         value = protName,
                         onValueChange = {
                             protName = it
-                            // 이름이 바뀌면 다시 인증하도록 초기화
                             isProtEmailVerified = false
                             isProtEmailSent = false
                         },
@@ -457,6 +456,7 @@ fun EditScreen(
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
+
                     AppInputField(
                         value = protEmail,
                         onValueChange = {
@@ -467,7 +467,6 @@ fun EditScreen(
                         label = "$guardianEmailText$labelText",
                         outlined = true,
                         singleLine = true,
-
                         trailingContent = {
                             AppButton(
                                 text = if (isProtEmailSent) sentText else sendText,
@@ -476,8 +475,6 @@ fun EditScreen(
                                 enabled = !isProtEmailVerified,
                                 onClick = {
                                     if (protEmail.isNotBlank() && protName.isNotBlank()) {
-
-                                        // ui용 테스트코드
                                         if (protEmail == "aaa@aaa.com") {
                                             isProtEmailSent = true
                                             isProtEmailVerified = false
@@ -489,10 +486,7 @@ fun EditScreen(
                                             ).show()
                                             return@AppButton
                                         }
-
-                                        // 실제코드
                                         viewModel.sendEmailCode(protEmail, protName)
-
                                     } else {
                                         Toast.makeText(
                                             context,
@@ -520,8 +514,6 @@ fun EditScreen(
                                 height = AppFieldHeight,
                                 width = 80.dp,
                                 onClick = {
-
-                                    // ui용 테스트코드
                                     if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
                                         isProtEmailVerified = true
                                         isProtEmailSent = false
@@ -533,7 +525,6 @@ fun EditScreen(
                                         return@AppButton
                                     }
 
-                                    // 실제코드
                                     viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
                                         if (ok) {
                                             isProtEmailVerified = true
@@ -557,37 +548,30 @@ fun EditScreen(
                 AppButton(
                     text = editDone,
                     onClick = {
-                        // ui테스트용코드
                         val isTestGuardian = (protName == "aaa" && protEmail == "aaa@aaa.com")
 
-                        // 소셜 로그인 필수 정보 체크
-                        if (isSocialLogin) {
-                            if (name.isBlank()) {
-                                Toast.makeText(context, enterNameMessage, Toast.LENGTH_SHORT).show()
-                                return@AppButton
-                            }
-                            if (phone.isBlank()) {
-                                Toast.makeText(context, enterPhoneMessage, Toast.LENGTH_SHORT)
-                                    .show()
-                                return@AppButton
-                            }
-                            if (gender.isBlank()) {
-                                Toast.makeText(context, selectGenderMessage, Toast.LENGTH_SHORT).show()
-                                return@AppButton
-                            }
-                            if (email.isBlank()) {
-                                Toast.makeText(context, enterEmailMessage, Toast.LENGTH_SHORT)
-                                    .show()
-                                return@AppButton
-                            }
-                            if (!isEmailVerified) {
-                                Toast.makeText(context, emailVerificationRequiredMessage, Toast.LENGTH_SHORT)
-                                    .show()
-                                return@AppButton
-                            }
+                        // 🔥 필수 정보 체크 (실제 정보가 없을 때만)
+                        if (!hasRealName && name.isBlank()) {
+                            Toast.makeText(context, enterNameMessage, Toast.LENGTH_SHORT).show()
+                            return@AppButton
+                        }
+                        if (!hasRealPhone && phone.isBlank()) {
+                            Toast.makeText(context, enterPhoneMessage, Toast.LENGTH_SHORT).show()
+                            return@AppButton
+                        }
+                        if (!hasRealGender && gender.isBlank()) {
+                            Toast.makeText(context, selectGenderMessage, Toast.LENGTH_SHORT).show()
+                            return@AppButton
+                        }
+                        if (!hasRealEmail && email.isBlank()) {
+                            Toast.makeText(context, enterEmailMessage, Toast.LENGTH_SHORT).show()
+                            return@AppButton
+                        }
+                        if (!hasRealEmail && !isEmailVerified) {
+                            Toast.makeText(context, emailVerificationRequiredMessage, Toast.LENGTH_SHORT).show()
+                            return@AppButton
                         }
 
-                        // ui테스트용코드
                         if (!isTestGuardian && protEmail.isNotBlank() && !isProtEmailVerified) {
                             Toast.makeText(context, guardianVerificationRequiredMessage, Toast.LENGTH_SHORT).show()
                             return@AppButton

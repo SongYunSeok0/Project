@@ -12,6 +12,8 @@ data class PlanResponse(
     @Json(name = "exTakenAt") val exTakenAt: Long?,
     @Json(name = "mealTime") val mealTime: String?,
     @Json(name = "note") val note: String?,
-    @Json(name = "taken") val taken: Long?,
-    @Json(name = "useAlarm") val useAlarm: Boolean
+    @Json(name = "taken") val taken: Boolean?,
+    @Json(name = "takenTime") val takenTime: Long?,
+    @Json(name = "useAlarm") val useAlarm: Boolean,
+    @Json(name = "status") val status: String?
 )

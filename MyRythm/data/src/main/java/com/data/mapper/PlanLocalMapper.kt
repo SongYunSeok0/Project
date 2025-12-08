@@ -2,6 +2,7 @@ package com.data.mapper
 
 import com.data.db.entity.PlanEntity
 import com.domain.model.Plan
+import com.domain.model.PlanStatus
 
 // ---------- DB → Domain ----------
 fun PlanEntity.toDomainLocal(): Plan =
@@ -14,7 +15,9 @@ fun PlanEntity.toDomainLocal(): Plan =
         mealTime = mealTime,
         note = note,
         taken = taken,
-        useAlarm = useAlarm
+        takenTime = takenTime,
+        useAlarm = useAlarm,
+        status = PlanStatus.from(status)
     )
 
 // ---------- Domain → DB ----------
@@ -28,5 +31,7 @@ fun Plan.toEntity(): PlanEntity =
         mealTime = mealTime,
         note = note,
         taken = taken,
-        useAlarm = useAlarm
+        takenTime = takenTime,
+        useAlarm = useAlarm,
+        status = status.value
     )

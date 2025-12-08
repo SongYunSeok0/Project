@@ -82,4 +82,13 @@ class StepRepositoryImpl @Inject constructor(
             dao.insertDailySteps(entities)
         }
     }
+
+    override suspend fun getWeeklySteps(): List<DailyStep> {
+        return dao.getLast7Days().map { e ->
+            DailyStep(
+                date = e.date,
+                steps = e.steps
+            )
+        }
+    }
 }

@@ -48,7 +48,7 @@ class PlanRepositoryImpl @Inject constructor(
         takenAt: Long,
         mealTime: String?,
         note: String?,
-        taken: Long?,
+        taken: Boolean?,
         useAlarm: Boolean
     ) {
         val body = PlanCreateRequest(
@@ -114,4 +114,11 @@ class PlanRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getRecentTakenPlans(userId: Long, days: Int): List<Plan> {
+        val daysAgo = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000L)
+
+        return dao.getRecentTakenPlans(userId, daysAgo).map { entity ->
+            entity.toDomainLocal()  // Entity -> Domain 변환
+        }
+    }
 }

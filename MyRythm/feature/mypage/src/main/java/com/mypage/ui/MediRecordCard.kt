@@ -155,7 +155,7 @@ fun GroupedMediRecordCard(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "${group.records.size}$countSuffixText",
+                        text = "${group.totalDoses}$countSuffixText",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -391,9 +391,20 @@ private fun DeleteConfirmDialog(
 fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
     val zone = ZoneId.systemDefault()
 
+    // 🔥 로그 추가
+    android.util.Log.d("GroupMediRecords", "====== 전체 records: ${records.size}개 ======")
+    records.forEach { record ->
+        android.util.Log.d("GroupMediRecords",
+            "Record: id=${record.id}, label=${record.regiLabel}, " +
+                    "name=${record.medicineName}, taken=${record.taken}, takenAt=${record.takenAt}")
+    }
+
     return records
         .groupBy { it.regiLabel ?: "미분류" }
         .map { (label, groupRecords) ->
+            // 🔥 로그 추가
+            android.util.Log.d("GroupMediRecords", "====== Label: $label (${groupRecords.size}개) ======")
+
             val dates = groupRecords.mapNotNull { record ->
                 record.takenAt?.let {
                     Instant.ofEpochMilli(it).atZone(zone).toLocalDate()
@@ -407,9 +418,35 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
 
             val representative = groupRecords.first()
 
-            val completedCount = groupRecords.count { it.taken == true }
-            val totalCount = groupRecords.size
-            val completionRate = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
+            // 시간대별 그룹화
+            val timeSlots = groupRecords.groupBy { it.takenAt }
+
+            // 🔥 로그 추가
+            android.util.Log.d("GroupMediRecords", "총 ${timeSlots.size}개 시간대")
+            timeSlots.forEach { (time, recordsAtSameTime) ->
+                val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                val timeStr = if (time != null) formatter.format(java.util.Date(time)) else "null"
+                val allTaken = recordsAtSameTime.all { it.taken == true }
+                android.util.Log.d("GroupMediRecords",
+                    "  시간: $timeStr, 약 ${recordsAtSameTime.size}개, 모두 복용: $allTaken")
+                recordsAtSameTime.forEach { r ->
+                    android.util.Log.d("GroupMediRecords",
+                        "    - ${r.medicineName}: taken=${r.taken}")
+                }
+            }
+
+            val completedTimeSlots = timeSlots.count { (_, recordsAtSameTime) ->
+                recordsAtSameTime.all { it.taken == true }
+            }
+
+            val totalTimeSlots = timeSlots.size
+            val completionRate = if (totalTimeSlots > 0)
+                completedTimeSlots.toFloat() / totalTimeSlots
+            else 0f
+
+            // 🔥 로그 추가
+            android.util.Log.d("GroupMediRecords",
+                "결과 - 완료: $completedTimeSlots/$totalTimeSlots, 완료율: ${(completionRate * 100).toInt()}%")
 
             GroupedMediRecord(
                 label = label,
@@ -418,8 +455,8 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
                 medNames = medNames,
                 mealTime = representative.mealTime,
                 memo = representative.memo,
-                totalDoses = totalCount,
-                completedDoses = completedCount,
+                totalDoses = totalTimeSlots,
+                completedDoses = completedTimeSlots,
                 records = groupRecords.sortedByDescending { it.takenAt },
                 completionRate = completionRate
             )

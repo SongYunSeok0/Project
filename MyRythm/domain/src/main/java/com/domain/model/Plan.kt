@@ -8,6 +8,8 @@ data class Plan(
     val exTakenAt: Long?,
     val mealTime: String?,
     val note: String?,
-    val taken: Long?,
-    val useAlarm: Boolean
+    val taken: Boolean?,
+    val takenTime: Long?,
+    val useAlarm: Boolean,
+    val status: PlanStatus = PlanStatus.PENDING
 )

@@ -48,4 +48,15 @@ class HeartRateRepositoryImpl @Inject constructor(
             dao.insertAll(remote.map { it.toEntity() })
         }
     }
+
+    override suspend fun getWeeklyHeartRates(): List<HeartRateHistory> {
+        val sevenDaysAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000L)
+
+        return dao.getLastWeek(sevenDaysAgo).map { entity ->
+            HeartRateHistory(
+                bpm = entity.bpm,
+                collectedAt = entity.collectedAt
+            )
+        }
+    }
 }
