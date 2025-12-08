@@ -30,14 +30,12 @@ import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shared.bar.AppTopBar
 import com.domain.model.Inquiry
+import com.domain.model.InquiryComment
 import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.OnlyColorTheme
 import kotlinx.coroutines.launch
 
-// 컴포넌트 적용했던 기존faq스크린을 2개로 분리, 이쪽은 기존 0번탭 그 외는 1번탭
-// 0 -> InquiryHistory(inquiries)
-// 프리뷰는 FAQ스크린으로 확인하기
 @Composable
 fun FAQScreen(
     onSubmit: (type: String, title: String, content: String) -> Unit,
@@ -45,25 +43,22 @@ fun FAQScreen(
 ) {
     val faqText = stringResource(R.string.faq)
 
-    // rememberPagerState : 탭 간의 전환 상태 관리 용도
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
     AppTheme {
+        Column(modifier = modifier
+            .fillMaxSize()
+        ) {
+            FAQTabRow(pagerState = pagerState)
 
-            Column(modifier = modifier
-                .fillMaxSize()
-            ) {
-                FAQTabRow(pagerState = pagerState)
-
-                FAQTabContent(
-                    pagerState = pagerState,
-                    onSubmit = onSubmit
-                )
-            }
+            FAQTabContent(
+                pagerState = pagerState,
+                onSubmit = onSubmit
+            )
+        }
     }
 }
 
-// 뷰모델진입점
 @Composable
 fun FAQScreenWrapper(
     viewModel: MyPageViewModel = hiltViewModel(),
@@ -75,14 +70,10 @@ fun FAQScreenWrapper(
     )
 }
 
-// 0번 탭 - 나의 문의 내역 화면 (InquiryHistory)+컴포넌트 FAQInquiryCard.kt 호출
 @Composable
 private fun InquiryHistory(
     inquiries: List<Inquiry>
 ) {
-    //실제 코드에선 뷰모델로 연결하기
-    //val inquiries by viewModel.inquiries.collectAsState()
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -97,7 +88,6 @@ private fun InquiryHistory(
     }
 }
 
-// FAQTabRow 탭 레이아웃 영역. 나의 문의 내역 / 1:1 문의하기 탭 전환 컨테이너
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FAQTabRow(pagerState: PagerState) {
@@ -110,7 +100,7 @@ private fun FAQTabRow(pagerState: PagerState) {
     PrimaryTabRow(
         selectedTabIndex = pagerState.currentPage,
         containerColor = MaterialTheme.colorScheme.primaryContainer,
-        indicator = {   // TabIndicatorScope 안에서 tabPositions 사용 가능
+        indicator = {
             TabRowDefaults.SecondaryIndicator(
                 modifier = Modifier
                     .tabIndicatorOffset(pagerState.currentPage),
@@ -118,7 +108,7 @@ private fun FAQTabRow(pagerState: PagerState) {
                 height = 2.dp
             )
         },
-        divider = {}  // 구분선 제거
+        divider = {}
     ) {
         tabs.forEachIndexed { index, title ->
             Tab(
@@ -137,17 +127,14 @@ private fun FAQTabRow(pagerState: PagerState) {
     }
 }
 
-// FAQTabContent 탭 안의 내용
 @Composable
 private fun FAQTabContent(
     pagerState: PagerState,
     onSubmit: (type: String, title: String, content: String) -> Unit,
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
-
     val inquiries by viewModel.inquiries.collectAsState()
 
-    // HorizontalPager: 좌우 스와이프 전환이 가능한 화면 구성
     HorizontalPager(state = pagerState) { index ->
         when (index) {
             0 -> InquiryHistory(inquiries = inquiries)
@@ -159,13 +146,86 @@ private fun FAQTabContent(
 @Preview(showBackground = true, widthDp = 412, heightDp = 917)
 @Composable
 fun FAQScreenWithSampleDataPreview() {
-    // 샘플 데이터
+    // 🔥 샘플 데이터 - 새로운 구조에 맞춰 수정
     val sampleInquiries = listOf(
-        Inquiry(1, "결제 문의", "환불은 어떻게 하나요?", "구매한 상품의 환불 절차가 궁금합니다.", "환불은 구매일로부터 7일 이내 가능합니다."),
-        Inquiry(2, "서비스 이용", "회원 탈퇴 방법 제목글자수테스트", "회원 탈퇴를 하고 싶은데 어떻게 하나요?", null),
-        Inquiry(3, "기술 지원", "로그인이 안됩니다", "비밀번호를 입력해도 로그인이 되지 않아요.", "비밀번호 재설정을 시도해보시기 바랍니다."),
-        Inquiry(4, "기술 지원", "스크롤테스트12345678910", "비밀번호를 입력해도 로그인이 되지 않아요.", "비밀번호 재설정을 시도해보시기 바랍니다."),
-// 날짜 임시로 넣어둠, 도메인에 등록X상태. 이후 필요 시 추가 -> 인퀴어리.등록날짜 형태로 변경필요함
+        Inquiry(
+            id = 1,
+            userId = 100,
+            username = "사용자1",
+            type = "결제 문의",
+            title = "환불은 어떻게 하나요?",
+            content = "구매한 상품의 환불 절차가 궁금합니다.",
+            isAnswered = true,
+            createdAt = "2025-11-03T10:00:00Z",
+            commentCount = 1,
+            comments = listOf(
+                InquiryComment(
+                    id = 1,
+                    inquiryId = 1,
+                    userId = 999,
+                    username = "관리자",
+                    content = "환불은 구매일로부터 7일 이내 가능합니다.",
+                    createdAt = "2025-11-04T14:00:00Z",
+                    isStaff = true
+                )
+            )
+        ),
+        Inquiry(
+            id = 2,
+            userId = 100,
+            username = "사용자1",
+            type = "서비스 이용",
+            title = "회원 탈퇴 방법 제목글자수테스트",
+            content = "회원 탈퇴를 하고 싶은데 어떻게 하나요?",
+            isAnswered = false,
+            createdAt = "2025-11-05T10:00:00Z",
+            commentCount = 0,
+            comments = emptyList()
+        ),
+        Inquiry(
+            id = 3,
+            userId = 100,
+            username = "사용자1",
+            type = "기술 지원",
+            title = "로그인이 안됩니다",
+            content = "비밀번호를 입력해도 로그인이 되지 않아요.",
+            isAnswered = true,
+            createdAt = "2025-11-06T10:00:00Z",
+            commentCount = 1,
+            comments = listOf(
+                InquiryComment(
+                    id = 2,
+                    inquiryId = 3,
+                    userId = 999,
+                    username = "관리자",
+                    content = "비밀번호 재설정을 시도해보시기 바랍니다.",
+                    createdAt = "2025-11-06T15:00:00Z",
+                    isStaff = true
+                )
+            )
+        ),
+        Inquiry(
+            id = 4,
+            userId = 100,
+            username = "사용자1",
+            type = "기술 지원",
+            title = "스크롤테스트12345678910",
+            content = "비밀번호를 입력해도 로그인이 되지 않아요.",
+            isAnswered = true,
+            createdAt = "2025-11-07T10:00:00Z",
+            commentCount = 1,
+            comments = listOf(
+                InquiryComment(
+                    id = 3,
+                    inquiryId = 4,
+                    userId = 999,
+                    username = "관리자",
+                    content = "비밀번호 재설정을 시도해보시기 바랍니다.",
+                    createdAt = "2025-11-07T16:00:00Z",
+                    isStaff = true
+                )
+            )
+        )
     )
 
     val inquiriesState = remember { mutableStateListOf<Inquiry>().apply { addAll(sampleInquiries) } }
@@ -191,9 +251,7 @@ fun FAQScreenWithSampleDataPreview() {
                 HorizontalPager(state = pagerState) { index ->
                     when (index) {
                         0 -> InquiryHistory(inquiries = inquiriesState)
-                        1 -> NewInquiryForm(
-
-                        )
+                        1 -> NewInquiryForm()
                     }
                 }
             }

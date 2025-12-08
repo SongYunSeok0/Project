@@ -11,4 +11,5 @@ data class UserProfile(
     val prot_name: String?,
     val prot_email: String?,
     val email: String?,
+    val isStaff: Boolean = false,
 )

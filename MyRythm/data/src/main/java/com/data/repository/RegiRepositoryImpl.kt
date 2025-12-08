@@ -7,8 +7,11 @@ import com.data.network.api.PlanApi
 import com.data.network.api.RegiHistoryApi
 import com.data.network.dto.plan.PlanCreateRequest
 import com.data.network.dto.regihistory.RegiHistoryRequest
+import com.data.network.mapper.toDomain
+import com.data.network.mapper.toModelList
 import com.domain.model.Plan
 import com.domain.model.RegiHistory
+import com.domain.model.RegiHistoryWithPlans
 import com.domain.repository.RegiRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -200,4 +203,28 @@ class RegiRepositoryImpl @Inject constructor(
         }
         planDao.insertAll(planEntities)
     }
+
+    // 🔥 스태프 전용: 특정 사용자의 모든 등록 이력 (Plan 포함)
+    override suspend fun getUserRegiHistories(userId: Long): Result<List<RegiHistoryWithPlans>> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                regiHistoryApi.getUserRegiHistories(userId).toModelList()
+            }
+        }
+
+    // 🔥 스태프 전용: 모든 등록 이력
+    override suspend fun getAllRegiHistories(): Result<List<RegiHistoryWithPlans>> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                regiHistoryApi.getAllRegiHistories().toModelList()
+            }
+        }
+
+    // 🔥 스태프 전용: 특정 사용자의 모든 복약 스케줄
+    override suspend fun getUserPlans(userId: Long): Result<List<Plan>> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                planApi.getUserPlans(userId).map { it.toDomain() }
+            }
+        }
 }

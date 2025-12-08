@@ -19,4 +19,8 @@ interface UserRepository {
 
     // 서버에서 강제로 최신 정보 가져오기만 하는 함수 (옵션)
     suspend fun fetchRemoteUser(): User?
+
+    suspend fun getAllUsers(): Result<List<User>>
+
+    suspend fun getUserById(userId: Long): Result<User>
 }

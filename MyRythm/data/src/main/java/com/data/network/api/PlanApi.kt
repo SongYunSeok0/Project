@@ -12,11 +12,9 @@ interface PlanApi {
     @GET("med/plan/")
     suspend fun getPlans(): List<PlanResponse>
 
-    //단건등록
     @POST("med/plan/")
     suspend fun createPlan(@Body body: PlanCreateRequest): PlanResponse
 
-    //여러건 등록 ex)3일치 점심 저녁
     @POST("med/plan/")
     suspend fun createPlanSmart(@Body body: @JvmSuppressWildcards Map<String, Any>): Response<Any>
 
@@ -40,4 +38,10 @@ interface PlanApi {
     suspend fun snoozePlan(
         @Path("id") planId: Long
     ): Response<Unit>
+
+    // 🔥 스태프 전용: 특정 사용자의 모든 복약 스케줄
+    @GET("med/plan/user/{userId}/")
+    suspend fun getUserPlans(
+        @Path("userId") userId: Long
+    ): List<PlanResponse>
 }

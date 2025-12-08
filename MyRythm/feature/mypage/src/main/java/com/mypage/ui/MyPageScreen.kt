@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,7 +61,9 @@ fun MyPageScreen(
     onLogoutClick: () -> Unit = {},
     onFaqClick: () -> Unit = {},
     onMediClick: () -> Unit = {},
-    onDeviceRegisterClick: () -> Unit = {},   // ⭐ 추가
+    onDeviceRegisterClick: () -> Unit = {},
+    onUserManagementClick: () -> Unit = {},      // 사용자 관리
+    onInquiriesManagementClick: () -> Unit = {}, // 문의사항 관리
     onWithdrawalSuccess: () -> Unit = {}
 ) {
     val editPageText = stringResource(R.string.editpage)
@@ -85,6 +88,11 @@ fun MyPageScreen(
     val logoutFailedMessage = stringResource(R.string.mypage_message_logout_failed)
     val withdrawalSuccessMessage = stringResource(R.string.mypage_message_withdrawal_success)
     val withdrawalFailedMessage = stringResource(R.string.mypage_message_withdrawal_failed)
+
+    // 스태프 전용 메뉴 텍스트 (strings.xml에 추가 필요)
+    val userManagementText = "사용자 관리"
+    val inquiriesManagementText = "문의사항 관리"
+    val staffMenuText = "관리자 메뉴"
 
     val profile by viewModel.profile.collectAsState()
     val context = LocalContext.current
@@ -154,15 +162,49 @@ fun MyPageScreen(
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
+            // 🔥 스태프 전용 메뉴 (내정보 수정 위에 표시)
+            if (profile?.isStaff == true) {
+                Text(
+                    text = staffMenuText,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                MenuItem(
+                    userManagementText,  // 사용자 관리
+                    R.drawable.edit,
+                    onUserManagementClick,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                MenuItem(
+                    inquiriesManagementText,  // 문의사항 관리
+                    R.drawable.faqchat,
+                    onInquiriesManagementClick,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(16.dp))
+                Divider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Spacer(Modifier.height(16.dp))
+            }
+
+            // 일반 메뉴
             MenuItem(editPageText, R.drawable.edit, onEditClick, tint = MaterialTheme.componentTheme.completionCaution)
             MenuItem(heartRateText, R.drawable.rate, onHeartClick)
             MenuItem(mediRecordText, R.drawable.logo, onMediClick)
+            MenuItem(deviceRegisterText, R.drawable.device, { onDeviceRegisterClick() })
 
-            // 🔥 “기기 등록" → QRScanRoute로 이동
-            MenuItem(deviceRegisterText, R.drawable.device, { onDeviceRegisterClick() } )
+            // 🔥 일반 사용자만 FAQ 표시 (스태프는 위에 "문의사항 관리"가 있음)
+            if (profile?.isStaff != true) {
+                MenuItem(faqCategoryText, R.drawable.faqchat, onFaqClick)
+            }
 
-            MenuItem(faqCategoryText, R.drawable.faqchat, onFaqClick)
-            MenuItem(logoutText, R.drawable.logout, { viewModel.logout() } )
+            MenuItem(logoutText, R.drawable.logout, { viewModel.logout() })
             MenuItem(withdrawalText, R.drawable.ic_delete, { showDeleteDialog = true }, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
@@ -186,7 +228,8 @@ fun MyPageScreen(
                     width = 100.dp,
                     backgroundColor = MaterialTheme.colorScheme.error,
                     textColor = MaterialTheme.colorScheme.onError,
-                    onClick = { viewModel.deleteAccount()
+                    onClick = {
+                        viewModel.deleteAccount()
                         showDeleteDialog = false
                     }
                 )
@@ -255,7 +298,7 @@ fun MenuItem(
     iconRes: Int,
     onClick: () -> Unit,
     tint: Color? = null,
-    ) {
+) {
     val arrowText = stringResource(R.string.arrow_description)
     AppTheme {
         Row(

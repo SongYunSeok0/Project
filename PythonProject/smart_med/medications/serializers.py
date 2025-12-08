@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from iot.models import Device
-from django.utils import timezone
-import datetime
 
 from .models import RegiHistory, Plan
 from smart_med.utils.time_utils import to_ms, from_ms
@@ -53,18 +51,12 @@ class PlanSerializer(serializers.ModelSerializer):
 
 #  Plan 생성용 입력 Serializer (Raw 입력)
 class PlanCreateIn(serializers.Serializer):
-    # RegiHistory는 반드시 있어야 한다고 가정 → 필수
     regihistoryId = serializers.IntegerField(required=True, allow_null=False)
-
     medName = serializers.CharField()
-
-    # 복용 예정 시간은 필수 (비워두면 400 발생)
     takenAt = serializers.IntegerField(required=True, allow_null=False)
-
     mealTime = serializers.CharField(required=False, allow_null=True)
     note = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     taken = serializers.IntegerField(required=False, allow_null=True)
-
     useAlarm = serializers.BooleanField(required=False, default=True)
 
 
@@ -145,19 +137,18 @@ class PlanCreateSerializer(serializers.ModelSerializer):
         if taken_ms is not None:
             validated_data["taken"] = from_ms(taken_ms)
 
+        # 영양제이면 med_name을 비워둔다
         if regi.regi_type == "supplement":
             validated_data.pop("med_name", None)
 
         return Plan.objects.create(regihistory=regi, **validated_data)
 
 
-
-#  RegiHistory 조회용 Serializer
+#  RegiHistory 조회용 Serializer (일반 사용자용)
 class RegiHistorySerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="user.id", read_only=True)
     useAlarm = serializers.BooleanField(source="use_alarm")
 
-    # device FK를 그대로 노출 (PK 값으로 직렬화됨) → JSON: "device": 3
     class Meta:
         model = RegiHistory
         fields = [
@@ -167,7 +158,7 @@ class RegiHistorySerializer(serializers.ModelSerializer):
             "label",
             "issued_date",
             "useAlarm",
-            "device",   # JSON: "device": <device_pk>
+            "device",
         ]
 
 
@@ -179,7 +170,6 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
         default=True
     )
 
-    # 클라이언트에서 "device": 3 으로 보내면 받는 필드
     device = serializers.IntegerField(
         write_only=True,
         required=False,
@@ -199,7 +189,6 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context["request"].user
 
-        # device는 int PK로 들어옴 → 실제 Device FK로 매핑
         device_id = validated_data.pop("device", None)
         device = None
         if device_id is not None:
@@ -212,3 +201,33 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
             device=device,
             **validated_data
         )
+
+
+#  🔥 스태프용: RegiHistory + Plan 목록 응답 Serializer
+class RegiHistoryWithPlansSerializer(serializers.ModelSerializer):
+    # user: Long (JSON key: "user")
+    user = serializers.IntegerField(source="user.id", read_only=True)
+    # use_alarm: Boolean (JSON key: "use_alarm")
+    use_alarm = serializers.BooleanField()
+    # plans: List<PlanSerializer> (JSON key: "plans")
+    plans = PlanSerializer(many=True, read_only=True, source="plan_set")
+    # plan_count: Int (JSON key: "plan_count")
+    plan_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RegiHistory
+        fields = [
+            "id",
+            "user",
+            "regi_type",
+            "label",
+            "issued_date",
+            "use_alarm",
+            "device",
+            "plan_count",
+            "plans",
+        ]
+
+    def get_plan_count(self, obj): 
+        # related_name 을 따로 안 줬으면 기본 reverse 이름이 plan_set
+        return obj.plan_set.count()

@@ -115,7 +115,12 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbar,
+                modifier = Modifier.padding(bottom = 40.dp)
+            )
+        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Box(
