@@ -1,6 +1,6 @@
 # med/views.py
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -16,6 +16,7 @@ from .serializers import (
     RegiHistoryCreateSerializer,
     PlanSerializer,
     PlanCreateIn,
+    RegiHistoryWithPlansSerializer,   # 🔥 스태프용 응답
 )
 
 from .docs import (
@@ -26,7 +27,21 @@ from .docs import (
 )
 
 # ============================================================
-# ✔ RegiHistory (CRUD)
+# ✔ 커스텀 권한: is_staff 사용자만 접근 가능
+# ============================================================
+
+class IsStaffUser(BasePermission):
+    """Django user.is_staff == True 인 경우만 허용"""
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.is_staff
+        )
+
+
+# ============================================================
+# ✔ RegiHistory (CRUD) - 일반 사용자용
 # ============================================================
 
 @regi_list_docs
@@ -76,6 +91,38 @@ class RegiHistoryDeleteView(APIView):
 
 
 # ============================================================
+# ✔ 관리자용: RegiHistory 조회 (Plan 포함)
+#    - GET /api/med/regihistory/user/<user_id>/
+#    - GET /api/med/regihistory/all/
+# ============================================================
+
+class UserRegiHistoryListView(APIView):
+    """
+    특정 사용자(user_id)의 등록 이력 + Plan 목록
+    """
+    permission_classes = [IsStaffUser]
+
+    def get(self, request, user_id):
+        rows = (
+            RegiHistory.objects
+            .filter(user_id=user_id)
+            .order_by("-id")
+        )
+        return Response(RegiHistoryWithPlansSerializer(rows, many=True).data)
+
+
+class AllRegiHistoryListView(APIView):
+    """
+    전체 사용자에 대한 등록 이력 + Plan 목록
+    """
+    permission_classes = [IsStaffUser]
+
+    def get(self, request):
+        rows = RegiHistory.objects.all().order_by("-id")
+        return Response(RegiHistoryWithPlansSerializer(rows, many=True).data)
+
+
+# ============================================================
 # ✔ Plan (GET / POST 단건 + 스마트 일정 생성)
 # ============================================================
 
@@ -107,7 +154,7 @@ class PlanListView(APIView):
 
             try:
                 current_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            except:
+            except Exception:
                 current_date = timezone.localdate()
 
             now = timezone.now()
