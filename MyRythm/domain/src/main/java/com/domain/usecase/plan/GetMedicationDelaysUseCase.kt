@@ -7,10 +7,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-// 🔥 UI용 데이터 모델 (String date)
 data class MedicationDelayUI(
     val date: String,
-    val label: String,
+    val label: String,           // RegiHistory의 label (예: "위염", "비타민C")
     val scheduledTime: Long,
     val actualTime: Long,
     val delayMinutes: Int,
@@ -28,20 +27,21 @@ class GetMedicationDelaysUseCase @Inject constructor(
         val zone = ZoneId.systemDefault()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-        return plans.map { plan ->
-            val originalTime = plan.exTakenAt!!
-            val actualTime = plan.takenTime!!
+        return plans.mapNotNull { plan ->
+            val originalTime = plan.exTakenAt ?: return@mapNotNull null
+            val actualTime = plan.takenTime ?: return@mapNotNull null
+            val label = plan.regihistoryLabel ?: return@mapNotNull null
 
             val date = Instant.ofEpochMilli(originalTime)
                 .atZone(zone)
                 .toLocalDate()
-                .format(formatter)  // 🔥 String으로 변환
+                .format(formatter)
 
             val delayMinutes = ((actualTime - originalTime) / (60 * 1000)).toInt()
 
             MedicationDelayUI(
                 date = date,
-                label = plan.medName,
+                label = label,
                 scheduledTime = originalTime,
                 actualTime = actualTime,
                 delayMinutes = delayMinutes,

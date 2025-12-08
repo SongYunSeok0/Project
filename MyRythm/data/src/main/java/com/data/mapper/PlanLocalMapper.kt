@@ -9,6 +9,7 @@ fun PlanEntity.toDomainLocal(): Plan =
     Plan(
         id = id,
         regihistoryId = regihistoryId,
+        regihistoryLabel = regihistoryLabel,
         medName = medName,
         takenAt = takenAt,
         exTakenAt = exTakenAt,
@@ -25,6 +26,7 @@ fun Plan.toEntity(): PlanEntity =
     PlanEntity(
         id = id,
         regihistoryId = regihistoryId,
+        regihistoryLabel = regihistoryLabel,
         medName = medName,
         takenAt = takenAt,
         exTakenAt = exTakenAt,
