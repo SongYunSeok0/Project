@@ -64,6 +64,7 @@ dependencies {
     implementation(project(":feature:auth"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:news"))
+    implementation(project(":feature:healthinsight"))
     implementation(project(":feature:scheduler"))
     implementation(project(":feature:chatbot"))
 

@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import kotlinx.serialization.ExperimentalSerializationApi
 import com.chatbot.navigation.ChatBotRoute
+import com.healthinsight.navigation.HealthInsightRoute
 import com.scheduler.navigation.SchedulerRoute
 import com.mypage.navigation.HeartReportRoute
 import com.map.navigation.MapRoute
@@ -43,6 +44,7 @@ fun NavGraphBuilder.mainNavGraph(
             onOpenHeart     = { nav.navigate(HeartReportRoute) },
             onOpenMap       = { nav.navigate(MapRoute) },
             onOpenNews      = { nav.navigate(NewsRoute(uid)) },
+            onOpenHealthInsight = { nav.navigate(HealthInsightRoute) },
             onOpenEditScreen = { nav.navigate(EditProfileRoute) }
         )
     }

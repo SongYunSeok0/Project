@@ -13,7 +13,7 @@ class CreatePlanUseCase @Inject constructor(
         takenAt: Long?,
         mealTime: String?,
         note: String?,
-        taken: Long?,
+        taken: Boolean?,
         useAlarm: Boolean
     ) {
         repository.createPlans(
@@ -27,6 +27,7 @@ class CreatePlanUseCase @Inject constructor(
                     mealTime = mealTime,
                     note = note,
                     taken = taken,
+                    takenTime = null,
                     exTakenAt = takenAt,
                     useAlarm = useAlarm
                 )

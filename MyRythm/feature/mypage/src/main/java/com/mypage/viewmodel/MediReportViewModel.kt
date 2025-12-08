@@ -28,6 +28,13 @@ class MediReportViewModel @Inject constructor(
     private fun loadRecords() {
         viewModelScope.launch {
             getMediRecordsUseCase().collect { list ->
+                // 🔥 로그 추가
+                android.util.Log.d("MediReportVM", "====== loadRecords: ${list.size}개 ======")
+                list.forEach { record ->
+                    android.util.Log.d("MediReportVM",
+                        "Record: id=${record.id}, label=${record.regiLabel}, " +
+                                "name=${record.medicineName}, taken=${record.taken}")
+                }
                 _records.value = list
             }
         }

@@ -45,4 +45,21 @@ interface PlanDao {
         """
     )
     suspend fun deleteAllByUser(userId: Long)
+
+    // 🔥 최근 N일간 복용 완료된 Plan 조회
+    @Query(
+        """
+        SELECT `plan`.*
+        FROM `plan`
+        INNER JOIN `regihistory`
+            ON `plan`.regihistoryId = `regihistory`.id
+        WHERE `regihistory`.userId = :userId
+        AND `plan`.taken = 1
+        AND `plan`.takenTime IS NOT NULL
+        AND `plan`.exTakenAt IS NOT NULL
+        AND `plan`.exTakenAt >= :timestamp
+        ORDER BY `plan`.exTakenAt DESC
+        """
+    )
+    suspend fun getRecentTakenPlans(userId: Long, timestamp: Long): List<PlanEntity>
 }

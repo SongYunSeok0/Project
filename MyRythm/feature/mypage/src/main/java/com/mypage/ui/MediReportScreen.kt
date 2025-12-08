@@ -23,6 +23,7 @@ fun MediReportScreen(
 
     val records by viewModel.records.collectAsState()
 
+    // records가 변경될 때마다 자동으로 재계산
     val groupedRecords = remember(records) {
         groupMediRecords(records)
     }
@@ -43,7 +44,10 @@ fun MediReportScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(groupedRecords) { group ->
+            items(
+                items = groupedRecords,
+                key = { it.label }  // 🔥 key 추가로 재구성 최적화
+            ) { group ->
                 GroupedMediRecordCard(
                     group = group,
                     onDeleteGroup = { deletedGroup ->

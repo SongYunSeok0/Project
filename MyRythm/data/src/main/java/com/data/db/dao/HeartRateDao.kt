@@ -18,4 +18,12 @@ interface HeartRateDao {
 
     @Query("DELETE FROM heart_rate")
     suspend fun clear()
+
+    // 🔥 최근 7일치 데이터 (suspend 함수)
+    @Query("""
+        SELECT * FROM heart_rate 
+        WHERE collectedAt >= :timestamp 
+        ORDER BY collectedAt DESC
+    """)
+    suspend fun getLastWeek(timestamp: Long): List<HeartRateEntity>
 }

@@ -17,7 +17,7 @@ interface PlanRepository {
         takenAt: Long,
         mealTime: String?,
         note: String?,
-        taken: Long?,
+        taken: Boolean?,
         useAlarm: Boolean
     )
 
@@ -40,4 +40,6 @@ interface PlanRepository {
     suspend fun markAsTaken(planId: Long): Result<Unit>
 
     suspend fun snoozePlan(planId: Long): Result<Unit>
+
+    suspend fun getRecentTakenPlans(userId: Long, days: Int = 7): List<Plan>
 }

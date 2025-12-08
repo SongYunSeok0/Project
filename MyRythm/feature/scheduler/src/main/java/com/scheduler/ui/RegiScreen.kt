@@ -458,6 +458,7 @@ fun RegiScreen(
                                     mealTime = mealRelation,
                                     note = memo.ifBlank { null },
                                     taken = null,
+                                    takenTime = null,
                                     exTakenAt = takenAt,
                                     useAlarm = useAlarm
                                 )

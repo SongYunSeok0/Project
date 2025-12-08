@@ -30,6 +30,7 @@ fun MainScreen(
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
+    onOpenHealthInsight: () -> Unit = {},  // 🔥 추가
     nextTime: String? = null,
     todaySteps: Int = 0,
     remainText: String? = null,
@@ -67,7 +68,7 @@ fun MainScreen(
 
         FullWidthFeatureCard(
             bg = MaterialTheme.componentTheme.healthInsightCard,
-            onClick = { /* 연결 필요하면 추가 */ }
+            onClick = onOpenHealthInsight  // 🔥 연결
         ) {
             Column(
                 modifier = Modifier

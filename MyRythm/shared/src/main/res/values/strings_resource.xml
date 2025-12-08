@@ -273,7 +273,8 @@
     <string name="mypage_error_qr_decode_failed">QR 해석 실패!</string>
     <string name="mypage_error_qr_camera_init_failed">카메라 초기화 실패: %1$s</string>
 
-
+    <string name="status_done">복용 완료</string>
+    <string name="status_missed">미복용</string>
 
 
 </resources>
