@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.shared.bar.AppTopBar
 import com.domain.model.Inquiry
 import com.mypage.viewmodel.MyPageViewModel
+import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.OnlyColorTheme
 import kotlinx.coroutines.launch
 
@@ -47,7 +48,7 @@ fun FAQScreen(
     // rememberPagerState : 탭 간의 전환 상태 관리 용도
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
-    OnlyColorTheme {
+    AppTheme {
 
             Column(modifier = modifier
                 .fillMaxSize()
@@ -108,7 +109,7 @@ private fun FAQTabRow(pagerState: PagerState) {
 
     PrimaryTabRow(
         selectedTabIndex = pagerState.currentPage,
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
         indicator = {   // TabIndicatorScope 안에서 tabPositions 사용 가능
             TabRowDefaults.SecondaryIndicator(
                 modifier = Modifier
@@ -129,8 +130,7 @@ private fun FAQTabRow(pagerState: PagerState) {
             ) {
                 Text(
                     text = title,
-                    fontSize = 16.sp,
-                    lineHeight = 1.5.em
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
         }

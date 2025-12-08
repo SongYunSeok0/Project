@@ -16,12 +16,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.domain.model.HeartRateHistory
 import com.domain.sharedvm.HeartRateVMContract
 import com.shared.R
+import com.shared.ui.components.AppButton
+import com.shared.ui.theme.AppFieldHeight
+import com.shared.ui.theme.componentTheme
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -31,6 +35,14 @@ fun HeartReportScreen(
 ) {
     val latestBpm by vm.latestHeartRate.collectAsState()
     val heartHistory by vm.heartHistory.collectAsState()
+
+    val currentHeartRateText = stringResource(R.string.currentheartrate)
+    val bpmText = stringResource(R.string.bpm)
+    val noBpmText = stringResource(R.string.no_bpm)
+    val refreshText = stringResource(R.string.refresh)
+    val recentMeasurementHeartrate = stringResource(R.string.recent_measurement_heartrate)
+    val errorNoHeartHistory = stringResource(R.string.mypage_error_no_heart_history)
+
 
     LaunchedEffect(Unit) {
         vm.syncHeartHistory()
@@ -43,17 +55,18 @@ fun HeartReportScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         // 상단 카드
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(296.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(MaterialTheme.shapes.large)
                     .background(
                         brush = Brush.verticalGradient(
-                            listOf(Color(0xffffe8e8), Color(0xffffd5d5))
+                            listOf(
+                                MaterialTheme.componentTheme.heartRateCardGradientLight,
+                                MaterialTheme.componentTheme.heartRateCardGradientDark)
                         )
                     )
                     .padding(24.dp)
@@ -63,18 +76,21 @@ fun HeartReportScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-
                     Image(
                         painter = painterResource(id = R.drawable.rate),
                         contentDescription = null,
                         alpha = 0.66f,
-                        colorFilter = ColorFilter.tint(Color(0xffff6b6b)),
                         modifier = Modifier.size(48.dp)
                     )
 
                     Spacer(Modifier.height(16.dp))
 
-                    Text("현재 심박수", color = Color(0xff4a5565), fontSize = 14.sp)
+                    Text(
+                        currentHeartRateText,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
                     Spacer(Modifier.height(8.dp))
 
                     Box(
@@ -87,53 +103,55 @@ fun HeartReportScreen(
                             modifier = Modifier
                                 .height(90.dp)
                                 .width(300.dp)
-                                .alpha(0.60f),
-                            colorFilter = ColorFilter.tint(Color(0xffff6b6b))
+                                .alpha(0.60f)
                         )
-
                         Text(
-                            text = latestBpm?.toString() ?: "--",
-                            color = Color(0xff101828),
-                            fontSize = 60.sp
+                            text = latestBpm?.toString() ?: noBpmText,
+                            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 60.sp),
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-
-                    Text("bpm", color = Color(0xff4a5565), fontSize = 18.sp)
+                    Text(
+                        bpmText,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
-
             Spacer(Modifier.height(24.dp))
         }
-
         // 새로고침 버튼
         item {
-            Button(
+            AppButton(
+                text = refreshText,
                 onClick = {
                     vm.syncHeartHistory()
                     vm.loadLatestHeartRate()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff6ae0d9)),
-                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Text("새로고침", color = Color.White)
-            }
+                    .height(AppFieldHeight),
+                backgroundColor = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
+                textStyle = MaterialTheme.typography.labelLarge
+            )
 
             Spacer(Modifier.height(24.dp))
 
-            Text("최근 측정 기록", fontSize = 16.sp, color = Color(0xff101828))
+            Text(
+                recentMeasurementHeartrate,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Spacer(Modifier.height(12.dp))
         }
-
         // 기록 리스트
         if (heartHistory.isEmpty()) {
             item {
                 Text(
-                    text = "아직 심박수 기록이 없어요.",
-                    fontSize = 14.sp,
-                    color = Color(0xff667085),
+                    text = errorNoHeartHistory,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -149,6 +167,7 @@ fun HeartReportScreen(
 private fun HeartHistoryRow(item: HeartRateHistory) {
     val (statusText, statusColor) = bpmStatus(item.bpm)
     val timeText = formatCollectedAt(item.collectedAt)
+    val bpmText = stringResource(R.string.bpm)
 
     Column(Modifier.fillMaxWidth()) {
 
@@ -161,29 +180,34 @@ private fun HeartHistoryRow(item: HeartRateHistory) {
         ) {
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("${item.bpm} bpm", fontSize = 16.sp, color = Color(0xFF111827))
-
+                Text(
+                    "${item.bpm} $bpmText",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
                         .background(statusColor.copy(alpha = 0.12f))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
-                    Text(statusText, fontSize = 11.sp, color = statusColor)
+                    Text(
+                        statusText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor
+                    )
                 }
             }
-
             Text(
                 text = timeText,
-                fontSize = 12.sp,
-                color = Color(0xFF6B7280),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
-
         Divider(
-            color = Color(0xFFE5E7EB),
+            color = MaterialTheme.colorScheme.surfaceVariant,
             thickness = 0.7.dp,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -197,10 +221,15 @@ private fun formatCollectedAt(raw: String): String {
     }.getOrElse { raw }
 }
 
+@Composable
 private fun bpmStatus(bpm: Int): Pair<String, Color> {
+    val normalText = stringResource(R.string.normal)
+    val lowText = stringResource(R.string.low)
+    val warningText = stringResource(R.string.warning)
+
     return when {
-        bpm < 50 -> "낮음" to Color(0xFF3B82F6)
-        bpm <= 90 -> "정상" to Color(0xFF16A34A)
-        else -> "주의" to Color(0xFFEF4444)
+        bpm < 50 -> lowText to MaterialTheme.componentTheme.heartRateLow
+        bpm <= 90 -> normalText to MaterialTheme.componentTheme.heartRateNormal
+        else -> warningText to MaterialTheme.componentTheme.heartRateWarning
     }
 }

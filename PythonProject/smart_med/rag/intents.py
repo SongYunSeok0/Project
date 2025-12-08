@@ -67,17 +67,17 @@ def build_side_effect_answer(question: str, chunks: List[Chunk]) -> str:
 
     parts = [p.strip() for p in re.split(r"[,，\n]", core) if p.strip()]
 
-    main = parts[:6]
+    # ⭐ 최대 5개로 제한 (기존 6개에서 감소)
+    main = parts[:5]
 
     cautions = [
         p
         for p in parts
         if any(k in p for k in ["중지", "악화", "지속", "새로운 증상", "의사", "약사"])
-    ][:3]
+    ][:2]  # ⭐ 3개 → 2개로 감소
 
     lines: List[str] = []
 
-    # 번호 제거
     lines.append("주요 부작용")
     if main:
         for p in main:
@@ -92,8 +92,7 @@ def build_side_effect_answer(question: str, chunks: List[Chunk]) -> str:
             lines.append(f"- {p}")
     else:
         lines.append(
-            "- 통증이나 발열 등이 지속되거나 악화되거나, 새로운 증상이 나타나면 "
-            "복용을 중지하고 의사 또는 약사와 상의하십시오."
+            "- 증상이 지속되면 복용을 중지하고 의사 또는 약사와 상의하세요."
         )
 
     return "\n".join(lines)

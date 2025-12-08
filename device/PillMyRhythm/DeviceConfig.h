@@ -10,5 +10,6 @@ public:
 
     static void load();
     static void save();
+    static void clear();
     static bool isRegistered();
 };

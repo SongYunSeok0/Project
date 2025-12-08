@@ -10,13 +10,15 @@ class CreateRegiHistoryUseCase @Inject constructor(
         regiType: String,
         label: String?,
         issuedDate: String?,
-        useAlarm: Boolean
+        useAlarm: Boolean,
+        device: Long?
     ): Long {
         return repository.createRegiHistory(
             regiType = regiType,
             label = label,
             issuedDate = issuedDate,
-            useAlarm = useAlarm
+            useAlarm = useAlarm,
+            device = device
         )
     }
 }

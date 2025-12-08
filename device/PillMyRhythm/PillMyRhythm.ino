@@ -22,98 +22,118 @@ void setup() {
     digitalWrite(GREEN_LED, LOW);
     noTone(BUZZER);
 
-    // ----------------------------
-    // 1) 기존 설정 불러오기
-    // ----------------------------
+    // ------------------------------------
+    // 기존 설정 불러오기
+    // ------------------------------------
     DeviceConfig::load();
 
+    // ------------------------------------
+    // 등록 여부 판단
+    // ------------------------------------
     if (!DeviceConfig::isRegistered()) {
-        Serial.println("🔵 등록 필요 → BLE 등록 모드로 진입");
-        startBLEConfig();   // BLE 시작 후, 앱이 JSON 보내길 기다림
-    } else {
-        Serial.println("🟢 등록됨 → WiFi 연결 시도");
-        connectWiFi();
+        Serial.println("🔵 등록 필요 → BLE 등록 모드");
+        startBLEConfig();           // ⭐ BLE만 켜고, 여기서 끝!
+        return;                     // ❗ 절대 아래 실행하면 안 됨
     }
 
-    // 센서, HTTP 태스크 준비
+    // -----------------------------
+    // 여기까지 왔다면 “이미 등록됨”
+    // → WiFi + Sensors + HTTP 시작
+    // -----------------------------
+    Serial.println("🟢 등록됨 → WiFi 연결 시도");
+
+    connectWiFi();
     initSensors();
     initHttpTask();
 }
 
-
 void loop() {
-    // ----------------------------
-    // 2) BLE 등록 완료됐으면 처리
-    // ----------------------------
-    if (bleConfigDone) {
-        bleConfigDone = false;
+    // ------------------------------------
+    // BLE 등록 모드일 경우
+    // ------------------------------------
+    if (!DeviceConfig::isRegistered()) {
 
-        Serial.println("🟢 BLE 등록 완료 → WiFi 연결 시작");
-        delay(500);
+        // ESP32로부터 JSON 수신 완료됨
+        if (bleConfigDone) {
+            Serial.println("🟢 BLE 등록 완료!");
+            delay(500);
 
-        if (connectWiFi()) {
-            Serial.println("✔ PillBox 정상 동작 시작합니다!");
-        } else {
-            Serial.println("⚠ WiFi 실패 → 재부팅 추천");
+            // 저장된 값으로 재부팅 → 정상 모드 진입
+            Serial.println("🔄 재부팅하여 정상 모드로 전환");
+            ESP.restart();
         }
+
+        delay(100);
+        return;
     }
 
-    // ----------------------------
-    // 3) WiFi 연결 안 됐으면 루프 최소 동작
-    // ----------------------------
+    // ------------------------------------
+    // 정상 운영 모드
+    // ------------------------------------
     if (!isWiFiConnected()) {
         delay(200);
         return;
     }
 
-    // ----------------------------
-    // 4) 센서 업데이트
-    // ----------------------------
+    // 센서 업데이트
     updateBPM();
     checkWeight();
     handleReset();
 
-    // ----------------------------
-    // 5) 서버 → GET 명령 처리
-    // ----------------------------
+    // GET 명령 체크
     if (httpTimeSignal) {
         httpTimeSignal = false;
 
         isTime = true;
         digitalWrite(RED_LED, LOW);
         digitalWrite(GREEN_LED, HIGH);
+
         Serial.println("💡 TIME SIGNAL: GREEN ON");
 
-        // 타임 상태 유지 시간
-        // greenStart 는 Sensors.cpp 안에 있음
         extern unsigned long greenStart;
         greenStart = millis();
     }
 
-    // GET 주기 도달하면 서버 요청
+    // GET 요청 주기
     static unsigned long lastGetSend = 0;
     if (millis() - lastGetSend >= 10000) {
         queueGet();
         lastGetSend = millis();
     }
 
-    // ----------------------------
-    // 6) POST 조건 판단 후 전송
-    // ----------------------------
+    // POST 조건 판단
     static float lastSentBPM = 0;
     static bool lastSentTime = false;
 
-    bool needPost =
-        openedEvent ||
-        abs(currentBPM - lastSentBPM) >= 25 ||
-        (isTime != lastSentTime);
+    // POST 조건 판단
+bool needPost =
+    openedEvent ||
+    abs(currentBPM - lastSentBPM) >= 25 ||
+    (isTime != lastSentTime);
 
-    if (needPost) {
-        queuePost(openedEvent, currentBPM, isTime);
-        openedEvent = false;
-        lastSentBPM = currentBPM;
-        lastSentTime = isTime;
+static bool timeConsumed = false;
+
+if (needPost) {
+
+    // POST 보내기
+    queuePost(openedEvent, currentBPM, isTime);
+
+    // ⭐ 정해진 시간에 열린 경우 → POST 후 isTime 끄기
+    if (openedEvent && isTime && !timeConsumed) {
+        Serial.println("✔ POST sent (isOpened=true, isTime=true) → turn off isTime");
+
+        isTime = false;
+        digitalWrite(19, LOW);
+        digitalWrite(18, HIGH);
+        timeConsumed = true;
     }
+
+    // reset
+    openedEvent = false;
+    lastSentBPM = currentBPM;
+    lastSentTime = isTime;
+}
+
 
     delay(20);
 }

@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.shared.ui.theme.AuthFieldHeight
+import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.authTheme
 import com.shared.ui.theme.loginTheme
 
@@ -49,7 +49,7 @@ fun AuthPrimaryButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .height(AuthFieldHeight),
+            .height(AppFieldHeight),
         enabled = enabled,
         shape = buttonShape,
         colors = ButtonDefaults.buttonColors(
@@ -87,7 +87,7 @@ fun AuthSecondaryButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier.height(AuthFieldHeight),
+        modifier = modifier.height(AppFieldHeight),
         enabled = enabled,
         shape = buttonShape,
         colors = ButtonDefaults.buttonColors(
@@ -135,7 +135,7 @@ fun AuthActionButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .height(AuthFieldHeight),
+            .height(AppFieldHeight),
         enabled = enabled,
         shape = buttonShape,
         colors = ButtonDefaults.buttonColors(

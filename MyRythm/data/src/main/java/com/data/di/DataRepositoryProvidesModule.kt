@@ -2,10 +2,13 @@ package com.data.di
 
 import android.content.Context
 import com.data.device.BLEManager
+import com.data.network.api.DeviceApi
 import com.data.network.api.MapApi
 import com.data.network.api.NewsApi
+import com.data.repository.DeviceRepositoryImpl
 import com.data.repository.MapRepositoryImpl
 import com.data.repository.NewsRepositoryImpl
+import com.domain.repository.DeviceRepository
 import com.domain.repository.MapRepository
 import com.domain.repository.NewsRepository
 import dagger.Module

@@ -7,6 +7,12 @@ from rest_framework.response import Response
 
 from .services import retrieve_top_chunks, build_answer
 from .tasks import run_rag_task
+from .utils import (
+    is_medical_question,
+    get_non_medical_response,
+    is_greeting,  # 추가
+    get_greeting_response,  # 추가
+)
 from celery.result import AsyncResult
 
 
@@ -23,12 +29,46 @@ class DrugRAGView(APIView):
         question = request.data.get("question")
         mode = request.data.get("mode", "async")
 
+        # 디버깅용 로그
+        print(f"[DEBUG] 요청 본문: {request.data}")
+        print(f"[DEBUG] question='{question}', mode='{mode}'")
+
         if not question:
             return Response({"detail": "question 필드가 필요합니다."}, status=400)
 
-        # -------------------------------
-        # 1) 비동기 Celery 모드
-        # -------------------------------
+        # ========== 최우선 1순위: 인사말 처리 (LLM/DB 조회 없이 즉시 응답) ==========
+        if is_greeting(question):
+            print(f"[GREETING-VIEW] 인사말 즉시 응답: '{question}'")
+            return Response(
+                {
+                    "status": "done",
+                    "question": question,
+                    "result": {
+                        "answer": get_greeting_response(),
+                        "contexts": [],
+                    },
+                },
+                status=200
+            )
+        # =================================================================
+
+        # ========== 2순위: 의료 질문 검증 ==========
+        if not is_medical_question(question):
+            print(f"[API-FILTER] 비의료 질문 차단: '{question}'")
+            return Response(
+                {
+                    "status": "rejected",
+                    "question": question,
+                    "result": {
+                        "answer": get_non_medical_response(),
+                        "contexts": [],
+                    },
+                },
+                status=200
+            )
+        # ==========================================
+
+        # ========== 3순위: 비동기 모드 (Celery) ==========
         if mode == "async":
             task = run_rag_task.delay(question)
             return Response(
@@ -36,12 +76,9 @@ class DrugRAGView(APIView):
                 status=202,
             )
 
-        # -------------------------------
-        # 2) 동기 모드 (즉시 RAG 실행)
-        # -------------------------------
+        # ========== 4순위: 동기 모드 (즉시 RAG 처리) ==========
         try:
             start = time.time()
-
             chunks = retrieve_top_chunks(question, k=5)
             answer = build_answer(question, chunks)
 
@@ -49,43 +86,48 @@ class DrugRAGView(APIView):
             print(f"[SYNC-RAG] q='{question[:30]}' elapsed={elapsed:.2f}s")
 
         except Exception as e:
-            print("🔥🔥🔥 RAG 처리 중 예외 발생 🔥🔥🔥")
-            print("Error:", e)
-            traceback.print_exc()  # ★ 중요: 실제 에러를 로그에 출력
-
+            print(f"[ERROR] RAG 처리 오류: {e}")
+            traceback.print_exc()
             return Response(
                 {"detail": "RAG 처리 중 오류", "error": str(e)},
                 status=500
             )
 
-        # -------------------------------
-        # 3) 정상 응답
-        # -------------------------------
+        # ----------------------
+        # fallback context 적용
+        # ----------------------
+        if not chunks:
+            contexts = [{
+                "chunk_id": "",
+                "item_name": "",
+                "section": "",
+                "chunk_index": 0
+            }]
+        else:
+            contexts = [
+                {
+                    "chunk_id": c.chunk_id,
+                    "item_name": c.item_name,
+                    "section": c.section,
+                    "chunk_index": c.chunk_index,
+                }
+                for c in chunks
+            ]
+
         return Response(
             {
                 "status": "done",
                 "question": question,
                 "result": {
                     "answer": answer,
-                    "contexts": [
-                        {
-                            "chunk_id": c.chunk_id,
-                            "item_name": c.item_name,
-                            "section": c.section,
-                            "chunk_index": c.chunk_index,
-                        }
-                        for c in chunks
-                    ],
+                    "contexts": contexts,
                 },
             },
             status=200
         )
 
+
 class RAGTaskResultView(APIView):
-    """
-    Celery Task 결과 조회 API
-    GET /rag/result/<task_id>/
-    """
     authentication_classes = []
     permission_classes = []
 
@@ -102,11 +144,17 @@ class RAGTaskResultView(APIView):
             return Response({"status": "failed", "error": str(result.result)})
 
         if result.state == "SUCCESS":
+            data = result.result  # Celery task 반환값
             return Response(
                 {
                     "status": "done",
-                    "result": result.result
-                }
+                    "question": data.get("question"),
+                    "result": {
+                        "answer": data["result"].get("answer"),
+                        "contexts": data["result"].get("contexts", []),
+                    },
+                },
+                status=200
             )
 
         # 예외적인 상태

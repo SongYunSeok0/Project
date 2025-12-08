@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.map.data.PlaceItem
 import com.naver.maps.geometry.LatLng
 import com.shared.R
+import com.shared.ui.components.AppTagButton
 import java.util.Locale
 
 /* -------------------- 하단 시트 컨텐츠 -------------------- */
@@ -34,7 +36,6 @@ fun PlaceInfoContent(
     val cleanTitle = cleanHtml(place.title)
     val prettyCategory = cleanCategoryForDisplay(place.category)
 
-    // 문자열 리소스
     val phoneText = stringResource(R.string.phone)
     val navigationText = stringResource(R.string.navigation)
     val closeText = stringResource(R.string.close)
@@ -160,22 +161,16 @@ fun SearchHereChip(
     val searchHereText = stringResource(R.string.search_here)
 
     if (!visible) return
-
-    Surface(
+    AppTagButton(
+        label = searchHereText,
+        onClick = onClick,
         modifier = modifier
-            .wrapContentWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 4.dp,
-        onClick = onClick
-    ) {
-        Text(
-            text = searchHereText,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
+            .shadow(4.dp, MaterialTheme.shapes.large)
+            .wrapContentWidth()
+            .height(36.dp),
+        isCircle = false,
+        alpha = 0.7f
+    )
 }
 
 @Composable

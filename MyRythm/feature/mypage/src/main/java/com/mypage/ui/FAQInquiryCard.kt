@@ -101,11 +101,11 @@ fun InquiryCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surface)
             .border(
-                border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(14.dp)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                shape = MaterialTheme.shapes.large
             )
             .clickable(
                 indication = null,
@@ -176,7 +176,7 @@ fun InquiryCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(MaterialTheme.shapes.large)
                     .background(MaterialTheme.componentTheme.inquiryCardQuestion)
                     .padding(12.dp)
             ) {
@@ -210,7 +210,7 @@ fun InquiryCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .background(MaterialTheme.componentTheme.inquiryCardAnswer)
                         .padding(12.dp)
                 ) {

@@ -5,24 +5,40 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.domain.model.MediRecord
 import com.shared.R
+import com.shared.ui.components.AppButton
+import com.shared.ui.theme.AppTheme
+import com.shared.ui.theme.componentTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -53,23 +69,35 @@ fun GroupedMediRecordCard(
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
     val dateRange = "${group.startDate.format(dateFormatter)} - ${group.endDate.format(dateFormatter)}"
-
     val completionPercent = (group.completionRate * 100).toInt()
+
+    // 문자열 리소스
+    val completionRateText = stringResource(R.string.completion_rate)
+    val medicationNameText = stringResource(R.string.medication_name)
+    val dosePeriodText = stringResource(R.string.dose_period)
+    val mealRelationText = stringResource(R.string.meal_relation)
+    val memoLabelText = stringResource(R.string.memo_label)
+    val countSuffixText = stringResource(R.string.count_per_day)
+
+    val recordDeleteButtonText = stringResource(R.string.record_delete_button)
+    val doseCountText = stringResource(R.string.dose_count)
+    val percentSuffixText = stringResource(R.string.percent_suffix)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surface)
             .border(
-                border = BorderStroke(0.7.dp, Color(0xFFE5E7EB)),
-                shape = RoundedCornerShape(14.dp)
+                border = BorderStroke(
+                    0.7.dp,
+                    MaterialTheme.componentTheme.mainFeatureCardBorderStroke
+                ),
+                shape = MaterialTheme.shapes.large
             )
             .clickable { expanded = !expanded }
             .padding(16.dp)
     ) {
-
-        // 상단: 라벨 / 날짜 범위 / 완료율 / 화살표
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -81,33 +109,39 @@ fun GroupedMediRecordCard(
                     text = group.label,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF111827)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = dateRange,
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280)
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+
                     Text(
-                        text = "완료율: ",
-                        fontSize = 12.sp,
-                        color = Color(0xFF6B7280)
+                        text = "$completionRateText: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
+
                     Text(
-                        text = "$completionPercent%",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = "$completionPercent$percentSuffixText",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
                         color = when {
-                            completionPercent >= 80 -> Color(0xFF16A34A)
-                            completionPercent >= 50 -> Color(0xFFF59E0B)
-                            else -> Color(0xFFEF4444)
+                            completionPercent >= 80 ->
+                                MaterialTheme.componentTheme.heartRateNormal
+                            completionPercent >= 50 ->
+                                MaterialTheme.componentTheme.completionCaution
+                            else ->
+                                MaterialTheme.componentTheme.heartRateWarning
                         }
                     )
                 }
@@ -117,21 +151,23 @@ fun GroupedMediRecordCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50.dp))
-                        .background(Color(0xFFF3F4F6))
+                        .background(MaterialTheme.componentTheme.mainFeatureCardBorderStroke)
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "${group.records.size}회",
-                        fontSize = 12.sp,
-                        color = Color(0xFF374151)
+                        text = "${group.records.size}$countSuffixText",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Image(
-                    painter = painterResource(if (expanded) R.drawable.arrow_up else R.drawable.arrow_down),
-                    contentDescription = null,
+                    painter = painterResource(
+                        if (expanded) R.drawable.arrow_up else R.drawable.arrow_down
+                    ),
+                    contentDescription = stringResource(R.string.arrow_description),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -143,7 +179,7 @@ fun GroupedMediRecordCard(
 
             // 약 이름들
             DetailInfoRow(
-                label = "약 이름",
+                label = medicationNameText,
                 content = {
                     Column {
                         group.medNames.forEach { medName ->
@@ -151,16 +187,24 @@ fun GroupedMediRecordCard(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.padding(vertical = 2.dp)
                             ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                 Image(
                                     painter = painterResource(R.drawable.pill),
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp)
                                 )
+                            }
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = medName,
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF111827)
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -171,59 +215,53 @@ fun GroupedMediRecordCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             DetailInfoRow(
-                label = "복용 기간",
+                label = dosePeriodText,
                 value = dateRange
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             DetailInfoRow(
-                label = "복용 횟수",
-                value = "${group.completedDoses}/${group.totalDoses}회"
+                label = doseCountText,
+                value = "${group.completedDoses}/${group.totalDoses}$countSuffixText"
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             val mealTimeText = when (group.mealTime) {
-                "before" -> "식전"
-                "after" -> "식후"
-                "none" -> "관계없음"
+                "before" -> stringResource(R.string.meal_relation_before)
+                "after" -> stringResource(R.string.meal_relation_after)
+                "none" -> stringResource(R.string.meal_relation_irrelevant)
                 else -> group.mealTime ?: "-"
             }
             DetailInfoRow(
-                label = "식사 관계",
+                label = mealRelationText,
                 value = mealTimeText
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             DetailInfoRow(
-                label = "메모",
+                label = memoLabelText,
                 value = group.memo ?: "-"
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // 삭제 버튼
-            Box(
+
+            AppButton(
+                text = recordDeleteButtonText,
+                onClick = { showDeleteDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFEF2F2))
-                    .clickable { showDeleteDialog = true }
                     .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "기록 삭제하기",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFFEF4444)
-                )
-            }
+                height = 48.dp,
+                shape = MaterialTheme.shapes.large,
+                textStyle = MaterialTheme.typography.labelMedium
+            )
         }
     }
-
     if (showDeleteDialog) {
         DeleteConfirmDialog(
             groupLabel = group.label,
@@ -249,8 +287,8 @@ private fun DetailInfoRow(
     ) {
         Text(
             text = label,
-            fontSize = 14.sp,
-            color = Color(0xFF6B7280),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.width(80.dp)
         )
 
@@ -261,8 +299,8 @@ private fun DetailInfoRow(
         } else {
             Text(
                 text = value ?: "-",
-                fontSize = 14.sp,
-                color = Color(0xFF111827),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -276,33 +314,44 @@ private fun DeleteConfirmDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val questionMessage =
+        stringResource(R.string.mypage_message_medi_record_delete_question, groupLabel)
+    val countMessage =
+        stringResource(R.string.mypage_message_medi_record_delete_count, recordCount)
+    val warningMessage =
+        stringResource(R.string.mypage_message_medi_record_delete_warning)
+
+    val deleteText = stringResource(R.string.delete)
+    val cancelText = stringResource(R.string.cancel)
+    val deleteTitleText = stringResource(R.string.record_delete)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "기록 삭제",
-                style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF111827)
+                text = deleteTitleText,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         text = {
             Column {
                 Text(
-                    text = "\"$groupLabel\" 처방의 모든 기록을 삭제하시겠습니까?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF374151)
+                    text = questionMessage,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "총 ${recordCount}개의 복약 기록이 삭제됩니다.",
+                    text = countMessage,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFEF4444)
+                    color = MaterialTheme.componentTheme.heartRateWarning
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "이 작업은 되돌릴 수 없습니다.",
+                    text = warningMessage,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF6B7280)
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
         },
@@ -310,30 +359,35 @@ private fun DeleteConfirmDialog(
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFEF4444)
+                    containerColor = MaterialTheme.colorScheme.error
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = MaterialTheme.shapes.small
             ) {
-                Text("삭제", color = Color.White)
+                Text(
+                    deleteText,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         },
         dismissButton = {
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF3F4F6)
+                    containerColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape =MaterialTheme.shapes.small
             ) {
-                Text("취소", color = Color(0xFF374151))
+                Text(
+                    cancelText,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         },
-        containerColor = Color.White,
-        shape = RoundedCornerShape(16.dp)
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape =MaterialTheme.shapes.extraLarge
     )
 }
 
-// 복약 기록 그룹화 함수
 fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
     val zone = ZoneId.systemDefault()
 
@@ -371,4 +425,35 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
             )
         }
         .sortedByDescending { it.endDate }
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+fun PreviewGroupedMediRecordCard() {
+    AppTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            GroupedMediRecordCard(
+                group = sampleGroupedMediRecord(),
+                onDeleteGroup = {}
+            )
+        }
+    }
+}
+
+@Composable
+fun sampleGroupedMediRecord(): GroupedMediRecord {
+    val today = LocalDate.now()
+
+    return GroupedMediRecord(
+        label = "고지혈증 처방",
+        startDate = today.minusDays(7),
+        endDate = today,
+        medNames = listOf("로수바스타틴 10mg", "아스피린 100mg"),
+        mealTime = "after",
+        memo = "식후에 바로 복용하세요.",
+        totalDoses = 14,
+        completedDoses = 9,
+        records = emptyList(),
+        completionRate = 9f / 14f
+    )
 }

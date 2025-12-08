@@ -20,8 +20,17 @@ import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.components.AuthActionButton
 import com.shared.ui.theme.AuthBackground
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.graphics.Color
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PwdScreen(
     modifier: Modifier = Modifier,
@@ -31,15 +40,12 @@ fun PwdScreen(
     var email by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     var sent by remember { mutableStateOf(false) }
-
-    // 1202 새로운비번설정
     var verified by remember { mutableStateOf(false) }
     var newPassword by remember { mutableStateOf("") }
 
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // 문자열 리소스화 선언
     val emailText = stringResource(R.string.email)
     val newPasswordText = stringResource(R.string.auth_newpassword)
     val sendText = stringResource(R.string.send)
@@ -49,7 +55,6 @@ fun PwdScreen(
     val comfirmText = stringResource(R.string.confirm)
     val backtologinText = stringResource(R.string.auth_backtologin)
 
-    // ViewModel 이벤트 감지 (스낵바 표시 및 상태 변경)
     LaunchedEffect(Unit) {
         viewModel.events.collect { msg ->
             snackbar.showSnackbar(msg)
@@ -62,23 +67,27 @@ fun PwdScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AuthBackground,
+        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbar) },
-        contentWindowInsets = WindowInsets(0)
-    ) { padding ->
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { inner ->
         Column(
-            modifier = modifier
+            modifier = Modifier
+                .padding(inner)
                 .fillMaxSize()
+                .background(AuthBackground)
+                .imePadding()
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(50.dp))
+            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+
+            Spacer(Modifier.height(34.dp))
 
             AuthLogoHeader(textLogoResId = R.drawable.auth_myrhythm)
 
             Spacer(Modifier.height(10.dp))
 
-            // 1202 휴대폰로직->이메일로직 변경 완
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -102,52 +111,37 @@ fun PwdScreen(
                 AuthActionButton(
                     text = if (sent) sentText else sendText,
                     onClick = {
-
-                        viewModel.sendResetCode(email) //1202 실제코드
-
-                        /*// 1202 ui테스트용 임시로직
-                        sent = true
-                        verified = false
-                        code = ""
-*/
+                        viewModel.sendResetCode(email)
                     },
                     enabled = !sent && email.isNotBlank(),
-                    modifier = Modifier
-                        .widthIn(min = 90.dp)
+                    modifier = Modifier.widthIn(min = 90.dp)
                 )
             }
 
             Spacer(Modifier.height(12.dp))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // 인증번호 입력
-            AuthInputField(
-                value = code,
-                onValueChange = { code = it },
-                hint = verificationCodeText,
-                modifier = Modifier.weight(1f),
-                keyboardType = KeyboardType.Number,
-                enabled = !verified
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                AuthInputField(
+                    value = code,
+                    onValueChange = { code = it },
+                    hint = verificationCodeText,
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Number,
+                    enabled = !verified
+                )
 
-            Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(8.dp))
 
-            AuthActionButton(
-                text = verificationText,
-                onClick = {
-                    viewModel.verifyResetCode(email, code)    //1202 실제코드
-
-                    /*// 1202 테스트용 임시 로직 1234
-                    if (code == "1234") {
-                        verified = true
-                        return@AuthActionButton
-                    }*/
-                },
-                enabled = !verified && code.isNotBlank(),
-                modifier = Modifier.widthIn(min = 90.dp)
+                AuthActionButton(
+                    text = verificationText,
+                    onClick = {
+                        viewModel.verifyResetCode(email, code)
+                    },
+                    enabled = !verified && code.isNotBlank(),
+                    modifier = Modifier.widthIn(min = 90.dp)
                 )
             }
 
@@ -169,24 +163,20 @@ fun PwdScreen(
                 text = comfirmText,
                 onClick = {
                     if (!verified) {
-                        scope.launch {snackbar.showSnackbar("이메일 인증을 완료하세요")}
+                        scope.launch { snackbar.showSnackbar("이메일 인증을 완료하세요") }
                         return@AuthPrimaryButton
                     }
 
                     if (newPassword.isBlank()) {
-                        scope.launch {snackbar.showSnackbar("새 비밀번호를 입력하세요")}
+                        scope.launch { snackbar.showSnackbar("새 비밀번호를 입력하세요") }
                         return@AuthPrimaryButton
                     }
 
-                    // 1202 실제코드
                     viewModel.resetPassword(email, newPassword)
-
-                    // 성공하면 로그인 화면으로 이동
                     onBackToLogin()
                 },
                 enabled = verified,
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 useClickEffect = true
             )
 
@@ -195,12 +185,12 @@ fun PwdScreen(
             AuthSecondaryButton(
                 text = backtologinText,
                 onClick = onBackToLogin,
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(Modifier.weight(1f))
-            Spacer(Modifier.height(30.dp))
+
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
     }
 }

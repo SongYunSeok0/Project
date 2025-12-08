@@ -29,7 +29,7 @@ services:
     command: >
       sh -c "
         sleep 10 &&
-        celery -A smart_med worker --loglevel=info
+        celery -A smart_med worker --loglevel=info --pool=solo --concurrency=1
       "
     volumes:
       - .:/app
@@ -44,6 +44,14 @@ services:
         condition: service_started
       redis:
         condition: service_started
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    runtime: nvidia
 
   celery_beat:
     build:

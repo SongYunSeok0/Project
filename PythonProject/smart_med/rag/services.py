@@ -1,13 +1,13 @@
 # rag/services.py
 from typing import List
-
-import torch
 from django.db.models import Q
 from pgvector.django import CosineDistance
+import torch
 
+from .llm_loader import get_llm_model
 from .models import Chunk
 from .embeddings import get_embedding
-from .llm_loader import get_llm_model        # <<< 싱글톤 LLM 로더
+from .llm import generate_answer
 from .symptom import recommend_by_symptom, build_symptom_answer
 from .intents import (
     build_side_effect_answer,
@@ -27,10 +27,15 @@ from .constants import (
     HEALTH_FOOD_KEYS,
     MAX_CHUNK_CHARS,
 )
-from .utils import normalize, clean_output, extract_med_names
+from .utils import (
+    normalize,
+    clean_output,
+    extract_med_names,
+    is_medical_question,
+    get_non_medical_response,
+)
 from .intent_detector import detect_intent
 from .health_food import search_health_food_chunks, build_health_food_answer
-
 
 
 def serialize_chunks(chunks):
@@ -70,11 +75,6 @@ def call_llm(prompt: str) -> str:
     generated_ids = outputs[0][inputs["input_ids"].shape[1]:]
     return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
-
-# ---------------------------
-# RAG chunk 추출
-# ---------------------------
-
 def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> List[Chunk]:
     intent = detect_intent(query)
 
@@ -103,10 +103,10 @@ def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> Li
         )
 
     if meds:
-        q_name = Q()
+        name_q = Q()
         for m in meds:
-            q_name |= Q(item_name__icontains=m)
-        filtered = qs.filter(q_name)
+            name_q |= Q(item_name__icontains=m)
+        filtered = qs.filter(name_q)
         if filtered.exists():
             qs = filtered
 
@@ -124,14 +124,17 @@ def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> Li
     print(f"[RAG] intent={intent}, meds={meds}, top_k={len(chunks)}, first_dist={first_dist}")
 
     if not meds and first_dist is not None and first_dist > max_distance:
-        print(f"[RAG] distance too far (no meds, {first_dist} > {max_distance}) → skip")
+        print(f"[RAG] distance too far (no meds, {first_dist} > {max_distance}) → 사용 안 함")
         return []
 
     return chunks
 
 
 def prioritize_base_brand(med: str, chunks: List[Chunk]) -> List[Chunk]:
-    exact, contains, others = [], [], []
+    exact: List[Chunk] = []
+    contains: List[Chunk] = []
+    others: List[Chunk] = []
+
     for c in chunks:
         name = (c.item_name or "").strip()
         if name.startswith(med):
@@ -140,12 +143,9 @@ def prioritize_base_brand(med: str, chunks: List[Chunk]) -> List[Chunk]:
             contains.append(c)
         else:
             others.append(c)
+
     return exact + contains + others
 
-
-# ---------------------------
-# Context builder
-# ---------------------------
 
 def build_context(chunks: List[Chunk]) -> str:
     blocks: List[str] = []
@@ -157,19 +157,17 @@ def build_context(chunks: List[Chunk]) -> str:
     return "\n".join(blocks)
 
 
-# ---------------------------
-# 일반 답변 생성
-# ---------------------------
-
 def build_general_answer(question: str, chunks: List[Chunk]) -> str:
     if not chunks:
         prompt = (
             "너는 의약품과 일반 건강 정보를 설명하는 한국어 상담 어시스턴트이다.\n\n"
             "아래 사용자의 질문에 대해, 네가 이미 학습한 의약·건강 지식을 사용해 "
-            "안전하고 보수적으로 답변해라.\n\n"
+            "안전하고 보수적으로 답변해라. 확실하지 않은 내용이나 진단이 필요한 부분은 "
+            "추측하지 말고 반드시 의사 또는 약사 상담을 권고해라.\n"
+            "⭐ 답변은 3-5문장 이내로 핵심만 간결하게 작성해라.\n\n"
             f"[질문]\n{question}\n\n[답변]\n"
         )
-        return call_llm(prompt).strip()
+        return generate_answer(prompt).strip()
 
     context = build_context(chunks)
 
@@ -184,19 +182,29 @@ def build_general_answer(question: str, chunks: List[Chunk]) -> str:
 
 [지시]
 1. 위 참고 문서 내용을 우선적으로 활용해 답변해라.
-2. 문서 내용이 부족하면 네가 학습한 의료 지식을 활용해 설명해라.
-3. 확실하지 않은 내용은 추측하지 말고 의료 상담을 권고하라.
+2. 참고 문서에 직접적인 내용이 없더라도,
+   네가 이미 학습한 일반 의약 지식을 사용해 최대한 도움이 되게 설명해라.
+3. 문서 내용을 그대로 복사하지 말고 핵심만 요약해 한국어로 답변해라.
+4. 확실하지 않은 부분은 추측하지 말고 모른다고 말하며,
+   필요한 경우 의사 또는 약사 상담을 권고해라.
+5. ⭐ 답변은 3-5문장 이내로 핵심만 간결하게 작성해라.
 
 [최종 답변]
 """
-    return call_llm(prompt).strip()
+    return generate_answer(prompt).strip()
 
-
-# ---------------------------
-# Intent-based 답변 생성
-# ---------------------------
 
 def build_answer(question: str, chunks: List[Chunk]) -> str:
+    """
+    질문에 대한 최종 답변 생성
+    - 의료 질문이 아니면 초기에 차단
+    """
+    # ========== 의료 질문 필터링 ==========
+    if not is_medical_question(question):
+        print(f"[FILTER] 비의료 질문 차단: {question[:50]}")
+        return get_non_medical_response()
+    # =====================================
+
     intent = detect_intent(question)
     print("[INTENT]", intent, "/ q =", question)
 

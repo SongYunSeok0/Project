@@ -16,7 +16,7 @@ from .models import Device, SensorData, IntakeStatus, generate_device_uuid, gene
 from health.models import HeartRate
 from smart_med.utils.make_qr import create_qr
 
-from .docs import ingest_docs, command_docs, register_device_docs
+from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
 
 
 # ==========================================
@@ -204,3 +204,11 @@ class CreateDeviceView(APIView):
             "qr_url": qr_url,
             "qr_file": qr_path,
         })
+
+
+class MyDeviceListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        devices = Device.objects.filter(user=request.user).values("id", "device_name")
+        return Response(list(devices))

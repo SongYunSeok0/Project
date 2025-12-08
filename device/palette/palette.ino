@@ -160,7 +160,7 @@ void checkWeight() {
 
   Serial.printf("Weight: %.2f  Diff: %.2f\n", currentWeight, diff);
 
-  if (diff > 100 && !isOpened) {
+  if (diff > 20 && !isOpened) {
     isOpened = true;
     openedEvent = true;
 

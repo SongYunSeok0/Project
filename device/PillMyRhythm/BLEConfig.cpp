@@ -11,35 +11,48 @@
 
 bool bleConfigDone = false;
 
+class ServerCallbacks : public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) override {
+        Serial.println("🔗 BLE Connected!");
+    }
+    void onDisconnect(BLEServer* pServer) override {
+        Serial.println("❌ BLE Disconnected!");
+        delay(200);
+        BLEDevice::startAdvertising();
+    }
+};
+
 class ConfigCallbacks : public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *ch) {
-        std::string v = ch->getValue();
-        if (v.empty()) return;
+    void onWrite(BLECharacteristic *ch) override {
+
+        String v = ch->getValue();
+        if (v.length() == 0) return;
 
         Serial.println("📩 BLE 설정 JSON 수신:");
-        Serial.println(v.c_str());
+        Serial.println(v);
 
         StaticJsonDocument<256> doc;
-        DeserializationError err = deserializeJson(doc, v.c_str());
+        auto err = deserializeJson(doc, v);
         if (err) {
             Serial.println("❌ JSON 파싱 실패");
             return;
         }
 
-        // BLE에서 받은 데이터 저장
-        DeviceConfig::uuid = doc["uuid"].as<String>();
+        // ⭐ 기존 등록 정보 삭제
+        Serial.println("🧹 기존 DeviceConfig 초기화");
+        DeviceConfig::clear();
+
+        // ⭐ 새로운 값 설정
+        DeviceConfig::uuid  = doc["uuid"].as<String>();
         DeviceConfig::token = doc["token"].as<String>();
-        DeviceConfig::ssid = doc["ssid"].as<String>();
-        DeviceConfig::pw = doc["pw"].as<String>();
+        DeviceConfig::ssid  = doc["ssid"].as<String>();
+        DeviceConfig::pw    = doc["pw"].as<String>();
 
         DeviceConfig::save();
+
         Serial.println("✔ BLE 설정 저장 완료!");
 
         bleConfigDone = true;
-
-        // 등록 완료 → BLE 종료
-        BLEDevice::stopAdvertising();
-        Serial.println("🛑 BLE Advertising 중단");
     }
 };
 
@@ -48,6 +61,8 @@ void startBLEConfig() {
 
     BLEDevice::init("PillBox");
     BLEServer *server = BLEDevice::createServer();
+    server->setCallbacks(new ServerCallbacks());
+
     BLEService *service = server->createService(SERVICE_UUID);
 
     BLECharacteristic *characteristic = service->createCharacteristic(
@@ -57,11 +72,14 @@ void startBLEConfig() {
     );
 
     characteristic->setCallbacks(new ConfigCallbacks());
+
     service->start();
 
     BLEAdvertising *adv = BLEDevice::getAdvertising();
     adv->addServiceUUID(SERVICE_UUID);
+    adv->setScanResponse(true);
+
     BLEDevice::startAdvertising();
 
-    Serial.println("📢 BLE Advertising ON (앱에서 등록 가능)");
+    Serial.println("📢 BLE Advertising ON (PillBox 등록 가능)");
 }

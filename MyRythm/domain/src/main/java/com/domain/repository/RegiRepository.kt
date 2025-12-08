@@ -11,7 +11,7 @@ interface RegiRepository {
         label: String?,
         issuedDate: String?,
         useAlarm: Boolean,
-        deviceId: String? = null
+        device: Long?
     ): Long
 
     fun getRegiHistories(): Flow<List<RegiHistory>>
@@ -20,7 +20,7 @@ interface RegiRepository {
 
     suspend fun deleteRegiHistory(id: Long)
 
-    suspend fun createPlans(regihistoryId: Long, list: List<Plan>)
+    suspend fun createPlans(regihistoryId: Long?, list: List<Plan>)
 
     fun observeAllPlans(userId: Long): Flow<List<Plan>>
 

@@ -8,5 +8,6 @@ data class BLERegisterState(
     val pw: String = "",
     val deviceUUID: String = "",
     val deviceToken: String = "",
+    val deviceName: String = "",
     val error: String? = null
 )

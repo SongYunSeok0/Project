@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,11 +39,12 @@ fun AppBottomBar(
 ) {
     val barHeight = 80.dp                   // 바텀바 기본 높이
     val floatingSize = 80.dp                // 플로팅 버튼 크기
-    val floatingOffset = -(floatingSize / 2) // 플로팅 오프셋 = 자동 반응형
+    val floatingOffset = -(floatingSize *0.25f) // 플로팅 오프셋 = 자동 반응형
 
     Box(
         Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .height(barHeight)
             .background(Color(0xFFF7FDFC))
     ) {

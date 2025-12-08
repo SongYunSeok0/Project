@@ -6,12 +6,17 @@ import androidx.compose.ui.graphics.Color
 // 기본 컬러가 Color.White 처럼 컴포즈상수에 존재하는 경우, color.kt에 정의하지 말고 theme.kt에 바로 넣기.
 val Black40 = Color(0x66000000)     // 블랙+투명도40, 가이드글씨
 val AuthBlue = Color(0xFF6AC0E0)
+val BorderGray = Color(0xFF808080)
+
+val DividerColor = Color(0xFFE5E5E5)
+
 
 // 메인 화면 컬러 m3테마용
 val Primary = Color(0xFF6AE0D9)
 val Secondary = Color(0x4DB5E5E1)
 val OnSurfaceVariant = Color(0xFF5DB0A8)
 
+val SurfaceVariant = Color(0xFFB4B4B4)
 
 // 컴포넌트
 val InquiryCardAnswer = Color(0xFFDFFDFB)
@@ -26,6 +31,15 @@ val NewsCard = Color(0x33FFEF6C)
 val HealthInsightCard = Color(0x666AC0E0)
 val MainFeatureCardBorderStroke = Color(0xfff3f4f6)
 val AppTransparent = Color.Transparent
+val HeartRateCardGradientLight = Color(0xFFFFE8E8)
+val HeartRateCardGradientDark = Color(0xFFFFD5D5)
+val HeartRateLowColor = Color(0xFF3B82F6)
+val HeartRateNormalColor = Color(0xFF16A34A)
+val HeartRateWarningColor = Color(0xFFEF4444)
+val CompletionCautionColor = Color(0xFFF59E0B)
+val BookMarkColor = Color(0xFFFFC107)
+
+
 
 
 // 로그인프로세스

@@ -2,6 +2,7 @@ package com.shared.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,23 +21,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.shared.R
-import com.shared.ui.theme.InquiryCardQuestion
 import com.shared.ui.theme.LoginTertiary
 
 @Composable
 fun ChatbotHeader(
-    title: String,
-    subtitle: String,
-    resetLabel: String,
     onResetClick: () -> Unit,
-    botIcon: String,
     modifier: Modifier = Modifier
 ) {
+    val chatbotText = stringResource(R.string.chatbot)
+    val botIconText = stringResource(R.string.chatbot_icon)
+    val chatbotProfile = stringResource(R.string.chatbotprofile)
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -52,39 +50,35 @@ fun ChatbotHeader(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                botIcon,
-                color = LoginTertiary,
-                fontSize = 16.sp,
-                lineHeight = 1.5.em
+                botIconText,
+                style = MaterialTheme.typography.labelLarge
             )
         }
 
         Column {
-            Text(title, fontSize = 16.sp)
-            Text(subtitle, color = LoginTertiary, fontSize = 14.sp)
+            Text(
+                chatbotText,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                chatbotProfile,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
 
         Spacer(Modifier.weight(1f))
 
-        InputChip(
-            label = { Text(resetLabel, fontSize = 14.sp) },
-            leadingIcon = {
-                Image(
-                    painter = painterResource(id = R.drawable.upload),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-            },
-            shape = RoundedCornerShape(10.dp),
-            colors = FilterChipDefaults.filterChipColors(
-                containerColor = InquiryCardQuestion
-            ),
-            selected = true,
-            onClick = onResetClick
+        Image(
+            painter = painterResource(id = R.drawable.reload),
+            contentDescription = "reload",
+            modifier = Modifier
+                .size(35.dp)
+                .clickable { onResetClick() }
         )
     }
 }
-
 
 
 @Composable

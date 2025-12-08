@@ -71,15 +71,3 @@ class SensorData(models.Model):
 
     def __str__(self):
         return f"SensorData {self.device.id} @ {self.collected_at}"
-
-
-import secrets
-from django.db import models
-
-
-
-class IntakeStatus(models.TextChoices):
-    TAKEN = "taken", "정상 복용"
-    WRONG = "wrong", "오복용"
-    MISSED = "missed", "미복용"
-    NONE = "none", "이벤트 아님"

@@ -26,6 +26,12 @@ void DeviceConfig::save() {
     prefs.end();
 }
 
+void DeviceConfig::clear() {
+    prefs.begin("device", false);
+    prefs.clear();
+    prefs.end();
+}
+
 bool DeviceConfig::isRegistered() {
     return uuid.length() > 0 && ssid.length() > 0;
 }

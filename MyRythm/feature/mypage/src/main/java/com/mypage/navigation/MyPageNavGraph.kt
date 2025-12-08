@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 
 import com.domain.sharedvm.HeartRateVMContract
+import com.mypage.ui.BLERegisterScreen
 
 import com.mypage.ui.EditScreen
 import com.mypage.ui.FAQScreenWrapper
@@ -24,9 +25,9 @@ fun NavGraphBuilder.mypageNavGraph(
     onLogoutClick: () -> Unit
 ) {
 
-    // 마이페이지 메인
-    composable<MyPageRoute> {
-        val vm: MyPageViewModel = hiltViewModel()
+    // -------------------- MyPage 메인 --------------------
+    composable<MyPageRoute> { backStackEntry ->
+        val vm: MyPageViewModel = hiltViewModel(backStackEntry)
 
         MyPageScreen(
             viewModel = vm,
@@ -40,37 +41,71 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
-    // 프로필 수정
-    composable<EditProfileRoute> {
-        EditScreen(onDone = { nav.navigateUp() })
-    }
 
-    // 심박수 리포트 화면
-    composable<HeartReportRoute> {
-        HeartReportScreen(vm = heartVm)   // ← ***domain 인터페이스만 사용***
-    }
+    // -------------------- QR 스캔 화면 --------------------
+    composable<QRScanRoute> { backStackEntry ->
 
-    // FAQ
-    composable<FAQRoute> {
-        FAQScreenWrapper()
-    }
-
-    // 복약 기록
-    composable<MediReportRoute> {
-        MediReportScreen(userId = userId)
-    }
-
-    // QR 스캔 화면
-    composable<QRScanRoute> {
-        val bleVM: BLERegisterViewModel = hiltViewModel()
+        // ⭐ MyPageRoute 범위의 ViewModel 공유
+        val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
+        val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
 
         QRScanScreen(
             onBack = { nav.navigateUp() },
             onScanSuccess = { uuid, token ->
-                bleVM.setDeviceInfo(uuid, token)
-                nav.navigateUp()
+                sharedBLEVM.setDeviceInfo(uuid, token)
+                nav.navigate(BLERegisterRoute)
+            }
+        )
+    }
+
+
+    // -------------------- BLE Wi-Fi 설정 화면 --------------------
+    composable<BLERegisterRoute> { backStackEntry ->
+
+        val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
+        val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
+
+        BLERegisterScreen(
+            viewModel = sharedBLEVM,
+            onFinish = {
+                nav.popBackStack(MyPageRoute, false)
+            }
+        )
+    }
+
+
+    // -------------------- 프로필 수정 --------------------
+    composable<EditProfileRoute> {
+        EditScreen(onDone = { nav.navigateUp() })
+    }
+
+    // -------------------- 심박 리포트 --------------------
+    composable<HeartReportRoute> {
+        HeartReportScreen(vm = heartVm)
+    }
+
+    // -------------------- FAQ --------------------
+    composable<FAQRoute> {
+        FAQScreenWrapper()
+    }
+
+    // -------------------- 복약 기록 --------------------
+    composable<MediReportRoute> {
+        MediReportScreen(userId = userId)
+    }
+
+    composable<BLERegisterRoute> { backStackEntry ->
+        val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
+        val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
+
+        BLERegisterScreen(
+            viewModel = sharedBLEVM,
+            onFinish = {
+                nav.popBackStack(MyPageRoute, false)
             }
         )
     }
 
 }
+
+

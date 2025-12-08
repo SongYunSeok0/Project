@@ -29,7 +29,7 @@ import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.components.AuthPrimaryButton
 import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.components.AuthTextButton
-import com.shared.ui.theme.AuthFieldHeight
+import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.loginTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,12 +87,15 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) }
+        snackbarHost = { SnackbarHost(snackbar) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.loginTheme.loginBackground)
+                .padding(padding)
+                .imePadding()
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -102,7 +105,6 @@ fun LoginScreen(
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
 
-                // 1128 상단 여백 투명화
                 item {
                     Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                 }
@@ -132,7 +134,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(12.dp))
 
-                    // 1125 자동 로그인 진행중 - 토글 디자인만 추가
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -153,7 +154,6 @@ fun LoginScreen(
                                 uncheckedThumbColor = MaterialTheme.loginTheme.loginTertiary,
                                 uncheckedTrackColor = MaterialTheme.loginTheme.loginTertiary.copy(alpha = 0.5f),
                                 uncheckedBorderColor = MaterialTheme.loginTheme.loginTertiary,
-
                                 checkedThumbColor = MaterialTheme.loginTheme.loginAppName,
                                 checkedTrackColor = MaterialTheme.loginTheme.loginAppName.copy(alpha = 0.7f),
                                 checkedBorderColor = MaterialTheme.loginTheme.loginTertiary
@@ -222,7 +222,7 @@ fun LoginScreen(
                             contentDescription = kakaoLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(AuthFieldHeight)
+                                .height(AppFieldHeight)
                                 .clip(MaterialTheme.shapes.medium)
                                 .clickable {
                                     Log.e("LoginScreen", "🟡 ========== 카카오 버튼 클릭 ==========")
@@ -244,7 +244,7 @@ fun LoginScreen(
                             contentDescription = googleLoginText,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(AuthFieldHeight)
+                                .height(AppFieldHeight)
                                 .clip(MaterialTheme.shapes.medium)
                                 .clickable {
                                     Log.e("LoginScreen", "🔵 ========== 구글 버튼 클릭 ==========")
@@ -260,11 +260,9 @@ fun LoginScreen(
                             contentScale = ContentScale.FillBounds
                         )
 
-                        // 1128 ui보는용 임시로그인
                         Button(
                             onClick = {
                                 Log.e("LoginScreen", "🔧 ========== 임시 로그인 버튼 클릭 ==========")
-                                // 임시 userId로 직접 네비게이션
                                 onLogin("test_user_123", "test_password")
                             },
                             modifier = Modifier
@@ -282,9 +280,12 @@ fun LoginScreen(
                             )
                         }
 
-
                         Spacer(Modifier.height(30.dp))
                     }
+                }
+
+                item {
+                    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                 }
             }
         }

@@ -19,7 +19,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from notifications.services import send_fcm_to_token
 from rest_framework.decorators import api_view, permission_classes
 
-from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer
+from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer, CustomTokenObtainPairSerializer
 from .docs import (
     jwt_login_docs, social_login_docs,
     me_get_docs, me_patch_docs,

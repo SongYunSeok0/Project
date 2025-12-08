@@ -36,7 +36,6 @@ android {
         jvmTarget = "21"
     }
 
-    // ✅ Compose 활성화
     buildFeatures {
         compose = true
     }
@@ -50,25 +49,31 @@ dependencies {
     implementation(project(":feature"))
     implementation(project(":shared"))
     implementation(project(":domain"))
+    implementation(project(":data"))
 
-    //기본
+    // Compose + core libs
     implementation(libs.bundles.compose.library)
     implementation(libs.bundles.core)
     implementation(libs.bundles.test)
-
-    // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.compose)
-    implementation(project(":data"))
-    implementation(libs.ui)
 
     ksp(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.tooling.preview)
-    implementation("com.github.yuriy-budiyev:code-scanner:2.3.2")
 
+    //ML Kit Barcode Scanner
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
+    //CameraX (Android 15 포함 완전 호환)
+    val cameraX_version = "1.3.1"
+    implementation("androidx.camera:camera-core:$cameraX_version")
+    implementation("androidx.camera:camera-camera2:$cameraX_version")
+    implementation("androidx.camera:camera-lifecycle:$cameraX_version")
+    implementation("androidx.camera:camera-view:$cameraX_version")
 }

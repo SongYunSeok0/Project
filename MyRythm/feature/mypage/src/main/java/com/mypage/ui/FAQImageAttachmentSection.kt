@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,7 +38,13 @@ fun ImageAttachmentSection(
     images: List<Uri>,
     onImagesSelected: (List<Uri>) -> Unit,
     onImageRemove: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    shape: Shape = MaterialTheme.shapes.large,
+    borderColor: Color = MaterialTheme.colorScheme.outline,
+    placeholderBg: Color = MaterialTheme.colorScheme.surfaceVariant,
+    textColor: Color = MaterialTheme.colorScheme.onSurface,
+    secondaryTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+
 ) {
     val attachImage = stringResource(R.string.attachimage)
     val addText = stringResource(R.string.add)
@@ -45,12 +52,11 @@ fun ImageAttachmentSection(
     val ImagesText = stringResource(R.string.images)
     val deleteImage = stringResource(R.string.deleteimage)
 
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
         if (uris.isNotEmpty()) {
-            val newImages = (images + uris).take(3) // 최대 3개
+            val newImages = (images + uris).take(3)
             onImagesSelected(newImages)
         }
     }
@@ -63,13 +69,13 @@ fun ImageAttachmentSection(
         ) {
             Text(
                 text = attachImage,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge,
+                color = textColor
                 )
             Text(
                 text = "${images.size}/3",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.surfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = secondaryTextColor
             )
         }
 
@@ -85,11 +91,11 @@ fun ImageAttachmentSection(
                     Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(shape)
                             .border(
                                 width = 1.dp,
-                                color = Color.LightGray,
-                                shape = RoundedCornerShape(12.dp)
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = MaterialTheme.shapes.medium
                             )
                             .clickable {
                                 imagePickerLauncher.launch("image/*")
@@ -108,7 +114,7 @@ fun ImageAttachmentSection(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = addText,
-                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.surfaceVariant
                             )
                         }
@@ -128,7 +134,7 @@ fun ImageAttachmentSection(
                         contentDescription = "$attachedImages ${index + 1}",
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(12.dp)),
+                            .clip(shape),
                         contentScale = ContentScale.Crop
                     )
 
@@ -148,22 +154,43 @@ fun ImageAttachmentSection(
                     }*/
 
                     // 삭제 버튼
-                    IconButton(
+                    /*IconButton(
                         onClick = { onImageRemove(index) },
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .size(24.dp)
+                            .size(16.dp)
                             .offset(x = (-4).dp, y = 4.dp)
                             .background(
-                                color = Color.Black.copy(alpha = 0.5f),
-                                shape = RoundedCornerShape(12.dp)
+                                color = MaterialTheme.colorScheme.background,
+                                shape = shape
                             )
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_android_black_24dp), // X 아이콘으로 교체
+                            painter = painterResource(R.drawable.x_delete), // X 아이콘으로 교체
                             contentDescription = deleteImage,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            tint = Color.Black,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }*/
+                    // 삭제 버튼 (IconButton → Box로 교체)
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = (-4).dp, y = 4.dp)
+                            .size(20.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.background,
+                                shape = shape
+                            )
+                            .clickable { onImageRemove(index) }
+                            .padding(2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.x_delete),
+                            contentDescription = deleteImage,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }

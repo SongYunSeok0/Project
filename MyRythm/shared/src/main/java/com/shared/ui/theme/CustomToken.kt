@@ -44,7 +44,15 @@ data class ComponentThemeColor(
     val healthInsightCard : Color,
     val mainFeatureCardBorderStroke : Color,
     val appTransparent : Color,
-)
+    val heartRateCardGradientLight: Color,
+    val heartRateCardGradientDark: Color,
+    val heartRateLow: Color,
+    val heartRateNormal: Color,
+    val heartRateWarning: Color,
+    val completionCaution: Color,
+    val bookMarkColor: Color,
+    val dividerColor: Color,
+    )
 
 val LoginThemeColors = LoginThemeColor(
     loginBackground = LoginBackground,
@@ -85,7 +93,15 @@ val ComponentThemeColors = ComponentThemeColor(
     healthInsightCard = HealthInsightCard,
     mainFeatureCardBorderStroke = MainFeatureCardBorderStroke,
     appTransparent = AppTransparent,
-)
+    heartRateCardGradientLight = HeartRateCardGradientLight,
+    heartRateCardGradientDark = HeartRateCardGradientDark,
+    heartRateLow = HeartRateLowColor,
+    heartRateNormal = HeartRateNormalColor,
+    heartRateWarning = HeartRateWarningColor,
+    completionCaution = CompletionCautionColor,
+    bookMarkColor = BookMarkColor,
+    dividerColor = DividerColor,
+    )
 
 // Login Local
 val LocalLoginThemeColors = staticCompositionLocalOf { LoginThemeColors }
