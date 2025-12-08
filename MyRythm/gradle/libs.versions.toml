@@ -57,7 +57,7 @@ foundation = "1.9.5"
 ui = "1.9.5"
 accompanistSystemuicontroller = "0.36.0"
 
-vico = "2.0.0-alpha.28"
+mpandroidchart = "v3.1.0"
 
 [libraries]
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -171,9 +171,7 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
 
-vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
-vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
-vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
+mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidchart", version.ref = "mpandroidchart" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

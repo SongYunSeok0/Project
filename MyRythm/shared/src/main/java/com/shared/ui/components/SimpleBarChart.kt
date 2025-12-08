@@ -1,167 +1,130 @@
-package com.shared.ui.components
+package com.healthinsight.ui.components
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import android.graphics.Typeface
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import kotlin.math.abs
 import kotlin.math.max
 
+// 🔥 모노톤 공용 컬러
+private val BarGray = Color(0xFF444444)        // 막대 색
+private val AxisText = Color(0xFF222222)       // 축 텍스트
+private val GridLine = Color(0xFFDDDDDD)       // 그리드 라인
+private val ZeroLine = Color(0xFF000000)       // 0 기준선 강조
+
 @Composable
-fun SimpleBarChart(
-    values: List<Int>,
+fun HealthBarChart(
+    values: List<Number>,
     labels: List<String>,
     modifier: Modifier = Modifier,
-    barColor: Color = Color(0xFF6DD5ED), // 이미지처럼 하늘색
-    showValues: Boolean = true,
-    showGrid: Boolean = true,
-    animated: Boolean = true
+    barColor: Color = BarGray,   // 기본: 회색 막대
+    axisColor: Color = AxisText, // 기본: 진한 회색 글자
+    isDelayChart: Boolean = false
 ) {
-    if (values.isEmpty() || labels.isEmpty() || values.size != labels.size) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "데이터가 없습니다",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
-        return
-    }
+    if (values.isEmpty()) return
 
-    val maxValue = (values.maxOrNull() ?: 1)
-    val minValue = (values.minOrNull() ?: 0)
+    val floatValues = values.map { it.toFloat() }
 
-    // 🎨 그라데이션 색상
-    val gradientColors = listOf(
-        barColor.copy(alpha = 0.8f),
-        barColor.copy(alpha = 0.4f)
-    )
-
-    // ✨ 애니메이션
-    val animatedProgress by animateFloatAsState(
-        targetValue = if (animated) 1f else 1f,
-        animationSpec = tween(durationMillis = 800, easing = EaseOutCubic),
-        label = "bar_animation"
-    )
-
-    val textMeasurer = rememberTextMeasurer()
-    val textStyle = TextStyle(
-        fontSize = 11.sp,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-    )
-
-    Column(
+    AndroidView(
         modifier = modifier
             .fillMaxWidth()
-            .height(240.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-        ) {
-            val barCount = values.size
-            val spacing = size.width * 0.08f // 막대 사이 간격
-            val totalSpacing = spacing * (barCount - 1)
-            val availableWidth = size.width - totalSpacing
-            val barWidth = availableWidth / barCount * 0.85f // 막대 너비
+            .height(200.dp),
+        factory = { context ->
+            BarChart(context).apply {
+                description.isEnabled = false
+                legend.isEnabled = false
 
-            val maxBarHeight = size.height - 40f // 값 표시 공간 확보
+                setScaleEnabled(false)
+                setPinchZoom(false)
+                setDrawGridBackground(false)
+                setTouchEnabled(false)
 
-            // 🔲 그리드 라인 (옵션)
-            if (showGrid) {
-                val gridColor = Color.Gray.copy(alpha = 0.2f)
-                for (i in 0..4) {
-                    val y = (maxBarHeight / 4) * i
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(0f, y),
-                        end = Offset(size.width, y),
-                        strokeWidth = 1f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-                    )
+                // 🔹 차트 여백 (조금만)
+                setExtraOffsets(8f, 4f, 8f, 12f)
+
+                // 🔹 X축
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
+                    granularity = 1f
+                    setDrawGridLines(false)
+                    textColor = axisColor.toArgb()
+                    textSize = 11f
                 }
+
+                // 오른쪽 축 제거
+                axisRight.isEnabled = false
+
+                // 🔹 왼쪽 축 (Y축)
+                axisLeft.apply {
+                    textColor = axisColor.toArgb()
+                    textSize = 11f
+                    setDrawAxisLine(true)
+                    axisLineColor = axisColor.toArgb()
+                    setDrawGridLines(true)
+                    gridColor = GridLine.toArgb()
+                }
+
+                setNoDataText("")
+            }
+        },
+        update = { chart ->
+            val entries = floatValues.mapIndexed { index, v ->
+                BarEntry(index.toFloat(), v)
             }
 
-            values.forEachIndexed { index, value ->
-                val ratio = if (maxValue > 0) {
-                    value.toFloat() / maxValue.toFloat()
+            val dataSet = BarDataSet(entries, "").apply {
+                color = barColor.toArgb()            // 회색 막대
+                valueTextColor = axisColor.toArgb()
+                valueTextSize = 10f
+                valueTypeface = Typeface.DEFAULT_BOLD
+                setDrawValues(false)
+                highLightAlpha = 0
+            }
+
+            chart.data = BarData(dataSet).apply {
+                barWidth = 0.5f
+            }
+
+            // X축 라벨
+            chart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+
+            // --- Y축 범위 조정 ---
+            val minY = floatValues.minOrNull() ?: 0f
+            val maxY = floatValues.maxOrNull() ?: 0f
+
+            chart.axisLeft.apply {
+                if (isDelayChart) {
+                    // 0 기준 위/아래 대칭
+                    val maxAbs = max(abs(minY), abs(maxY)).coerceAtLeast(1f)
+                    axisMinimum = -maxAbs - 1f
+                    axisMaximum =  maxAbs + 1f
+
+                    // 0 기준선 검정색
+                    setDrawZeroLine(true)
+                    zeroLineColor = ZeroLine.toArgb()
+                    zeroLineWidth = 1.8f
                 } else {
-                    0f
-                }
-
-                val barHeight = max(maxBarHeight * ratio * animatedProgress, 8f)
-
-                val xPosition = (barWidth + spacing) * index
-                val left = xPosition
-                val top = maxBarHeight - barHeight
-
-                // 🎨 그라데이션 막대
-                drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = gradientColors,
-                        startY = top,
-                        endY = maxBarHeight
-                    ),
-                    topLeft = Offset(left, top),
-                    size = Size(barWidth, barHeight),
-                    cornerRadius = CornerRadius(12f, 12f)
-                )
-
-                // 📊 값 표시
-                if (showValues && animatedProgress > 0.5f) {
-                    val textLayoutResult = textMeasurer.measure(
-                        text = value.toString(),
-                        style = textStyle
-                    )
-                    drawText(
-                        textLayoutResult = textLayoutResult,
-                        topLeft = Offset(
-                            left + (barWidth - textLayoutResult.size.width) / 2,
-                            top - textLayoutResult.size.height - 4f
-                        )
-                    )
+                    // 일반 차트는 패딩만
+                    val padding = (maxY - minY).coerceAtLeast(10f) * 0.1f
+                    axisMinimum = minY - padding
+                    axisMaximum = maxY + padding
+                    setDrawZeroLine(false)
                 }
             }
-        }
 
-        // 🏷️ 레이블
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            labels.forEach { label ->
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            chart.invalidate()
         }
-    }
+    )
 }
