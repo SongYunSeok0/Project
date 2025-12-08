@@ -22,13 +22,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.domain.model.Plan
 import com.domain.model.RegiHistoryWithPlans
 import com.domain.model.User
 import com.mypage.viewmodel.StaffManagementViewModel
+import com.shared.R
 import com.shared.bar.AppTopBar
+import com.shared.ui.components.AppIconButton
+import com.shared.ui.components.AppInputField
 import com.shared.ui.theme.AppTheme
 import java.time.Instant
 import java.time.ZoneId
@@ -40,6 +46,9 @@ fun UserManagementScreen(
     viewModel: StaffManagementViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {}
 ) {
+    val userMediRecordText = stringResource(R.string.user_medi_record)
+    val userManagementText = stringResource(R.string.user_management)
+
     val users by viewModel.filteredUsers.collectAsState()
     val selectedUser by viewModel.selectedUser.collectAsState()
     val userRegiHistories by viewModel.userRegiHistories.collectAsState()
@@ -77,9 +86,9 @@ fun UserManagementScreen(
             topBar = {
                 AppTopBar(
                     title = if (selectedUser != null)
-                        "${selectedUser?.username}님의 복약 기록"
+                        "${selectedUser?.username}$userMediRecordText"
                     else
-                        "사용자 관리",
+                        userManagementText,
                     showBack = true,
                     onBackClick = {
                         if (selectedUser != null) {
@@ -116,13 +125,11 @@ fun UserManagementScreen(
                                     .fillMaxWidth()
                                     .padding(16.dp)
                             )
-
                             UsersListContent(
                                 users = users,
                                 onUserClick = { viewModel.selectUser(it) }
                             )
                         }
-
                         else -> {
                             // 선택된 사용자의 복약 기록
                             UserRegiHistoriesContent(
@@ -144,21 +151,38 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedTextField(
+    val searchBarText = stringResource(R.string.searchbar)
+    val searchText = stringResource(R.string.search)
+    val clearText = stringResource(R.string.clear)
+
+    AppInputField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("이름, 이메일, 전화번호로 검색") },
-        leadingIcon = { Icon(Icons.Default.Search, null) },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, "지우기")
-                }
-            }
-        },
+        label = searchBarText,
         singleLine = true,
-        shape = RoundedCornerShape(12.dp)
+        modifier = modifier
+            .fillMaxWidth(),
+        leadingContent = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = searchText,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingContent = {
+            if (query.isNotEmpty()) {
+                AppIconButton(
+                    onClick = { onQueryChange("") },
+                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    icon = {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = clearText
+                        )
+                    }
+                )
+            }
+        }
     )
 }
 
@@ -168,13 +192,15 @@ private fun UsersListContent(
     users: List<User>,
     onUserClick: (User) -> Unit
 ) {
+    val noUsersMessage = stringResource(R.string.mypage_message_no_users)
+
     if (users.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "사용자가 없습니다",
+                text = noUsersMessage,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -201,12 +227,18 @@ private fun UserCard(
     user: User,
     onClick: () -> Unit
 ) {
+    val labelUserText = stringResource(R.string.label_user)
+    val labelAdminText = stringResource(R.string.label_admin)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(0.2f)
+        ),
+        //elevation = CardDefaults.cardElevation(defaultElevation = 2.dp), //테두리그림자설정
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier
@@ -233,14 +265,14 @@ private fun UserCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = user.username ?: "사용자",
+                        text = user.username ?: labelUserText,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     if (user.isStaff == true) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "관리자",
+                            text = labelAdminText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
@@ -291,6 +323,8 @@ private fun UserRegiHistoriesContent(
     user: User,
     regiHistories: List<RegiHistoryWithPlans>
 ) {
+    val noRegiHistoryMessage = stringResource(R.string.mypage_message_no_regi_history)
+
     if (regiHistories.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -305,7 +339,7 @@ private fun UserRegiHistoriesContent(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "등록된 복약 기록이 없습니다",
+                    text = noRegiHistoryMessage,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -329,13 +363,24 @@ private fun UserRegiHistoriesContent(
 private fun RegiHistoryCard(
     regiHistory: RegiHistoryWithPlans
 ) {
+    val collapseText = stringResource(R.string.collapse)
+    val expandText = stringResource(R.string.expand)
+    val planCountText = stringResource(R.string.plan_count)
+    val issueDateText = stringResource(R.string.issued_date)
+    val alarmText = stringResource(R.string.alarm)
+    val onText = stringResource(R.string.on)
+    val offText = stringResource(R.string.off)
+    val medScheduleText = stringResource(R.string.med_schedule)
+
     var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(0.2f)
+        ),
+        //elevation = CardDefaults.cardElevation(defaultElevation = 2.dp), //테두리그림자설정
+        shape = MaterialTheme.shapes.medium    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -359,18 +404,18 @@ private fun RegiHistoryCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = regiHistory.regiType,
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .clip(MaterialTheme.shapes.extraSmall)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(0.1f))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
 
                         Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
-                            text = "${regiHistory.planCount}개 일정",
+                            text = "${regiHistory.planCount}$planCountText",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -379,7 +424,7 @@ private fun RegiHistoryCard(
 
                 Icon(
                     if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "접기" else "펼치기"
+                    contentDescription = if (expanded) collapseText else expandText
                 )
             }
 
@@ -389,20 +434,20 @@ private fun RegiHistoryCard(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 regiHistory.issuedDate?.let {
-                    DetailRow(label = "발행일", value = it)
+                    DetailRow(label = issueDateText, value = it)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 DetailRow(
-                    label = "알람",
-                    value = if (regiHistory.useAlarm) "ON" else "OFF"
+                    label = alarmText,
+                    value = if (regiHistory.useAlarm) onText else offText
                 )
 
                 if (regiHistory.plans.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "복약 스케줄",
-                        style = MaterialTheme.typography.titleSmall,
+                        text = medScheduleText,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -422,12 +467,20 @@ private fun RegiHistoryCard(
 private fun PlanItem(
     plan: com.domain.model.Plan
 ) {
+    val mealBeforeText = stringResource(R.string.meal_relation_before)
+    val mealAfterText = stringResource(R.string.meal_relation_after)
+    val mealWithText = stringResource(R.string.meal_with)
+    val planDoseTimeText = stringResource(R.string.plan_dose_time)
+    val doseTypeText = stringResource(R.string.dose_type)
+    val noteLabel = stringResource(R.string.note_label)
+    val doseCompleteCheckText = stringResource(R.string.dose_complete_check)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(0.3f)
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Column(
             modifier = Modifier
@@ -449,7 +502,7 @@ private fun PlanItem(
                     .toLocalDateTime()
 
                 Text(
-                    text = "복용 시간: ${dateTime.format(formatter)}",
+                    text = "$planDoseTimeText ${dateTime.format(formatter)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -457,13 +510,13 @@ private fun PlanItem(
 
             plan.mealTime?.let {
                 val mealTimeText = when (it) {
-                    "before" -> "식전"
-                    "after" -> "식후"
-                    "with" -> "식사 중"
+                    "before" -> mealBeforeText
+                    "after" -> mealAfterText
+                    "with" -> mealWithText
                     else -> it
                 }
                 Text(
-                    text = "복용법: $mealTimeText",
+                    text = "$doseTypeText $mealTimeText",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -471,7 +524,7 @@ private fun PlanItem(
 
             plan.note?.let {
                 Text(
-                    text = "메모: $it",
+                    text = "$noteLabel $it",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -480,7 +533,7 @@ private fun PlanItem(
             if (plan.taken != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "✓ 복용 완료",
+                    text = doseCompleteCheckText,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -509,5 +562,141 @@ private fun DetailRow(
             text = value,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Preview(showBackground = true, heightDp = 900)
+@Composable
+fun UserManagement_List_Preview() {
+    AppTheme {
+
+        // ⭐ Preview 전용 상태들
+        var searchQuery by remember { mutableStateOf("") }
+        var selectedUser by remember { mutableStateOf<User?>(null) }
+
+        // ⭐ 문자열 리소스
+        val userManagementText = stringResource(R.string.user_management)
+        val userMediRecordText = stringResource(R.string.user_medi_record)
+        val searchBarText = stringResource(R.string.searchbar)
+
+        // ⭐ Preview용 더미 User 생성
+        val baseUser = User(
+            id = 1,
+            username = "홍길동",
+            email = "hong@test.com",
+            phone = "010-1234-5678",
+            isStaff = false,
+            isActive = true,
+            birthDate = "1990-01-01",
+            createdAt = "2024-01-01T00:00:00",
+            gender = "F",
+            height = 165.0,
+            lastLogin = "2024-12-01T12:00:00",
+            preferences = emptyMap(),
+            protPhone = "010-0000-0000",
+            relation = "보호자",
+            updatedAt = "2024-12-01T12:00:00",
+            uuid = "dummy-uuid",
+            weight = 55.0
+        )
+
+        val users = listOf(
+            baseUser,
+            baseUser.copy(id = 2, username = "관리자", email = "admin@test.com", isStaff = true),
+            baseUser.copy(id = 3, username = "비활성 유저", isActive = false)
+        )
+
+        // ⭐ Preview용 더미 Plan 목록
+        val dummyPlans = listOf(
+            Plan(
+                id = 1L,
+                regihistoryId = 1L,
+                medName = "아스피린 100mg",
+                takenAt = System.currentTimeMillis(),
+                exTakenAt = null,
+                mealTime = "after",
+                note = "식후 30분 복용",
+                taken = null,
+                useAlarm = true
+            ),
+            Plan(
+                id = 2L,
+                regihistoryId = 1L,
+                medName = "오메가3",
+                takenAt = null,
+                exTakenAt = null,
+                mealTime = "before",
+                note = null,
+                taken = null,
+                useAlarm = false
+            )
+        )
+
+        // ⭐ Preview용 더미 RegiHistoryWithPlans
+        val dummyRegiHistory = RegiHistoryWithPlans(
+            id = 1L,
+            userId = 1L,
+            username = "홍길동",
+            userEmail = "hong@test.com",
+            regiType = "일반 복약",
+            label = "혈압약 복용 스케줄",
+            issuedDate = "2024-11-20",
+            useAlarm = true,
+            device = 101L,
+            plans = dummyPlans,
+            planCount = dummyPlans.size
+        )
+
+        // ⭐ 프리뷰 레이아웃
+        Scaffold(
+            topBar = {
+                AppTopBar(
+                    title =
+                        if (selectedUser != null)
+                            "${selectedUser?.username}$userMediRecordText"
+                        else
+                            userManagementText,
+                    showBack = selectedUser != null,
+                    onBackClick = { selectedUser = null },
+                    showSearch = false
+                )
+            }
+        ) { padding ->
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+
+                // 🔍 검색창 — 목록 화면에서만 표시
+                if (selectedUser == null) {
+                    SearchBar(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+
+                // 📌 사용자 목록 ↔ 상세 화면 전환
+                if (selectedUser == null) {
+                    UsersListContent(
+                        users = users,
+                        onUserClick = { clickedUser ->
+                            selectedUser = clickedUser
+                        }
+                    )
+                } else {
+                    // 📌 상세 화면에 더미 기록 적용
+                    UserRegiHistoriesContent(
+                        user = selectedUser!!,
+                        regiHistories = listOf(dummyRegiHistory)
+                    )
+                }
+            }
+        }
     }
 }

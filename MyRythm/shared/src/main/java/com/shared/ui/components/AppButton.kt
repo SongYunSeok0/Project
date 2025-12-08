@@ -16,10 +16,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.InputChip
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -183,7 +185,6 @@ fun AppButton(
     }
 }
 
-
 // chip 버튼
 @Composable
 fun AppTagButton(
@@ -280,4 +281,44 @@ fun AppTagButton(
         modifier = modifier.height(32.dp),
         interactionSource = interactionSource
     )
+}
+
+@Composable
+fun AppIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 36.dp,
+    iconTint: Color = MaterialTheme.colorScheme.onSurface,
+    enabled: Boolean = true,
+    pressBackgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+    shape: Shape = CircleShape,
+    useClickEffect: Boolean = true,
+    icon: @Composable () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val finalBackground =
+        if (enabled && useClickEffect && isPressed)
+            pressBackgroundColor
+        else
+            Color.Transparent
+
+    Surface(
+        modifier = modifier.size(size),
+        color = finalBackground,
+        shape = shape,
+        onClick = onClick,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            CompositionLocalProvider(
+                LocalContentColor provides iconTint
+            ) {
+                icon()
+            }
+        }
+    }
 }

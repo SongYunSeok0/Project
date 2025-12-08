@@ -383,7 +383,7 @@ fun MedDetailDialog(
     val detailTitle = stringResource(R.string.detail_title)
     val regiLabel = stringResource(R.string.regi_label)
     val medNameLabel = stringResource(R.string.med_name_label)
-    val mealTimeLabel = stringResource(R.string.meal_time_label)
+    val mealTimeLabel = stringResource(R.string.meal_relation)
     val noMemoLabel = stringResource(R.string.no_memo)
     val memoLabel = stringResource(R.string.memo_label)
     val alarmLabel = stringResource(R.string.alarm_label)
