@@ -3,15 +3,17 @@
 
 namespace SlotLED {
 
-static const int LED_PINS[4] = {22, 25, 27, 33};
-extern int currentSlot;
+static const int LED_PINS[4] = {25, 26, 27, 33};
 
-// LED 유지 시간
+extern int currentSlot;
+extern int lastSlotBeforeOff;   // ⭐ 추가: OFF되기 전에 마지막 슬롯 번호 저장
 extern unsigned long slotStartTime;
-const unsigned long SLOT_ON_DURATION = 10000;  // 10초
+
+const unsigned long SLOT_ON_DURATION = 10000;
 
 void init();
 void updateSlotLEDs();
-void nextSlot();   // time:true 들어오면 실행
-void resetIfTimeout();  // 10초 지나면 OFF
+void nextSlot();
+void resetIfTimeout();
 }
+

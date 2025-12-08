@@ -1,4 +1,5 @@
 # iot/views.py
+
 import secrets
 from pathlib import Path
 from django.db import transaction
@@ -11,26 +12,27 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import datetime
+from medications.models import Plan
 
-from .models import Device, SensorData, IntakeStatus, generate_device_uuid, generate_device_token
+
+
+from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
 from smart_med.utils.make_qr import create_qr
 
 from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
 
 
-# ==========================================
-# Ingest API
-# ==========================================
+# ---------------------------------------------------------
+# 디바이스가 상태 센서 데이터를 서버로 업로드하는 ingest API
+# ---------------------------------------------------------
 @ingest_docs
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def ingest(request):
     p = request.data
 
-    # --------------------------
-    # Header 인증 (CommandView와 동일하게)
-    # --------------------------
     uuid = request.headers.get("X-DEVICE-UUID")
     token = request.headers.get("X-DEVICE-TOKEN")
 
@@ -45,36 +47,63 @@ def ingest(request):
     if device.device_token != token:
         return Response({"error": "invalid token"}, status=401)
 
-    # --------------------------
-    # Payload 파싱
-    # --------------------------
-
     is_opened = to_bool(p.get("is_opened") or p.get("isOpened"))
     is_time = to_bool(p.get("is_time") or p.get("isTime"))
     bpm_raw = p.get("bpm") or p.get("Bpm")
-
-    timestamp = parse_ts(
-        p.get("timestamp") or p.get("collected_at")
-    )
-
-    # user 보정 (등록되지 않은 기기면 user_id = None)
+    timestamp = parse_ts(p.get("timestamp") or p.get("collected_at"))
     user_id = device.user_id
 
-    # --------------------------
-    # Status 판정
-    # --------------------------
-    if is_time and is_opened:
-        status_code = IntakeStatus.TAKEN
-    elif not is_time and is_opened:
-        status_code = IntakeStatus.WRONG
-    elif is_time and not is_opened:
-        status_code = IntakeStatus.MISSED
-    else:
-        status_code = IntakeStatus.NONE
+    # ===============================
+    # 🔥 복용 타임 판단 (정해진 시간대인지)
+    # ===============================
+    now = timezone.now()
+    threshold = datetime.timedelta(minutes=15)
 
-    # --------------------------
-    # DB 저장
-    # --------------------------
+    regi_list = device.regi_histories.all()
+    plans = Plan.objects.filter(
+        regihistory__in=regi_list,
+        use_alarm=True
+    )
+
+    current_plan = None
+    for p in plans:
+        if p.taken_at and abs(p.taken_at - now) <= threshold:
+            current_plan = p
+            break
+
+    # ===============================
+    # 🔥 이번 타임에 이미 정상복용(TAKEN)한 적이 있는지
+    # ===============================
+    already_taken = False
+    if current_plan:
+        already_taken = SensorData.objects.filter(
+            device=device,
+            status=IntakeStatus.TAKEN,
+            collected_at__gte=current_plan.taken_at - threshold,
+            collected_at__lte=current_plan.taken_at + threshold,
+        ).exists()
+
+    # ===============================
+    # 🔥 최종 status_code 결정 로직
+    # ===============================
+    if is_opened:
+        if current_plan:
+            if already_taken:
+                status_code = IntakeStatus.WRONG  # 두 번째 열림 → 오복용
+            else:
+                if is_time:
+                    status_code = IntakeStatus.TAKEN  # 첫 정상 복용
+                else:
+                    status_code = IntakeStatus.WRONG  # 시간 안 맞음 → 오복용
+        else:
+            status_code = IntakeStatus.WRONG  # 시간대 아님 → 무조건 오복용
+
+    else:
+        if is_time:
+            status_code = IntakeStatus.MISSED  # 시간인데 안 열림
+        else:
+            status_code = IntakeStatus.NONE
+
     with transaction.atomic():
         SensorData.objects.create(
             device=device,
@@ -85,7 +114,6 @@ def ingest(request):
             status=status_code,
         )
 
-        # BPM 저장
         if bpm_raw is not None:
             try:
                 bpm = int(bpm_raw)
@@ -98,7 +126,6 @@ def ingest(request):
             except:
                 pass
 
-    # 마지막 통신 시간 갱신
     device.last_connected_at = timezone.now()
     device.save(update_fields=["last_connected_at"])
 
@@ -114,9 +141,9 @@ def ingest(request):
     })
 
 
-# ==========================================
-# Command Polling
-# ==========================================
+# ---------------------------------------------------------
+# IoT 기기가 명령을 가져가는 Command Polling API
+# ---------------------------------------------------------
 @command_docs
 class CommandView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -136,7 +163,29 @@ class CommandView(APIView):
         if device.device_token != token:
             return Response({"error": "invalid token"}, status=401)
 
-        return Response({"time": True})
+        now = timezone.now()
+        threshold = datetime.timedelta(minutes=15)
+
+        regi_list = device.regi_histories.all()
+        plans = Plan.objects.filter(
+            regihistory__in=regi_list,
+            use_alarm=True,
+            taken__isnull=True
+        )
+
+        time_signal = False
+
+        for p in plans:
+            if not p.taken_at:
+                continue
+
+            diff = abs(p.taken_at - now)
+            if diff <= threshold:
+                time_signal = True
+                break
+
+        return Response({"time": time_signal})
+
 
 
 # ==========================================
@@ -162,7 +211,6 @@ class RegisterDeviceView(APIView):
         if device.device_token != token:
             return Response({"error": "invalid token"}, status=401)
 
-        # user 연결
         device.user = request.user
         if device_name:
             device.device_name = device_name

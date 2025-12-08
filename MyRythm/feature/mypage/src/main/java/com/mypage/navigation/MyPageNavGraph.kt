@@ -50,6 +50,7 @@ fun NavGraphBuilder.mypageNavGraph(
         QRScanScreen(
             onBack = { nav.navigateUp() },
             onScanSuccess = { uuid, token ->
+                sharedBLEVM.resetAll()
                 sharedBLEVM.setDeviceInfo(uuid, token)
                 nav.navigate(BLERegisterRoute)
             }
