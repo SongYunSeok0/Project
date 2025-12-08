@@ -11,3 +11,6 @@ import kotlinx.serialization.Serializable
 @Serializable data object QRScanRoute
 @Serializable data object BLERegisterRoute
 
+@Serializable data object UserManageRoute
+
+@Serializable data object InquiriesManageRoute

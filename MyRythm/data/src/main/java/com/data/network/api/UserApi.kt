@@ -64,4 +64,11 @@ interface UserApi {
 
     @POST("users/check-email/")
     suspend fun checkEmailDuplicate(@Body body: Map<String, String>): CheckEmailResponse
+
+    // 🔥 스태프 전용 API
+    @GET("users/")
+    suspend fun getAllUsers(): List<UserDto>
+
+    @GET("users/{id}/")
+    suspend fun getUserById(@Path("id") userId: Long): UserDto
 }

@@ -4,18 +4,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-
 import com.domain.sharedvm.HeartRateVMContract
 import com.mypage.ui.BLERegisterScreen
-
 import com.mypage.ui.EditScreen
 import com.mypage.ui.FAQScreenWrapper
 import com.mypage.ui.HeartReportScreen
+import com.mypage.ui.InquiriesManagementScreen
 import com.mypage.ui.MediReportScreen
 import com.mypage.ui.MyPageScreen
 import com.mypage.ui.QRScanScreen
+import com.mypage.ui.UserManagementScreen
 import com.mypage.viewmodel.BLERegisterViewModel
-
 import com.mypage.viewmodel.MyPageViewModel
 
 fun NavGraphBuilder.mypageNavGraph(
@@ -36,16 +35,15 @@ fun NavGraphBuilder.mypageNavGraph(
             onFaqClick   = { nav.navigate(FAQRoute) },
             onMediClick  = { nav.navigate(MediReportRoute) },
             onDeviceRegisterClick = { nav.navigate(QRScanRoute) },
+            onUserManagementClick = { nav.navigate(UserManageRoute) },
+            onInquiriesManagementClick = { nav.navigate(InquiriesManageRoute) },
             onLogoutClick = onLogoutClick,
             onWithdrawalSuccess = onLogoutClick
         )
     }
 
-
     // -------------------- QR 스캔 화면 --------------------
     composable<QRScanRoute> { backStackEntry ->
-
-        // ⭐ MyPageRoute 범위의 ViewModel 공유
         val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
         val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
 
@@ -59,10 +57,8 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
-
     // -------------------- BLE Wi-Fi 설정 화면 --------------------
     composable<BLERegisterRoute> { backStackEntry ->
-
         val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
         val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
 
@@ -74,6 +70,25 @@ fun NavGraphBuilder.mypageNavGraph(
         )
     }
 
+    // -------------------- 스태프 전용: 사용자 관리 --------------------
+    composable<UserManageRoute> {
+        UserManagementScreen(
+            onBackClick = {
+                // MyPage로 돌아가기
+                nav.navigateUp()      // 또는 nav.popBackStack(MyPageRoute, false)
+            }
+        )
+    }
+
+    // -------------------- 스태프 전용: 문의사항 관리 --------------------
+    composable<InquiriesManageRoute> {
+        InquiriesManagementScreen(
+            onBackClick = {
+                // MyPage로 돌아가기
+                nav.navigateUp()      // 또는 nav.popBackStack(MyPageRoute, false)
+            }
+        )
+    }
 
     // -------------------- 프로필 수정 --------------------
     composable<EditProfileRoute> {
@@ -95,6 +110,7 @@ fun NavGraphBuilder.mypageNavGraph(
         MediReportScreen(userId = userId)
     }
 
+    // (이미 위에 BLERegisterRoute 정의가 있어서, 아래 중복 정의는 필요 없으면 지워도 됨)
     composable<BLERegisterRoute> { backStackEntry ->
         val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
         val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
@@ -106,7 +122,4 @@ fun NavGraphBuilder.mypageNavGraph(
             }
         )
     }
-
 }
-
-

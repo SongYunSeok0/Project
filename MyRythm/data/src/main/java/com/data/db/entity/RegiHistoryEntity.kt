@@ -17,7 +17,8 @@ data class RegiHistoryEntity(
     @ColumnInfo(name = "regi_type")
     val regiType: String,
 
-    val label: String?,
+    @ColumnInfo(name = "label")
+    val label: String,
 
     @ColumnInfo(name = "issued_date")
     val issuedDate: String?,

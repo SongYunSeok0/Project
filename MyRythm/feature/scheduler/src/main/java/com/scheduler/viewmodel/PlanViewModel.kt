@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.Plan
 import com.domain.model.RegiHistory
+import com.domain.usecase.device.GetMyDevicesUseCase
 import com.domain.usecase.plan.CreatePlanUseCase
 import com.domain.usecase.plan.DeletePlanUseCase
 import com.domain.usecase.plan.GetPlanUseCase
@@ -27,7 +28,8 @@ class PlanViewModel @Inject constructor(
     private val updatePlanUseCase: UpdatePlanUseCase,
     private val deletePlanUseCase: DeletePlanUseCase,
     private val refreshPlansUseCase: RefreshPlansUseCase,
-    private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase
+    private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase,
+    private val getMyDevicesUseCase: GetMyDevicesUseCase
 ) : ViewModel() {
 
     data class UiState(
@@ -43,8 +45,17 @@ class PlanViewModel @Inject constructor(
     private val _itemsByDate = MutableStateFlow<Map<LocalDate, List<MedItem>>>(emptyMap())
     val itemsByDate = _itemsByDate.asStateFlow()
 
+    private val _isDeviceUser = MutableStateFlow(false)
+    val isDeviceUser: StateFlow<Boolean> = _isDeviceUser.asStateFlow()
+
     fun load(userId: Long) {
         viewModelScope.launch {
+
+            launch {
+                val devices = runCatching { getMyDevicesUseCase() }
+                    .getOrElse { emptyList() }
+                _isDeviceUser.value = devices.isNotEmpty()
+            }
 
             getRegiHistoriesUseCase()
                 .catch { e ->

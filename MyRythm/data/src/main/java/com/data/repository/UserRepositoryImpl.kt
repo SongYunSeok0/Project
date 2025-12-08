@@ -7,8 +7,10 @@ import com.data.mapper.user.toDomain
 import com.data.network.api.UserApi
 import com.domain.model.User
 import com.domain.repository.UserRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
@@ -35,4 +37,20 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun fetchRemoteUser(): User? =
         runCatching { api.getMe().toDomain() }.getOrNull()
+
+    override suspend fun getAllUsers(): Result<List<User>> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val userDtos = api.getAllUsers()
+                userDtos.map { it.asEntity().asDomain() }
+            }
+        }
+
+    override suspend fun getUserById(userId: Long): Result<User> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val userDto = api.getUserById(userId)
+                userDto.asEntity().asDomain()
+            }
+        }
 }
