@@ -31,4 +31,6 @@ dependencies {
     implementation(libs.bundles.test)
     implementation(libs.androidx.material3)
     implementation(libs.accompanist.systemuicontroller)
+
+    implementation(libs.mpandroidchart)
 }
