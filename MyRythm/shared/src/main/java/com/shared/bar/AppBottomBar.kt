@@ -1,5 +1,6 @@
 package com.shared.bar
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,7 +41,7 @@ import androidx.compose.ui.zIndex
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.shared.R
 import com.shared.ui.theme.AppTheme
-
+/*
 @Composable
 fun AppBottomBar(
     currentScreen: String,
@@ -114,7 +115,7 @@ fun AppBottomBar(
     }
 }
 
-/*
+
 // 1206 바텀바 반응형 적용중
 @Composable
 fun ResponsiveAppBottomBar(
@@ -137,7 +138,9 @@ fun ResponsiveAppBottomBar(
     // ⭐ navigation bar가 있을 때만 자동으로 공간 생김
     // ⭐ 없으면 0dp라서 일반 기기에서는 깔끔하게 딱 붙음
     Spacer(modifier = Modifier.height(navBarPadding))
-}*/
+}
+
+//1206
 @Composable
 fun ResponsiveAppBottomBar(
     currentScreen: String,
@@ -169,5 +172,132 @@ fun ResponsiveAppBottomBar(
     AppBottomBar(
         currentScreen = currentScreen,
         onTabSelected = onTabSelected
+    )
+}
+*/
+@Composable
+fun AppBottomBar(
+    currentScreen: String,
+    onTabSelected: (String) -> Unit,
+    addPadding: Boolean = true,
+    isGestureMode: Boolean = false // ⭐ 제스처 모드 플래그 추가
+) {
+    val barHeight = 80.dp
+    val floatingSize = 80.dp
+    val floatingOffset = -(floatingSize * 0.25f)
+    val homeText = stringResource(R.string.home)
+    val mypageText = stringResource(R.string.mypage)
+    val scheduleText = stringResource(R.string.schedule)
+
+    // ⭐ 제스처 모드일 때 네비바 높이 계산
+    val density = LocalDensity.current
+    val navBarHeight = if (isGestureMode) {
+        with(density) { WindowInsets.navigationBars.getBottom(density).toDp() }
+    } else 0.dp
+
+    AppTheme {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .then(
+                    if (addPadding) Modifier.navigationBarsPadding()
+                    else Modifier
+                )
+                .height(barHeight + navBarHeight) // ⭐ 제스처 모드일 때 높이 확장
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            // ⭐ 실제 콘텐츠는 barHeight만큼만 차지
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(barHeight)
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 50.dp)
+                        .zIndex(1f),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onTabSelected("Home") }) {
+                        Icon(
+                            imageVector = Icons.Default.Home,
+                            contentDescription = homeText,
+                            tint = if (currentScreen == "Home") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    IconButton(onClick = { onTabSelected("MyPage") }) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = mypageText,
+                            tint = if (currentScreen == "MyPage") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = floatingOffset)
+                        .shadow(8.dp, CircleShape, clip = false)
+                        .size(floatingSize)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .zIndex(2f)
+                        .clickable { onTabSelected("Schedule") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.pill),
+                        contentDescription = scheduleText,
+                        modifier = Modifier.size(floatingSize * 0.5f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ResponsiveAppBottomBar(
+    currentScreen: String,
+    onTabSelected: (String) -> Unit
+) {
+    val systemUi = rememberSystemUiController()
+    val density = LocalDensity.current
+    val bottomInset = WindowInsets.navigationBars.getBottom(density)
+    val barColor = MaterialTheme.colorScheme.secondaryContainer
+
+    val isGestureMode = bottomInset == 0
+
+    LaunchedEffect(bottomInset) {
+        Log.d("BottomBar", "🔍 bottomInset: $bottomInset, isGestureMode: $isGestureMode")
+    }
+
+    LaunchedEffect(bottomInset, barColor) {
+        if (isGestureMode) {
+            // 제스처 모드: 네비바 투명
+            systemUi.setNavigationBarColor(
+                color = barColor,
+                darkIcons = false,
+                navigationBarContrastEnforced = false
+            )
+        } else {
+            // 3버튼 모드: 네비바를 바텀바와 같은 색으로
+            systemUi.setNavigationBarColor(
+                color = barColor,
+                darkIcons = true
+            )
+        }
+    }
+
+    AppBottomBar(
+        currentScreen = currentScreen,
+        onTabSelected = onTabSelected,
+        addPadding = !isGestureMode, // 제스처 모드가 아닐 때만 패딩
+        isGestureMode = isGestureMode // ⭐ 제스처 모드 플래그 전달
     )
 }

@@ -23,7 +23,6 @@ fun HealthInsightScreen(
     val healthInsightText = stringResource(R.string.healthinsight)
     val recentStepText = stringResource(R.string.recent_step)
 
-
     val values = weeklySteps.map { it.steps }
     val labels = weeklySteps.map { day ->
         if (day.date.length >= 5) {

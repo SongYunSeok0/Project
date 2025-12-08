@@ -67,6 +67,8 @@ private fun BLERegisterScreenUI(
     val deviceNameText = stringResource(R.string.device_name)
     val devicerRgisterText = stringResource(R.string.device_register_button)
     val deviceResetText = stringResource(R.string.device_reset)
+    val uuidText = stringResource(R.string.device_uuid)
+    val tokenText = stringResource(R.string.device_token)
     val wifiConfigSentMessage = stringResource(R.string.mypage_message_wifi_config_sent)
 
     // BLE 연결/전송 완료 시 페이지 종료
@@ -97,8 +99,8 @@ private fun BLERegisterScreenUI(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Text("UUID: ${state.deviceUUID}", color = Color.Black)
-        Text("TOKEN: ${state.deviceToken}", color = Color.Black)
+        Text("$uuidText ${state.deviceUUID}", color = MaterialTheme.colorScheme.onSurface)
+        Text("$tokenText ${state.deviceToken}", color = MaterialTheme.colorScheme.onSurface)
 
         AppInputField(
             value = state.ssid,

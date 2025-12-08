@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.shared.R
+import com.shared.ui.theme.AppTheme
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,46 +29,47 @@ fun AppTopBar(
     val backText = stringResource(R.string.back)
     val searchText = stringResource(R.string.search)
 
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                text = title,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium
-            )
-        },
-        navigationIcon = {
-            if (showBack) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.back),
-                        contentDescription = backText,
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+    AppTheme {
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = title,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            navigationIcon = {
+                if (showBack) {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.back),
+                            contentDescription = backText,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
-            }
-        },
-        actions = {
-            if (showSearch) {
-                IconButton(onClick = onSearchClick) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = searchText,
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
+            },
+            actions = {
+                if (showSearch) {
+                    IconButton(onClick = onSearchClick) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = searchText,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
-            }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ,
-            scrolledContainerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondary)
-    )
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                scrolledContainerColor = MaterialTheme.colorScheme.background,
+                titleContentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondary)
+        )
+    }
 }
 
