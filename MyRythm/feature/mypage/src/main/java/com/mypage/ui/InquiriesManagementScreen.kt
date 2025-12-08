@@ -37,6 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +54,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.domain.model.Inquiry
@@ -74,23 +76,6 @@ fun InquiriesManagementScreen(
     viewModel: StaffManagementViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {}
 ) {
-    val searchText = stringResource(R.string.search)
-    val clearText = stringResource(R.string.clear)
-    val answeredText = stringResource(R.string.inquiry_status_answered)
-    val unansweredText = stringResource(R.string.inquiry_status_unanswered)
-    val answerText = stringResource(R.string.answer_label)
-    val sendText = stringResource(R.string.send)
-    val anonymousText = stringResource(R.string.anonymous)
-    val generalText = stringResource(R.string.general_inquiry)
-    val accountText = stringResource(R.string.account_inquiry)
-    val medicationText = stringResource(R.string.medication_inquiry)
-    val deviceText = stringResource(R.string.device_inquiry)
-    val otherText = stringResource(R.string.other_inquiry)
-    val adminText = stringResource(R.string.label_admin)
-    val noAnswerMessage = stringResource(R.string.mypage_message_no_answer)
-    val answerInputMessage = stringResource(R.string.mypage_message_answer_input)
-
-
     val inquiries by viewModel.filteredInquiries.collectAsState()
     val selectedInquiry by viewModel.selectedInquiry.collectAsState()
     val inquiryComments by viewModel.inquiryComments.collectAsState()
@@ -240,13 +225,15 @@ private fun InquiriesListContent(
     inquiries: List<Inquiry>,
     onInquiryClick: (Inquiry) -> Unit
 ) {
+    val noAnswerMessage = stringResource(R.string.mypage_message_no_answer)
+
     if (inquiries.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "문의사항이 없습니다",
+                text = noAnswerMessage,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -275,6 +262,9 @@ private fun InquiryCard(
 ) {
     val chatIcon = R.drawable.faqchat
     val faqIcon = stringResource(R.string.faqicon)
+    val answeredText = stringResource(R.string.inquiry_status_answered)
+    val unansweredText = stringResource(R.string.inquiry_status_unanswered)
+    val anonymousText = stringResource(R.string.anonymous)
 
     Card(
         modifier = Modifier
@@ -402,8 +392,14 @@ private fun InquiryDetailContent(
     comments: List<InquiryComment>,
     onAddComment: (String) -> Unit
 ) {
+    val chatIcon = R.drawable.faqchat
+    val faqIcon = stringResource(R.string.faqicon)
     var commentText by remember { mutableStateOf("") }
-
+    val answerText = stringResource(R.string.answer_label)
+    val sendText = stringResource(R.string.send)
+    val anonymousText = stringResource(R.string.anonymous)
+    val noAnswerMessage = stringResource(R.string.mypage_message_no_answer)
+    val answerInputMessage = stringResource(R.string.mypage_message_answer_input)
     Column(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
@@ -538,13 +534,17 @@ private fun InquiryDetailContent(
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
                 AppInputField(
                     value = commentText,
                     onValueChange = { commentText = it },
                     label = answerInputMessage,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
                     imeAction = ImeAction.Send,
                     keyboardActions = KeyboardActions(
                         onSend = {
@@ -555,6 +555,13 @@ private fun InquiryDetailContent(
                         }
                     ),
                     maxLines = 5,
+                    leadingContent = {
+                        Image(
+                            painter = painterResource(chatIcon),
+                            contentDescription = faqIcon,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    },
                     trailingContent = {
                         AppButton(
                             isCircle = true,
@@ -589,6 +596,8 @@ private fun InquiryDetailContent(
 private fun CommentItem(
     comment: InquiryComment
 ) {
+    val anonymousText = stringResource(R.string.anonymous)
+    val adminText = stringResource(R.string.label_admin)
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -668,7 +677,13 @@ private fun CommentItem(
 }
 
 // 🔥 카테고리 텍스트 변환
+@Composable
 private fun getCategoryText(category: String): String {
+    val generalText = stringResource(R.string.general_inquiry)
+    val accountText = stringResource(R.string.account_inquiry)
+    val medicationText = stringResource(R.string.medication_inquiry)
+    val deviceText = stringResource(R.string.device_inquiry)
+    val otherText = stringResource(R.string.other_inquiry)
     return when (category) {
         "general" -> generalText
         "account" -> accountText
@@ -687,5 +702,105 @@ private fun formatDateTime(dateTimeString: String): String {
         instant.atZone(ZoneId.systemDefault()).format(formatter)
     } catch (e: Exception) {
         dateTimeString
+    }
+}
+
+@Preview(showBackground = true, heightDp = 900)
+@Composable
+fun InquiriesManagement_Interactive_Preview() {
+    AppTheme {
+
+        // 미답변 / 답변완료 둘 다 테스트 가능하도록 상태 제공
+        var isAnswered by remember { mutableStateOf(false) }
+
+        // inquiry 샘플
+        val inquiry = Inquiry(
+            id = 1L,
+            userId = 1L,
+            username = if (isAnswered) "홍길동" else "김철수",
+            title = if (isAnswered) "기기 등록이 안돼요" else "앱이 자꾸 종료됩니다",
+            content = if (isAnswered) "블루투스 연결 이후 진행이 안됩니다." else "어제부터 실행하면 바로 종료됩니다.",
+            type = if (isAnswered) "device" else "general",
+            isAnswered = isAnswered,
+            createdAt = "2024-12-01T12:00:00Z",
+            commentCount = 0
+        )
+
+        // 댓글 상태
+        var comments by remember {
+            mutableStateOf(
+                if (isAnswered) {
+                    listOf(
+                        InquiryComment(
+                            id = 1L,
+                            inquiryId = inquiry.id,
+                            userId = 999L,
+                            username = "관리자",
+                            content = "확인 후 조치 완료했습니다!",
+                            createdAt = "2024-12-01T14:00:00Z",
+                            isStaff = true
+                        )
+                    )
+                } else emptyList()
+            )
+        }
+
+        // UI 표시
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+
+            // 스위치(답변 완료/미답변 테스트)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("미답변 / 답변완료 테스트", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.width(12.dp))
+                Switch(
+                    checked = isAnswered,
+                    onCheckedChange = {
+                        isAnswered = it
+                        comments = if (it) {
+                            listOf(
+                                InquiryComment(
+                                    id = 1L,
+                                    inquiryId = inquiry.id,
+                                    userId = 999L,
+                                    username = "관리자",
+                                    content = "확인 후 조치 완료했습니다!",
+                                    createdAt = "2024-12-01T14:00:00Z",
+                                    isStaff = true
+                                )
+                            )
+                        } else emptyList()
+                    }
+                )
+            }
+
+            InquiryDetailContent(
+                inquiry = inquiry.copy(
+                    isAnswered = isAnswered,
+                    commentCount = comments.size
+                ),
+                comments = comments,
+                onAddComment = { text ->
+                    val newComment = InquiryComment(
+                        id = comments.size + 1L,
+                        inquiryId = inquiry.id,
+                        userId = 999L,
+                        username = "관리자",
+                        content = text,
+                        createdAt = "2024-12-01T14:30:00Z",
+                        isStaff = true
+                    )
+                    comments = comments + newComment
+                }
+            )
+        }
     }
 }
