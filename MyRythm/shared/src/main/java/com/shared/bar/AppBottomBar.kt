@@ -6,9 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -27,10 +31,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.shared.R
+import com.shared.ui.theme.AppTheme
 
 @Composable
 fun AppBottomBar(
@@ -41,14 +47,16 @@ fun AppBottomBar(
     val floatingSize = 80.dp                // 플로팅 버튼 크기
     val floatingOffset = -(floatingSize / 2) // 플로팅 오프셋 = 자동 반응형
 
+    val homeText = stringResource(R.string.home)
+    val mypageText = stringResource(R.string.mypage)
+    val scheduleText = stringResource(R.string.schedule)
+
     Box(
         Modifier
             .fillMaxWidth()
             .height(barHeight)
-            .background(Color(0xFFF7FDFC))
+            .background(MaterialTheme.colorScheme.onSecondaryContainer)
     ) {
-
-        // 좌/우 탭 버튼 (Home / MyPage)
         Row(
             Modifier
                 .fillMaxSize()
@@ -61,8 +69,8 @@ fun AppBottomBar(
             IconButton(onClick = { onTabSelected("Home") }) {
                 Icon(
                     imageVector = Icons.Default.Home,
-                    contentDescription = "홈",
-                    tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else MaterialTheme.colorScheme.surfaceVariant,
+                    contentDescription = homeText,
+                    tint = if (currentScreen == "Home") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -70,8 +78,8 @@ fun AppBottomBar(
             IconButton(onClick = { onTabSelected("MyPage") }) {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "마이",
-                    tint = if (currentScreen == "MyPage") Color(0xFF6AE0D9) else MaterialTheme.colorScheme.surfaceVariant,
+                    contentDescription = mypageText,
+                    tint = if (currentScreen == "MyPage") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -85,44 +93,42 @@ fun AppBottomBar(
                 .shadow(8.dp, CircleShape, clip = false)
                 .size(floatingSize)
                 .clip(CircleShape)
-                .background(Color(0xFF6AE0D9))
+                .background(MaterialTheme.colorScheme.primary)
                 .zIndex(2f)
                 .clickable {
-                    onTabSelected("Schedule")  // ⭐ 핵심
+                    onTabSelected("Schedule")
                 },
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.pill),
-                contentDescription = "스케줄",
+                contentDescription = scheduleText,
                 modifier = Modifier.size(floatingSize * 0.5f)
             )
         }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
+// 1206 바텀바 반응형 적용중
 @Composable
-fun AppBottomBarPreview() {
+fun ResponsiveAppBottomBar(
+    currentScreen: String,
+    onTabSelected: (String) -> Unit
+) {
+    val navBarPadding = WindowInsets
+        .navigationBars
+        .asPaddingValues()
+        .calculateBottomPadding()
 
-    // 프리뷰 용으로 위쪽 공간을 확보한 Wrapper 박스
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)   // 👈 프리뷰 영역 크게 확보
-            .background(Color(0xFFF5F5F5))
-    ) {
-
-        // 바텀바는 하단에 붙여서 표시
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-        ) {
-            AppBottomBar(
-                currentScreen = "Home",
-                onTabSelected = {}
-            )
-        }
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // 네 원본 바텀바 그대로
+        AppBottomBar(
+            currentScreen = currentScreen,
+            onTabSelected = onTabSelected
+        )
     }
-}
 
+    // ⭐ navigation bar가 있을 때만 자동으로 공간 생김
+    // ⭐ 없으면 0dp라서 일반 기기에서는 깔끔하게 딱 붙음
+    Spacer(modifier = Modifier.height(navBarPadding))
+}
