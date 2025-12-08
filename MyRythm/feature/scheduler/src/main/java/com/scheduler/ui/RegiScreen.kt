@@ -88,6 +88,7 @@ fun RegiScreen(
     val alarmOnText = stringResource(R.string.isalarm_on)
     val alarmOffText = stringResource(R.string.isalarm_off)
     val countPerDayText = stringResource(R.string.count_per_day)
+    val iotDeviceText = stringResource(R.string.iotdevice)
     val registrationSuccessMessage = stringResource(R.string.scheduler_message_registration_success)
     val registrationFailedMessage = stringResource(R.string.scheduler_message_registration_failed)
     val enterDiseaseNameMessage = stringResource(R.string.scheduler_message_disease_name)
@@ -396,8 +397,7 @@ fun RegiScreen(
 
             // IoT 기기 선택 드롭다운
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("연동할 IoT 기기", color = MaterialTheme.colorScheme.onSurface)
-
+                Text(iotDeviceText, color = MaterialTheme.colorScheme.background)
                 DeviceDropdown(
                     devices = devices,
                     selectedDevice = selectedDevice,

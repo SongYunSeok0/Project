@@ -231,7 +231,7 @@ fun MainScreenRealPreview() {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) {
                 AppBottomBar(
                     currentScreen = "Home",
-                    onTabSelected = {}
+                    onTabSelected = {},
                 )
             }
         }

@@ -24,6 +24,7 @@ val AppTypography = Typography(
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
+
     // 카드 제목, 섹션 제목 등
     titleMedium = TextStyle(
         fontFamily = pretendard,

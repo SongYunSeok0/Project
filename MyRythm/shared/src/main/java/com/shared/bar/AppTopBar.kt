@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.shared.R
@@ -24,14 +25,16 @@ fun AppTopBar(
     showSearch: Boolean = false,
     onSearchClick: () -> Unit = {}
 ) {
+    val backText = stringResource(R.string.back)
+    val searchText = stringResource(R.string.search)
+
     CenterAlignedTopAppBar(
         title = {
             Text(
                 text = title,
-                fontSize = 20.sp,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
         },
         navigationIcon = {
@@ -39,8 +42,8 @@ fun AppTopBar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         painter = painterResource(id = R.drawable.back),
-                        contentDescription = "뒤로가기",
-                        tint = Color.Black
+                        contentDescription = backText,
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -50,17 +53,17 @@ fun AppTopBar(
                 IconButton(onClick = onSearchClick) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "검색",
-                        tint = Color.Black
+                        contentDescription = searchText,
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color(0xFFF7FDFC)
+            containerColor = MaterialTheme.colorScheme.background
         ,
-            scrolledContainerColor = Color.White,
-            titleContentColor = Color.Black
+            scrolledContainerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.onSurface
         ),
         modifier = Modifier
             .fillMaxWidth()

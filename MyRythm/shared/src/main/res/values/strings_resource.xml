@@ -200,23 +200,22 @@
     <string name="verification_success">인증 성공</string>
     <string name="verification_failed">인증 실패</string>
     <string name="save_failed">저장 실패</string>
-
     <string name="alarm_setting">알람 설정</string>
     <string name="isalarm_on">알람 켜짐</string>
     <string name="isalarm_off">알람 꺼짐</string>
-    <string name="scheduler_message_registration_success">등록이 완료되었습니다!</string>
-    <string name="scheduler_message_registration_failed">등록에 실패했습니다.</string>
-    <string name="scheduler_message_enter_memo">메모를 입력하세요</string>
-
     <string name="device_wifi_title">기기 Wi-Fi 설정</string>
     <string name="device_name">기기 별명(예: 약통1)</string>
     <string name="device_register_button">디바이스 등록하기</string>
     <string name="device_reset">정보 초기화</string>
     <string name="device_uuid">UUID: %1$s</string>
     <string name="device_token">TOKEN: %1$s</string>
+    <string name="iotdevice">연동할 IoT 기기</string>
+
+
     <string name="mypage_message_ble_permission_required">BLE 권한이 필요해요!</string>
-
-
+    <string name="scheduler_message_registration_success">등록이 완료되었습니다!</string>
+    <string name="scheduler_message_registration_failed">등록에 실패했습니다.</string>
+    <string name="scheduler_message_enter_memo">메모를 입력하세요</string>
     <string name="mypage_message_withdrawal_title">정말 탈퇴하시겠습니까?</string>
     <string name="mypage_message_withdrawal">회원 탈퇴 시 모든 데이터가 삭제되며 복구가 불가능합니다.</string>
     <string name="mypage_message_device_register">Wi-Fi 정보를 입력하면\n기기에 BLE로 전송됩니다.</string>
