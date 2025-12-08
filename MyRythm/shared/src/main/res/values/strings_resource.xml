@@ -209,8 +209,6 @@
     <string name="device_uuid">UUID: %1$s</string>
     <string name="device_token">TOKEN: %1$s</string>
     <string name="iotdevice">연동할 IoT 기기</string>
-
-
     <string name="user_medi_record">%1$s님의 복약 기록</string>
     <string name="user_management">사용자 관리</string>
     <string name="searchbar">이름, 이메일, 전화번호로 검색</string>
@@ -224,22 +222,24 @@
     <string name="on">ON</string>
     <string name="off">OFF</string>
     <string name="med_schedule">복약 스케줄</string>
+    <string name="plan_dose_time">복용 시간: %1$s</string>
+    <string name="meal_with">식사 중</string>
+    <string name="dose_type">복용법: %1$s</string>
+    <string name="note_label">메모: %1$s</string>
+    <string name="dose_complete_check">✓ 복용 완료</string>
+    <string name="anonymous">익명</string>
+    <string name="no_inquiries">문의사항이 없습니다</string>
+    <string name="answer_label">답변</string>
+    <string name="mypage_message_no_answer">아직 답변이 없습니다</string>
+    <string name="mypage_message_answer_input">답변을 입력하세요</string>
+    <string name="account_inquiry">계정 관련</string>
+    <string name="medication_inquiry">복약 관련</string>
+    <string name="device_inquiry">기기 관련</string>
+    <string name="other_inquiry">기타</string>
 
 
     <string name="mypage_message_no_users">사용자가 없습니다</string>
     <string name="mypage_message_no_regi_history">등록된 복약 기록이 없습니다</string>
-
-
-    <string name="plan_dose_time">복용 시간: %1$s</string>
-    <string name="meal_with">식사 중</string>
-
-    <string name="dose_type">복용법: %1$s</string>
-    <string name="note_label">메모: %1$s</string>
-    <string name="dose_complete_check">✓ 복용 완료</string>
-
-
-
-
     <string name="mypage_message_ble_permission_required">BLE 권한이 필요해요!</string>
     <string name="scheduler_message_registration_success">등록이 완료되었습니다!</string>
     <string name="scheduler_message_registration_failed">등록에 실패했습니다.</string>

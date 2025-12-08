@@ -72,7 +72,7 @@ fun ChatbotScreen(
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
-    // 메시지가 추가될 때마다 자동으로 맨 아래로 스크롤
+    // 메시지가 추가될 때마다 자동으로 맨 아래스크롤
     LaunchedEffect(state.messages.size, state.loading) {
         coroutineScope.launch {
             scrollState.animateScrollTo(scrollState.maxValue)
