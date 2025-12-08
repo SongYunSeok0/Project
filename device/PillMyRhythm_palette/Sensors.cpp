@@ -1,5 +1,6 @@
 #include "Sensors.h"
 #include "HX711.h"
+#include "HttpTask.h"   // ⭐ serverTimeFlag 사용
 
 // ---------------- HX711 ----------------
 #define DOUT  4
@@ -26,14 +27,14 @@ bool fingerPresent = false;
 float currentWeight = 0;
 float prevWeight = 0;
 unsigned long lastWeightReadTime = 0;
-const unsigned long WEIGHT_READ_INTERVAL = 500;   // 최신 버전 반영
+const unsigned long WEIGHT_READ_INTERVAL = 5000;   // 최신 버전 반영
 
-bool isOpened = false;
-bool openedEvent = false;
+bool isOpened = false;       // 최근 10초 안에 열렸는지
+bool openedEvent = false;    // 이번 루프에서 서버로 보낼 열림 이벤트 플래그
 unsigned long openedTime = 0;
 
-// ---------------- Time state ----------------
-bool isTime = false;
+// ---------------- Time state (LED용) ----------------
+bool isTime = false;         // ⭐ LED / SlotLED용 로컬 타임 상태
 unsigned long greenStart = 0;
 const unsigned long GREEN_DURATION = 10000;
 
@@ -115,7 +116,7 @@ void updateBPM() {
 
 
 // ===================================================
-// UPDATED CHECKWEIGHT (최신)
+// UPDATED CHECKWEIGHT
 // ===================================================
 void checkWeight() {
     unsigned long now = millis();
@@ -128,26 +129,29 @@ void checkWeight() {
     float diff = prevWeight - currentWeight;
     prevWeight = currentWeight;
 
-    Serial.printf("Weight: %.2f  Diff: %.2f\n", currentWeight, diff);
+    float adiff = fabs(diff);
+    Serial.printf("Weight: %.2f  Diff: %.2f\n", currentWeight, adiff);
 
-    // ---- 약 꺼냄 감지 ----
-    if (diff > 100 && !isOpened) {
-        isOpened = true;
-        openedEvent = true;
+    // -----------------------------
+    // 약 꺼냄 감지 (이 순간만 openedEvent = true)
+    // -----------------------------
+    if (adiff > 100) {
+        openedEvent = true;      // 서버에 보낼 이벤트
         openedTime = now;
+
         Serial.println("⚠ Weight DROP detected!");
 
-        // ⭐ 정해진 시간에 꺼냈을 때
-        if (isTime) {
-            isTime = false;
+        // 최근 10초 동안 열림 상태 유지
+        isOpened = true;
 
-            digitalWrite(19, LOW);  // GREEN OFF
-            digitalWrite(18, HIGH); // RED ON
-
-            Serial.println("⏰ Correct time consumption → LED RED!");
-        }
-        else {
-            // 시간 외 오픈 → buzzer
+        // ⭐ 여기서 "정해진 시간" 판단은
+        //    서버에서 내려준 serverTimeFlag 기준
+        if (serverTimeFlag) {
+            Serial.println("⏰ Correct time consumption (serverTimeFlag=true) → LED RED");
+            digitalWrite(19, LOW);   // GREEN OFF
+            digitalWrite(18, HIGH);  // RED ON
+        } else {
+            Serial.println("🚨 Wrong time → buzzer");
             tone(12, 1000, 800);
         }
     }
@@ -156,19 +160,19 @@ void checkWeight() {
 
 
 // ===================================================
-// UPDATED RESET LOGIC (최신)
+// UPDATED RESET LOGIC
 // ===================================================
 void handleReset() {
     unsigned long now = millis();
 
-    // ---- GREEN LED 자동 OFF ----
+    // GREEN LED 자동 OFF (LED용 타임 끝)
     if (isTime && now - greenStart >= GREEN_DURATION) {
-        isTime = false;
+        isTime = false;          // ⭐ LED용 상태 종료 (다음 time:true 받을 준비)
         digitalWrite(19, LOW);
         digitalWrite(18, HIGH);
     }
 
-    // ---- opened 상태 자동 해제 ----
+    // 열림 상태 자동 해제 (10초 뒤)
     if (isOpened && now - openedTime >= 10000) {
         isOpened = false;
         noTone(12);

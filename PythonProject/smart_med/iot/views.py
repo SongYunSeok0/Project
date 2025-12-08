@@ -10,6 +10,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import datetime
+from medications.models import Plan
+
+
 
 from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
@@ -44,21 +48,67 @@ def ingest(request):
     if device.device_token != token:
         return Response({"error": "invalid token"}, status=401)
 
+    # --- 수신 데이터 ---
     is_opened = to_bool(p.get("is_opened") or p.get("isOpened"))
     is_time = to_bool(p.get("is_time") or p.get("isTime"))
     bpm_raw = p.get("bpm") or p.get("Bpm")
     timestamp = parse_ts(p.get("timestamp") or p.get("collected_at"))
     user_id = device.user_id
 
-    if is_time and is_opened:
-        status_code = IntakeStatus.TAKEN
-    elif not is_time and is_opened:
-        status_code = IntakeStatus.WRONG
-    elif is_time and not is_opened:
-        status_code = IntakeStatus.MISSED
-    else:
-        status_code = IntakeStatus.NONE
+    # ===============================
+    # 🔥 복용 타임 판단 (정해진 시간대인지)
+    # ===============================
+    now = timezone.now()
+    threshold = datetime.timedelta(minutes=15)
 
+    regi_list = device.regi_histories.all()
+    plans = Plan.objects.filter(
+        regihistory__in=regi_list,
+        use_alarm=True
+    )
+
+    current_plan = None
+    for p in plans:
+        if p.taken_at and abs(p.taken_at - now) <= threshold:
+            current_plan = p
+            break
+
+    # ===============================
+    # 🔥 이번 타임에 이미 정상복용(TAKEN)한 적이 있는지
+    # ===============================
+    already_taken = False
+    if current_plan:
+        already_taken = SensorData.objects.filter(
+            device=device,
+            status=IntakeStatus.TAKEN,
+            collected_at__gte=current_plan.taken_at - threshold,
+            collected_at__lte=current_plan.taken_at + threshold,
+        ).exists()
+
+    # ===============================
+    # 🔥 최종 status_code 결정 로직
+    # ===============================
+    if is_opened:
+        if current_plan:
+            if already_taken:
+                status_code = IntakeStatus.WRONG  # 두 번째 열림 → 오복용
+            else:
+                if is_time:
+                    status_code = IntakeStatus.TAKEN  # 첫 정상 복용
+                else:
+                    status_code = IntakeStatus.WRONG  # 시간 안 맞음 → 오복용
+        else:
+            status_code = IntakeStatus.WRONG  # 시간대 아님 → 무조건 오복용
+
+    else:
+        if is_time:
+            status_code = IntakeStatus.MISSED  # 시간인데 안 열림
+        else:
+            status_code = IntakeStatus.NONE
+
+    # ===============================
+    # 🔥 DB 저장
+    # ===============================
     with transaction.atomic():
         SensorData.objects.create(
             device=device,
@@ -96,6 +146,7 @@ def ingest(request):
     })
 
 
+
 # ---------------------------------------------------------
 # IoT 기기가 명령을 가져가는 Command Polling API
 # ---------------------------------------------------------
@@ -118,7 +169,29 @@ class CommandView(APIView):
         if device.device_token != token:
             return Response({"error": "invalid token"}, status=401)
 
-        return Response({"time": True})
+        now = timezone.now()
+        threshold = datetime.timedelta(minutes=15)
+
+        regi_list = device.regi_histories.all()
+        plans = Plan.objects.filter(
+            regihistory__in=regi_list,
+            use_alarm=True,
+            taken__isnull=True
+        )
+
+        time_signal = False
+
+        for p in plans:
+            if not p.taken_at:
+                continue
+
+            diff = abs(p.taken_at - now)
+            if diff <= threshold:
+                time_signal = True
+                break
+
+        return Response({"time": time_signal})
+
 
 
 # ---------------------------------------------------------
