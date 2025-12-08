@@ -54,7 +54,6 @@ import com.shared.ui.components.AuthTextButton
 import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.loginTheme
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -78,10 +77,7 @@ fun LoginScreen(
     val form by viewModel.form.collectAsStateWithLifecycle()
     val ui by viewModel.state.collectAsStateWithLifecycle()
 
-    Log.e(
-        "LoginScreen",
-        "🎨 State 수집: isLoggedIn=${ui.isLoggedIn}, userId=${ui.userId}, loading=${ui.loading}"
-    )
+    Log.e("LoginScreen", "🎨 State 수집: isLoggedIn=${ui.isLoggedIn}, userId=${ui.userId}, loading=${ui.loading}")
 
     val autoLoginEnabled by viewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
@@ -111,13 +107,17 @@ fun LoginScreen(
             }
         }
     }
+
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) }
+        snackbarHost = { SnackbarHost(snackbar) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.loginTheme.loginBackground)
+                .padding(padding)
+                .imePadding()
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -126,6 +126,11 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
+
+                item {
+                    Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+                }
+
                 item { AuthLogoHeader(textLogoResId = R.drawable.login_myrhythm) }
 
                 item {
@@ -151,7 +156,6 @@ fun LoginScreen(
 
                     Spacer(Modifier.height(12.dp))
 
-                    // 1125 자동 로그인 진행중 - 토글 디자인만 추가
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -170,15 +174,10 @@ fun LoginScreen(
                             onCheckedChange = { viewModel.setAutoLogin(it) },
                             colors = SwitchDefaults.colors(
                                 uncheckedThumbColor = MaterialTheme.loginTheme.loginTertiary,
-                                uncheckedTrackColor = MaterialTheme.loginTheme.loginTertiary.copy(
-                                    alpha = 0.5f
-                                ),
+                                uncheckedTrackColor = MaterialTheme.loginTheme.loginTertiary.copy(alpha = 0.5f),
                                 uncheckedBorderColor = MaterialTheme.loginTheme.loginTertiary,
-
                                 checkedThumbColor = MaterialTheme.loginTheme.loginAppName,
-                                checkedTrackColor = MaterialTheme.loginTheme.loginAppName.copy(
-                                    alpha = 0.7f
-                                ),
+                                checkedTrackColor = MaterialTheme.loginTheme.loginAppName.copy(alpha = 0.7f),
                                 checkedBorderColor = MaterialTheme.loginTheme.loginTertiary
                             )
                         )
@@ -252,10 +251,7 @@ fun LoginScreen(
                                     viewModel.kakaoOAuth(
                                         context,
                                         onResult = { success, message ->
-                                            Log.e(
-                                                "LoginScreen",
-                                                "🟡 카카오 onResult: success=$success, message=$message"
-                                            )
+                                            Log.e("LoginScreen", "🟡 카카오 onResult: success=$success, message=$message")
                                         },
                                         onNeedAdditionalInfo = { _, _ -> }
                                     )
@@ -278,10 +274,7 @@ fun LoginScreen(
                                         context,
                                         googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
                                         onResult = { success, message ->
-                                            Log.e(
-                                                "LoginScreen",
-                                                "🔵 구글 onResult: success=$success, message=$message"
-                                            )
+                                            Log.e("LoginScreen", "🔵 구글 onResult: success=$success, message=$message")
                                         },
                                         onNeedAdditionalInfo = { _, _ -> }
                                     )
@@ -293,7 +286,6 @@ fun LoginScreen(
                         Button(
                             onClick = {
                                 Log.e("LoginScreen", "🔧 ========== 임시 로그인 버튼 클릭 ==========")
-                                // 임시 userId로 직접 네비게이션
                                 onLogin("test_user_123", "test_password")
                             },
                             modifier = Modifier
@@ -311,9 +303,12 @@ fun LoginScreen(
                             )
                         }
 
-
                         Spacer(Modifier.height(30.dp))
                     }
+                }
+
+                item {
+                    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                 }
             }
         }

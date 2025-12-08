@@ -5,6 +5,12 @@ from rest_framework.response import Response
 
 from .services import retrieve_top_chunks, build_answer
 from .tasks import run_rag_task
+from .utils import (
+    is_medical_question, 
+    get_non_medical_response,
+    is_greeting,  # 추가
+    get_greeting_response,  # 추가
+)
 from celery.result import AsyncResult
 
 
@@ -19,12 +25,48 @@ class DrugRAGView(APIView):
 
     def post(self, request):
         question = request.data.get("question")
-        mode = request.data.get("mode", "async")  # celery할때 sync -> async
+        mode = request.data.get("mode", "async")
+
+        # 디버깅용 로그
+        print(f"[DEBUG] 요청 본문: {request.data}")
+        print(f"[DEBUG] question='{question}', mode='{mode}'")
 
         if not question:
             return Response({"detail": "question 필드가 필요합니다."}, status=400)
 
-        # 비동기 모드 (Celery)
+        # ========== 최우선 1순위: 인사말 처리 (LLM/DB 조회 없이 즉시 응답) ==========
+        if is_greeting(question):
+            print(f"[GREETING-VIEW] 인사말 즉시 응답: '{question}'")
+            return Response(
+                {
+                    "status": "done",
+                    "question": question,
+                    "result": {
+                        "answer": get_greeting_response(),
+                        "contexts": [],
+                    },
+                },
+                status=200
+            )
+        # =================================================================
+
+        # ========== 2순위: 의료 질문 검증 ==========
+        if not is_medical_question(question):
+            print(f"[API-FILTER] 비의료 질문 차단: '{question}'")
+            return Response(
+                {
+                    "status": "rejected",
+                    "question": question,
+                    "result": {
+                        "answer": get_non_medical_response(),
+                        "contexts": [],
+                    },
+                },
+                status=200
+            )
+        # ==========================================
+
+        # ========== 3순위: 비동기 모드 (Celery) ==========
         if mode == "async":
             task = run_rag_task.delay(question)
             return Response(
@@ -32,7 +74,7 @@ class DrugRAGView(APIView):
                 status=202,
             )
 
-        # 동기 모드 (즉시 RAG 처리)
+        # ========== 4순위: 동기 모드 (즉시 RAG 처리) ==========
         try:
             start = time.time()
             chunks = retrieve_top_chunks(question, k=5)
@@ -42,6 +84,9 @@ class DrugRAGView(APIView):
             print(f"[SYNC-RAG] q='{question[:30]}' elapsed={elapsed:.2f}s")
 
         except Exception as e:
+            print(f"[ERROR] RAG 처리 오류: {e}")
+            import traceback
+            traceback.print_exc()
             return Response(
                 {"detail": "RAG 처리 중 오류", "error": str(e)},
                 status=500

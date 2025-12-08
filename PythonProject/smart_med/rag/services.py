@@ -25,7 +25,13 @@ from .constants import (
     HEALTH_FOOD_KEYS,
     MAX_CHUNK_CHARS,
 )
-from .utils import normalize, clean_output, extract_med_names
+from .utils import (
+    normalize, 
+    clean_output, 
+    extract_med_names,
+    is_medical_question,
+    get_non_medical_response,
+)
 from .intent_detector import detect_intent
 from .health_food import search_health_food_chunks, build_health_food_answer
 
@@ -112,13 +118,16 @@ def build_context(chunks: List[Chunk]) -> str:
     return "\n".join(blocks)
 
 
+# rag/services.py
+
 def build_general_answer(question: str, chunks: List[Chunk]) -> str:
     if not chunks:
         prompt = (
             "너는 의약품과 일반 건강 정보를 설명하는 한국어 상담 어시스턴트이다.\n\n"
             "아래 사용자의 질문에 대해, 네가 이미 학습한 의약·건강 지식을 사용해 "
             "안전하고 보수적으로 답변해라. 확실하지 않은 내용이나 진단이 필요한 부분은 "
-            "추측하지 말고 반드시 의사 또는 약사 상담을 권고해라.\n\n"
+            "추측하지 말고 반드시 의사 또는 약사 상담을 권고해라.\n"
+            "⭐ 답변은 3-5문장 이내로 핵심만 간결하게 작성해라.\n\n"
             f"[질문]\n{question}\n\n[답변]\n"
         )
         return generate_answer(prompt).strip()
@@ -141,6 +150,7 @@ def build_general_answer(question: str, chunks: List[Chunk]) -> str:
 3. 문서 내용을 그대로 복사하지 말고 핵심만 요약해 한국어로 답변해라.
 4. 확실하지 않은 부분은 추측하지 말고 모른다고 말하며,
    필요한 경우 의사 또는 약사 상담을 권고해라.
+5. ⭐ 답변은 3-5문장 이내로 핵심만 간결하게 작성해라.
 
 [최종 답변]
 """
@@ -148,6 +158,16 @@ def build_general_answer(question: str, chunks: List[Chunk]) -> str:
 
 
 def build_answer(question: str, chunks: List[Chunk]) -> str:
+    """
+    질문에 대한 최종 답변 생성
+    - 의료 질문이 아니면 초기에 차단
+    """
+    # ========== 의료 질문 필터링 ==========
+    if not is_medical_question(question):
+        print(f"[FILTER] 비의료 질문 차단: {question[:50]}")
+        return get_non_medical_response()
+    # =====================================
+    
     intent = detect_intent(question)
     print("[INTENT]", intent, "/ q =", question)
 

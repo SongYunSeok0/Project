@@ -45,7 +45,7 @@ fun AppBottomBar(
 ) {
     val barHeight = 80.dp                   // 바텀바 기본 높이
     val floatingSize = 80.dp                // 플로팅 버튼 크기
-    val floatingOffset = -(floatingSize / 2) // 플로팅 오프셋 = 자동 반응형
+    val floatingOffset = -(floatingSize *0.25f) // 플로팅 오프셋 = 자동 반응형
 
     val homeText = stringResource(R.string.home)
     val mypageText = stringResource(R.string.mypage)
@@ -54,13 +54,13 @@ fun AppBottomBar(
     Box(
         Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .height(barHeight)
             .background(MaterialTheme.colorScheme.onSecondaryContainer)
     ) {
         Row(
             Modifier
                 .fillMaxSize()
-                .navigationBarsPadding()
                 .padding(horizontal = 50.dp)
                 .zIndex(1f),
             horizontalArrangement = Arrangement.SpaceBetween,

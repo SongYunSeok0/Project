@@ -17,9 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,10 +40,6 @@ import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
 import kotlinx.coroutines.launch
-
-// 컬러
-private val Yellow = Color(0xFFF9C034)
-
 
 // 데이터 모델
 enum class IntakeStatus { DONE, SCHEDULED }
@@ -68,6 +65,7 @@ fun SchedulerScreen(
 ) {
     val ui by vm.uiState.collectAsState()
     val items by vm.itemsByDate.collectAsState(initial = emptyMap())
+    val isDeviceUser by vm.isDeviceUser.collectAsState()
 
     BackHandler {
         navController.navigate(MainRoute) {
@@ -84,6 +82,7 @@ fun SchedulerScreen(
     SchedulerContent(
         itemsByDate = items,
         resetKey = ui.plans.hashCode(),
+        isDeviceUser = isDeviceUser,
         onToggleAlarm = { planIds, newValue ->
             planIds.forEach { planId ->
                 vm.toggleAlarm(userId, planId, newValue)
@@ -99,6 +98,7 @@ fun SchedulerContent(
     itemsByDate: Map<LocalDate, List<MedItem>> = emptyMap(),
     clock: Clock = Clock.systemDefaultZone(),
     resetKey: Any? = null,
+    isDeviceUser: Boolean = false,
     onToggleAlarm: (List<Long>, Boolean) -> Unit = { _, _ -> }
 ) {
     val monthSuffix = stringResource(R.string.month_suffix)
@@ -150,21 +150,45 @@ fun SchedulerContent(
         ) {
 
             val wf = WeekFields.of(Locale.KOREAN)
-            val startOfWeek = weekRangeOf(weekAnchor).first()
             val weekNum = weekAnchor.get(wf.weekOfMonth())
-            val title = "${startOfWeek.monthValue}$monthSuffix ${weekNum}$weekSuffix"
+            val title = "${weekAnchor.monthValue}$monthSuffix ${weekNum}$weekSuffix"
 
             Row(
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.Center
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(Modifier.width(48.dp))
+
+                // 가운데 주차 타이틀
                 Text(
                     title,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface
+                )
+
+                // 오른쪽 "오늘" 버튼
+                TextButton(
+                    onClick = {
+                        // 오늘 날짜로 이동
+                        selectedDay = today
+                        weekAnchor = today
+
+                        scope.launch {
+                            pagerState.animateScrollToPage(startPage)
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.down_chevron),
+                        contentDescription = "오늘로 돌아가기",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
+                }
             }
 
             Row(
@@ -215,8 +239,8 @@ fun SchedulerContent(
                         val bg = when {
                             isToday && isSelected -> MaterialTheme.colorScheme.primary
                             isToday -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            isSelected -> MaterialTheme.componentTheme.bookMarkColor
-                            else -> MaterialTheme.colorScheme.primaryContainer
+                            isSelected -> MaterialTheme.componentTheme.bookMarkColor  // 북마크 색
+                            else -> MaterialTheme.colorScheme.secondary               // 기본 날짜 배경
                         }
 
                         Box(
@@ -226,12 +250,20 @@ fun SchedulerContent(
                                 .background(bg)
                                 .clickable {
                                     selectedDay = day
-                                    val diffWeeks =
-                                        java.time.temporal.ChronoUnit.WEEKS.between(today, day)
-                                            .toInt()
+
+                                    val todayWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                                    val dayWeekStart = day.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+
+                                    val diffWeeks = java.time.temporal.ChronoUnit.WEEKS
+                                        .between(todayWeekStart, dayWeekStart)
+                                        .toInt()
+
                                     val target = startPage + diffWeeks
+
                                     if (pagerState.currentPage != target) {
-                                        scope.launch { pagerState.animateScrollToPage(target) }
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(target)
+                                        }
                                     }
                                 },
                             contentAlignment = Alignment.Center
@@ -240,7 +272,8 @@ fun SchedulerContent(
                                 text = "${day.dayOfMonth}",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.Normal,
-                                color = if (isSelected || isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
+                                color = if (isSelected || isToday) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.outline
                             )
                         }
                     }
@@ -330,6 +363,7 @@ fun SchedulerContent(
     selectedItem?.let { item ->
         MedDetailDialog(
             item = item,
+            isDeviceUser = isDeviceUser,
             onDismiss = { selectedItem = null },
             onToggleAlarm = { newValue ->
                 onToggleAlarm(item.planIds, newValue)
@@ -343,7 +377,8 @@ fun SchedulerContent(
 fun MedDetailDialog(
     item: MedItem,
     onDismiss: () -> Unit,
-    onToggleAlarm: (Boolean) -> Unit
+    onToggleAlarm: (Boolean) -> Unit,
+    isDeviceUser: Boolean = false
 ) {
     val detailTitle = stringResource(R.string.detail_title)
     val regiLabel = stringResource(R.string.regi_label)
@@ -386,27 +421,7 @@ fun MedDetailDialog(
 
                 DetailRow(regiLabel,item.label)
 
-                // 약 이름이 여러 개일 경우 세로로 표시
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Text(
-                        medNameLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    item.medNames.forEach { medName ->
-                        Text(
-                            "• $medName",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(start = 8.dp, top = 2.dp)
-                        )
-                    }
-                }
+                DetailMedNames(medNameLabel, item.medNames)
 
                 DetailRow(mealTimeLabel, mealTimeText)
                 DetailRow(memoLabel, item.memo ?: noMemoLabel)
@@ -425,7 +440,13 @@ fun MedDetailDialog(
                     )
                     Switch(
                         checked = item.useAlarm,
-                        onCheckedChange = onToggleAlarm
+                        enabled = !isDeviceUser,
+                        onCheckedChange = {
+                            if (!isDeviceUser) {
+                                onToggleAlarm(it)
+                            }
+                        }
+
                     )
                 }
 
@@ -463,6 +484,43 @@ private fun DetailRow(label: String, value: String) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+@Composable
+private fun DetailMedNames(label: String, medNames: List<String>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.width(80.dp)
+        )
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (medNames.isEmpty() || medNames.all { it.isBlank() }) {
+                Text(
+                    "-",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                medNames.forEach { name ->
+                    Text(
+                        text = "• $name",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 2.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
