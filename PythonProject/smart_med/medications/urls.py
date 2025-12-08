@@ -6,10 +6,16 @@ from .views import (
     PlanListView,
     PlanUpdateView,
     PlanDeleteView,
-    MarkAsTakenView, SnoozeMedicationView,
+    MarkAsTakenView, 
+    SnoozeMedicationView,
+    UserRegiHistoryListView,
+    AllRegiHistoryListView,
 )
 
 urlpatterns = [
+    path("regihistory/user/<int:user_id>/", UserRegiHistoryListView.as_view(), name="user-regihistory"),
+    path("regihistory/all/", AllRegiHistoryListView.as_view(), name="regihistory-all"),
+
     # RegiHistory
     path("regihistory/", RegiHistoryListCreateView.as_view(), name="regihistory_list_create"),
     path("regihistory/<int:pk>/", RegiHistoryUpdateView.as_view(), name="regihistory_update"),

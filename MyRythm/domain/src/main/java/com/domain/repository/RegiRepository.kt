@@ -2,6 +2,7 @@ package com.domain.repository
 
 import com.domain.model.RegiHistory
 import com.domain.model.Plan
+import com.domain.model.RegiHistoryWithPlans
 import kotlinx.coroutines.flow.Flow
 
 interface RegiRepository {
@@ -27,4 +28,8 @@ interface RegiRepository {
     fun observePlans(regihistoryId: Long): Flow<List<Plan>>
 
     suspend fun syncRegiHistories(userId: Long)
+
+    suspend fun getUserRegiHistories(userId: Long): Result<List<RegiHistoryWithPlans>>
+    suspend fun getAllRegiHistories(): Result<List<RegiHistoryWithPlans>>
+    suspend fun getUserPlans(userId: Long): Result<List<Plan>>
 }

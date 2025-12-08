@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -36,6 +38,8 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.navigationBars
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +67,11 @@ fun SignupScreen(
     var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
     var code by rememberSaveable { mutableStateOf("") }
 
+    // 전송 횟수 및 타이머 관리
+    var sendCount by rememberSaveable { mutableStateOf(0) }
+    var remainingSeconds by rememberSaveable { mutableStateOf(0) }
+    var isTimerRunning by remember { mutableStateOf(false) }
+
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
@@ -80,7 +89,7 @@ fun SignupScreen(
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
     val emailVerification = stringResource(R.string.email_verification)
     val sendText = stringResource(R.string.send)
-    val sentText = stringResource(R.string.sent)
+    val resendText = "재전송"
     val verificationText = stringResource(R.string.verification)
     val verificationCodeText = stringResource(R.string.verification_code)
     val signupLoading = stringResource(R.string.auth_signup_loading)
@@ -88,13 +97,37 @@ fun SignupScreen(
     val backText = stringResource(R.string.back)
     val backToLoginMessage = stringResource(R.string.auth_message_backtologin)
 
+    // 타이머 LaunchedEffect
+    LaunchedEffect(isTimerRunning) {
+        if (isTimerRunning && remainingSeconds > 0) {
+            while (remainingSeconds > 0) {
+                delay(1000L)
+                remainingSeconds--
+            }
+            isTimerRunning = false
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { msg ->
-            snackbar.showSnackbar(msg)
             when {
-                msg.contains("회원가입 성공") -> onSignupComplete()
-                msg == "인증코드 전송" -> isEmailCodeSent = true
-                msg == "인증 성공" -> isVerificationCompleted = true
+                msg.contains("회원가입 성공") -> {
+                    snackbar.showSnackbar(msg)
+                    onSignupComplete()
+                }
+                msg.contains("인증 성공") || msg.contains("인증 완료") -> {
+                    // 인증 성공은 UI에 이미 표시되므로 스낵바 표시 안 함
+                    isVerificationCompleted = true
+                    isTimerRunning = false
+                }
+                msg.contains("인증코드 전송") -> {
+                    // 전송 완료도 UI에 표시되므로 스낵바 표시 안 함
+                    isEmailCodeSent = true
+                    sendCount++
+                    remainingSeconds = 180
+                    isTimerRunning = true
+                }
+                else -> snackbar.showSnackbar(msg)
             }
         }
     }
@@ -104,7 +137,12 @@ fun SignupScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbar,
+                modifier = Modifier.padding(bottom = 40.dp)
+            )
+        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { inner ->
         Column(
@@ -136,6 +174,9 @@ fun SignupScreen(
                         if (isVerificationCompleted) {
                             isVerificationCompleted = false
                             isEmailCodeSent = false
+                            sendCount = 0
+                            remainingSeconds = 0
+                            isTimerRunning = false
                         }
                     },
                     hint = emailText,
@@ -147,16 +188,50 @@ fun SignupScreen(
                 Spacer(Modifier.width(8.dp))
 
                 AuthActionButton(
-                    text = if (isEmailCodeSent) sentText else sendText,
+                    text = if (isEmailCodeSent) resendText else sendText,
                     onClick = {
                         if (email.isNotBlank()) {
-                            viewModel.updateSignupEmail(email)
-                            viewModel.sendCode()
+                            if (sendCount >= 5) {
+                                kotlinx.coroutines.MainScope().launch {
+                                    snackbar.showSnackbar("인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.")
+                                }
+                            } else {
+                                viewModel.updateSignupEmail(email)
+                                viewModel.sendCode()
+                                // 상태 업데이트는 LaunchedEffect에서 처리
+                            }
                         }
                     },
-                    enabled = !isEmailCodeSent && email.isNotBlank(),
+                    enabled = email.isNotBlank() && sendCount < 5 && !isVerificationCompleted,
                     modifier = Modifier.widthIn(min = 90.dp)
                 )
+            }
+
+            // 타이머 표시
+            if (isTimerRunning && remainingSeconds > 0) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "인증 번호 발송 완료",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF9E9E9E),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                    Text(
+                        text = String.format(
+                            "%02d:%02d",
+                            remainingSeconds / 60,
+                            remainingSeconds % 60
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFFF6B6B),
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
             }
 
             if (isEmailCodeSent) {
@@ -186,9 +261,23 @@ fun SignupScreen(
                             viewModel.updateSignupEmail(email)
                             viewModel.updateCode(code)
                             viewModel.verifyCode()
+                            // 상태 업데이트는 LaunchedEffect에서 처리
                         },
                         enabled = !isVerificationCompleted && code.isNotBlank(),
                         modifier = Modifier.widthIn(min = 90.dp)
+                    )
+                }
+
+                // 인증 완료 메시지
+                if (isVerificationCompleted) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "인증 완료",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF9E9E9E),  // 초록색
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 8.dp)
                     )
                 }
             }

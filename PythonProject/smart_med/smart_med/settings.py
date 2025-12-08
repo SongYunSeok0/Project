@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "django_celery_results",
     "users",
+    "faqs",
     "medications",
     "iot",
     "health",

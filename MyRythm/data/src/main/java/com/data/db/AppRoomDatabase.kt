@@ -16,6 +16,7 @@ import com.data.db.dao.UserDao
 import com.data.db.entity.DailyStepEntity
 import com.data.db.entity.FavoriteEntity
 import com.data.db.entity.HeartRateEntity
+import com.data.db.entity.InquiryCommentEntity
 import com.data.db.entity.InquiryEntity
 import com.data.db.entity.PlanEntity
 import com.data.db.entity.RegiHistoryEntity
@@ -29,11 +30,12 @@ import com.data.db.entity.UserEntity
         PlanEntity::class,
         FavoriteEntity::class,
         InquiryEntity::class,
+        InquiryCommentEntity::class,
         StepEntity::class,
         DailyStepEntity::class,
         HeartRateEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {
@@ -63,7 +65,7 @@ abstract class AppRoomDatabase : RoomDatabase() {
                     "app.db"
                 )
                     .addMigrations(MIGRATION_2_3)
-                    .fallbackToDestructiveMigration() // 구조 완전 바뀐 경우 이거 추천
+                    .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
             }

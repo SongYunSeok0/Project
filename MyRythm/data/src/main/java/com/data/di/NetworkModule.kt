@@ -8,6 +8,10 @@ import com.data.network.api.PlanApi
 import com.data.network.api.UserApi
 import com.data.network.api.ChatbotApi
 import com.data.network.api.HeartRateApi
+import com.data.network.api.InquiryApi
+import com.data.network.api.DeviceApi
+import com.data.network.api.StepApi
+import com.data.network.api.RegiHistoryApi
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -23,9 +27,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 import com.data.core.net.AuthHeaderInterceptor
-import com.data.network.api.DeviceApi
-import com.data.network.api.StepApi
-import com.data.network.api.RegiHistoryApi
 
 
 // ---- Qualifiers ----
@@ -222,4 +223,9 @@ object NetworkModule {
     @Singleton
     fun provideDeviceApi(@UserRetrofit retrofit: Retrofit): DeviceApi =
         retrofit.create(DeviceApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideInquiryApi(@UserRetrofit retrofit: Retrofit): InquiryApi =
+        retrofit.create(InquiryApi::class.java)
 }

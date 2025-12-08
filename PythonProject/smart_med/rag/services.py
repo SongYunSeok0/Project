@@ -2,9 +2,7 @@
 from typing import List
 from django.db.models import Q
 from pgvector.django import CosineDistance
-import torch
 
-from .llm_loader import get_llm_model
 from .models import Chunk
 from .embeddings import get_embedding
 from .llm import generate_answer
@@ -37,43 +35,6 @@ from .utils import (
 from .intent_detector import detect_intent
 from .health_food import search_health_food_chunks, build_health_food_answer
 
-
-def serialize_chunks(chunks):
-    return [
-        {
-            "chunk_id": c.chunk_id,
-            "item_name": c.item_name,
-            "section": c.section,
-            "chunk_index": c.chunk_index,
-            "text": c.text,
-        }
-        for c in chunks
-    ]
-
-# ---------------------------
-# LLM 호출 래퍼
-# ---------------------------
-
-def call_llm(prompt: str) -> str:
-    tokenizer, model = get_llm_model()
-
-    inputs = tokenizer(
-        prompt,
-        return_tensors="pt",
-        truncation=True,
-        max_length=512,
-    )
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
-
-    with torch.inference_mode():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=256,
-            eos_token_id=tokenizer.eos_token_id
-        )
-
-    generated_ids = outputs[0][inputs["input_ids"].shape[1]:]
-    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
 
 def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> List[Chunk]:
     intent = detect_intent(query)

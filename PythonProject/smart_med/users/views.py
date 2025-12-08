@@ -8,10 +8,10 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -19,15 +19,33 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from notifications.services import send_fcm_to_token
 from rest_framework.decorators import api_view, permission_classes
 
-from .serializers import UserCreateSerializer, UserUpdateSerializer, UserSerializer, CustomTokenObtainPairSerializer
+from .serializers import (
+    UserCreateSerializer,
+    UserUpdateSerializer,
+    UserSerializer,
+)
 from .docs import (
     jwt_login_docs, social_login_docs,
     me_get_docs, me_patch_docs,
     register_fcm_docs, send_email_code_docs,
-    verify_email_code_docs, signup_docs, withdraw_docs
+    verify_email_code_docs, signup_docs, withdraw_docs,
 )
 
 User = get_user_model()
+
+
+# ============================================================
+# ✔ 커스텀 권한: is_staff 사용자만 접근 가능
+# ============================================================
+
+class IsStaffUser(BasePermission):
+    """Django user.is_staff == True 인 경우만 허용"""
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.is_staff
+        )
 
 
 # ============================================================
@@ -49,14 +67,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
 
             try:
-                user = User.objects.filter(username=login_id).first() or \
-                       User.objects.filter(email=login_id).first()
+                user = (
+                    User.objects.filter(username=login_id).first()
+                    or User.objects.filter(email=login_id).first()
+                )
 
                 if user:
                     cache_key = f"just_logged_in:{user.id}"
                     cache.set(cache_key, True, timeout=60)
                     print(f"[CustomLogin] Set {cache_key}=True")
-            except:
+            except Exception:
                 traceback.print_exc()
 
         return response
@@ -100,7 +120,7 @@ class SocialLoginView(APIView):
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
-                "needAdditionalInfo": False
+                "needAdditionalInfo": False,
             })
 
         # 신규 유저 생성
@@ -121,7 +141,7 @@ class SocialLoginView(APIView):
         return Response({
             "access": str(refresh.access_token),
             "refresh": str(refresh),
-            "needAdditionalInfo": True
+            "needAdditionalInfo": True,
         })
 
 
@@ -172,7 +192,7 @@ class RegisterFcmTokenView(APIView):
                     title="로그인 알림",
                     body=f"{user.username} 님이 로그인했습니다.",
                 )
-            except:
+            except Exception:
                 traceback.print_exc()
 
             cache.delete(cache_key)
@@ -299,3 +319,27 @@ class WithdrawalView(APIView):
     def delete(self, request):
         request.user.delete()
         return Response({"message": "회원 탈퇴 완료"})
+
+
+# ============================================================
+# ✔ 관리자용: 사용자 목록 / 상세 조회 (is_staff)
+# ============================================================
+
+class UserListView(generics.ListAPIView):
+    """
+    GET /api/users/ → 전체 사용자 목록
+    is_staff=True 인 계정만 접근 가능
+    """
+    queryset = User.objects.all().order_by('-created_at')  # 🔥 date_joined → created_at
+    serializer_class = UserSerializer
+    permission_classes = [IsStaffUser]
+
+
+class UserDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/users/<id>/ → 특정 사용자 상세
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsStaffUser]
+    lookup_field = 'id'

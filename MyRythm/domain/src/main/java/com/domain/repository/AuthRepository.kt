@@ -4,6 +4,7 @@ import com.domain.model.AuthTokens
 import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
+import com.domain.model.User
 
 interface AuthRepository {
     // 1127 자동로그인 autoLogin: Boolean = false 추가

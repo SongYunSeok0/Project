@@ -4,6 +4,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User, Gender
 
+STAFF_EMAILS = {
+    'qkfrus6623@naver.com'
+}
+
 
 def _normalize_phone(s: str) -> str:
     return "".join(ch for ch in (s or "") if ch.isdigit() or ch == "+")
@@ -92,17 +96,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
         provider = validated_data.get("provider")
         social_id = validated_data.get("socialId")
 
-        # 소셜 계정인 경우 create_user 호출 방식 변경
+        # 소셜 계정인 경우
         if provider and social_id:
             validated_data.pop("password", None)
             email = validated_data.pop("email", "") or None
             username = validated_data.pop("username", f"{provider}_{social_id}")
+
+            is_staff = email in STAFF_EMAILS if email else False
+            print(f"[소셜 회원가입] email: {email}, is_staff: {is_staff}, STAFF_EMAILS: {STAFF_EMAILS}")
 
             user = User.objects.create(
                 email=email,
                 username=username,
                 provider=provider,
                 social_id=social_id,
+                is_staff=is_staff,
                 **validated_data
             )
             return user
@@ -110,9 +118,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         # 로컬 유저 회원가입
         email = validated_data.pop("email").lower()
         pwd = validated_data.pop("password")
+
+        is_staff = email in STAFF_EMAILS
+        print(f"[로컬 회원가입] email: {email}, is_staff: {is_staff}, STAFF_EMAILS: {STAFF_EMAILS}")
+
         user = User.objects.create_user(
             email=email,
             password=pwd,
+            is_staff=is_staff,
             **validated_data
         )
         return user
