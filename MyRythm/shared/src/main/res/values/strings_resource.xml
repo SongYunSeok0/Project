@@ -238,6 +238,23 @@
     <string name="other_inquiry">기타</string>
 
 
+    <string name="healthinsight_message_no_data">데이터가 없습니다</string>
+
+    <string name="average">평균</string>
+    <string name="maximum">최고</string>
+    <string name="steps_unit">걸음</string>
+
+    <string name="heart_rate_title">❤️ 최근 7일 심박수 추이</string>
+    <string name="minimum">최저</string>
+
+    <string name="medi_compliance_title">💊 복약 시간 준수도</string>
+
+
+    <string name="average_delay">평균 지연</string>
+    <string name="minute">분</string>
+    <string name="ontime_rate">정시 복용률</string>
+
+
     <string name="mypage_message_no_users">사용자가 없습니다</string>
     <string name="mypage_message_no_regi_history">등록된 복약 기록이 없습니다</string>
     <string name="mypage_message_ble_permission_required">BLE 권한이 필요해요!</string>

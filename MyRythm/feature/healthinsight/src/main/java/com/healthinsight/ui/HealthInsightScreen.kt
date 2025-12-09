@@ -1,17 +1,34 @@
 package com.healthinsight.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -23,34 +40,36 @@ import com.healthinsight.ui.components.HealthBarChart
 import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
 import com.shared.R
-import com.shared.ui.components.SimpleBarChart
+import com.shared.ui.theme.AppTheme
 
 @Composable
 fun HealthInsightScreen(
     viewModel: HealthInsightViewModel = hiltViewModel()
 ) {
-    val weeklySteps by viewModel.weeklySteps.collectAsStateWithLifecycle()
-    val weeklyHeartRates by viewModel.weeklyHeartRates.collectAsStateWithLifecycle()
-    val medicationDelays by viewModel.medicationDelays.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) {
-        viewModel.loadAll()
-    }
-
-    LaunchedEffect(weeklyHeartRates) {
-        println("UI received ${weeklyHeartRates.size} days of heart rate data")
-        weeklyHeartRates.forEach { day ->
-            println("UI: ${day.date} - ${day.measurements.size} measurements")
+    AppTheme {
+        val weeklySteps by viewModel.weeklySteps.collectAsStateWithLifecycle()
+        val weeklyHeartRates by viewModel.weeklyHeartRates.collectAsStateWithLifecycle()
+        val medicationDelays by viewModel.medicationDelays.collectAsStateWithLifecycle()
+        val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+        LaunchedEffect(Unit) {
+            viewModel.loadAll()
         }
-    }
 
-    HealthInsightContent(
-        weeklySteps = weeklySteps,
-        weeklyHeartRates = weeklyHeartRates,
-        medicationDelays = medicationDelays,
-        isLoading = isLoading,
-        onInsertTestData = { viewModel.insertTestData() }
-    )
+        LaunchedEffect(weeklyHeartRates) {
+            println("UI received ${weeklyHeartRates.size} days of heart rate data")
+            weeklyHeartRates.forEach { day ->
+                println("UI: ${day.date} - ${day.measurements.size} measurements")
+            }
+        }
+
+        HealthInsightContent(
+            weeklySteps = weeklySteps,
+            weeklyHeartRates = weeklyHeartRates,
+            medicationDelays = medicationDelays,
+            isLoading = isLoading,
+            onInsertTestData = { viewModel.insertTestData() }
+        )
+    }
 }
 
 @Composable
@@ -101,11 +120,16 @@ private fun HealthInsightContent(
 @Composable
 private fun StepsCard(weeklySteps: List<DailyStep>) {
     val recentStepText = stringResource(R.string.recent_step)
+    val noDataMessage = stringResource(R.string.healthinsight_message_no_data)
+    val averageText = stringResource(R.string.average)
+    val maximumText = stringResource(R.string.maximum)
+    val stepText = stringResource(R.string.steps_unit)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.background
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -118,15 +142,15 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
             Text(
                 text = recentStepText,
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             if (weeklySteps.isEmpty()) {
                 Text(
-                    text = "데이터가 없습니다",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = noDataMessage,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
@@ -148,7 +172,7 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
                     values = values,
                     labels = labels,
                     barColors = stepColors,
-                    axisColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    axisColor = MaterialTheme.colorScheme.outline,
                     valueUnit = ""
                 )
 
@@ -161,8 +185,8 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem("평균", "${String.format("%,d", avgSteps)}걸음", Color(0xFF2196F3))
-                    StatItem("최고", "${String.format("%,d", maxSteps)}걸음", Color(0xFF1976D2))
+                    StatItem(averageText, "${String.format("%,d", avgSteps)}$stepText", Color(0xFF2196F3))
+                    StatItem(maximumText, "${String.format("%,d", maxSteps)}$stepText", Color(0xFF1976D2))
                 }
             }
         }
@@ -171,11 +195,16 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
 
 @Composable
 private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
+    val noDataMessage = stringResource(R.string.healthinsight_message_no_data)
+    val heartRateTitle = stringResource(R.string.heart_rate_title)
+    val averageText = stringResource(R.string.average)
+    val maximumText = stringResource(R.string.maximum)
+    val minimumText = stringResource(R.string.minimum)
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.background
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -186,17 +215,17 @@ private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
                 .padding(20.dp)
         ) {
             Text(
-                text = "❤️ 최근 7일 심박수 추이",
+                text = heartRateTitle,
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             if (weeklyHeartRates.isEmpty()) {
                 Text(
-                    text = "데이터가 없습니다",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = noDataMessage,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
@@ -231,9 +260,9 @@ private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem("평균", "${avgBpm}bpm", Color(0xFFE91E63))
-                    StatItem("최고", "${maxBpm}bpm", Color(0xFFD81B60))
-                    StatItem("최저", "${minBpm}bpm", Color(0xFFC2185B))
+                    StatItem(averageText, "${avgBpm}bpm", Color(0xFFE91E63))
+                    StatItem(maximumText, "${maxBpm}bpm", Color(0xFFD81B60))
+                    StatItem(minimumText, "${minBpm}bpm", Color(0xFFC2185B))
                 }
             }
         }
@@ -242,11 +271,13 @@ private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
 
 @Composable
 private fun MedicationDelayCard(medicationDelays: List<MedicationDelayUI>) {
+    val noDataMessage = stringResource(R.string.healthinsight_message_no_data)
+    val mediComplianceTitle = stringResource(R.string.medi_compliance_title)
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.background
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -257,17 +288,17 @@ private fun MedicationDelayCard(medicationDelays: List<MedicationDelayUI>) {
                 .padding(20.dp)
         ) {
             Text(
-                text = "💊 복약 시간 준수도",
+                text = mediComplianceTitle,
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             if (medicationDelays.isEmpty()) {
                 Text(
-                    text = "데이터가 없습니다",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = noDataMessage,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
@@ -294,6 +325,13 @@ private fun MedicationChart(
     medName: String,
     delays: List<MedicationDelayUI>
 ) {
+    val countPerDayText = stringResource(R.string.count_per_day)
+    val averageDelayText = stringResource(R.string.average_delay)
+    val minuteText = stringResource(R.string.minute)
+    val ontimeRateText = stringResource(R.string.ontime_rate)
+
+    val minimumText = stringResource(R.string.minimum)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -308,13 +346,13 @@ private fun MedicationChart(
                 text = "🔹 $medName",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color =  MaterialTheme.colorScheme.onSurface
             )
 
             Text(
-                text = "${delays.size}회",
+                text = "${delays.size}$countPerDayText",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color =  MaterialTheme.colorScheme.surfaceVariant
             )
         }
 
@@ -359,7 +397,7 @@ private fun MedicationChart(
             barColors = medicationColors,
             axisColor = MaterialTheme.colorScheme.onSurfaceVariant,
             isDelayChart = true,
-            valueUnit = "분"
+            valueUnit = minuteText
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -373,21 +411,21 @@ private fun MedicationChart(
         ) {
             Column {
                 Text(
-                    text = "평균 지연",
+                    text = averageDelayText,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color =  MaterialTheme.colorScheme.surfaceVariant
                 )
                 Text(
                     text = "${if (avgDelay > 0) "+" else ""}%.1f분".format(avgDelay),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color =  MaterialTheme.colorScheme.onSurface
                 )
             }
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "정시 복용률",
+                    text = ontimeRateText,
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
