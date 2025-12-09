@@ -21,6 +21,7 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = OnSurfaceVariant,
     surfaceVariant = SurfaceVariant,
     primaryContainer = Color.Transparent,
+    secondaryContainer = SecondaryContainer,
     // 오류 팝업
     error = Color.Red,
     onError = Color.White,

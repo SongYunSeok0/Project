@@ -25,12 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.shared.R
+import com.shared.ui.theme.AppTheme
 
 @Composable
 fun AppBottomBar(
@@ -39,90 +39,68 @@ fun AppBottomBar(
 ) {
     val barHeight = 80.dp                   // 바텀바 기본 높이
     val floatingSize = 80.dp                // 플로팅 버튼 크기
-    val floatingOffset = -(floatingSize *0.25f) // 플로팅 오프셋 = 자동 반응형
+    val floatingOffset = -(floatingSize * 0.25f) // 플로팅 오프셋 = 자동 반응형
 
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .height(barHeight)
-            .background(Color(0xFFF7FDFC))
-    ) {
+    val homeText = stringResource(R.string.home)
+    val mypageText = stringResource(R.string.mypage)
+    val scheduleText = stringResource(R.string.schedule)
 
-        // 좌/우 탭 버튼 (Home / MyPage)
-        Row(
+    AppTheme {
+        Box(
             Modifier
-                .fillMaxSize()
-                .padding(horizontal = 50.dp)
-                .zIndex(1f),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(barHeight)
+                .background(MaterialTheme.colorScheme.secondaryContainer)
         ) {
-            IconButton(onClick = { onTabSelected("Home") }) {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "홈",
-                    tint = if (currentScreen == "Home") Color(0xFF6AE0D9) else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(32.dp)
-                )
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 50.dp)
+                    .zIndex(1f),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { onTabSelected("Home") }) {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = homeText,
+                        tint = if (currentScreen == "Home") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                IconButton(onClick = { onTabSelected("MyPage") }) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = mypageText,
+                        tint = if (currentScreen == "MyPage") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
 
-            IconButton(onClick = { onTabSelected("MyPage") }) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "마이",
-                    tint = if (currentScreen == "MyPage") Color(0xFF6AE0D9) else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(32.dp)
+            // 중앙 알약 버튼
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = floatingOffset)
+                    .shadow(8.dp, CircleShape, clip = false)
+                    .size(floatingSize)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .zIndex(2f)
+                    .clickable {
+                        onTabSelected("Schedule")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.pill),
+                    contentDescription = scheduleText,
+                    modifier = Modifier.size(floatingSize * 0.5f)
                 )
             }
-        }
-
-        // 중앙 알약 버튼
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = floatingOffset)
-                .shadow(8.dp, CircleShape, clip = false)
-                .size(floatingSize)
-                .clip(CircleShape)
-                .background(Color(0xFF6AE0D9))
-                .zIndex(2f)
-                .clickable {
-                    onTabSelected("Schedule")  // ⭐ 핵심
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.pill),
-                contentDescription = "스케줄",
-                modifier = Modifier.size(floatingSize * 0.5f)
-            )
         }
     }
 }
-
-@Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
-@Composable
-fun AppBottomBarPreview() {
-
-    // 프리뷰 용으로 위쪽 공간을 확보한 Wrapper 박스
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)   // 👈 프리뷰 영역 크게 확보
-            .background(Color(0xFFF5F5F5))
-    ) {
-
-        // 바텀바는 하단에 붙여서 표시
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-        ) {
-            AppBottomBar(
-                currentScreen = "Home",
-                onTabSelected = {}
-            )
-        }
-    }
-}
-

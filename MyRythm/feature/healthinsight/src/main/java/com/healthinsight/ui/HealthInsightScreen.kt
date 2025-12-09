@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,6 +22,8 @@ import com.domain.usecase.plan.MedicationDelayUI
 import com.healthinsight.ui.components.HealthBarChart
 import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
+import com.shared.R
+import com.shared.ui.components.SimpleBarChart
 
 @Composable
 fun HealthInsightScreen(
@@ -78,6 +82,7 @@ private fun HealthInsightContent(
 
 @Composable
 private fun StepsCard(weeklySteps: List<DailyStep>) {
+    val recentStepText = stringResource(R.string.recent_step)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -93,7 +98,7 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
                 .padding(20.dp)
         ) {
             Text(
-                text = "🚶 최근 7일 걸음수",
+                text = recentStepText,
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.Black
             )

@@ -74,7 +74,8 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.MyRythm">
+            android:theme="@style/Theme.MyRythm"
+            android:forceDarkAllowed="false"> <!--1208 다크모드 비활성화-->
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

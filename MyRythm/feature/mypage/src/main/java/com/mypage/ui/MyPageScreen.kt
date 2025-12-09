@@ -4,7 +4,17 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,7 +24,13 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,10 +75,6 @@ fun MyPageScreen(
     val withdrawalText = stringResource(R.string.withdrawal)
     val cancelText = stringResource(R.string.cancel)
     val withdrawalConfirmText = stringResource(R.string.withdrawal_confirm)
-    val wifiSsidText = stringResource(R.string.wifi_ssid)
-    val wifiPasswordText = stringResource(R.string.wifi_password)
-    val wifiConnectingText = stringResource(R.string.wifi_connecting)
-    val registerText = stringResource(R.string.register)
     val cmText = stringResource(R.string.cm)
     val kgText = stringResource(R.string.kg)
     val heightText = stringResource(R.string.height)
@@ -70,7 +82,6 @@ fun MyPageScreen(
     val bpmText = stringResource(R.string.bpm)
     val withdrawalTitleMessage = stringResource(R.string.mypage_message_withdrawal_title)
     val withdrawalMessage = stringResource(R.string.mypage_message_withdrawal)
-    val deviceRegisterMessage = stringResource(R.string.mypage_message_device_register)
     val wifiConfigSentMessage = stringResource(R.string.mypage_message_wifi_config_sent)
     val wifiBleConnectedSuccessMessage = stringResource(R.string.mypage_message_wifi_ble_connected_success)
     val logoutSuccessMessage = stringResource(R.string.mypage_message_logout_success)

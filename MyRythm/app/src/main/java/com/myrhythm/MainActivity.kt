@@ -16,6 +16,8 @@ import com.myrhythm.splash.SplashViewModel
 import com.myrhythm.ui.theme.MyRhythmTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.WindowCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -23,6 +25,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO) //1208 다크모드비활
+
 
         askNotificationPermission()
 

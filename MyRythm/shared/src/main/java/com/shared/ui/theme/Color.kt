@@ -17,6 +17,7 @@ val Secondary = Color(0x4DB5E5E1)
 val OnSurfaceVariant = Color(0xFF5DB0A8)
 
 val SurfaceVariant = Color(0xFFB4B4B4)
+val SecondaryContainer = Color(0xFFF7FDFC)
 
 // 컴포넌트
 val InquiryCardAnswer = Color(0xFFDFFDFB)
