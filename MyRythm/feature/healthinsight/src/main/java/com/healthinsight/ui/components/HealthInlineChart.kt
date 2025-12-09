@@ -7,17 +7,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
 import com.patrykandpatrick.vico.compose.component.lineComponent
-import com.patrykandpatrick.vico.compose.component.shapeComponent
 import com.patrykandpatrick.vico.compose.component.textComponent
 import com.patrykandpatrick.vico.compose.style.ProvideChartStyle
 import com.patrykandpatrick.vico.core.axis.AxisItemPlacer
 import com.patrykandpatrick.vico.core.chart.values.AxisValuesOverrider
-import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
 import com.patrykandpatrick.vico.core.entry.entryOf
 
@@ -71,7 +70,7 @@ fun HealthLineChart(
         Chart(
             chart = lineChart(
                 axisValuesOverrider = axisValuesOverrider,
-                spacing = 24.dp
+                spacing = 16.dp  // 간격 줄임
             ),
             chartModelProducer = chartEntryModelProducer,
             startAxis = rememberStartAxis(
@@ -94,14 +93,31 @@ fun HealthLineChart(
             ),
             bottomAxis = rememberBottomAxis(
                 label = textComponent(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textSize = 10.sp
                 ),
                 valueFormatter = { value, _ ->
-                    // 각 날짜의 중간 지점(측정 2번째)에만 날짜 표시
                     val dayIndex = (value.toInt() / 3)
                     val measurementIndex = value.toInt() % 3
                     if (measurementIndex == 1 && dayIndex < labels.size) {
-                        labels[dayIndex]
+                        val label = labels[dayIndex]
+                        println("Label at $dayIndex: '$label'")  // 🔥 디버깅
+
+                        // 여러 형식 시도
+                        when {
+                            label.contains("월") && label.contains("일") -> {
+                                // "12월 02일" -> "02"
+                                label.substringAfter("월 ").substringBefore("일").trim()
+                            }
+                            label.contains("/") -> {
+                                // "12/02" -> "02"
+                                label.substringAfter("/").trim()
+                            }
+                            else -> {
+                                // 마지막 2-3자만 표시
+                                label.takeLast(3).replace("일", "").trim()
+                            }
+                        }
                     } else {
                         ""
                     }
@@ -115,7 +131,7 @@ fun HealthLineChart(
             modifier = modifier
                 .fillMaxWidth()
                 .height(230.dp)
-                .padding(vertical = 8.dp, horizontal = 4.dp)
+                .padding(vertical = 8.dp, horizontal = 0.dp)
         )
     }
 }
