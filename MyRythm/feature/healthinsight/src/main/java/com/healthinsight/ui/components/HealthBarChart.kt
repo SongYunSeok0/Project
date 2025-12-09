@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
@@ -97,7 +98,7 @@ fun HealthBarChart(
                 columns = columnComponents,
                 axisValuesOverrider = axisValuesOverrider,
                 decorations = decorations,
-                spacing = 28.dp
+                spacing = 20.dp  // 28.dp -> 20.dp
             ),
             chartModelProducer = chartEntryModelProducer,
             startAxis = rememberStartAxis(
@@ -120,10 +121,23 @@ fun HealthBarChart(
             ),
             bottomAxis = rememberBottomAxis(
                 label = textComponent(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textSize = 10.sp  // 텍스트 크기 추가
                 ),
                 valueFormatter = { value, _ ->
-                    labels.getOrNull(value.toInt()) ?: ""
+                    val label = labels.getOrNull(value.toInt()) ?: ""
+                    // 날짜 형식 변환
+                    when {
+                        label.contains("월") && label.contains("일") -> {
+                            // "12월 02일" -> "02"
+                            label.substringAfter("월 ").substringBefore("일").trim()
+                        }
+                        label.contains("/") -> {
+                            // "12/02" -> "02"
+                            label.substringAfter("/").trim()
+                        }
+                        else -> label
+                    }
                 },
                 axis = lineComponent(
                     color = MaterialTheme.colorScheme.outlineVariant,

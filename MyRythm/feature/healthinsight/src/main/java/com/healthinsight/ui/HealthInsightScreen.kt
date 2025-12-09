@@ -267,56 +267,6 @@ private fun MedicationDelayCard(medicationDelays: List<MedicationDelayUI>) {
                     modifier = Modifier.padding(vertical = 32.dp)
                 )
             } else {
-                val allDelayMinutes = medicationDelays.map { it.delayMinutes }
-                val onTimeCount = allDelayMinutes.count { it in -5..5 }
-                val onTimeRate = (onTimeCount.toFloat() / allDelayMinutes.size * 100).toInt()
-                val overallAvgDelay = allDelayMinutes.average()
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFF5F5F5)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "전체 정시 복용률",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray
-                            )
-                            Text(
-                                text = "$onTimeRate%",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = when {
-                                    onTimeRate >= 90 -> Color(0xFF66BB6A)
-                                    onTimeRate >= 70 -> Color(0xFFFF9800)
-                                    else -> Color(0xFFEF5350)
-                                }
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "평균 지연",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray
-                            )
-                            Text(
-                                text = "${if (overallAvgDelay > 0) "+" else ""}%.1f분".format(overallAvgDelay),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
                 val groupedByMed = medicationDelays.groupBy { it.label }
 
                 groupedByMed.entries.forEachIndexed { index, (medName, delays) ->
