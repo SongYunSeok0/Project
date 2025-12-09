@@ -23,7 +23,7 @@ import com.healthinsight.ui.components.HealthBarChart
 import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
 import com.shared.R
-import com.shared.ui.components.SimpleBarChart
+
 
 @Composable
 fun HealthInsightScreen(
