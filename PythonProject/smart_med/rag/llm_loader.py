@@ -7,28 +7,10 @@ _cached_model = None
 _lock = threading.Lock()
 
 
+# rag/llm_loader.py
 def get_llm_model():
-    global _cached_tokenizer, _cached_model
-
-    # 이미 로드됨
-    if _cached_tokenizer is not None and _cached_model is not None:
-        return _cached_tokenizer, _cached_model
-
-    # 스레드 안전 로드
-    with _lock:
-        if _cached_tokenizer is None or _cached_model is None:
-            print("[LLM-LOADER] 모델 초기 로딩 시작")
-            tokenizer, model = _load_model()   # ★★★ 여기서 반드시 튜플이 와야 함
-
-            if tokenizer is None or model is None:
-                raise RuntimeError("LLM 모델 로드 실패: _load_model()이 None을 반환함")
-
-            _cached_tokenizer = tokenizer
-            _cached_model = model
-
-            print("[LLM-LOADER] 모델 로딩 완료")
-
-    return _cached_tokenizer, _cached_model
+    # LLM 사용 안 함 → None 반환
+    return None, None
 
 
 def preload_qwen():

@@ -5,7 +5,6 @@ from pgvector.django import CosineDistance
 
 from .models import Chunk
 from .embeddings import get_embedding
-from .llm import generate_answer
 from .symptom import recommend_by_symptom, build_symptom_answer
 from .intents import (
     build_side_effect_answer,
@@ -36,6 +35,9 @@ from .intent_detector import detect_intent
 from .health_food import search_health_food_chunks, build_health_food_answer
 
 
+# ================================================================
+#  RAG Embedding Search
+# ================================================================
 def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> List[Chunk]:
     intent = detect_intent(query)
 
@@ -92,9 +94,7 @@ def retrieve_top_chunks(query: str, k: int = 3, max_distance: float = 0.5) -> Li
 
 
 def prioritize_base_brand(med: str, chunks: List[Chunk]) -> List[Chunk]:
-    exact: List[Chunk] = []
-    contains: List[Chunk] = []
-    others: List[Chunk] = []
+    exact, contains, others = [], [], []
 
     for c in chunks:
         name = (c.item_name or "").strip()
@@ -108,6 +108,9 @@ def prioritize_base_brand(med: str, chunks: List[Chunk]) -> List[Chunk]:
     return exact + contains + others
 
 
+# ================================================================
+#  Context Builder
+# ================================================================
 def build_context(chunks: List[Chunk]) -> str:
     blocks: List[str] = []
     for i, c in enumerate(chunks):
@@ -118,60 +121,31 @@ def build_context(chunks: List[Chunk]) -> str:
     return "\n".join(blocks)
 
 
+# ================================================================
+#  LLM 완전 비활성화 — 여기서 답변을 항상 고정 메시지로 반환
+# ================================================================
 def build_general_answer(question: str, chunks: List[Chunk]) -> str:
-    if not chunks:
-        prompt = (
-            "너는 의약품과 일반 건강 정보를 설명하는 한국어 상담 어시스턴트이다.\n\n"
-            "아래 사용자의 질문에 대해, 네가 이미 학습한 의약·건강 지식을 사용해 "
-            "안전하고 보수적으로 답변해라. 확실하지 않은 내용이나 진단이 필요한 부분은 "
-            "추측하지 말고 반드시 의사 또는 약사 상담을 권고해라.\n"
-            "⭐ 답변은 3-5문장 이내로 핵심만 간결하게 작성해라.\n\n"
-            f"[질문]\n{question}\n\n[답변]\n"
-        )
-        return generate_answer(prompt).strip()
-
-    context = build_context(chunks)
-
-    prompt = f"""
-너는 의약품과 일반 건강 정보를 설명하는 한국어 상담 어시스턴트이다.
-
-[참고 문서]
-{context}
-
-[질문]
-{question}
-
-[지시]
-1. 위 참고 문서 내용을 우선적으로 활용해 답변해라.
-2. 참고 문서에 직접적인 내용이 없더라도,
-   네가 이미 학습한 일반 의약 지식을 사용해 최대한 도움이 되게 설명해라.
-3. 문서 내용을 그대로 복사하지 말고 핵심만 요약해 한국어로 답변해라.
-4. 확실하지 않은 부분은 추측하지 말고 모른다고 말하며,
-   필요한 경우 의사 또는 약사 상담을 권고해라.
-5. ⭐ 답변은 3-5문장 이내로 핵심만 간결하게 작성해라.
-
-[최종 답변]
-"""
-    return generate_answer(prompt).strip()
+    return "[현재 LLM 기능은 비활성화되어 있어 답변 생성이 중지된 상태입니다.]"
 
 
+# ================================================================
+#  Master Answer Builder (RAG + Intent)
+# ================================================================
 def build_answer(question: str, chunks: List[Chunk]) -> str:
-    """
-    질문에 대한 최종 답변 생성
-    - 의료 질문이 아니면 초기에 차단
-    """
-    # ========== 의료 질문 필터링 ==========
+
+    # 의료 질문이 아니면 차단
     if not is_medical_question(question):
         print(f"[FILTER] 비의료 질문 차단: {question[:50]}")
         return get_non_medical_response()
-    # =====================================
 
     intent = detect_intent(question)
     print("[INTENT]", intent, "/ q =", question)
 
+    # 일반 의약 상담 → LLM 없이 고정 메시지 반환
     if intent == INTENT_GENERAL:
         return clean_output(build_general_answer(question, chunks))
 
+    # 증상 기반 추천
     if intent == INTENT_SYMPTOM:
         recs = recommend_by_symptom(question)
         if recs:
@@ -183,11 +157,13 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
 
         return clean_output(build_general_answer(question, chunks))
 
+    # 부작용
     if intent == INTENT_SIDE_EFFECT:
         if chunks:
             return clean_output(build_side_effect_answer(question, chunks))
         return clean_output(build_general_answer(question, chunks))
 
+    # 효능
     if intent == INTENT_EFFICACY:
         q_norm = normalize(question)
         is_health_food_q = any(h in q_norm for h in HEALTH_FOOD_KEYS)
@@ -207,19 +183,23 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
 
         return clean_output(build_general_answer(question, []))
 
+    # 용법·용량
     if intent == INTENT_DOSAGE:
         if chunks:
             return clean_output(build_dosage_answer(question, chunks))
         return clean_output(build_general_answer(question, chunks))
 
+    # 상호작용
     if intent == INTENT_INTERACTION:
         if chunks:
             return clean_output(build_interaction_answer(question, chunks))
         return clean_output(build_general_answer(question, chunks))
 
+    # 주의사항·경고
     if intent == INTENT_WARNING:
         if chunks:
             return clean_output(build_warning_answer(question, chunks))
         return clean_output(build_general_answer(question, chunks))
 
+    # fallback
     return clean_output(build_general_answer(question, chunks))

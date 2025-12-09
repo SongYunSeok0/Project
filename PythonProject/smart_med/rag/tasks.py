@@ -2,18 +2,16 @@
 from celery import shared_task
 
 from .services import retrieve_top_chunks, build_answer
-from .llm_loader import get_llm_model
 
 
 @shared_task(bind=True)
 def run_rag_task(self, question):
     try:
-        tokenizer, model = get_llm_model()
-
+        # 1) RAG 검색
         chunks = retrieve_top_chunks(question, k=5)
         answer = build_answer(question, chunks)
 
-        # fallback contexts 동일 적용!
+        # 2) context fallback
         if not chunks:
             contexts = [{
                 "chunk_id": "",
@@ -22,19 +20,16 @@ def run_rag_task(self, question):
                 "chunk_index": 0
             }]
         else:
-            contexts = [
-                {
-                    "chunk_id": c.chunk_id,
-                    "item_name": c.item_name,
-                    "section": c.section,
-                    "chunk_index": c.chunk_index,
-                }
-                for c in chunks
-            ]
+            contexts = [{
+                "chunk_id": c.chunk_id,
+                "item_name": c.item_name,
+                "section": c.section,
+                "chunk_index": c.chunk_index,
+            } for c in chunks]
 
         return {
             "status": "done",
-            "task_id": self.request.id,
+            "question": question,
             "result": {
                 "answer": answer,
                 "contexts": contexts,
@@ -43,6 +38,3 @@ def run_rag_task(self, question):
 
     except Exception as e:
         return {"status": "failed", "error": str(e)}
-
-
-

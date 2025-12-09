@@ -190,14 +190,14 @@ def check_missed_medication():
             # Plan 정보
             med_name = regihistory.label
             plan_count = len(plans)
-            plan_ids = [str(p.id) for p in plans]
+            plan_id = [str(p.id) for p in plans]
 
             # FCM 전송 (data만 사용, notification 없음)
             message = messaging.Message(
                 data={
                     "type": "missed_alarm",
                     "regihistory_id": str(regihistory.id),
-                    "plan_ids": ",".join(plan_ids),
+                    "plan_id": ",".join(plan_id),
                     "plan_count": str(plan_count),
                     "user_name": patient.username,
                     "med_name": med_name,
