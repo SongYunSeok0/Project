@@ -72,24 +72,6 @@ private fun HealthInsightContent(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 🔥 개발용 테스트 버튼 (배포 시 제거)
-            Button(
-                onClick = onInsertTestData,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2196F3)
-                )
-            ) {
-                Text("걸음수 테스트 데이터 삽입")
-            }
-
-            MedicationDelayCard(medicationDelays)
-            if (weeklyHeartRates.isNotEmpty()) {
-                HeartRateCard(weeklyHeartRates)
-            }
-            if (weeklySteps.isNotEmpty()) {
-                StepsCard(weeklySteps)
-            }
         }
     }
 }
