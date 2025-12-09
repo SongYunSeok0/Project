@@ -14,4 +14,6 @@ interface StepRepository {
     fun observeWeeklySteps(): Flow<List<DailyStep>>
     suspend fun refreshWeeklySteps()
     suspend fun getWeeklySteps(): List<DailyStep>
+
+    suspend fun insertDummyData()
 }

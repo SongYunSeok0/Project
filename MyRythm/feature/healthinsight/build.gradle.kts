@@ -62,7 +62,7 @@ dependencies {
 
     implementation(libs.androidx.material3)
 
-    implementation(libs.vico.compose)
-    implementation(libs.vico.compose.m3)
-    implementation(libs.vico.core)
+    implementation(libs.mpandroidchart)
+
+    implementation(libs.bundles.vico)
 }

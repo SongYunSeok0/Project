@@ -121,4 +121,16 @@ class StepViewModel @Inject constructor(
     override fun onCleared() {
         autoJob?.cancel()
     }
+
+    fun insertTestData() {
+        viewModelScope.launch {
+            try {
+                repo.insertDummyData()
+                loadWeeklySteps()
+                Log.d("StepVM", "✅ 테스트 데이터 7건 삽입 완료")
+            } catch (e: Exception) {
+                Log.e("StepVM", "❌ 테스트 데이터 삽입 실패", e)
+            }
+        }
+    }
 }

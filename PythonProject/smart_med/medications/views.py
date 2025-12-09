@@ -16,7 +16,7 @@ from .serializers import (
     RegiHistoryCreateSerializer,
     PlanSerializer,
     PlanCreateIn,
-    RegiHistoryWithPlansSerializer,   # 🔥 스태프용 응답
+    RegiHistoryWithPlansSerializer,
 )
 
 from .docs import (

@@ -26,7 +26,7 @@ interface StepDao {
     // 기존 주간 조회 함수 (suspend 버전)
     @Query("""
         SELECT * FROM daily_steps
-        ORDER BY date DESC
+        ORDER BY date ASC
         LIMIT 7
     """)
     suspend fun getLast7Days(): List<DailyStepEntity>

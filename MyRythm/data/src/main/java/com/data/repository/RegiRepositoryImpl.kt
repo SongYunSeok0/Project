@@ -122,6 +122,7 @@ class RegiRepositoryImpl @Inject constructor(
             entities += PlanEntity(
                 id = res.id,
                 regihistoryId = res.regihistoryId,
+                regihistoryLabel = res.regihistoryLabel,
                 medName = res.medName,
                 takenAt = res.takenAt,
                 exTakenAt = res.exTakenAt,
@@ -130,7 +131,7 @@ class RegiRepositoryImpl @Inject constructor(
                 taken = res.taken,
                 takenTime = res.takenTime,
                 useAlarm = res.useAlarm,
-                status = res.status           // 🔹 서버에서 내려온 status 저장
+                status = res.status
             )
         }
 
@@ -143,6 +144,7 @@ class RegiRepositoryImpl @Inject constructor(
                 Plan(
                     id = row.id,
                     regihistoryId = row.regihistoryId,
+                    regihistoryLabel = row.regihistoryLabel,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     exTakenAt = row.exTakenAt,
@@ -151,7 +153,7 @@ class RegiRepositoryImpl @Inject constructor(
                     taken = row.taken,
                     takenTime = row.takenTime,
                     useAlarm = row.useAlarm,
-                    status = PlanStatus.from(row.status)   // 🔹 String? → enum
+                    status = PlanStatus.from(row.status)
                 )
             }
         }
@@ -162,6 +164,7 @@ class RegiRepositoryImpl @Inject constructor(
                 Plan(
                     id = row.id,
                     regihistoryId = row.regihistoryId,
+                    regihistoryLabel = row.regihistoryLabel,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     exTakenAt = row.exTakenAt,
@@ -170,7 +173,7 @@ class RegiRepositoryImpl @Inject constructor(
                     taken = row.taken,
                     takenTime = row.takenTime,
                     useAlarm = row.useAlarm,
-                    status = PlanStatus.from(row.status)   // 🔹 동일
+                    status = PlanStatus.from(row.status)
                 )
             }
         }
@@ -199,6 +202,7 @@ class RegiRepositoryImpl @Inject constructor(
             PlanEntity(
                 id = res.id,
                 regihistoryId = res.regihistoryId,
+                regihistoryLabel = res.regihistoryLabel,
                 medName = res.medName,
                 takenAt = res.takenAt,
                 exTakenAt = res.exTakenAt,
@@ -207,13 +211,12 @@ class RegiRepositoryImpl @Inject constructor(
                 taken = res.taken,
                 takenTime = res.takenTime,
                 useAlarm = res.useAlarm,
-                status = res.status           // 🔹 여기서도 저장
+                status = res.status
             )
         }
         planDao.insertAll(planEntities)
     }
 
-    // 🔥 스태프 전용: 특정 사용자의 모든 등록 이력 (Plan 포함)
     override suspend fun getUserRegiHistories(userId: Long): Result<List<RegiHistoryWithPlans>> =
         withContext(Dispatchers.IO) {
             runCatching {
@@ -221,7 +224,6 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    // 🔥 스태프 전용: 모든 등록 이력
     override suspend fun getAllRegiHistories(): Result<List<RegiHistoryWithPlans>> =
         withContext(Dispatchers.IO) {
             runCatching {
@@ -229,7 +231,6 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    // 🔥 스태프 전용: 특정 사용자의 모든 복약 스케줄
     override suspend fun getUserPlans(userId: Long): Result<List<Plan>> =
         withContext(Dispatchers.IO) {
             runCatching {

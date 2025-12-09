@@ -42,7 +42,11 @@ class MediReportViewModel @Inject constructor(
 
     fun deleteRecordGroup(userId: Long, group: GroupedMediRecord) {
         viewModelScope.launch {
-            // 그룹의 모든 Plan 삭제
+
+            val current = _records.value.toMutableList()
+            current.removeAll { it.regiLabel == group.label }
+            _records.value = current
+
             group.records.forEach { record ->
                 deletePlanUseCase(userId = userId, planId = record.id)
             }
