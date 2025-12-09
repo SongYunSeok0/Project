@@ -10,11 +10,7 @@ fun PlanWithRegi.toDomain(): MediRecord {
         takenAt = plan.takenAt,
         mealTime = plan.mealTime,
         memo = plan.note,
-        taken = when (plan.taken) {
-            1L -> true
-            0L -> false
-            else -> null
-        },
+        taken = plan.taken,
         regiLabel = regi?.label
     )
 }

@@ -21,6 +21,8 @@ import com.data.core.auth.JwtUtils
 import com.data.core.di.CoreEntryPoint
 import com.domain.repository.*
 import com.google.accompanist.swiperefresh.*
+import com.healthinsight.navigation.HealthInsightRoute
+import com.healthinsight.navigation.healthInsightNavGraph
 import com.map.navigation.MapRoute
 import com.map.navigation.mapNavGraph
 import com.mypage.navigation.*
@@ -185,7 +187,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
         SwipeRefresh(
             modifier = Modifier.padding(inner),
             state = rememberSwipeRefreshState(isRefreshing = refreshing),
-            swipeEnabled = syncEnabled,              // 🔹 허용된 화면에서만 제스처 활성화
+            swipeEnabled = syncEnabled,
             onRefresh = {
                 if (syncEnabled) {
                     refreshAll()
@@ -217,6 +219,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
                     onLogoutClick = { authVm.logout() }
                 )
                 chatbotNavGraph()
+                healthInsightNavGraph()  // 🔥 추가
             }
         }
     }
@@ -232,6 +235,7 @@ private fun isSyncAllowedRoute(routeName: String): Boolean {
         routeName.startsWith(MyPageRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(EditProfileRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(HeartReportRoute::class.qualifiedName.orEmpty()) -> true
+        routeName.startsWith(HealthInsightRoute::class.qualifiedName.orEmpty()) -> true  // 🔥 추가
 
         // 일정 / 처방 관련
         routeName.startsWith(SchedulerRoute::class.qualifiedName.orEmpty()) -> true
@@ -256,6 +260,7 @@ private fun titleFor(routeName: String) = when (routeName) {
     NewsRoute::class.qualifiedName -> "뉴스"
     UserManageRoute::class.qualifiedName -> "사용자 관리"
     InquiriesManageRoute::class.qualifiedName -> "문의사항 관리"
+    HealthInsightRoute::class.qualifiedName -> "건강 인사이트"  // 🔥 추가
     else -> "마이 리듬"
 }
 

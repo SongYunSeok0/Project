@@ -10,11 +10,14 @@ data class PlanEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Long,
     val regihistoryId: Long?,
+    val regihistoryLabel: String?,
     val medName: String,
     val takenAt: Long?,
     val exTakenAt: Long?,
     val mealTime: String?,
     val note: String?,
-    val taken: Long?,
-    val useAlarm: Boolean
+    val taken: Boolean?,
+    val takenTime: Long?,
+    val useAlarm: Boolean,
+    val status: String? = null
 )

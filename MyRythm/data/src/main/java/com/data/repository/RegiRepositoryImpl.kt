@@ -10,6 +10,7 @@ import com.data.network.dto.regihistory.RegiHistoryRequest
 import com.data.network.mapper.toDomain
 import com.data.network.mapper.toModelList
 import com.domain.model.Plan
+import com.domain.model.PlanStatus
 import com.domain.model.RegiHistory
 import com.domain.model.RegiHistoryWithPlans
 import com.domain.repository.RegiRepository
@@ -101,12 +102,13 @@ class RegiRepositoryImpl @Inject constructor(
         regiHistoryApi.deleteRegiHistory(id)
         regiHistoryDao.deleteById(id)
     }
+
     override suspend fun createPlans(regihistoryId: Long?, list: List<Plan>) {
         val entities = mutableListOf<PlanEntity>()
 
         for (plan in list) {
             val req = PlanCreateRequest(
-                regihistoryId = regihistoryId,      // PlanCreateRequest 도 Long? 이라 호환됨
+                regihistoryId = regihistoryId,
                 medName = plan.medName,
                 takenAt = plan.takenAt,
                 mealTime = plan.mealTime,
@@ -119,20 +121,22 @@ class RegiRepositoryImpl @Inject constructor(
 
             entities += PlanEntity(
                 id = res.id,
-                regihistoryId = res.regihistoryId,  // 서버에서 오는 값 사용
+                regihistoryId = res.regihistoryId,
+                regihistoryLabel = res.regihistoryLabel,
                 medName = res.medName,
                 takenAt = res.takenAt,
                 exTakenAt = res.exTakenAt,
                 mealTime = res.mealTime,
                 note = res.note,
                 taken = res.taken,
-                useAlarm = res.useAlarm
+                takenTime = res.takenTime,
+                useAlarm = res.useAlarm,
+                status = res.status
             )
         }
 
         planDao.insertAll(entities)
     }
-
 
     override fun observeAllPlans(userId: Long): Flow<List<Plan>> =
         planDao.getAllByUser(userId).map { list ->
@@ -140,13 +144,16 @@ class RegiRepositoryImpl @Inject constructor(
                 Plan(
                     id = row.id,
                     regihistoryId = row.regihistoryId,
+                    regihistoryLabel = row.regihistoryLabel,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     exTakenAt = row.exTakenAt,
                     mealTime = row.mealTime,
                     note = row.note,
                     taken = row.taken,
-                    useAlarm = row.useAlarm
+                    takenTime = row.takenTime,
+                    useAlarm = row.useAlarm,
+                    status = PlanStatus.from(row.status)
                 )
             }
         }
@@ -157,13 +164,16 @@ class RegiRepositoryImpl @Inject constructor(
                 Plan(
                     id = row.id,
                     regihistoryId = row.regihistoryId,
+                    regihistoryLabel = row.regihistoryLabel,
                     medName = row.medName,
                     takenAt = row.takenAt,
                     exTakenAt = row.exTakenAt,
                     mealTime = row.mealTime,
                     note = row.note,
                     taken = row.taken,
-                    useAlarm = row.useAlarm
+                    takenTime = row.takenTime,
+                    useAlarm = row.useAlarm,
+                    status = PlanStatus.from(row.status)
                 )
             }
         }
@@ -192,19 +202,21 @@ class RegiRepositoryImpl @Inject constructor(
             PlanEntity(
                 id = res.id,
                 regihistoryId = res.regihistoryId,
+                regihistoryLabel = res.regihistoryLabel,
                 medName = res.medName,
                 takenAt = res.takenAt,
                 exTakenAt = res.exTakenAt,
                 mealTime = res.mealTime,
                 note = res.note,
                 taken = res.taken,
-                useAlarm = res.useAlarm
+                takenTime = res.takenTime,
+                useAlarm = res.useAlarm,
+                status = res.status
             )
         }
         planDao.insertAll(planEntities)
     }
 
-    // 🔥 스태프 전용: 특정 사용자의 모든 등록 이력 (Plan 포함)
     override suspend fun getUserRegiHistories(userId: Long): Result<List<RegiHistoryWithPlans>> =
         withContext(Dispatchers.IO) {
             runCatching {
@@ -212,7 +224,6 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    // 🔥 스태프 전용: 모든 등록 이력
     override suspend fun getAllRegiHistories(): Result<List<RegiHistoryWithPlans>> =
         withContext(Dispatchers.IO) {
             runCatching {
@@ -220,7 +231,6 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    // 🔥 스태프 전용: 특정 사용자의 모든 복약 스케줄
     override suspend fun getUserPlans(userId: Long): Result<List<Plan>> =
         withContext(Dispatchers.IO) {
             runCatching {

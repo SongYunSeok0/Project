@@ -35,7 +35,7 @@ import com.data.db.entity.UserEntity
         DailyStepEntity::class,
         HeartRateEntity::class,
     ],
-    version = 14,
+    version = 1,
     exportSchema = false
 )
 abstract class AppRoomDatabase : RoomDatabase() {
@@ -48,11 +48,6 @@ abstract class AppRoomDatabase : RoomDatabase() {
     abstract fun heartRateDao(): HeartRateDao
 
     companion object {
-        val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                // ⚠️ 테이블 삭제 후 재생성 or 컬럼 추가 등 필요한 처리
-            }
-        }
 
         @Volatile
         private var INSTANCE: AppRoomDatabase? = null
@@ -64,7 +59,6 @@ abstract class AppRoomDatabase : RoomDatabase() {
                     AppRoomDatabase::class.java,
                     "app.db"
                 )
-                    .addMigrations(MIGRATION_2_3)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

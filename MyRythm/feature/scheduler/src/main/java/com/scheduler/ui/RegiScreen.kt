@@ -498,11 +498,13 @@ fun RegiScreen(
                                 plans += Plan(
                                     id = 0L,
                                     regihistoryId = regihistoryId,
+                                    regihistoryLabel = label,
                                     medName = med,
                                     takenAt = takenAt,
                                     mealTime = mealRelation,
                                     note = memo.ifBlank { null },
                                     taken = null,
+                                    takenTime = null,
                                     exTakenAt = takenAt,
                                     useAlarm = useAlarm
                                 )
