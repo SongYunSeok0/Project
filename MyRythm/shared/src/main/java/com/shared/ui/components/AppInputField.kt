@@ -99,13 +99,13 @@ fun AppInputField(
         ),
         keyboardActions = keyboardActions,
         // 필드 옆에 추가하는 인증/아이콘 등등 UI
-        leadingIcon = {
-            if (leadingContent != null) leadingContent()
+        leadingIcon = if (leadingContent != null) {
+            { leadingContent() }
+        } else null,
 
-        },
-        trailingIcon = {
-            if (trailingContent != null) trailingContent()
-        },
+        trailingIcon = if (trailingContent != null) {
+            { trailingContent() }
+        } else null,
 
         colors = if (outlined) {
             OutlinedTextFieldDefaults.colors(

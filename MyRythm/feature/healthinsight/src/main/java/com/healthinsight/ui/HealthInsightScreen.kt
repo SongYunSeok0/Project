@@ -29,9 +29,6 @@ import com.shared.ui.components.SimpleBarChart
 fun HealthInsightScreen(
     viewModel: HealthInsightViewModel = hiltViewModel()
 ) {
-    val healthInsightText = stringResource(R.string.healthinsight)
-    val recentStepText = stringResource(R.string.recent_step)
-
     val weeklySteps by viewModel.weeklySteps.collectAsStateWithLifecycle()
     val weeklyHeartRates by viewModel.weeklyHeartRates.collectAsStateWithLifecycle()
     val medicationDelays by viewModel.medicationDelays.collectAsStateWithLifecycle()
@@ -103,6 +100,7 @@ private fun HealthInsightContent(
 
 @Composable
 private fun StepsCard(weeklySteps: List<DailyStep>) {
+    val recentStepText = stringResource(R.string.recent_step)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -118,7 +116,7 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
                 .padding(20.dp)
         ) {
             Text(
-                text = "🚶 최근 7일 걸음수",
+                text = recentStepText,
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.Black
             )
