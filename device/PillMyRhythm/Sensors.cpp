@@ -76,7 +76,6 @@ void updateBPM() {
     unsigned long now = millis();
     int val = readSmooth(SENSOR_PIN);
 
-    // 손가락 감지
     fingerPresent = (val > 500);
     if (!fingerPresent) {
         baseline = 0;
@@ -87,24 +86,22 @@ void updateBPM() {
         return;
     }
 
-    // baseline 계산
+    // baseline 계산 (미세하게 둔감하게)
     if (baseline == 0) baseline = val;
-    else baseline = (baseline * 19 + val) / 20;
+    else baseline = (baseline * 14 + val) / 15;  // ← 9 → 14로 변경
 
-    int threshold = baseline + 10;
-    const unsigned long LOCAL_MIN_GAP = 550;
+    int threshold = baseline + 8;                // ← +6 → +8 조정
+    const unsigned long LOCAL_MIN_GAP = 450;     // ← 380 → 450ms
 
-    // 피크 감지
     if (!isAbove && val > threshold && (now - lastBeat) > LOCAL_MIN_GAP) {
         isAbove = true;
         lastBeat = now;
         beats++;
-    } 
+    }
     else if (isAbove && val < baseline) {
         isAbove = false;
     }
 
-    // BPM 계산
     if (now - bpmStartTime >= BPM_INTERVAL) {
         unsigned long window = now - bpmStartTime;
         float instantBPM = (window > 0) ? beats * (60000.0 / window) : 0;
@@ -112,11 +109,12 @@ void updateBPM() {
         bpmStartTime = now;
         beats = 0;
 
-        // 스무딩
         if (currentBPM == 0) currentBPM = instantBPM;
         else currentBPM = currentBPM * 0.6f + instantBPM * 0.4f;
     }
 }
+
+
 
 
 // ===================================================

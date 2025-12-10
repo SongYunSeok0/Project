@@ -135,7 +135,7 @@ void checkWeight() {
     // -----------------------------
     // 약 꺼냄 감지 (이 순간만 openedEvent = true)
     // -----------------------------
-    if (adiff > 100) {
+    if (adiff > 5) {
         openedEvent = true;      // 서버에 보낼 이벤트
         openedTime = now;
 
