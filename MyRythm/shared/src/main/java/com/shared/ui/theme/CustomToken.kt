@@ -52,6 +52,26 @@ data class ComponentThemeColor(
     val completionCaution: Color,
     val bookMarkColor: Color,
     val dividerColor: Color,
+
+    val stepBarBlueColor: Color,
+    val stepBarBlueDarkColor: Color,
+    val stepBarBlueDarkerColor: Color,
+    val heartRateLineColor: Color,
+    val heartRateAverageColor: Color,
+    val heartRateMaxColor: Color,
+    val heartRateMinColor: Color,
+    val medicationDelayGood1Color: Color,
+    val medicationDelayGood2Color: Color,
+    val medicationDelayGood3Color: Color,
+    val medicationDelayNormal1Color: Color,
+    val medicationDelayNormal2Color: Color,
+    val medicationDelayNormal3Color: Color,
+    val medicationDelayBad1Color: Color,
+    val medicationDelayBad2Color: Color,
+    val medicationDelayBad3Color: Color,
+    val onTimeRateGoodColor: Color,
+    val onTimeRateNormalColor: Color,
+    val onTimeRateBadColor: Color,
     )
 
 val LoginThemeColors = LoginThemeColor(
@@ -101,6 +121,26 @@ val ComponentThemeColors = ComponentThemeColor(
     completionCaution = CompletionCautionColor,
     bookMarkColor = BookMarkColor,
     dividerColor = DividerColor,
+
+    stepBarBlueColor = StepBarBlueColor,
+    stepBarBlueDarkColor = StepBarBlueDarkColor,
+    stepBarBlueDarkerColor = StepBarBlueDarkerColor,
+    heartRateLineColor = HeartRateLineColor,
+    heartRateAverageColor = HeartRateAverageColor,
+    heartRateMaxColor = HeartRateMaxColor,
+    heartRateMinColor = HeartRateMinColor,
+    medicationDelayGood1Color = MedicationDelayGood1Color,
+    medicationDelayGood2Color = MedicationDelayGood2Color,
+    medicationDelayGood3Color = MedicationDelayGood3Color,
+    medicationDelayNormal1Color = MedicationDelayNormal1Color,
+    medicationDelayNormal2Color = MedicationDelayNormal2Color,
+    medicationDelayNormal3Color = MedicationDelayNormal3Color,
+    medicationDelayBad1Color = MedicationDelayBad1Color,
+    medicationDelayBad2Color = MedicationDelayBad2Color,
+    medicationDelayBad3Color = MedicationDelayBad3Color,
+    onTimeRateGoodColor = OnTimeRateGoodColor,
+    onTimeRateNormalColor = OnTimeRateNormalColor,
+    onTimeRateBadColor = OnTimeRateBadColor,
     )
 
 // Login Local

@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +40,7 @@ import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
 import com.shared.R
 import com.shared.ui.theme.AppTheme
+import com.shared.ui.theme.componentTheme
 
 @Composable
 fun HealthInsightScreen(
@@ -161,9 +163,9 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
                 }
 
                 val stepColors = listOf(
-                    Color(0xFF2196F3),
-                    Color(0xFF1E88E5),
-                    Color(0xFF1976D2),
+                    MaterialTheme.componentTheme.stepBarBlueColor,
+                    MaterialTheme.componentTheme.stepBarBlueDarkColor,
+                    MaterialTheme.componentTheme.stepBarBlueDarkerColor,
                 )
 
                 HealthBarChart(
@@ -183,8 +185,16 @@ private fun StepsCard(weeklySteps: List<DailyStep>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem(averageText, "${String.format("%,d", avgSteps)}$stepText", Color(0xFF2196F3))
-                    StatItem(maximumText, "${String.format("%,d", maxSteps)}$stepText", Color(0xFF1976D2))
+                    StatItem(
+                        averageText,
+                        "${String.format("%,d", avgSteps)}$stepText",
+                        MaterialTheme.componentTheme.stepBarBlueColor
+                    )
+                    StatItem(
+                        maximumText,
+                        "${String.format("%,d", maxSteps)}$stepText",
+                        MaterialTheme.componentTheme.stepBarBlueDarkerColor
+                    )
                 }
             }
         }
@@ -241,7 +251,7 @@ private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
                 HealthLineChart(
                     measurements = measurements,
                     labels = labels,
-                    lineColor = Color(0xFFE91E63),
+                    lineColor = MaterialTheme.componentTheme.heartRateLineColor,
                     valueUnit = ""
                 )
 
@@ -258,9 +268,9 @@ private fun HeartRateCard(weeklyHeartRates: List<DailyHeartRateUI>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem(averageText, "${avgBpm}bpm", Color(0xFFE91E63))
-                    StatItem(maximumText, "${maxBpm}bpm", Color(0xFFD81B60))
-                    StatItem(minimumText, "${minBpm}bpm", Color(0xFFC2185B))
+                    StatItem(averageText, "${avgBpm}bpm", MaterialTheme.componentTheme.heartRateAverageColor)
+                    StatItem(maximumText, "${maxBpm}bpm", MaterialTheme.componentTheme.heartRateMaxColor)
+                    StatItem(minimumText, "${minBpm}bpm", MaterialTheme.componentTheme.heartRateMinColor)
                 }
             }
         }
@@ -373,19 +383,19 @@ private fun MedicationChart(
         val avgDelay = delays.map { it.delayMinutes }.average()
         val medicationColors = when {
             avgDelay <= 5 -> listOf(
-                Color(0xFF66BB6A),
-                Color(0xFF81C784),
-                Color(0xFF4CAF50)
+                MaterialTheme.componentTheme.medicationDelayGood1Color,
+                MaterialTheme.componentTheme.medicationDelayGood2Color,
+                MaterialTheme.componentTheme.medicationDelayGood3Color
             )
             avgDelay <= 15 -> listOf(
-                Color(0xFFFFB74D),
-                Color(0xFFFF9800),
-                Color(0xFFFFA726)
+                MaterialTheme.componentTheme.medicationDelayNormal1Color,
+                MaterialTheme.componentTheme.medicationDelayNormal2Color,
+                MaterialTheme.componentTheme.medicationDelayNormal3Color
             )
             else -> listOf(
-                Color(0xFFEF5350),
-                Color(0xFFE57373),
-                Color(0xFFD32F2F)
+                MaterialTheme.componentTheme.medicationDelayBad1Color,
+                MaterialTheme.componentTheme.medicationDelayBad2Color,
+                MaterialTheme.componentTheme.medicationDelayBad3Color
             )
         }
 
@@ -432,9 +442,9 @@ private fun MedicationChart(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = when {
-                        onTimeRate >= 90 -> Color(0xFF66BB6A)
-                        onTimeRate >= 70 -> Color(0xFFFF9800)
-                        else -> Color(0xFFEF5350)
+                        onTimeRate >= 90 -> MaterialTheme.componentTheme.onTimeRateGoodColor
+                        onTimeRate >= 70 -> MaterialTheme.componentTheme.onTimeRateNormalColor
+                        else -> MaterialTheme.componentTheme.onTimeRateBadColor
                     }
                 )
             }

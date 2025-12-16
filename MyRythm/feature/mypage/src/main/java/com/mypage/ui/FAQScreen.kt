@@ -148,49 +148,54 @@ private fun FAQTabContent(
 fun FAQScreenWithSampleDataPreview() {
     // 🔥 샘플 데이터 - 새로운 구조에 맞춰 수정
     val sampleInquiries = listOf(
+        // 🔴 1. 미답변 (가장 상위)
         Inquiry(
             id = 1,
             userId = 100,
             username = "사용자1",
-            type = "결제 문의",
-            title = "환불은 어떻게 하나요?",
-            content = "구매한 상품의 환불 절차가 궁금합니다.",
-            isAnswered = true,
-            createdAt = "2025-11-03T10:00:00Z",
-            commentCount = 1,
-            comments = listOf(
-                InquiryComment(
-                    id = 1,
-                    inquiryId = 1,
-                    userId = 999,
-                    username = "관리자",
-                    content = "환불은 구매일로부터 7일 이내 가능합니다.",
-                    createdAt = "2025-11-04T14:00:00Z",
-                    isStaff = true
-                )
-            )
+            type = "일반문의",
+            title = "등록방법",
+            content = "회원 가입 후 약 정보는 어디에서 등록하나요?",
+            isAnswered = false,
+            createdAt = "2025-11-08T09:00:00Z",
+            commentCount = 0,
+            comments = emptyList()
         ),
+
+        // 🟢 2. 답변완료
         Inquiry(
             id = 2,
             userId = 100,
             username = "사용자1",
-            type = "서비스 이용",
-            title = "회원 탈퇴 방법 제목글자수테스트",
-            content = "회원 탈퇴를 하고 싶은데 어떻게 하나요?",
-            isAnswered = false,
-            createdAt = "2025-11-05T10:00:00Z",
-            commentCount = 0,
-            comments = emptyList()
+            type = "일반문의",
+            title = "약 복용 알림은 어떻게 설정하나요?",
+            content = "복용 시간 알림 설정 방법이 궁금합니다.",
+            isAnswered = true,
+            createdAt = "2025-11-07T10:30:00Z",
+            commentCount = 1,
+            comments = listOf(
+                InquiryComment(
+                    id = 1,
+                    inquiryId = 2,
+                    userId = 999,
+                    username = "관리자",
+                    content = "스케줄러 메뉴에서 복용 시간을 등록하시면 알림이 자동 설정됩니다.",
+                    createdAt = "2025-11-07T11:00:00Z",
+                    isStaff = true
+                )
+            )
         ),
+
+        // 🟢 3. 답변완료 (버그신고)
         Inquiry(
             id = 3,
             userId = 100,
             username = "사용자1",
-            type = "기술 지원",
-            title = "로그인이 안됩니다",
-            content = "비밀번호를 입력해도 로그인이 되지 않아요.",
+            type = "버그신고",
+            title = "로그인이 간헐적으로 안 됩니다",
+            content = "앱 실행 후 로그인이 실패하는 경우가 있습니다.",
             isAnswered = true,
-            createdAt = "2025-11-06T10:00:00Z",
+            createdAt = "2025-11-06T14:20:00Z",
             commentCount = 1,
             comments = listOf(
                 InquiryComment(
@@ -198,21 +203,23 @@ fun FAQScreenWithSampleDataPreview() {
                     inquiryId = 3,
                     userId = 999,
                     username = "관리자",
-                    content = "비밀번호 재설정을 시도해보시기 바랍니다.",
-                    createdAt = "2025-11-06T15:00:00Z",
+                    content = "현재 해당 이슈를 확인 중이며, 다음 업데이트에서 수정될 예정입니다.",
+                    createdAt = "2025-11-06T15:10:00Z",
                     isStaff = true
                 )
             )
         ),
+
+        // 🟢 4. 답변완료
         Inquiry(
             id = 4,
             userId = 100,
             username = "사용자1",
-            type = "기술 지원",
-            title = "스크롤테스트12345678910",
-            content = "비밀번호를 입력해도 로그인이 되지 않아요.",
+            type = "일반문의",
+            title = "문의 답변은 어디서 확인하나요?",
+            content = "문의한 내용의 답변 확인 위치가 궁금합니다.",
             isAnswered = true,
-            createdAt = "2025-11-07T10:00:00Z",
+            createdAt = "2025-11-05T09:40:00Z",
             commentCount = 1,
             comments = listOf(
                 InquiryComment(
@@ -220,13 +227,14 @@ fun FAQScreenWithSampleDataPreview() {
                     inquiryId = 4,
                     userId = 999,
                     username = "관리자",
-                    content = "비밀번호 재설정을 시도해보시기 바랍니다.",
-                    createdAt = "2025-11-07T16:00:00Z",
+                    content = "마이페이지 > 나의 문의 내역에서 확인하실 수 있습니다.",
+                    createdAt = "2025-11-05T10:00:00Z",
                     isStaff = true
                 )
             )
         )
     )
+
 
     val inquiriesState = remember { mutableStateListOf<Inquiry>().apply { addAll(sampleInquiries) } }
     val pagerState = rememberPagerState(initialPage = 0) { 2 }

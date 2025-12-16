@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 val Black40 = Color(0x66000000)     // 블랙+투명도40, 가이드글씨
 val AuthBlue = Color(0xFF6AC0E0)
 val BorderGray = Color(0xFF808080)
-
 val DividerColor = Color(0xFFE5E5E5)
 
 
@@ -41,6 +40,25 @@ val CompletionCautionColor = Color(0xFFF59E0B)
 val BookMarkColor = Color(0xFFFFC107)
 
 
+val StepBarBlueColor = Color(0xFF2196F3)
+val StepBarBlueDarkColor = Color(0xFF1E88E5)
+val StepBarBlueDarkerColor = Color(0xFF1976D2)
+val HeartRateLineColor = Color(0xFFE91E63)
+val HeartRateAverageColor = Color(0xFFE91E63)
+val HeartRateMaxColor = Color(0xFFD81B60)
+val HeartRateMinColor = Color(0xFFC2185B)
+val MedicationDelayGood1Color = Color(0xFF66BB6A)
+val MedicationDelayGood2Color = Color(0xFF81C784)
+val MedicationDelayGood3Color = Color(0xFF4CAF50)
+val MedicationDelayNormal1Color = Color(0xFFFFB74D)
+val MedicationDelayNormal2Color = Color(0xFFFF9800)
+val MedicationDelayNormal3Color = Color(0xFFFFA726)
+val MedicationDelayBad1Color = Color(0xFFEF5350)
+val MedicationDelayBad2Color = Color(0xFFE57373)
+val MedicationDelayBad3Color = Color(0xFFD32F2F)
+val OnTimeRateGoodColor = Color(0xFF66BB6A)
+val OnTimeRateNormalColor = Color(0xFFFF9800)
+val OnTimeRateBadColor = Color(0xFFEF5350)
 
 
 // 로그인프로세스

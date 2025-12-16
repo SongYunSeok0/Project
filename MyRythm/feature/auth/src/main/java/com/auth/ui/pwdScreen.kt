@@ -54,6 +54,8 @@ fun PwdScreen(
     val verificationCodeText = stringResource(R.string.verification_code)
     val comfirmText = stringResource(R.string.confirm)
     val backtologinText = stringResource(R.string.auth_backtologin)
+    val verifyEmailMessage = stringResource(R.string.auth_message_verify_email)
+    val enterNewPasswordMessage = stringResource(R.string.auth_message_enter_new_password)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { msg ->
@@ -163,12 +165,12 @@ fun PwdScreen(
                 text = comfirmText,
                 onClick = {
                     if (!verified) {
-                        scope.launch { snackbar.showSnackbar("이메일 인증을 완료하세요") }
+                        scope.launch { snackbar.showSnackbar(verifyEmailMessage) }
                         return@AuthPrimaryButton
                     }
 
                     if (newPassword.isBlank()) {
-                        scope.launch { snackbar.showSnackbar("새 비밀번호를 입력하세요") }
+                        scope.launch { snackbar.showSnackbar(enterNewPasswordMessage) }
                         return@AuthPrimaryButton
                     }
 
@@ -194,103 +196,3 @@ fun PwdScreen(
         }
     }
 }
-
-/* 1201 기존 휴대폰인증코드 주석
-@Composable
-fun PwdScreen(
-    modifier: Modifier = Modifier,
-    onSendCode: (phone: String) -> Unit = {},
-    onConfirm: (phone: String, code: String) -> Unit = { _, _ -> },
-    onBackToLogin: () -> Unit = {}
-) {
-    var phone by remember { mutableStateOf("") }
-    var code by remember { mutableStateOf("") }
-    var sent by remember { mutableStateOf(false) }
-
-    // 문자열 리소스화 선언
-    val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
-    val sendText = stringResource(R.string.send)
-    val sentText = stringResource(R.string.sent)
-    val verificationCodeText = stringResource(R.string.verification_code)
-    val comfirmText = stringResource(R.string.confirm)
-    val backtologinText = stringResource(R.string.auth_backtologin)
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.authTheme.authBackground)
-    ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.height(50.dp))
-
-            AuthLogoHeader(textLogoResId = R.drawable.auth_myrhythm)
-
-            Spacer(Modifier.height(10.dp))
-
-            // 휴대폰 번호 + 전송 버튼 -> 이메일로 변경 필요, 확인하면 비번을바꿔서저장하는필드넣거나
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AuthInputField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    hint = phoneNumberPlaceholderText,
-                    modifier = Modifier.weight(1f),
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                AuthActionButton(
-                    text = if (sent) sentText else sendText,
-                    onClick = {
-                        sent = true
-                        onSendCode(phone)
-                    },
-                    enabled = !sent && phone.isNotBlank(),
-                    modifier = Modifier
-                        .widthIn(min = 90.dp)
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // 인증번호 입력
-            AuthInputField(
-                value = code,
-                onValueChange = { code = it },
-                hint = verificationCodeText,
-                modifier = Modifier.fillMaxWidth(),
-                imeAction = ImeAction.Done
-            )
-
-            Spacer(Modifier.height(58.dp))
-
-            AuthPrimaryButton(
-                text = comfirmText,
-                onClick = { onConfirm(phone, code) },
-                modifier = Modifier
-                    .fillMaxWidth(),
-                useClickEffect = true
-            )
-
-            Spacer(Modifier.height(14.dp))
-
-            AuthSecondaryButton(
-                text = backtologinText,
-                onClick = onBackToLogin,
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
-
-            Spacer(Modifier.weight(1f))
-            Spacer(Modifier.height(30.dp))
-        }
-    }
-}
- */

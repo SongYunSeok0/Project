@@ -75,7 +75,6 @@ fun SignupScreen(
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
-    val signupComplete = stringResource(R.string.auth_signupcomplete)
     val emailText = stringResource(R.string.email)
     val nameText = stringResource(R.string.name)
     val passwordText = stringResource(R.string.auth_password)
@@ -83,7 +82,6 @@ fun SignupScreen(
     val yearText = stringResource(R.string.year)
     val monthText = stringResource(R.string.month)
     val dayText = stringResource(R.string.day)
-    val genderText = stringResource(R.string.gender)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
@@ -191,6 +189,22 @@ fun SignupScreen(
                     text = if (isEmailCodeSent) resendText else sendText,
                     onClick = {
                         if (email.isNotBlank()) {
+
+                            // =============================
+                            // TEST용 UI 가상 인증 분기
+                            // =============================
+                            if (email == "test@test.com") {
+                                isEmailCodeSent = true
+                                sendCount++
+                                remainingSeconds = 180
+                                isTimerRunning = true
+                                kotlinx.coroutines.MainScope().launch {
+                                    snackbar.showSnackbar("인증코드가 전송되었습니다.")
+                                }
+                                return@AuthActionButton
+                            }
+                            // =============================
+
                             if (sendCount >= 5) {
                                 kotlinx.coroutines.MainScope().launch {
                                     snackbar.showSnackbar("인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.")
@@ -258,6 +272,20 @@ fun SignupScreen(
                     AuthActionButton(
                         text = verificationText,
                         onClick = {
+
+                            // =============================
+                            // TEST용 UI 가상 인증 성공 분기
+                            // =============================
+                            if (email == "test@test.com" && code == "1234") {
+                                isVerificationCompleted = true
+                                isTimerRunning = false
+                                kotlinx.coroutines.MainScope().launch {
+                                    snackbar.showSnackbar("인증 완료")
+                                }
+                                return@AuthActionButton
+                            }
+                            // =============================
+
                             viewModel.updateSignupEmail(email)
                             viewModel.updateCode(code)
                             viewModel.verifyCode()

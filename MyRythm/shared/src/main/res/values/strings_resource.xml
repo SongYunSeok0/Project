@@ -248,11 +248,11 @@
     <string name="minimum">최저</string>
 
     <string name="medi_compliance_title">💊 복약 시간 준수도</string>
-
-
     <string name="average_delay">평균 지연</string>
     <string name="minute">분</string>
     <string name="ontime_rate">정시 복용률</string>
+    <string name="status_done">복용 완료</string>
+    <string name="status_missed">미복용</string>
 
 
     <string name="mypage_message_no_users">사용자가 없습니다</string>
@@ -275,6 +275,11 @@
     <string name="auth_message_code_sent">인증번호가 전송되었습니다. 테스트 코드는 0000 입니다</string>
     <string name="auth_message_verification_completed">전화번호 인증이 완료되었습니다</string>
     <string name="auth_message_backtologin">이미 계정이 있으신가요?</string>
+    <string name="auth_message_verify_email">이메일 인증을 완료하세요</string>
+    <string name="auth_message_enter_new_password">새 비밀번호를 입력하세요</string>
+
+
+
     <string name="chatbot_message_prompt_start">안녕하세요! AI 약사입니다.\n무엇을 도와드릴까요?</string>
     <string name="chatbot_message_prompt_question">약, 부작용, 복용법, 증상, 병원 찾기 등에 대해 자유롭게 질문해보세요.</string>
     <string name="chatbot_message_content">메시지를 입력하세요.</string>
@@ -304,12 +309,6 @@
     <string name="scheduler_message_dose_good_progress">좋습니다. 나머지도 잊지 마세요</string>
     <string name="scheduler_message_dose_low_progress">복약 주기를 지키면 리포트 정확도가 올라갑니다</string>
     <string name="mypage_message_profile_info_notice">⚠️ 필수 정보를 입력해주세요.\n이름, 전화번호, 성별, 이메일은 한번만 입력 가능합니다.</string>
-
-
-
-
-
-
     <string name="mypage_message_saved">저장되었습니다</string>
     <string name="mypage_message_code_sent">인증코드 전송됨</string>
     <string name="mypage_message_email_duplicate">이미 사용 중인 이메일입니다</string>
@@ -322,7 +321,6 @@
     <string name="mypage_message_guardian_verification_required">보호자 이메일 인증 필요</string>
 
     <string name="error_profile_load_failed">프로필 불러오기 실패</string>
-
     <string name="auth_error_id_pw_blank">ID와 비밀번호를 입력해주세요.</string>
     <string name="auth_error_phone_blank">전화번호를 입력하세요</string>
     <string name="auth_error_code_blank">먼저 인증번호를 전송하세요</string>
@@ -340,8 +338,6 @@
     <string name="mypage_error_qr_decode_failed">QR 해석 실패!</string>
     <string name="mypage_error_qr_camera_init_failed">카메라 초기화 실패: %1$s</string>
 
-    <string name="status_done">복용 완료</string>
-    <string name="status_missed">미복용</string>
 
 
 </resources>
