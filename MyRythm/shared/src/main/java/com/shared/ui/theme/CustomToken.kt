@@ -52,7 +52,6 @@ data class ComponentThemeColor(
     val completionCaution: Color,
     val bookMarkColor: Color,
     val dividerColor: Color,
-
     val stepBarBlueColor: Color,
     val stepBarBlueDarkColor: Color,
     val stepBarBlueDarkerColor: Color,
@@ -72,7 +71,8 @@ data class ComponentThemeColor(
     val onTimeRateGoodColor: Color,
     val onTimeRateNormalColor: Color,
     val onTimeRateBadColor: Color,
-    )
+    val successGreen: Color,
+)
 
 val LoginThemeColors = LoginThemeColor(
     loginBackground = LoginBackground,
@@ -141,7 +141,8 @@ val ComponentThemeColors = ComponentThemeColor(
     onTimeRateGoodColor = OnTimeRateGoodColor,
     onTimeRateNormalColor = OnTimeRateNormalColor,
     onTimeRateBadColor = OnTimeRateBadColor,
-    )
+    successGreen = SuccessGreen,
+)
 
 // Login Local
 val LocalLoginThemeColors = staticCompositionLocalOf { LoginThemeColors }

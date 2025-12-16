@@ -22,6 +22,9 @@
     <string name="auth_mini_iconlogo_description">Mini logo Icon</string>
     <string name="auth_password_hide">비밀번호 숨기기</string>
     <string name="auth_password_show">비밀번호 보기</string>
+
+
+
     <string name="chatbot">챗봇</string>
     <string name="back">뒤로 가기</string>
     <string name="chatbot_icon">🤖</string>
@@ -53,9 +56,13 @@
     <string name="phone_number_placeholder">휴대폰 번호 (01011111111)</string>
     <string name="sent">전송됨</string>
     <string name="send">전송</string>
+    <string name="resend">재전송</string>
+    <string name="email_code_sent">인증 번호 발송 완료</string>
+    <string name="verification_completed">인증 완료</string>
     <string name="verification_code">인증번호</string>
     <string name="email_verification">이메일 인증 *</string>
     <string name="verification">인증</string>
+    <string name="timer_format">%02d:%02d</string>
     <string name="scheduler">스케줄러</string>
     <string name="step">걸음수</string>
     <string name="recent_step">🚶 최근 7일 걸음수</string>
@@ -230,23 +237,15 @@
     <string name="anonymous">익명</string>
     <string name="no_inquiries">문의사항이 없습니다</string>
     <string name="answer_label">답변</string>
-    <string name="mypage_message_no_answer">아직 답변이 없습니다</string>
-    <string name="mypage_message_answer_input">답변을 입력하세요</string>
     <string name="account_inquiry">계정 관련</string>
     <string name="medication_inquiry">복약 관련</string>
     <string name="device_inquiry">기기 관련</string>
     <string name="other_inquiry">기타</string>
-
-
-    <string name="healthinsight_message_no_data">데이터가 없습니다</string>
-
     <string name="average">평균</string>
     <string name="maximum">최고</string>
     <string name="steps_unit">걸음</string>
-
     <string name="heart_rate_title">❤️ 최근 7일 심박수 추이</string>
     <string name="minimum">최저</string>
-
     <string name="medi_compliance_title">💊 복약 시간 준수도</string>
     <string name="average_delay">평균 지연</string>
     <string name="minute">분</string>
@@ -255,6 +254,9 @@
     <string name="status_missed">미복용</string>
 
 
+    <string name="mypage_message_no_answer">아직 답변이 없습니다</string>
+    <string name="mypage_message_answer_input">답변을 입력하세요</string>
+    <string name="healthinsight_message_no_data">데이터가 없습니다</string>
     <string name="mypage_message_no_users">사용자가 없습니다</string>
     <string name="mypage_message_no_regi_history">등록된 복약 기록이 없습니다</string>
     <string name="mypage_message_ble_permission_required">BLE 권한이 필요해요!</string>
@@ -277,9 +279,6 @@
     <string name="auth_message_backtologin">이미 계정이 있으신가요?</string>
     <string name="auth_message_verify_email">이메일 인증을 완료하세요</string>
     <string name="auth_message_enter_new_password">새 비밀번호를 입력하세요</string>
-
-
-
     <string name="chatbot_message_prompt_start">안녕하세요! AI 약사입니다.\n무엇을 도와드릴까요?</string>
     <string name="chatbot_message_prompt_question">약, 부작용, 복용법, 증상, 병원 찾기 등에 대해 자유롭게 질문해보세요.</string>
     <string name="chatbot_message_content">메시지를 입력하세요.</string>
@@ -337,7 +336,4 @@
     <string name="mypage_error_qr_invalid_code">올바른 QR 코드가 아닙니다.</string>
     <string name="mypage_error_qr_decode_failed">QR 해석 실패!</string>
     <string name="mypage_error_qr_camera_init_failed">카메라 초기화 실패: %1$s</string>
-
-
-
 </resources>
