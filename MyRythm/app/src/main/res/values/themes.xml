@@ -19,8 +19,6 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
 
-
-        <!-- 여기에 색상 등 다른 테마 속성을 추가 가능 -->
     </style>
 
     <!--

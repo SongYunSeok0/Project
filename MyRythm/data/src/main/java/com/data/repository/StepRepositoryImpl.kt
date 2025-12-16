@@ -82,4 +82,28 @@ class StepRepositoryImpl @Inject constructor(
             dao.insertDailySteps(entities)
         }
     }
+
+    override suspend fun getWeeklySteps(): List<DailyStep> {
+        return dao.getLast7Days().map { e ->
+            DailyStep(
+                date = e.date,
+                steps = e.steps
+            )
+        }
+            .sortedBy { it.date }
+    }
+
+    // 더미데이터 주입
+    override suspend fun insertDummyData() {
+        val testData = listOf(
+            DailyStepEntity(date = "2025-12-02", steps = 8500),
+            DailyStepEntity(date = "2025-12-03", steps = 9200),
+            DailyStepEntity(date = "2025-12-04", steps = 7800),
+            DailyStepEntity(date = "2025-12-05", steps = 10500),
+            DailyStepEntity(date = "2025-12-06", steps = 6900),
+            DailyStepEntity(date = "2025-12-07", steps = 11200),
+            DailyStepEntity(date = "2025-12-08", steps = 8800)
+        )
+        dao.insertDailySteps(testData)
+    }
 }

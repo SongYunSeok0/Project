@@ -139,7 +139,8 @@ fun NewInquiryForm(
                 value = content,
                 onValueChange = { content = it },
                 label = content_Message,
-                height = 150.dp,
+                modifier = Modifier
+                    .height(150.dp),
                 useFloatingLabel = true,
                 outlined = true
             )

@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from iot.models import Device
+from datetime import timedelta
+from django.utils import timezone
 
 from .models import RegiHistory, Plan
 from smart_med.utils.time_utils import to_ms, from_ms
@@ -19,7 +21,10 @@ class PlanSerializer(serializers.ModelSerializer):
     exTakenAt = serializers.SerializerMethodField()
     mealTime = serializers.CharField(source="meal_time")
     taken = serializers.SerializerMethodField()
+    takenTime = serializers.SerializerMethodField()
     useAlarm = serializers.BooleanField(source="use_alarm")
+
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Plan
@@ -33,7 +38,9 @@ class PlanSerializer(serializers.ModelSerializer):
             "mealTime",
             "note",
             "taken",
+            "takenTime",
             "useAlarm",
+            "status",
         ]
 
     def get_regihistoryId(self, obj):
@@ -46,7 +53,27 @@ class PlanSerializer(serializers.ModelSerializer):
         return to_ms(obj.ex_taken_at)
 
     def get_taken(self, obj):
-        return to_ms(obj.taken)
+        return obj.taken is not None
+    
+    def get_takenTime(self, obj):
+        return to_ms(obj.taken) if obj.taken else None
+    
+    def get_status(self, obj):
+        # 1) 이미 복용 완료
+        if obj.taken:
+            return "done"
+
+        # taken_at 이 없으면 그냥 예정 상태로 둠
+        if not obj.taken_at:
+            return "pending"
+
+        now = timezone.now()
+        # 2) 복용 예정 시간 + 30분이 지났는데 taken 이 없으면 → 미복용
+        if now > obj.taken_at + timedelta(minutes=30):
+            return "missed"
+
+        # 3) 그 외는 아직 예정 상태
+        return "pending"
 
 
 #  Plan 생성용 입력 Serializer (Raw 입력)

@@ -117,6 +117,7 @@ class RegiViewModel @Inject constructor(
                 plans.forEach { plan ->
                     createPlanUseCase(
                         regihistoryId = realRegiId,
+                        regihistoryLabel = label,
                         medName = plan.medName,
                         takenAt = plan.takenAt,
                         mealTime = plan.mealTime,

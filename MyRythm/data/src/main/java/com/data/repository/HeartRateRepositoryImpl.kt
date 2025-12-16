@@ -1,5 +1,6 @@
 package com.data.repository
 
+import android.util.Log
 import com.data.db.AppRoomDatabase
 import com.data.mapper.toDomain
 import com.data.mapper.toEntity
@@ -46,6 +47,17 @@ class HeartRateRepositoryImpl @Inject constructor(
             val remote = api.getHeartHistory()
             dao.clear()
             dao.insertAll(remote.map { it.toEntity() })
+        }
+    }
+
+    override suspend fun getWeeklyHeartRates(): List<HeartRateHistory> {
+        val sevenDaysAgo = java.time.LocalDate.now().minusDays(7).toString() // 7 -> 6
+
+        return dao.getLastWeek(sevenDaysAgo).map { entity ->
+            HeartRateHistory(
+                bpm = entity.bpm,
+                collectedAt = entity.collectedAt
+            )
         }
     }
 }

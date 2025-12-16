@@ -224,3 +224,19 @@ def check_missed_medication():
 
     logger.info(f"[MISSED] 총 {success_count}개 RegiHistory 그룹에 대한 미복용 알림 발송 완료")
     return f"미복용 체크 완료: {success_count}건 발송 (Plan {missed_plans.count()}개를 {len(regihistory_groups)}개 그룹으로 처리)"
+
+@shared_task
+def delete_plan_async(plan_id: int, user_id: int):
+    """
+    Plan 삭제를 비동기 처리
+    """
+    try:
+        plan = Plan.objects.filter(id=plan_id, regihistory__user_id=user_id).first()
+        if not plan:
+            return f"Plan {plan_id} not found or no permission"
+
+        plan.delete()
+        return f"Plan {plan_id} deleted successfully"
+
+    except Exception as e:
+        return f"Error deleting Plan {plan_id}: {e}"

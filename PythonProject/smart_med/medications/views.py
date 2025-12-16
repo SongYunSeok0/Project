@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework import status
-
+from medications.tasks import delete_plan_async
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.shortcuts import get_object_or_404
@@ -16,7 +16,7 @@ from .serializers import (
     RegiHistoryCreateSerializer,
     PlanSerializer,
     PlanCreateIn,
-    RegiHistoryWithPlansSerializer,   # 🔥 스태프용 응답
+    RegiHistoryWithPlansSerializer,
 )
 
 from .docs import (
@@ -240,8 +240,11 @@ class PlanDeleteView(APIView):
         if not plan:
             return Response({"error": "not found"}, status=404)
 
-        plan.delete()
-        return Response(status=204)
+        # 🔥 Celery 비동기 작업 호출
+        delete_plan_async.delay(plan.id, request.user.id)
+
+        # 클라이언트에게 즉시 성공 응답
+        return Response({"status": "delete queued"}, status=202)
 
 
 # ============================================================

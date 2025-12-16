@@ -1,5 +1,7 @@
 from django.db import IntegrityError
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from .models import User, Gender
 
 STAFF_EMAILS = {
@@ -193,3 +195,28 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"phone": "이미 사용 중인 전화번호입니다."})
             raise
         return instance
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = 'email'
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        if email and password:
+            from django.contrib.auth import authenticate
+            user = authenticate(request=self.context.get('request'), email=email, password=password)
+            if not user:
+                raise serializers.ValidationError("이메일 또는 비밀번호가 잘못되었습니다.")
+        else:
+            raise serializers.ValidationError("이메일과 비밀번호를 모두 입력해야 합니다.")
+
+        refresh = self.get_token(user)
+
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+
+        return data

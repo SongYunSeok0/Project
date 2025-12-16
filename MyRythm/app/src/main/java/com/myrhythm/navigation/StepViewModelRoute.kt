@@ -40,6 +40,7 @@ fun StepViewModelRoute(
     onOpenHeart: () -> Unit = {},
     onOpenMap: () -> Unit = {},
     onOpenNews: () -> Unit = {},
+    onOpenHealthInsight: () -> Unit,
     onOpenEditScreen: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -294,6 +295,7 @@ fun StepViewModelRoute(
         onOpenHeart = onOpenHeart,
         onOpenMap = onOpenMap,
         onOpenNews = onOpenNews,
+        onOpenHealthInsight = onOpenHealthInsight,
         onOpenAlram = onAlarmCardClick,
         todaySteps = if (installed) todaySteps else 0,
         remainText = remainText,

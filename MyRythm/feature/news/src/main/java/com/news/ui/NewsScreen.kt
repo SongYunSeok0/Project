@@ -272,7 +272,7 @@ fun NewsCard(
             .fillMaxWidth()
             .height(100.dp)
             .clip(MaterialTheme.shapes.medium)
-            .background(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f))
+            .background(color = MaterialTheme.colorScheme.surfaceVariant.copy(0.3f))
             .clickable { onClick() }
             .padding(8.dp)
     ) {

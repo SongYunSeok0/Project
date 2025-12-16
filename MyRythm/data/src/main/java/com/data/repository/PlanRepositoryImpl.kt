@@ -13,6 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -48,7 +51,7 @@ class PlanRepositoryImpl @Inject constructor(
         takenAt: Long,
         mealTime: String?,
         note: String?,
-        taken: Long?,
+        taken: Boolean?,
         useAlarm: Boolean
     ) {
         val body = PlanCreateRequest(
@@ -114,4 +117,30 @@ class PlanRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getRecentTakenPlans(userId: Long, days: Int): List<Plan> {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)  // ✅ yesterday → today로 변경
+
+        // 오늘 23:59:59 (현재 시각까지)
+        val endTime = today.atTime(LocalTime.now(zone))  // ✅ 현재 시각까지
+            .atZone(zone)
+            .toInstant()
+            .toEpochMilli()
+
+        // (days)일 전 00:00:00
+        val startTime = today.minusDays((days - 1).toLong())
+            .atStartOfDay(zone)
+            .toInstant()
+            .toEpochMilli()
+
+        android.util.Log.d("PlanRepo", "조회 범위: ${java.util.Date(startTime)} ~ ${java.util.Date(endTime)}")
+
+        val entities = dao.getRecentTakenPlans(userId, startTime, endTime)
+
+        android.util.Log.d("PlanRepo", "조회된 데이터: ${entities.size}개")
+
+        return entities.map { entity ->
+            entity.toDomainLocal()
+        }
+    }
 }

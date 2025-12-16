@@ -26,8 +26,8 @@ from .constants import (
     MAX_CHUNK_CHARS,
 )
 from .utils import (
-    normalize, 
-    clean_output, 
+    normalize,
+    clean_output,
     extract_med_names,
     is_medical_question,
     get_non_medical_response,
@@ -118,8 +118,6 @@ def build_context(chunks: List[Chunk]) -> str:
     return "\n".join(blocks)
 
 
-# rag/services.py
-
 def build_general_answer(question: str, chunks: List[Chunk]) -> str:
     if not chunks:
         prompt = (
@@ -167,7 +165,7 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
         print(f"[FILTER] 비의료 질문 차단: {question[:50]}")
         return get_non_medical_response()
     # =====================================
-    
+
     intent = detect_intent(question)
     print("[INTENT]", intent, "/ q =", question)
 
@@ -178,11 +176,11 @@ def build_answer(question: str, chunks: List[Chunk]) -> str:
         recs = recommend_by_symptom(question)
         if recs:
             return clean_output(build_symptom_answer(question, recs))
-        
+
         hf_chunks = search_health_food_chunks(question)
         if hf_chunks:
             return build_health_food_answer(question, hf_chunks)
-        
+
         return clean_output(build_general_answer(question, chunks))
 
     if intent == INTENT_SIDE_EFFECT:

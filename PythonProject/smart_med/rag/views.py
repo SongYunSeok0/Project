@@ -1,12 +1,14 @@
 # rag/views.py
 import time
+import traceback
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .services import retrieve_top_chunks, build_answer
 from .tasks import run_rag_task
 from .utils import (
-    is_medical_question, 
+    is_medical_question,
     get_non_medical_response,
     is_greeting,  # 추가
     get_greeting_response,  # 추가
@@ -85,29 +87,40 @@ class DrugRAGView(APIView):
 
         except Exception as e:
             print(f"[ERROR] RAG 처리 오류: {e}")
-            import traceback
             traceback.print_exc()
             return Response(
                 {"detail": "RAG 처리 중 오류", "error": str(e)},
                 status=500
             )
 
-        # 응답 형식 Celery와 동일하게 통일
+        # ----------------------
+        # fallback context 적용
+        # ----------------------
+        if not chunks:
+            contexts = [{
+                "chunk_id": "",
+                "item_name": "",
+                "section": "",
+                "chunk_index": 0
+            }]
+        else:
+            contexts = [
+                {
+                    "chunk_id": c.chunk_id,
+                    "item_name": c.item_name,
+                    "section": c.section,
+                    "chunk_index": c.chunk_index,
+                }
+                for c in chunks
+            ]
+
         return Response(
             {
                 "status": "done",
                 "question": question,
                 "result": {
                     "answer": answer,
-                    "contexts": [
-                        {
-                            "chunk_id": c.chunk_id,
-                            "item_name": c.item_name,
-                            "section": c.section,
-                            "chunk_index": c.chunk_index,
-                        }
-                        for c in chunks
-                    ],
+                    "contexts": contexts,
                 },
             },
             status=200
@@ -115,10 +128,6 @@ class DrugRAGView(APIView):
 
 
 class RAGTaskResultView(APIView):
-    """
-    Celery Task 결과 조회 API
-    GET /rag/result/<task_id>/
-    """
     authentication_classes = []
     permission_classes = []
 
@@ -135,11 +144,17 @@ class RAGTaskResultView(APIView):
             return Response({"status": "failed", "error": str(result.result)})
 
         if result.state == "SUCCESS":
+            data = result.result  # Celery task 반환값
             return Response(
                 {
                     "status": "done",
-                    "result": result.result
-                }
+                    "question": data.get("question"),
+                    "result": {
+                        "answer": data["result"].get("answer"),
+                        "contexts": data["result"].get("contexts", []),
+                    },
+                },
+                status=200
             )
 
         # 예외적인 상태

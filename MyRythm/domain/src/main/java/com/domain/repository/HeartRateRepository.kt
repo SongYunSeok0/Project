@@ -12,4 +12,6 @@ interface HeartRateRepository {
     fun observeHeartHistory(): Flow<List<HeartRateHistory>>
 
     suspend fun syncHeartHistory()
+
+    suspend fun getWeeklyHeartRates(): List<HeartRateHistory>
 }

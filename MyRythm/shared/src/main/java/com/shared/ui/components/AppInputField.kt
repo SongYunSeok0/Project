@@ -39,6 +39,7 @@ fun AppInputField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardType: KeyboardType = KeyboardType.Text,
     trailingContent: @Composable (() -> Unit)? = null,
+    leadingContent: @Composable (() -> Unit)? = null,
     focusedContainerColor: Color? = null,
     unfocusedContainerColor: Color? = null,
     colors: TextFieldColors? = null
@@ -98,9 +99,13 @@ fun AppInputField(
         ),
         keyboardActions = keyboardActions,
         // 필드 옆에 추가하는 인증/아이콘 등등 UI
-        trailingIcon = {
-            if (trailingContent != null) trailingContent()
-        },
+        leadingIcon = if (leadingContent != null) {
+            { leadingContent() }
+        } else null,
+
+        trailingIcon = if (trailingContent != null) {
+            { trailingContent() }
+        } else null,
 
         colors = if (outlined) {
             OutlinedTextFieldDefaults.colors(
@@ -109,7 +114,7 @@ fun AppInputField(
                 focusedLabelColor = borderColorFocused,
                 unfocusedLabelColor = borderColorUnfocused,
                 focusedContainerColor = bgColor,
-                unfocusedContainerColor = bgColor
+                unfocusedContainerColor = bgColor,
             )
         } else {
             TextFieldDefaults.colors(

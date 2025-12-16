@@ -5,6 +5,8 @@ from pathlib import Path
 from django.db import transaction
 from django.http import FileResponse
 from django.utils import timezone
+from smart_med.utils.time_utils import to_ms, from_ms, parse_ts
+from smart_med.utils.data_utils import to_bool
 from rest_framework import permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -17,9 +19,6 @@ from medications.models import Plan
 
 from .models import Device, SensorData, IntakeStatus
 from health.models import HeartRate
-
-from smart_med.utils.time_utils import to_ms, from_ms, parse_ts
-from smart_med.utils.data_utils import to_bool
 from smart_med.utils.make_qr import create_qr
 
 from .docs import ingest_docs, command_docs, qr_docs, register_device_docs
@@ -48,7 +47,6 @@ def ingest(request):
     if device.device_token != token:
         return Response({"error": "invalid token"}, status=401)
 
-    # --- 수신 데이터 ---
     is_opened = to_bool(p.get("is_opened") or p.get("isOpened"))
     is_time = to_bool(p.get("is_time") or p.get("isTime"))
     bpm_raw = p.get("bpm") or p.get("Bpm")
@@ -106,9 +104,6 @@ def ingest(request):
         else:
             status_code = IntakeStatus.NONE
 
-    # ===============================
-    # 🔥 DB 저장
-    # ===============================
     with transaction.atomic():
         SensorData.objects.create(
             device=device,
@@ -144,7 +139,6 @@ def ingest(request):
             "bpm": bpm_raw,
         }
     })
-
 
 
 # ---------------------------------------------------------
@@ -194,30 +188,9 @@ class CommandView(APIView):
 
 
 
-# ---------------------------------------------------------
-# 특정 디바이스의 QR 코드 이미지를 반환하는 API
-# ---------------------------------------------------------
-@qr_docs
-class QRCodeView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def get(self, request, device_uuid):
-        try:
-            device = Device.objects.get(device_uuid=device_uuid)
-        except Device.DoesNotExist:
-            return Response({"error": "Device not found"}, status=404)
-
-        filepath = Path(create_qr(device.device_uuid, device.device_token))
-
-        if not filepath.exists():
-            return Response({"error": "QR not found"}, status=404)
-
-        return FileResponse(open(filepath, "rb"), content_type="image/png")
-
-
-# ---------------------------------------------------------
-# 현재 로그인한 사용자 계정에 기기를 등록(연결)하는 API
-# ---------------------------------------------------------
+# ==========================================
+# Register Device
+# ==========================================
 @register_device_docs
 class RegisterDeviceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -252,9 +225,35 @@ class RegisterDeviceView(APIView):
         })
 
 
-# ---------------------------------------------------------
-# 현재 로그인한 사용자가 등록한 IoT 기기 목록을 반환하는 API
-# ---------------------------------------------------------
+class CreateDeviceView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # 1) uuid/token 자동 생성
+        uuid = generate_device_uuid()
+        token = generate_device_token()
+
+        # 2) Device DB 생성
+        device = Device.objects.create(
+            device_uuid=uuid,
+            device_token=token,
+        )
+
+        # 3) QR 코드 생성
+        qr_path = create_qr(uuid, token)
+
+        # 4) 접근 가능한 URL로 변환
+        qr_url = f"/media/qr/{uuid}.png"
+
+        return Response({
+            "device_id": device.id,
+            "device_uuid": uuid,
+            "device_token": token,
+            "qr_url": qr_url,
+            "qr_file": qr_path,
+        })
+
+
 class MyDeviceListView(APIView):
     permission_classes = [IsAuthenticated]
 
