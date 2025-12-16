@@ -1,99 +1,65 @@
+version: "3.9"
+
 services:
   web:
-    build:
-      context: .
-      target: web
+    build: .
     container_name: django_web
+    # DB가 켜질 때까지 기다렸다가 migrate 하도록 설정하면 좋지만,
+    # 일단 depends_on에 db를 추가하는 것이 우선입니다.
     command: >
       sh -c "python manage.py migrate &&
-      gunicorn smart_med.asgi:application -k uvicorn.workers.UvicornWorker --workers 1 --preload --timeout 60 --bind 0.0.0.0:8000"
+             gunicorn smart_med.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
-      # - "C:/Users/user/Desktop/secret:/run/secrets"
-      # - "C:/Users/user/Desktop/qwen_sft:/models"
-      - "C:/Users/s/Desktop/secret:/run/secrets"
-      - "C:/Users/s/Desktop/qwen_sft:/models"
+      - "C:/Users/user/Desktop/secret:/run/secrets"
     ports:
       - "8000:8000"
     env_file:
       - .env
     depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
+      - redis
+      - db  # <--- [중요] 여기에 db를 추가해야 합니다!
 
-  celery:
-    build:
-      context: .
-      target: celery
-    container_name: celery_worker
-    command: >
-      sh -c "
-        sleep 10 &&
-        celery -A smart_med worker --loglevel=info --pool=solo --concurrency=1
-      "
+  # --- [추가] 데이터베이스 서비스 시작 ---
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: postgres_db
     volumes:
-      - .:/app
-      # - "C:/Users/user/Desktop/secret:/run/secrets"
-      # - "C:/Users/user/Desktop/qwen_sft:/models"
-      - "C:/Users/s/Desktop/secret:/run/secrets"
-      - "C:/Users/s/Desktop/qwen_sft:/models"
+      - postgres_data:/var/lib/postgresql/data
     env_file:
-      - .env
-    depends_on:
-      web:
-        condition: service_started
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    runtime: nvidia
-
-  celery_beat:
-    build:
-      context: .
-      target: celery_beat
-    container_name: celery_beat
-    command: >
-      sh -c "
-        sleep 10 &&
-        celery -A smart_med beat --loglevel=info
-      "
-    volumes:
-      - .:/app
-      # - "C:/Users/user/Desktop/secret:/run/secrets"
-      # - "C:/Users/user/Desktop/qwen_sft:/models"
-      - "C:/Users/s/Desktop/secret:/run/secrets"
-      - "C:/Users/s/Desktop/qwen_sft:/models"
-    env_file:
-      - .env
-    depends_on:
-      web:
-        condition: service_started
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
-
-  postgres:
-    image: ankane/pgvector:latest
-    container_name: postgres_server
-    environment:
-      POSTGRES_DB: rnb2
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      - .env  # .env 파일에 DB 관련 변수가 있어야 합니다.
     ports:
       - "5432:5432"
+  # --- [추가] 데이터베이스 서비스 끝 ---
+
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A smart_med worker --loglevel=info
+    volumes:
+      - .:/app
+      - "C:/Users/user/Desktop/secret:/run/secrets"
+      - "C:/Users/user/Desktop/qwen_sft:/models"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - web
+      - db # Celery도 DB를 쓴다면 추가하는 게 좋습니다.
+
+  celery_beat:
+    build: .
+    container_name: celery_beat
+    command: celery -A smart_med beat --loglevel=info
+    volumes:
+      - .:/app
+      - "C:/Users/user/Desktop/secret:/run/secrets"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - web
+      - db
 
   redis:
     image: redis:7
@@ -101,5 +67,16 @@ services:
     ports:
       - "6379:6379"
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - web
+
+# --- [추가] 볼륨 설정 ---
 volumes:
-  pgdata:
+  postgres_data:

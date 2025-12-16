@@ -111,11 +111,11 @@ WSGI_APPLICATION = "smart_med.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("POSTGRES_HOST", "postgres"),
-        "PORT": os.getenv("POSTGRES_PORT", 5432),
+        "NAME": env("POSTGRES_DB", default="RNB2"),
+        "USER": env("POSTGRES_USER", default="postgres"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="1234"),
+        'HOST': 'db',
+        "PORT": env("POSTGRES_PORT", default="5432"),
         "OPTIONS": {
             "options": "-c client_encoding=UTF8",
             "application_name": "django",
