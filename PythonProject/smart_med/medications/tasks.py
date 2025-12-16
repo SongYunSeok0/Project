@@ -19,7 +19,8 @@ User = get_user_model()
 def send_med_alarms_task():
     """
     1분마다 실행되어, 정확히 현재 시간에 복용해야 할 약(Plan)을 찾아 알림을 전송합니다.
-    ⭐ RegiHistory 단위로 그룹화하여 중복 알림 방지
+    ⭐ 수정사항: send_fcm_to_token 대신 messaging.Message를 직접 사용하여
+               'priority=high'를 설정함 (절전모드에서도 화면 깨우기 위함)
     """
     now_utc = timezone.now()
     now_kst = timezone.localtime(now_utc)
@@ -49,13 +50,13 @@ def send_med_alarms_task():
                     'earliest_time': plan.taken_at
                 }
             regihistory_groups[regi_id]['plans'].append(plan)
-            # 가장 빨른 복용 시간 저장
+            # 가장 빠른 복용 시간 저장
             if plan.taken_at < regihistory_groups[regi_id]['earliest_time']:
                 regihistory_groups[regi_id]['earliest_time'] = plan.taken_at
 
     logger.info(f"[MED] 발견된 Plan: {targets.count()}개, 그룹화된 RegiHistory: {len(regihistory_groups)}개")
 
-    # 4. RegiHistory 단위로 알림 전송
+    # 4. RegiHistory 단위로 알림 전송 (High Priority 적용)
     success_count = 0
     for regi_id, group_data in regihistory_groups.items():
         try:
@@ -64,7 +65,6 @@ def send_med_alarms_task():
             earliest_time = group_data['earliest_time']
 
             if not regihistory or not regihistory.user:
-                logger.warning(f"[MED] 데이터 오류 → RegiHistory ID: {regi_id}")
                 continue
 
             user = regihistory.user
@@ -79,32 +79,46 @@ def send_med_alarms_task():
             plan_count = len(plans)
             plan_ids = [str(p.id) for p in plans]
 
-            # FCM 전송 (type="ALARM"으로 전체 화면 알림)
-            send_fcm_to_token(
+            # 🔴 [핵심 수정] Android High Priority 설정
+            # 화면이 꺼져 있거나 절전 모드일 때 즉시 깨우기 위한 필수 설정입니다.
+            message = messaging.Message(
                 token=token,
-                title="💊 약 드실 시간이에요!",
-                body=f"{user.username}님, [{regihistory.label}] 복용 시간입니다. ({plan_time_str})",
                 data={
                     "type": "ALARM",
+                    "title": "💊 약 드실 시간이에요!",
+                    "body": f"{user.username}님, [{regihistory.label}] 복용 시간입니다. ({plan_time_str})",
                     "regihistory_id": str(regihistory.id),
                     "plan_ids": ",".join(plan_ids),
                     "plan_count": str(plan_count),
                     "click_action": "FLUTTER_NOTIFICATION_CLICK"
-                }
+                },
+                # 👇 안드로이드 설정: 중요도 높음, 즉시 전송
+                android=messaging.AndroidConfig(
+                    priority='high',
+                    ttl=0,  # 지연 없이 즉시 배달
+                ),
+                # 👇 iOS 설정: 백그라운드 깨우기
+                apns=messaging.APNSConfig(
+                    payload=messaging.APNSPayload(
+                        aps=messaging.Aps(content_available=True)
+                    )
+                )
             )
+
+            # 전송
+            response = messaging.send(message)
 
             success_count += 1
             logger.info(
-                f"[MED] 알림 전송 성공 → user_id={user.id}, regihistory_id={regi_id}, "
-                f"plan_count={plan_count}, plan_ids={','.join(plan_ids)}, time={plan_time_str}"
+                f"[MED] 알림 전송 성공(High Priority) → user_id={user.id}, regihistory_id={regi_id}, "
+                f"time={plan_time_str}, response={response}"
             )
 
         except Exception as e:
             logger.error(f"[MED] 알림 전송 실패 → regihistory_id={regi_id}, error={e}")
 
     logger.info(f"[MED] 총 {success_count}개 RegiHistory 그룹에 대한 알림 발송 완료")
-    return f"총 {success_count}건 전송 완료 (Plan {targets.count()}개를 {len(regihistory_groups)}개 그룹으로 처리)"
-
+    return f"총 {success_count}건 전송 완료"
 
 # ====================================================
 # 2. [Celery Task] 보호자 미복용 알림 (30분 지연)
@@ -113,15 +127,16 @@ def send_med_alarms_task():
 def check_missed_medication():
     """
     30분이 지났는데 미복용(taken is NULL)인 건에 대해 보호자에게 알림을 보냅니다.
-    ⭐ RegiHistory 단위로 그룹화하여 중복 알림 방지
+    ⭐ RegiHistory + 복용시간(earliest_time)을 조합하여 중복 알림을 방지합니다.
     """
-    # Firebase 초기화
+    # Firebase 초기화 (안전장치)
     initialize_firebase()
 
     now = timezone.now()
     now_kst = timezone.localtime(now)
 
-    # 1. 검색 범위: 30분 전 ~ 24시간 전
+    # 1. 검색 범위 설정
+    # 현재 시각보다 30분 전 ~ 24시간 전 사이의 약만 조회
     end_time = now - timedelta(minutes=30)
     start_time = now - timedelta(days=1)
 
@@ -145,7 +160,8 @@ def check_missed_medication():
                     'earliest_time': plan.taken_at
                 }
             regihistory_groups[regi_id]['plans'].append(plan)
-            # 가장 오래된 미복용 시간 저장
+
+            # 그룹 내에서 가장 오래된(빠른) 미복용 시간 업데이트
             if plan.taken_at < regihistory_groups[regi_id]['earliest_time']:
                 regihistory_groups[regi_id]['earliest_time'] = plan.taken_at
 
@@ -158,13 +174,21 @@ def check_missed_medication():
             regihistory = group_data['regihistory']
             plans = group_data['plans']
 
-            # Redis 중복 체크 (RegiHistory ID 기준)
-            cache_key = f"missed_noti_sent:regi:{regi_id}"
+            # 🟢 [수정 포인트] 딕셔너리에서 시간을 꺼내와야 합니다.
+            earliest_time = group_data['earliest_time']
+
+            # 🟢 [Redis 중복 체크 키 생성]
+            # 키 형식: missed_noti:regi:{ID}:time:{YYYYMMDDHHMM}
+            # 약의 종류(ID)와 복용해야 했던 시간(Time)이 모두 같아야만 중복으로 처리
+            time_key = earliest_time.strftime("%Y%m%d%H%M")
+            cache_key = f"missed_noti_sent:regi:{regi_id}:time:{time_key}"
+
+            # 이미 전송된 기록이 있다면 건너뜀
             if cache.get(cache_key):
-                logger.info(f"[MISSED] 스킵 → RegiHistory {regi_id}: 이미 알림 전송됨 (Redis 캐시)")
+                # logger.info(f"[MISSED] 스킵 → 이미 전송됨 (RegiID: {regi_id}, Time: {time_key})")
                 continue
 
-            # 환자 정보
+            # --- 이하 전송 로직 ---
             patient = regihistory.user
             guardian_email = patient.prot_email
 
@@ -187,12 +211,15 @@ def check_missed_medication():
                 patient_phone = patient.phone_number or ""
             patient_phone = patient_phone.replace('-', '').replace(' ', '')
 
-            # Plan 정보
+            # 메시지 내용 구성
             med_name = regihistory.label
             plan_count = len(plans)
             plan_ids = [str(p.id) for p in plans]
 
-            # FCM 전송 (data만 사용, notification 없음)
+            # 메시지에 표시할 시간 (한국 시간 기준)
+            missed_time_str = timezone.localtime(earliest_time).strftime('%H:%M')
+
+            # FCM 전송
             message = messaging.Message(
                 data={
                     "type": "missed_alarm",
@@ -203,24 +230,24 @@ def check_missed_medication():
                     "med_name": med_name,
                     "patient_phone": patient_phone,
                     "title": "🚨 미복용 알림",
-                    "body": f"{patient.username}님이 [{med_name}] 약을 아직 복용하지 않았습니다."
+                    "body": f"{patient.username}님이 [{med_name}] 약을 아직 복용하지 않았습니다. ({missed_time_str})"
                 },
                 token=guardian.fcm_token,
             )
 
             response = messaging.send(message)
 
-            # 캐시 저장 (24시간) - RegiHistory ID 기준
+            # 🟢 [중요] 전송 성공 시 캐시 저장 (24시간 동안 유지)
             cache.set(cache_key, "True", timeout=86400)
 
             success_count += 1
             logger.info(
                 f"[MISSED] 알림 전송 성공 → patient={patient.username}, guardian={guardian.email}, "
-                f"regihistory_id={regi_id}, plan_count={plan_count}, fcm_response={response}"
+                f"regihistory_id={regi_id}, time={missed_time_str}"
             )
 
         except Exception as e:
             logger.error(f"[MISSED] 알림 전송 실패 → regihistory_id={regi_id}, error={e}", exc_info=True)
 
-    logger.info(f"[MISSED] 총 {success_count}개 RegiHistory 그룹에 대한 미복용 알림 발송 완료")
-    return f"미복용 체크 완료: {success_count}건 발송 (Plan {missed_plans.count()}개를 {len(regihistory_groups)}개 그룹으로 처리)"
+    logger.info(f"[MISSED] 총 {success_count}개 그룹에 대한 알림 발송 완료")
+    return f"미복용 체크 완료: {success_count}건 발송"

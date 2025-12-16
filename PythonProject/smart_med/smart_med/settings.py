@@ -114,7 +114,7 @@ DATABASES = {
         "NAME": env("POSTGRES_DB", default="RNB2"),
         "USER": env("POSTGRES_USER", default="postgres"),
         "PASSWORD": env("POSTGRES_PASSWORD", default="1234"),
-        "HOST": env("POSTGRES_HOST", default="127.0.0.1"),
+        'HOST': 'db',
         "PORT": env("POSTGRES_PORT", default="5432"),
         "OPTIONS": {
             "options": "-c client_encoding=UTF8",

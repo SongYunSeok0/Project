@@ -24,6 +24,11 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute="*"),  # 매 분 실행
     },
 
+    "medication_check_missed_every_minute": {
+        "task": "medications.tasks.check_missed_medication",
+        "schedule": crontab(minute="*"), # 매 1분마다 체크 (운영 시 */10 등으로 변경 가능)
+    },
+
     "medication_check_time_window": {
         "task": "iot.tasks.check_medication_schedule",
         "schedule": crontab(minute="*"),  # 매 분 실행

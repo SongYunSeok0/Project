@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
 
     <!-- Health Connect -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
@@ -93,6 +95,7 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:showWhenLocked="true"
+            android:launchMode="singleTask"
             android:turnScreenOn="true" />
 
         <receiver

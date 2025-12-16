@@ -25,7 +25,6 @@ fun NavGraphBuilder.authNavGraph(nav: NavController) {
             )
         }
 
-        // 1201 수정
         composable<PwdRoute> {
             PwdScreen(
                 onBackToLogin = {
