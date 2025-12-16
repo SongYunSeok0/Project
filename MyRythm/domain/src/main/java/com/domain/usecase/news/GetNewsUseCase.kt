@@ -1,4 +1,4 @@
-package com.domain.usecase
+package com.domain.usecase.news
 
 import androidx.paging.PagingData
 import com.domain.model.News

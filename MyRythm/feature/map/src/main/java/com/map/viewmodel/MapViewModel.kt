@@ -13,19 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import com.naver.maps.map.compose.LocationTrackingMode
-
-
-data class MapUiState(
-    val searchQuery: String = "",
-    val selectedChip: String = "병원",
-    val myLocation: LatLng? = null,
-    val mapCenter: LatLng? = null,
-    val trackingMode: LocationTrackingMode = LocationTrackingMode.None,
-    val places: List<PlaceWithLatLng> = emptyList(),
-    val selected: PlaceWithLatLng? = null,
-    val showBottomSheet: Boolean = false,
-    val showSearchHere: Boolean = false
-)
+import com.map.viewmodel.MapUiState
 
 @HiltViewModel
 class MapViewModel @Inject constructor(

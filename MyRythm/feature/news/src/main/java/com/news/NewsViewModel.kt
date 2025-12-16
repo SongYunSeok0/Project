@@ -7,8 +7,11 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.domain.model.Favorite
 import com.domain.model.News
-import com.domain.repository.FavoriteRepository
-import com.domain.usecase.GetNewsUseCase
+import com.domain.usecase.news.AddFavoriteUseCase
+import com.domain.usecase.news.GetFavoritesUseCase
+import com.domain.usecase.news.GetNewsUseCase
+import com.domain.usecase.news.RemoveFavoriteUseCase
+import com.domain.usecase.news.UpdateFavoriteLastUsedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -20,7 +23,10 @@ import javax.inject.Inject
 @HiltViewModel
 class NewsViewModel @Inject constructor(
     private val getNewsUseCase: GetNewsUseCase,
-    private val favoriteRepository: FavoriteRepository,
+    private val getFavoritesUseCase: GetFavoritesUseCase,
+    private val addFavoriteUseCase: AddFavoriteUseCase,
+    private val removeFavoriteUseCase: RemoveFavoriteUseCase,
+    private val updateFavoriteLastUsedUseCase: UpdateFavoriteLastUsedUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -44,7 +50,7 @@ class NewsViewModel @Inject constructor(
             .cachedIn(viewModelScope)
 
     // Room에서 flow로 가져온 즐겨찾기 리스트
-    val favorites = favoriteRepository.getFavorites()
+    val favorites = getFavoritesUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     //  즐겨찾기 관련 함수
@@ -59,13 +65,13 @@ class NewsViewModel @Inject constructor(
                 lastUsed = System.currentTimeMillis(),
                 userId = userId
             )
-            favoriteRepository.insertFavorite(favorite)
+            addFavoriteUseCase(favorite)
         }
     }
 
     fun removeFavorite(keyword: String) {
         viewModelScope.launch {
-            favoriteRepository.deleteFavorite(keyword,userId)
+            removeFavoriteUseCase(keyword,userId)
         }
     }
 
@@ -80,7 +86,7 @@ class NewsViewModel @Inject constructor(
 
         // 마지막 사용시간 업데이트
         viewModelScope.launch {
-            favoriteRepository.updateLastUsed(keyword)
+            updateFavoriteLastUsedUseCase(keyword)
         }
     }
 

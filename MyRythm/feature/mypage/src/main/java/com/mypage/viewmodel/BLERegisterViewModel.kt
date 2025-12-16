@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.data.device.BLEManager
 import com.domain.repository.DeviceRepository
 import com.domain.repository.UserRepository
+import com.domain.usecase.mypage.RegisterDeviceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,9 +15,7 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class BLERegisterViewModel @Inject constructor(
-    private val ble: BLEManager,
-    private val deviceRepository: DeviceRepository,
-    private val userRepository: UserRepository
+    private val registerDeviceUseCase: RegisterDeviceUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BLERegisterState())
@@ -34,24 +33,9 @@ class BLERegisterViewModel @Inject constructor(
     }
 
     fun startRegister() = viewModelScope.launch {
-
-        val userId = userRepository.getLocalUser()?.id
-        if (userId == null) {
-            _state.value = _state.value.copy(
-                loading = false,
-                error = "로그인이 필요해!"
-            )
-            return@launch
-        }
-
         val s = state.value
-        val ssid = s.ssid
-        val pw = s.pw
-        val uuid = s.deviceUUID
-        val token = s.deviceToken
-        val deviceName = s.deviceName
 
-        if (deviceName.isBlank()) {
+        if (s.deviceName.isBlank()) {
             _state.value = _state.value.copy(error = "디바이스 별명을 입력해줘!")
             return@launch
         }
@@ -62,49 +46,27 @@ class BLERegisterViewModel @Inject constructor(
         )
 
         try {
-            deviceRepository.registerDevice(
-                uuid = uuid,
-                token = token,
-                name = deviceName
+            registerDeviceUseCase.execute(
+                ssid = s.ssid,
+                pw = s.pw,
+                uuid = s.deviceUUID,
+                token = s.deviceToken,
+                deviceName = s.deviceName
             )
+
+            _state.value = _state.value.copy(
+                loading = false,
+                configSent = true
+            )
+
         } catch (e: Exception) {
             _state.value = _state.value.copy(
                 loading = false,
-                error = "디바이스 별명 저장 실패: ${e.message}"
+                error = e.message ?: "디바이스 등록 실패"
             )
-            return@launch
         }
-
-        // --- 이후 BLE 시작 ---
-        val connected = ble.scanAndConnectSuspend()
-        if (!connected) {
-            ble.disconnect()
-            _state.value = _state.value.copy(
-                loading = false,
-                error = "BLE 연결 실패"
-            )
-            return@launch
-        }
-
-        val json = """{"uuid":"$uuid","token":"$token","ssid":"$ssid","pw":"$pw"}"""
-        Log.d("BLE_REGISTER", "Send JSON → $json")
-
-        val sent = ble.sendConfigSuspend(json)
-
-        if (!sent) {
-            ble.disconnect()
-            _state.value = _state.value.copy(
-                loading = false,
-                error = "기기 전송 실패"
-            )
-            return@launch
-        }
-
-        _state.value = _state.value.copy(
-            loading = false,
-            configSent = true
-        )
     }
+
 
     fun resetFields() {
         _state.value = _state.value.copy(
