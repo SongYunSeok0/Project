@@ -175,6 +175,7 @@ class PlanCreateSerializer(serializers.ModelSerializer):
 class RegiHistorySerializer(serializers.ModelSerializer):
     userId = serializers.IntegerField(source="user.id", read_only=True)
     useAlarm = serializers.BooleanField(source="use_alarm")
+    label = serializers.SerializerMethodField()
 
     class Meta:
         model = RegiHistory
@@ -187,6 +188,8 @@ class RegiHistorySerializer(serializers.ModelSerializer):
             "useAlarm",
             "device",
         ]
+    def get_label(self, obj):
+        return obj.label or "복약 기록"
 
 
 #  RegiHistory 생성 Serializer
@@ -230,7 +233,7 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
         )
 
 
-#  🔥 스태프용: RegiHistory + Plan 목록 응답 Serializer
+#  관리자용: RegiHistory + Plan 목록 응답 Serializer
 class RegiHistoryWithPlansSerializer(serializers.ModelSerializer):
     # user: Long (JSON key: "user")
     user = serializers.IntegerField(source="user.id", read_only=True)
@@ -240,6 +243,7 @@ class RegiHistoryWithPlansSerializer(serializers.ModelSerializer):
     plans = PlanSerializer(many=True, read_only=True, source="plan_set")
     # plan_count: Int (JSON key: "plan_count")
     plan_count = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
 
     class Meta:
         model = RegiHistory
@@ -255,6 +259,9 @@ class RegiHistoryWithPlansSerializer(serializers.ModelSerializer):
             "plans",
         ]
 
-    def get_plan_count(self, obj): 
+    def get_label(self, obj):
+        return obj.label or "복약 기록"
+
+    def get_plan_count(self, obj):
         # related_name 을 따로 안 줬으면 기본 reverse 이름이 plan_set
         return obj.plan_set.count()
