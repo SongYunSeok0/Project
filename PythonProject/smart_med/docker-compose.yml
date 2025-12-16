@@ -11,7 +11,10 @@ services:
              gunicorn smart_med.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
-      - "C:/Users/user/Desktop/secret:/run/secrets"
+      # - "C:/Users/user/Desktop/secret:/run/secrets"
+      # - "C:/Users/user/Desktop/qwen_sft:/models"
+      - "C:/Users/s/Desktop/secret:/run/secrets"
+      - "C:/Users/s/Desktop/qwen_sft:/models"
     ports:
       - "8000:8000"
     env_file:
@@ -38,8 +41,10 @@ services:
     command: celery -A smart_med worker --loglevel=info
     volumes:
       - .:/app
-      - "C:/Users/user/Desktop/secret:/run/secrets"
-      - "C:/Users/user/Desktop/qwen_sft:/models"
+      # - "C:/Users/user/Desktop/secret:/run/secrets"
+      # - "C:/Users/user/Desktop/qwen_sft:/models"
+      - "C:/Users/s/Desktop/secret:/run/secrets"
+      - "C:/Users/s/Desktop/qwen_sft:/models"
     env_file:
       - .env
     depends_on:
@@ -53,7 +58,10 @@ services:
     command: celery -A smart_med beat --loglevel=info
     volumes:
       - .:/app
-      - "C:/Users/user/Desktop/secret:/run/secrets"
+      # - "C:/Users/user/Desktop/secret:/run/secrets"
+      # - "C:/Users/user/Desktop/qwen_sft:/models"
+      - "C:/Users/s/Desktop/secret:/run/secrets"
+      - "C:/Users/s/Desktop/qwen_sft:/models"
     env_file:
       - .env
     depends_on:
