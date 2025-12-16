@@ -17,11 +17,13 @@ import javax.inject.Singleton
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.UUID
 import kotlin.coroutines.resume
+import com.domain.BLEConnector
+
 
 @Singleton
 class BLEManager @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) :  BLEConnector {
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
         BluetoothAdapter.getDefaultAdapter()
@@ -167,9 +169,22 @@ class BLEManager @Inject constructor(
     // 🔥 4) disconnect 로그
     // =============================================================
     @SuppressLint("MissingPermission")
-    fun disconnect() {
+    fun disconnectInternal() {
         Log.d("BLE", "🔌 disconnect() 실행 — GATT 닫힘")
         bluetoothGatt?.close()
         bluetoothGatt = null
     }
+
+    override suspend fun scanAndConnect(): Boolean {
+        return scanAndConnectSuspend()
+    }
+
+    override suspend fun sendConfig(json: String): Boolean {
+        return sendConfigSuspend(json)
+    }
+
+    override fun disconnect() {
+        disconnectInternal()
+    }
+
 }

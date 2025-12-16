@@ -47,8 +47,6 @@ void SlotLED::resetIfTimeout() {
 
   if (millis() - slotStartTime >= SLOT_ON_DURATION) {
 
-    Serial.println("⏳ Slot LED OFF (10초 만료)");
-
     // 현재 마지막 슬롯값 저장
     lastSlotBeforeOff = currentSlot;
 

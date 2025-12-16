@@ -564,3 +564,4 @@ private fun DetailRow(
         )
     }
 }
+
