@@ -40,8 +40,8 @@ fun UserProfile.toDto(): UserUpdateDto {
         birth_date = birth_date,
         phone = phone,
         prot_email = prot_email,
-        // [수정] 앱의 'prot_name'을 서버로 전송하기 위해 DTO에 포함
         prot_name = prot_name,
+        relation = prot_name,
         email = email ?: ""
     )
 }

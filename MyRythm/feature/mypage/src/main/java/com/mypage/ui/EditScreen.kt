@@ -7,7 +7,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -23,6 +25,7 @@ import com.shared.ui.components.AppInputField
 import com.shared.ui.components.AuthGenderDropdown
 import com.shared.ui.theme.AppFieldHeight
 import com.shared.ui.theme.AppTheme
+import kotlinx.coroutines.delay
 
 // 🔥 소셜 로그인 username인지 확인
 private fun isSocialUsername(username: String?): Boolean {
@@ -42,14 +45,12 @@ fun EditScreen(
 ) {
     val profile by viewModel.profile.collectAsState()
 
-    // 🔥 실제 정보가 등록되었는지 확인
-    val hasRealName = !profile?.username.isNullOrBlank() && !isSocialUsername(profile?.username)
-    val hasRealPhone = !profile?.phone.isNullOrBlank()
-    val hasRealGender = !profile?.gender.isNullOrBlank()
-    val hasRealEmail = !profile?.email.isNullOrBlank()
-    val hasValidBirth = profile?.birth_date?.let {
-        Regex("""^\d{4}-\d{2}-\d{2}$""").matches(it)
-    } ?: false
+    // 🔥 remember 변수로 상태 관리
+    var hasRealName by remember { mutableStateOf(false) }
+    var hasRealPhone by remember { mutableStateOf(false) }
+    var hasRealGender by remember { mutableStateOf(false) }
+    var hasRealEmail by remember { mutableStateOf(false) }
+    var hasValidBirth by remember { mutableStateOf(false) }
 
     // 🔥 소셜 로그인 안내 카드 표시 여부
     val showSocialNotice = !hasRealName || !hasRealPhone || !hasRealGender
@@ -62,6 +63,7 @@ fun EditScreen(
     var birthYear by remember { mutableStateOf("") }
     var birthMonth by remember { mutableStateOf("") }
     var birthDay by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf("") }  // 전체 생년월일 저장용
 
     var phone by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
@@ -71,24 +73,58 @@ fun EditScreen(
     var protName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
 
-    // 보호자 이메일 인증 상태
-    var isProtEmailVerified by remember { mutableStateOf(false) }
-    var isProtEmailSent by remember { mutableStateOf(false) }
-    var protEmailCode by remember { mutableStateOf("") }
+    // 📧 사용자 이메일 인증 상태
+    var isEmailVerified by rememberSaveable { mutableStateOf(false) }
+    var isEmailSent by rememberSaveable { mutableStateOf(false) }
+    var emailCode by rememberSaveable { mutableStateOf("") }
+    var emailSendCount by rememberSaveable { mutableIntStateOf(0) }
+    var emailRemainingSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var isEmailTimerRunning by remember { mutableStateOf(false) }
 
-    // 이메일 인증 상태
-    var isEmailVerified by remember { mutableStateOf(false) }
-    var isEmailSent by remember { mutableStateOf(false) }
-    var emailCode by remember { mutableStateOf("") }
+    // 📧 보호자 이메일 인증 상태
+    var isProtEmailVerified by rememberSaveable { mutableStateOf(false) }
+    var isProtEmailSent by rememberSaveable { mutableStateOf(false) }
+    var protEmailCode by rememberSaveable { mutableStateOf("") }
+    var protEmailSendCount by rememberSaveable { mutableIntStateOf(0) }
+    var protEmailRemainingSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var isProtEmailTimerRunning by remember { mutableStateOf(false) }
 
+    // 🔥 초기화 여부 추적
+    var isInitialized by remember { mutableStateOf(false) }
+
+    // ⏱️ 사용자 이메일 타이머
+    LaunchedEffect(isEmailTimerRunning) {
+        if (isEmailTimerRunning && emailRemainingSeconds > 0) {
+            while (emailRemainingSeconds > 0) {
+                delay(1000L)
+                emailRemainingSeconds--
+            }
+            isEmailTimerRunning = false
+        }
+    }
+
+    // ⏱️ 보호자 이메일 타이머
+    LaunchedEffect(isProtEmailTimerRunning) {
+        if (isProtEmailTimerRunning && protEmailRemainingSeconds > 0) {
+            while (protEmailRemainingSeconds > 0) {
+                delay(1000L)
+                protEmailRemainingSeconds--
+            }
+            isProtEmailTimerRunning = false
+        }
+    }
+
+    // 🔥 프로필 데이터 초기화 (한 번만 실행)
     LaunchedEffect(profile) {
-        profile?.let {
-            name = it.username ?: ""
-            height = it.height?.toString() ?: ""
-            weight = it.weight?.toString() ?: ""
+        val currentProfile = profile
+        if (!isInitialized && currentProfile != null) {
+            name = currentProfile.username ?: ""
+            height = currentProfile.height?.toString() ?: ""
+            weight = currentProfile.weight?.toString() ?: ""
 
             // 생년월일 파싱
-            it.birth_date?.let { date ->
+            currentProfile.birth_date?.let { date ->
+                birthDate = date  // 전체 날짜 저장
                 val parts = date.split("-")
                 if (parts.size == 3) {
                     birthYear = parts[0]
@@ -97,13 +133,26 @@ fun EditScreen(
                 }
             }
 
-            phone = it.phone ?: ""
-            gender = it.gender ?: ""
-            protEmail = it.prot_email ?: ""
-            protName = it.prot_name ?: ""
-            email = it.email ?: ""
-            isProtEmailVerified = !it.prot_email.isNullOrBlank()
-            isEmailVerified = !it.email.isNullOrBlank()
+            phone = currentProfile.phone ?: ""
+            gender = currentProfile.gender ?: ""
+            protEmail = currentProfile.prot_email ?: ""
+            protName = currentProfile.prot_name ?: ""
+            email = currentProfile.email ?: ""
+
+            // 🔥 실제 정보 등록 여부 체크
+            hasRealName = !currentProfile.username.isNullOrBlank() && !isSocialUsername(currentProfile.username)
+            hasRealPhone = !currentProfile.phone.isNullOrBlank()
+            hasRealGender = !currentProfile.gender.isNullOrBlank()
+            hasRealEmail = !currentProfile.email.isNullOrBlank()
+            hasValidBirth = currentProfile.birth_date?.let { date ->
+                Regex("""^\d{4}-\d{2}-\d{2}$""").matches(date)
+            } ?: false
+
+            // 이미 등록된 이메일이 있으면 인증 완료 상태로 설정
+            isProtEmailVerified = !currentProfile.prot_email.isNullOrBlank()
+            isEmailVerified = !currentProfile.email.isNullOrBlank()
+
+            isInitialized = true
         }
     }
 
@@ -120,7 +169,7 @@ fun EditScreen(
     val dayText = "일"
     val context = LocalContext.current
     val sendText = stringResource(R.string.send)
-    val sentText = stringResource(R.string.sent)
+    val resendText = "재전송"
     val verificationText = stringResource(R.string.verification)
     val guardianEmailText = stringResource(R.string.guardianemail)
     val guardiannameText = stringResource(R.string.guardianname)
@@ -158,10 +207,7 @@ fun EditScreen(
                     Toast.makeText(context, errorprofileLoadFailed, Toast.LENGTH_SHORT).show()
                 }
                 EditProfileEvent.EmailSent -> {
-                    isProtEmailSent = true
-                    isProtEmailVerified = false
-                    protEmailCode = ""
-                    Toast.makeText(context, codeSentMessage, Toast.LENGTH_SHORT).show()
+                    // 이벤트는 유지하되, 타이머 로직은 개별 처리
                 }
                 is EditProfileEvent.Error -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
@@ -237,7 +283,7 @@ fun EditScreen(
                 // 생년월일 입력
                 if (hasValidBirth) {
                     AppInputField(
-                        value = profile?.birth_date ?: "",
+                        value = birthDate,
                         onValueChange = {},
                         label = birthText,
                         readOnly = true,
@@ -309,7 +355,7 @@ fun EditScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 🔥 이메일 - 등록되면 읽기 전용
+                // 📧 사용자 이메일 인증 섹션
                 if (hasRealEmail) {
                     AppInputField(
                         value = email,
@@ -320,94 +366,68 @@ fun EditScreen(
                         singleLine = true
                     )
                 } else {
-                    AppInputField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            isEmailVerified = false
-                            isEmailSent = false
-                        },
-                        label = "$emailText$labelText",
-                        outlined = true,
-                        singleLine = true,
-                        keyboardType = KeyboardType.Email,
-                        trailingContent = {
-                            AppButton(
-                                text = if (isEmailSent) sentText else sendText,
-                                height = AppFieldHeight,
-                                width = 80.dp,
-                                enabled = !isEmailVerified,
-                                onClick = {
-                                    if (email.isBlank()) {
-                                        Toast.makeText(
-                                            context,
-                                            enterEmailMessage,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        return@AppButton
-                                    }
-                                    viewModel.checkEmailDuplicate(email) { isDuplicate ->
-                                        if (isDuplicate) {
-                                            Toast.makeText(
-                                                context,
-                                                emailDuplicateMessage,
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        } else {
-                                            viewModel.sendEmailCode(email)
-                                            isEmailSent = true
-                                            isEmailVerified = false
-                                            emailCode = ""
-                                            Toast.makeText(
-                                                context,
-                                                codeSentMessage,
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    )
-
-                    if (isEmailSent && !isEmailVerified) {
+                    Column {
                         AppInputField(
-                            value = emailCode,
-                            onValueChange = { emailCode = it },
-                            label = verificationCodeText,
+                            value = email,
+                            onValueChange = {
+                                email = it
+                                // 이메일 변경 시 인증 상태 초기화
+                                if (isEmailVerified || isEmailSent) {
+                                    isEmailVerified = false
+                                    isEmailSent = false
+                                    emailSendCount = 0
+                                    emailRemainingSeconds = 0
+                                    isEmailTimerRunning = false
+                                    emailCode = ""
+                                }
+                            },
+                            label = "$emailText$labelText",
                             outlined = true,
                             singleLine = true,
-                            keyboardType = KeyboardType.Number,
+                            keyboardType = KeyboardType.Email,
+                            readOnly = isEmailVerified,
                             trailingContent = {
                                 AppButton(
-                                    text = verificationText,
+                                    text = if (isEmailSent) resendText else sendText,
                                     height = AppFieldHeight,
                                     width = 80.dp,
+                                    enabled = email.isNotBlank() && emailSendCount < 5 && !isEmailVerified,
                                     onClick = {
-                                        if (email == "test@test.com" && emailCode == "1111") {
-                                            isEmailVerified = true
-                                            isEmailSent = false
+                                        if (email.isBlank()) {
                                             Toast.makeText(
                                                 context,
-                                                "[테스트] 이메일 인증 성공",
+                                                enterEmailMessage,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@AppButton
+                                        }
+                                        if (emailSendCount >= 5) {
+                                            Toast.makeText(
+                                                context,
+                                                "인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                             return@AppButton
                                         }
 
-                                        viewModel.verifyEmailCode(email, emailCode) { ok ->
-                                            if (ok) {
-                                                isEmailVerified = true
-                                                isEmailSent = false
+                                        viewModel.checkEmailDuplicate(email) { isDuplicate ->
+                                            if (isDuplicate) {
                                                 Toast.makeText(
                                                     context,
-                                                    verificationSuccessText,
-                                                    Toast.LENGTH_SHORT
+                                                    emailDuplicateMessage,
+                                                    Toast.LENGTH_LONG
                                                 ).show()
                                             } else {
+                                                viewModel.sendEmailCode(email)
+                                                isEmailSent = true
+                                                isEmailVerified = false
+                                                emailCode = ""
+                                                emailSendCount++
+                                                emailRemainingSeconds = 180
+                                                isEmailTimerRunning = true
                                                 Toast.makeText(
                                                     context,
-                                                    verificationFailedText,
+                                                    codeSentMessage,
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             }
@@ -416,6 +436,97 @@ fun EditScreen(
                                 )
                             }
                         )
+
+                        // ⏱️ 타이머 표시
+                        if (isEmailTimerRunning && emailRemainingSeconds > 0) {
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "인증 번호 발송 완료",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF9E9E9E),
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                                Text(
+                                    text = "%02d:%02d".format(
+                                        emailRemainingSeconds / 60,
+                                        emailRemainingSeconds % 60
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFFF6B6B),
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
+                        }
+
+                        if (isEmailSent && !isEmailVerified) {
+                            Spacer(Modifier.height(8.dp))
+                            AppInputField(
+                                value = emailCode,
+                                onValueChange = { emailCode = it },
+                                label = verificationCodeText,
+                                outlined = true,
+                                singleLine = true,
+                                keyboardType = KeyboardType.Number,
+                                trailingContent = {
+                                    AppButton(
+                                        text = verificationText,
+                                        height = AppFieldHeight,
+                                        width = 80.dp,
+                                        enabled = emailCode.isNotBlank(),
+                                        onClick = {
+                                            if (email == "test@test.com" && emailCode == "1111") {
+                                                isEmailVerified = true
+                                                isEmailSent = false
+                                                isEmailTimerRunning = false
+                                                Toast.makeText(
+                                                    context,
+                                                    "[테스트] 이메일 인증 성공",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                                return@AppButton
+                                            }
+
+                                            viewModel.verifyEmailCode(email, emailCode) { ok ->
+                                                if (ok) {
+                                                    isEmailVerified = true
+                                                    isEmailSent = false
+                                                    isEmailTimerRunning = false
+                                                    Toast.makeText(
+                                                        context,
+                                                        verificationSuccessText,
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        verificationFailedText,
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            )
+                        }
+
+                        // ✅ 인증 완료 메시지
+                        if (isEmailVerified) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "인증 완료",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF9E9E9E),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
 
@@ -439,7 +550,9 @@ fun EditScreen(
                     )
                 }
 
-                // --- 보호자 정보 섹션 ---
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // --- 📧 보호자 이메일 인증 섹션 ---
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
                     // 보호자 이름 입력 필드
@@ -447,8 +560,14 @@ fun EditScreen(
                         value = protName,
                         onValueChange = {
                             protName = it
-                            isProtEmailVerified = false
-                            isProtEmailSent = false
+                            if (isProtEmailVerified || isProtEmailSent) {
+                                isProtEmailVerified = false
+                                isProtEmailSent = false
+                                protEmailSendCount = 0
+                                protEmailRemainingSeconds = 0
+                                isProtEmailTimerRunning = false
+                                protEmailCode = ""
+                            }
                         },
                         label = guardiannameText,
                         outlined = true,
@@ -461,85 +580,167 @@ fun EditScreen(
                         value = protEmail,
                         onValueChange = {
                             protEmail = it
-                            isProtEmailVerified = false
-                            isProtEmailSent = false
+                            if (isProtEmailVerified || isProtEmailSent) {
+                                isProtEmailVerified = false
+                                isProtEmailSent = false
+                                protEmailSendCount = 0
+                                protEmailRemainingSeconds = 0
+                                isProtEmailTimerRunning = false
+                                protEmailCode = ""
+                            }
                         },
                         label = "$guardianEmailText$labelText",
                         outlined = true,
                         singleLine = true,
+                        keyboardType = KeyboardType.Email,
+                        readOnly = isProtEmailVerified,
                         trailingContent = {
                             AppButton(
-                                text = if (isProtEmailSent) sentText else sendText,
+                                text = if (isProtEmailSent) resendText else sendText,
                                 height = AppFieldHeight,
                                 width = 80.dp,
-                                enabled = !isProtEmailVerified,
+                                enabled = protEmail.isNotBlank() && protName.isNotBlank() &&
+                                        protEmailSendCount < 5 && !isProtEmailVerified,
                                 onClick = {
-                                    if (protEmail.isNotBlank() && protName.isNotBlank()) {
-                                        if (protEmail == "aaa@aaa.com") {
-                                            isProtEmailSent = true
-                                            isProtEmailVerified = false
-                                            protEmailCode = ""
-                                            Toast.makeText(
-                                                context,
-                                                "[테스트] 인증코드 전송됨 (코드는 1234)",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            return@AppButton
-                                        }
-                                        viewModel.sendEmailCode(protEmail, protName)
-                                    } else {
+                                    if (protEmail.isBlank() || protName.isBlank()) {
                                         Toast.makeText(
                                             context,
                                             enterGuardianInfoMessage,
                                             Toast.LENGTH_SHORT
                                         ).show()
+                                        return@AppButton
                                     }
-                                }
-                            )
-                        }
-                    )
-                }
-
-                if (isProtEmailSent && !isProtEmailVerified) {
-                    AppInputField(
-                        value = protEmailCode,
-                        onValueChange = { protEmailCode = it },
-                        label = verificationCodeText,
-                        outlined = true,
-                        singleLine = true,
-                        keyboardType = KeyboardType.Number,
-                        trailingContent = {
-                            AppButton(
-                                text = verificationText,
-                                height = AppFieldHeight,
-                                width = 80.dp,
-                                onClick = {
-                                    if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
-                                        isProtEmailVerified = true
-                                        isProtEmailSent = false
+                                    if (protEmailSendCount >= 5) {
                                         Toast.makeText(
                                             context,
-                                            "[테스트] 보호자 이메일 인증 성공",
+                                            "인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                         return@AppButton
                                     }
 
-                                    viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
-                                        if (ok) {
-                                            isProtEmailVerified = true
-                                            isProtEmailSent = false
-                                            Toast.makeText(context, verificationSuccessText, Toast.LENGTH_SHORT)
-                                                .show()
-                                        } else {
-                                            Toast.makeText(context, verificationFailedText, Toast.LENGTH_SHORT)
-                                                .show()
-                                        }
+                                    if (protEmail == "aaa@aaa.com") {
+                                        isProtEmailSent = true
+                                        isProtEmailVerified = false
+                                        protEmailCode = ""
+                                        protEmailSendCount++
+                                        protEmailRemainingSeconds = 180
+                                        isProtEmailTimerRunning = true
+                                        Toast.makeText(
+                                            context,
+                                            "[테스트] 인증코드 전송됨 (코드는 1234)",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        return@AppButton
                                     }
+
+                                    viewModel.sendEmailCode(protEmail, protName)
+                                    isProtEmailSent = true
+                                    isProtEmailVerified = false
+                                    protEmailCode = ""
+                                    protEmailSendCount++
+                                    protEmailRemainingSeconds = 180
+                                    isProtEmailTimerRunning = true
+                                    Toast.makeText(
+                                        context,
+                                        codeSentMessage,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             )
                         }
                     )
+
+                    // ⏱️ 보호자 이메일 타이머 표시
+                    if (isProtEmailTimerRunning && protEmailRemainingSeconds > 0) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "인증 번호 발송 완료",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF9E9E9E),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                            Text(
+                                text = "%02d:%02d".format(
+                                    protEmailRemainingSeconds / 60,
+                                    protEmailRemainingSeconds % 60
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFFF6B6B),
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        }
+                    }
+
+                    if (isProtEmailSent && !isProtEmailVerified) {
+                        Spacer(Modifier.height(8.dp))
+                        AppInputField(
+                            value = protEmailCode,
+                            onValueChange = { protEmailCode = it },
+                            label = verificationCodeText,
+                            outlined = true,
+                            singleLine = true,
+                            keyboardType = KeyboardType.Number,
+                            trailingContent = {
+                                AppButton(
+                                    text = verificationText,
+                                    height = AppFieldHeight,
+                                    width = 80.dp,
+                                    enabled = protEmailCode.isNotBlank(),
+                                    onClick = {
+                                        if (protEmail == "aaa@aaa.com" && protEmailCode == "1234") {
+                                            isProtEmailVerified = true
+                                            isProtEmailSent = false
+                                            isProtEmailTimerRunning = false
+                                            Toast.makeText(
+                                                context,
+                                                "[테스트] 보호자 이메일 인증 성공",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@AppButton
+                                        }
+
+                                        viewModel.verifyEmailCode(protEmail, protEmailCode) { ok ->
+                                            if (ok) {
+                                                isProtEmailVerified = true
+                                                isProtEmailSent = false
+                                                isProtEmailTimerRunning = false
+                                                Toast.makeText(
+                                                    context,
+                                                    verificationSuccessText,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    verificationFailedText,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    }
+
+                    // ✅ 보호자 인증 완료 메시지
+                    if (isProtEmailVerified) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "인증 완료",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF9E9E9E),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 8.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

@@ -26,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mypage.viewmodel.BLERegisterViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel
@@ -94,10 +94,12 @@ fun MyPageScreen(
     val inquiriesManagementText = "문의사항 관리"
     val staffMenuText = "관리자 메뉴"
 
-    val profile by viewModel.profile.collectAsState()
+    val profile by viewModel.profile.collectAsStateWithLifecycle()
+    val latestHeartRate  by viewModel.latestHeartRate.collectAsStateWithLifecycle()
+    val heartRateTextValue = latestHeartRate?.let {  "$it $bpmText" } ?: "- $bpmText"
     val context = LocalContext.current
 
-    val bleState by bleViewModel.state.collectAsState()
+    val bleState by bleViewModel.state.collectAsStateWithLifecycle()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -154,7 +156,7 @@ fun MyPageScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
         ) {
-            InfoCard(heartRateText, "215 $bpmText", R.drawable.heart)
+            InfoCard(heartRateText, heartRateTextValue, R.drawable.heart)
             InfoCard(heightText, "${profile?.height ?: "-"} $cmText", R.drawable.height)
             InfoCard(weightText, "${profile?.weight ?: "-"} $kgText", R.drawable.weight)
         }

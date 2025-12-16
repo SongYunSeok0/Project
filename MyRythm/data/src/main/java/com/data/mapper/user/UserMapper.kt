@@ -72,7 +72,7 @@ fun UserDto.toProfile(): UserProfile {
         birth_date = birth_date,
         gender = gender,
         phone = phone,
-        prot_name = null,
+        prot_name = relation,  // ✅ relation 필드를 매핑
         prot_email = prot_email,
         email = email,
         isStaff = is_staff
@@ -88,7 +88,8 @@ fun UserProfile.toDto(): UserUpdateDto {
         birth_date = birth_date,
         phone = phone,
         prot_email = prot_email,
-        prot_name = prot_name,
+        prot_name = prot_name,  // prot_name으로 전송
+        relation = prot_name,   // ✅ relation 필드도 함께 전송 (서버 호환성)
         email = email ?: ""
     )
 }
@@ -113,7 +114,7 @@ fun UserEntity.toProfile(): UserProfile {
         gender = gender,
         phone = phone,
         prot_email = protPhone,
-        prot_name = null,
+        prot_name = relation,  // ✅ relation 필드를 매핑
         email = email,
         isStaff = isStaff
     )

@@ -2,13 +2,15 @@ package com.mypage.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.UserProfile
 import com.domain.usecase.auth.LogoutUseCase
-import com.domain.usecase.auth.WithdrawalUseCase  // 👈 추가
-import com.domain.usecase.inquiry.GetInquiriesUseCase  // 👈 추가
-import com.domain.usecase.inquiry.AddInquiryUseCase  // 👈 추가
+import com.domain.usecase.auth.WithdrawalUseCase
+import com.domain.usecase.health.GetLatestHeartRateUseCase
+import com.domain.usecase.inquiry.GetInquiriesUseCase
+import com.domain.usecase.inquiry.AddInquiryUseCase
 import com.domain.usecase.mypage.GetUserProfileUseCase
 import com.domain.usecase.mypage.ObserveUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +20,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,6 +33,8 @@ class MyPageViewModel @Inject constructor(
     private val observeUserProfileUseCase: ObserveUserProfileUseCase,
     private val getInquiriesUseCase: GetInquiriesUseCase,
     private val addInquiryUseCase: AddInquiryUseCase,
+    @Suppress("unused") // MyPageScreen에서 사용됨
+    private val getLatestHeartRateUseCase: GetLatestHeartRateUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -39,12 +44,18 @@ class MyPageViewModel @Inject constructor(
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> = _profile
 
+    // 🔥 최근 심박수 상태 추가
+    @Suppress("unused") // MyPageScreen에서 사용됨
+    private val _latestHeartRate = MutableStateFlow<Int?>(null)
+    val latestHeartRate: StateFlow<Int?> = _latestHeartRate.asStateFlow()
+
     val inquiries = getInquiriesUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         Log.e("MyPageViewModel", "🎬 ========== ViewModel 초기화 시작 ==========")
         loadProfile()
+        loadLatestHeartRate() // 🔥 심박수 로드 추가
 
         viewModelScope.launch {
             Log.e("MyPageViewModel", "👂 observeLocalProfile 시작")
@@ -73,6 +84,20 @@ class MyPageViewModel @Inject constructor(
             }
     }
 
+    // 🔥 최근 심박수 로드
+    private fun loadLatestHeartRate() = viewModelScope.launch {
+        Log.e("MyPageViewModel", "💓 ========== loadLatestHeartRate() 시작 ==========")
+        runCatching {
+            getLatestHeartRateUseCase()
+        }.onSuccess { heartRate ->
+            Log.e("MyPageViewModel", "✅ 최근 심박수: $heartRate bpm")
+            _latestHeartRate.value = heartRate
+        }.onFailure { e ->
+            Log.e("MyPageViewModel", "❌ 심박수 로드 실패: ${e.message}", e)
+            _latestHeartRate.value = null
+        }
+    }
+
     fun refreshProfile() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🔄 ========== refreshProfile() 시작 ==========")
         runCatching { getUserProfileUseCase() }
@@ -83,6 +108,9 @@ class MyPageViewModel @Inject constructor(
             .onFailure {
                 Log.e("MyPageViewModel", "❌ Profile 새로고침 실패: ${it.message}", it)
             }
+
+        // 🔥 프로필 새로고침 시 심박수도 함께 새로고침
+        loadLatestHeartRate()
     }
 
     private var isLoggingOut = false
@@ -132,7 +160,9 @@ class MyPageViewModel @Inject constructor(
 
                     // SharedPreferences 초기화
                     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                    prefs.edit().clear().apply()
+                    prefs.edit {
+                        clear()
+                    }
                     Log.e("MyPageViewModel", "🧹 SharedPreferences 초기화 완료")
 
                     _events.send(MyPageEvent.WithdrawalSuccess)

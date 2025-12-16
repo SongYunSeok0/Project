@@ -8,6 +8,7 @@ data class UserUpdateDto(
     val birth_date: String?,
     val phone: String?,
     val prot_name: String?,
+    val relation: String?,
     val prot_email: String?,
     val email: String,
 )
