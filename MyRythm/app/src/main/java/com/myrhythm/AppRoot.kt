@@ -219,7 +219,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
                     onLogoutClick = { authVm.logout() }
                 )
                 chatbotNavGraph()
-                healthInsightNavGraph()  // 🔥 추가
+                healthInsightNavGraph()
             }
         }
     }
@@ -235,9 +235,7 @@ private fun isSyncAllowedRoute(routeName: String): Boolean {
         routeName.startsWith(MyPageRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(EditProfileRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(HeartReportRoute::class.qualifiedName.orEmpty()) -> true
-        routeName.startsWith(HealthInsightRoute::class.qualifiedName.orEmpty()) -> true  // 🔥 추가
-
-        // 일정 / 처방 관련
+        routeName.startsWith(HealthInsightRoute::class.qualifiedName.orEmpty()) -> true         // 일정 / 처방 관련
         routeName.startsWith(SchedulerRoute::class.qualifiedName.orEmpty()) -> true
 
         // 뉴스
@@ -260,7 +258,7 @@ private fun titleFor(routeName: String) = when (routeName) {
     NewsRoute::class.qualifiedName -> "뉴스"
     UserManageRoute::class.qualifiedName -> "사용자 관리"
     InquiriesManageRoute::class.qualifiedName -> "문의사항 관리"
-    HealthInsightRoute::class.qualifiedName -> "건강 인사이트"  // 🔥 추가
+    HealthInsightRoute::class.qualifiedName -> "건강 인사이트"
     else -> "마이 리듬"
 }
 

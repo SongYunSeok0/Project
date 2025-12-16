@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,7 +22,7 @@ import com.healthinsight.ui.components.HealthBarChart
 import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
 import com.shared.R
-import com.shared.ui.components.SimpleBarChart
+
 
 @Composable
 fun HealthInsightScreen(
@@ -76,6 +75,17 @@ private fun HealthInsightContent(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            // 👣 걸음 수 카드
+            StepsCard(weeklySteps)
+
+            // ♥ 심박수 카드
+            HeartRateCard(weeklyHeartRates)
+
+            // 💊 복약 지연 카드
+            MedicationDelayCard(medicationDelays)
+
+            Spacer(modifier = Modifier.height(60.dp))
         }
     }
 }
