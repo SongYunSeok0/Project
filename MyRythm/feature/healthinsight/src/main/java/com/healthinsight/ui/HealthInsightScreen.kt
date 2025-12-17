@@ -23,6 +23,7 @@ import com.healthinsight.ui.components.HealthLineChart
 import com.healthinsight.viewmodel.HealthInsightViewModel
 import com.shared.R
 
+
 @Composable
 fun HealthInsightScreen(
     viewModel: HealthInsightViewModel = hiltViewModel()
@@ -74,6 +75,17 @@ private fun HealthInsightContent(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            // 👣 걸음 수 카드
+            StepsCard(weeklySteps)
+
+            // ♥ 심박수 카드
+            HeartRateCard(weeklyHeartRates)
+
+            // 💊 복약 지연 카드
+            MedicationDelayCard(medicationDelays)
+
+            Spacer(modifier = Modifier.height(60.dp))
         }
     }
 }

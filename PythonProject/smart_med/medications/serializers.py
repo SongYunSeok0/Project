@@ -233,7 +233,7 @@ class RegiHistoryCreateSerializer(serializers.ModelSerializer):
         )
 
 
-#  🔥 스태프용: RegiHistory + Plan 목록 응답 Serializer
+#  관리자용: RegiHistory + Plan 목록 응답 Serializer
 class RegiHistoryWithPlansSerializer(serializers.ModelSerializer):
     # user: Long (JSON key: "user")
     user = serializers.IntegerField(source="user.id", read_only=True)
@@ -262,6 +262,9 @@ class RegiHistoryWithPlansSerializer(serializers.ModelSerializer):
     def get_label(self, obj):
         return obj.label or "복약 기록"
 
-    def get_plan_count(self, obj): 
+    def get_label(self, obj):
+        return obj.label or "복약 기록"
+
+    def get_plan_count(self, obj):
         # related_name 을 따로 안 줬으면 기본 reverse 이름이 plan_set
         return obj.plan_set.count()
