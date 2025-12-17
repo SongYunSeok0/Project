@@ -104,19 +104,44 @@ fun MyPageScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     // BLE 상태 변화 → 토스트 표시
-    LaunchedEffect(bleState.bleConnected, bleState.configSent, bleState.error) {
+    LaunchedEffect(
+        bleState.bleConnected,
+        bleState.configSent,
+        bleState.uiError
+    ) {
         when {
-            bleState.error != null -> {
-                Toast.makeText(context, bleState.error ?: logoutFailedMessage, Toast.LENGTH_SHORT).show()
+            bleState.uiError != null -> {
+                Toast
+                    .makeText(
+                        context,
+                        bleState.uiError!!.toMessage(context),
+                        Toast.LENGTH_SHORT
+                    )
+                    .show()
             }
+
             bleState.configSent -> {
-                Toast.makeText(context, wifiConfigSentMessage, Toast.LENGTH_SHORT).show()
+                Toast
+                    .makeText(
+                        context,
+                        wifiConfigSentMessage,
+                        Toast.LENGTH_SHORT
+                    )
+                    .show()
             }
+
             bleState.bleConnected -> {
-                Toast.makeText(context, wifiBleConnectedSuccessMessage, Toast.LENGTH_SHORT).show()
+                Toast
+                    .makeText(
+                        context,
+                        wifiBleConnectedSuccessMessage,
+                        Toast.LENGTH_SHORT
+                    )
+                    .show()
             }
         }
     }
+
 
     // 기존 MyPage 이벤트 수집
     LaunchedEffect(Unit) {

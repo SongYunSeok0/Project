@@ -1,5 +1,7 @@
 package com.mypage.viewmodel
 
+import com.mypage.ui.UiError
+
 data class BLERegisterState(
     val loading: Boolean = false,
     val bleConnected: Boolean = false,
@@ -9,5 +11,5 @@ data class BLERegisterState(
     val deviceUUID: String = "",
     val deviceToken: String = "",
     val deviceName: String = "",
-    val error: String? = null
+    val uiError: UiError? = null
 )

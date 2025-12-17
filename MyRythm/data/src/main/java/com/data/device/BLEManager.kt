@@ -38,9 +38,7 @@ class BLEManager @Inject constructor(
     private val serviceUUID = UUID.fromString("12345678-1234-1234-1234-1234567890ab")
     private val characteristicUUID = UUID.fromString("abcd1234-5678-90ab-cdef-1234567890ab")
 
-    // =============================================================
-    // 🔥 1) 스캔 단계 로그 강화
-    // =============================================================
+
     @SuppressLint("MissingPermission")
     fun scanAndConnect(
         onConnected: () -> Unit,
@@ -116,9 +114,7 @@ class BLEManager @Inject constructor(
             )
         }
 
-    // =============================================================
-    // 🔥 2) BLE 전송 JSON을 그대로 출력하는 핵심
-    // =============================================================
+
     @SuppressLint("MissingPermission")
     fun sendConfigJson(json: String, onDone: () -> Unit) {
 
@@ -157,17 +153,12 @@ class BLEManager @Inject constructor(
         onDone()
     }
 
-    // =============================================================
-    // 🔥 3) suspend 버전도 로그 포함
-    // =============================================================
     suspend fun sendConfigSuspend(json: String): Boolean =
         suspendCancellableCoroutine { cont ->
             sendConfigJson(json) { cont.resume(true) }
         }
 
-    // =============================================================
-    // 🔥 4) disconnect 로그
-    // =============================================================
+
     @SuppressLint("MissingPermission")
     fun disconnectInternal() {
         Log.d("BLE", "🔌 disconnect() 실행 — GATT 닫힘")
