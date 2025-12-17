@@ -89,7 +89,6 @@ fun MyPageScreen(
     val withdrawalSuccessMessage = stringResource(R.string.mypage_message_withdrawal_success)
     val withdrawalFailedMessage = stringResource(R.string.mypage_message_withdrawal_failed)
 
-    // 스태프 전용 메뉴 텍스트 (strings.xml에 추가 필요)
     val userManagementText = "사용자 관리"
     val inquiriesManagementText = "문의사항 관리"
     val staffMenuText = "관리자 메뉴"

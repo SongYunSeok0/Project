@@ -82,6 +82,3 @@ class BLERegisterViewModel @Inject constructor(
         _state.value = BLERegisterState()
     }
 }
-
-
-

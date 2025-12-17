@@ -323,6 +323,10 @@
     <string name="mypage_error_qr_decode_failed">QR 해석 실패!</string>
     <string name="mypage_error_qr_camera_init_failed">카메라 초기화 실패: %1$s</string>
 
+    <string name="error_need_login">로그인이 필요합니다</string>
+    <string name="error_ble_failed">블루투스 연결에 실패했습니다</string>
+    <string name="error_network_failed">네트워크 연결에 실패했습니다</string>
+
     <string name="status_done">복용 완료</string>
     <string name="status_missed">미복용</string>
 
