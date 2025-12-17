@@ -363,3 +363,13 @@ def send_user_reminders_task():
     #     logger.info(f"[REMINDER] 총 {success_count}건 전송 완료 at {now_kst.strftime('%H:%M')} (KST)")
 
     return f"재알림(10/20분) 통합 체크 완료: {success_count}건 전송"
+
+@shared_task
+def delete_plan_async(plan_id):
+    """비동기로 Plan 삭제"""
+    try:
+        plan = Plan.objects.get(id=plan_id)
+        plan.delete()
+        return f"Plan {plan_id} deleted successfully"
+    except Plan.DoesNotExist:
+        return f"Plan {plan_id} not found"

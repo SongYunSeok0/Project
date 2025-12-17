@@ -34,6 +34,7 @@ def run_rag_task(self, question):
 
         return {
             "status": "done",
+            "question": question,
             "task_id": self.request.id,
             "result": {
                 "answer": answer,
@@ -42,4 +43,8 @@ def run_rag_task(self, question):
         }
 
     except Exception as e:
-        return {"status": "failed", "error": str(e)}
+        return {
+            "status": "failed", 
+            "error": str(e),
+            "question": question
+        }

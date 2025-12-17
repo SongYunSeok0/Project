@@ -17,6 +17,7 @@ django-environ
 celery
 redis
 django-celery-results
+django-redis>=5.4.0
 
 # === Notifications ===
 firebase-admin
@@ -30,6 +31,7 @@ requests
 qrcode[pil]
 
 # === AI / RAG ===
+torch>=2.0.0
 pgvector
 sentence-transformers
 

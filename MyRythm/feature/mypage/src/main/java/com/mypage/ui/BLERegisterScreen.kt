@@ -80,9 +80,13 @@ private fun BLERegisterScreenUI(
     }
 
     // 에러 처리
-    LaunchedEffect(state.error) {
-        state.error?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(state.uiError) {
+        state.uiError?.let { error ->
+            Toast.makeText(
+                context,
+                error.toMessage(context),  // UiError를 String으로 변환
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
