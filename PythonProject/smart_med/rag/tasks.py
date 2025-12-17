@@ -43,6 +43,3 @@ def run_rag_task(self, question):
 
     except Exception as e:
         return {"status": "failed", "error": str(e)}
-
-
-
