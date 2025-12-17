@@ -24,10 +24,16 @@ val AppTypography = Typography(
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
-
+    titleLarge = TextStyle(
+        fontFamily = pretendard,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
+    ),
     // 카드 제목, 섹션 제목 등
     titleMedium = TextStyle(
-        fontFamily = pretendard,
+        fontFamily = defaultFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 20.sp,
         lineHeight = 24.sp,

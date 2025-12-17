@@ -1,7 +1,21 @@
 package com.auth.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,21 +23,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.auth.ui.components.EmailVerificationSection
 import com.auth.viewmodel.AuthViewModel
 import com.domain.model.SignupRequest
 import com.shared.R
-import com.shared.ui.components.AuthActionButton
 import com.shared.ui.components.AuthGenderDropdown
 import com.shared.ui.components.AuthInputField
 import com.shared.ui.components.AuthLogoIcon
@@ -32,12 +49,6 @@ import com.shared.ui.components.AuthSecondaryButton
 import com.shared.ui.components.AuthSectionTitle
 import com.shared.ui.components.AuthTextButton
 import com.shared.ui.theme.AuthBackground
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBars
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,23 +86,15 @@ fun SignupScreen(
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
-    val signupComplete = stringResource(R.string.auth_signupcomplete)
-    val emailText = stringResource(R.string.email)
     val nameText = stringResource(R.string.name)
     val passwordText = stringResource(R.string.auth_password)
     val birthText = stringResource(R.string.birth)
     val yearText = stringResource(R.string.year)
     val monthText = stringResource(R.string.month)
     val dayText = stringResource(R.string.day)
-    val genderText = stringResource(R.string.gender)
     val heightText = stringResource(R.string.height)
     val weightText = stringResource(R.string.weight)
     val phoneNumberPlaceholderText = stringResource(R.string.phone_number_placeholder)
-    val emailVerification = stringResource(R.string.email_verification)
-    val sendText = stringResource(R.string.send)
-    val resendText = "재전송"
-    val verificationText = stringResource(R.string.verification)
-    val verificationCodeText = stringResource(R.string.verification_code)
     val signupLoading = stringResource(R.string.auth_signup_loading)
     val signupText = stringResource(R.string.auth_signup)
     val backText = stringResource(R.string.back)
@@ -136,7 +139,7 @@ fun SignupScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbar,
@@ -161,131 +164,77 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            AuthSectionTitle(emailVerification)
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                AuthInputField(
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        if (isVerificationCompleted) {
-                            isVerificationCompleted = false
-                            isEmailCodeSent = false
-                            sendCount = 0
-                            remainingSeconds = 0
-                            isTimerRunning = false
-                        }
-                    },
-                    hint = emailText,
-                    modifier = Modifier.weight(1f),
-                    keyboardType = KeyboardType.Email,
-                    enabled = !isVerificationCompleted
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                AuthActionButton(
-                    text = if (isEmailCodeSent) resendText else sendText,
-                    onClick = {
-                        if (email.isNotBlank()) {
-                            if (sendCount >= 5) {
-                                kotlinx.coroutines.MainScope().launch {
-                                    snackbar.showSnackbar("인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.")
-                                }
-                            } else {
-                                viewModel.updateSignupEmail(email)
-                                viewModel.sendCode()
-                                // 상태 업데이트는 LaunchedEffect에서 처리
+            // 이메일인증+타이머까지 컴포넌트로 넘김_1216 EmailVerificationSection.kt
+            EmailVerificationSection(
+                email = email,
+                code = code,
+                isVerificationCompleted = isVerificationCompleted,
+                isEmailCodeSent = isEmailCodeSent,
+                isTimerRunning = isTimerRunning,
+                remainingSeconds = remainingSeconds,
+                canSend = email.isNotBlank() && sendCount < 5 && !isVerificationCompleted,
+                onEmailChange = {
+                    email = it
+                    if (isVerificationCompleted) {
+                        isVerificationCompleted = false
+                        isEmailCodeSent = false
+                        sendCount = 0
+                        remainingSeconds = 0
+                        isTimerRunning = false
+                    }
+                },
+                onSendClick = {
+                    if (email.isNotBlank()) {
+                        // =============================
+                        // TEST용 UI 가상 인증 코드
+                        // =============================
+                        if (email == "test@test.com") {
+                            isEmailCodeSent = true
+                            sendCount++
+                            remainingSeconds = 180
+                            isTimerRunning = true
+                            kotlinx.coroutines.MainScope().launch {
+                                snackbar.showSnackbar("인증코드가 전송되었습니다.")
                             }
+                            return@EmailVerificationSection
                         }
-                    },
-                    enabled = email.isNotBlank() && sendCount < 5 && !isVerificationCompleted,
-                    modifier = Modifier.widthIn(min = 90.dp)
-                )
-            }
-
-            // 타이머 표시
-            if (isTimerRunning && remainingSeconds > 0) {
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "인증 번호 발송 완료",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF9E9E9E),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                    Text(
-                        text = String.format(
-                            "%02d:%02d",
-                            remainingSeconds / 60,
-                            remainingSeconds % 60
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFFF6B6B),
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                }
-            }
-
-            if (isEmailCodeSent) {
-                Spacer(Modifier.height(20.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    AuthInputField(
-                        value = code,
-                        onValueChange = {
-                            code = it
-                            viewModel.updateCode(it)
-                        },
-                        hint = verificationCodeText,
-                        modifier = Modifier.weight(1f),
-                        imeAction = ImeAction.Done,
-                        keyboardType = KeyboardType.Number,
-                        enabled = !isVerificationCompleted
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-
-                    AuthActionButton(
-                        text = verificationText,
-                        onClick = {
+                        // =============================
+                        if (sendCount >= 5) {
+                            kotlinx.coroutines.MainScope().launch {
+                                snackbar.showSnackbar("인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.")
+                            }
+                        } else {
                             viewModel.updateSignupEmail(email)
-                            viewModel.updateCode(code)
-                            viewModel.verifyCode()
-                            // 상태 업데이트는 LaunchedEffect에서 처리
-                        },
-                        enabled = !isVerificationCompleted && code.isNotBlank(),
-                        modifier = Modifier.widthIn(min = 90.dp)
-                    )
+                            viewModel.sendCode()
+                        }
+                    }
+                },
+                onCodeChange = {
+                    code = it
+                    viewModel.updateCode(it)
+                },
+                onVerifyClick = {
+                    // =============================
+                    // TEST용 UI 가상 인증 성공 분기
+                    // =============================
+                    if (email == "test@test.com" && code == "1234") {
+                        isVerificationCompleted = true
+                        isTimerRunning = false
+                        kotlinx.coroutines.MainScope().launch  {
+                            snackbar.showSnackbar("인증 완료")
+                        }
+                        return@EmailVerificationSection
+                    }
+                    // =============================
+                    viewModel.updateSignupEmail(email)
+                    viewModel.updateCode(code)
+                    viewModel.verifyCode()
                 }
-
-                // 인증 완료 메시지
-                if (isVerificationCompleted) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "인증 완료",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF9E9E9E),  // 초록색
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 8.dp)
-                    )
-                }
-            }
+            )
 
             Spacer(Modifier.height(12.dp))
 
             AuthSectionTitle(nameText)
-
             AuthInputField(
                 value = username,
                 onValueChange = { username = it },
@@ -296,7 +245,6 @@ fun SignupScreen(
             Spacer(Modifier.height(12.dp))
 
             AuthSectionTitle(passwordText)
-
             AuthInputField(
                 value = password,
                 onValueChange = { password = it },
@@ -309,7 +257,6 @@ fun SignupScreen(
             Spacer(Modifier.height(12.dp))
 
             AuthSectionTitle(birthText)
-
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -382,7 +329,6 @@ fun SignupScreen(
             Spacer(Modifier.height(12.dp))
 
             AuthSectionTitle(phoneNumberPlaceholderText)
-
             AuthInputField(
                 value = phone,
                 onValueChange = { phone = it },
@@ -450,7 +396,6 @@ fun SignupScreen(
                     onClick = { onBackToLogin() }
                 )
             }
-
             Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
         }
     }
