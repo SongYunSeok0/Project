@@ -2,6 +2,7 @@ import logging
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.db.models import Q
 from datetime import timedelta
 from django.core.cache import cache
 from firebase_admin import messaging
@@ -251,3 +252,114 @@ def check_missed_medication():
 
     logger.info(f"[MISSED] 총 {success_count}개 그룹에 대한 알림 발송 완료")
     return f"미복용 체크 완료: {success_count}건 발송"
+
+
+# ====================================================
+# 3. [Celery Task] 환자 재알림 통합 (10분 & 20분 경과)
+# ====================================================
+@shared_task
+def send_user_reminders_task():
+    """
+    현재 시간 기준으로 복용 시간이 '10분 전' 또는 '20분 전'인 약을 찾아
+    환자 본인에게 재알림을 보냅니다. (아직 안 먹은 경우만)
+    """
+    # 1. 시간 설정
+    now_utc = timezone.now()  # DB 조회용 (UTC)
+    now_kst = timezone.localtime(now_utc)  # 로그 출력용 (KST)
+
+    # (선택사항) 작업 시작 로그를 한국 시간으로 찍어두면 디버깅이 편합니다.
+    # logger.info(f"[REMINDER] 재알림 체크 시작 → {now_kst.strftime('%Y-%m-%d %H:%M:%S')} (KST)")
+
+    # 2. 시간대 계산 (초 단위 절삭) - UTC 기준
+    # Target 1: 10분 전
+    time_10_start = (now_utc - timedelta(minutes=10)).replace(second=0, microsecond=0)
+    time_10_end = time_10_start + timedelta(minutes=1)
+
+    # Target 2: 20분 전
+    time_20_start = (now_utc - timedelta(minutes=20)).replace(second=0, microsecond=0)
+    time_20_end = time_20_start + timedelta(minutes=1)
+
+    # 3. 데이터 조회 (OR 조건 사용: 10분 전 범위 이거나 OR 20분 전 범위)
+    targets = Plan.objects.filter(
+        Q(taken_at__range=(time_10_start, time_10_end)) |
+        Q(taken_at__range=(time_20_start, time_20_end)),
+        use_alarm=True,
+        taken__isnull=True  # 미복용만
+    ).select_related('regihistory__user')
+
+    # 4. RegiHistory 그룹화
+    regihistory_groups = {}
+    for plan in targets:
+        if not plan.regihistory: continue
+
+        regi_id = plan.regihistory.id
+        if regi_id not in regihistory_groups:
+            regihistory_groups[regi_id] = {
+                'regihistory': plan.regihistory,
+                'plans': [],
+                'earliest_time': plan.taken_at
+            }
+        regihistory_groups[regi_id]['plans'].append(plan)
+
+    # 5. 알림 전송 및 메시지 분기 처리
+    success_count = 0
+    for regi_id, group_data in regihistory_groups.items():
+        try:
+            regihistory = group_data['regihistory']
+            plans = group_data['plans']
+            earliest_time = group_data['earliest_time']
+            user = regihistory.user
+            token = getattr(user, 'fcm_token', None)
+
+            if not token: continue
+
+            # 몇 분 지났는지 계산
+            diff_minutes = (now_utc - earliest_time).total_seconds() / 60
+
+            # 메시지 내용 분기
+            if 10 <= diff_minutes <= 11:
+                # 10분 경과
+                title = "💊 [재알림] 약 드셨나요?"
+                body = f"{user.username}님, [{regihistory.label}] 복용 시간 10분이 지났습니다. 잊지 말고 챙겨드세요!"
+                log_prefix = "10분 경과"
+            elif 20 <= diff_minutes <= 21:
+                # 20분 경과
+                title = "💊 [2차 알림] 약 복용 잊으셨나요?"
+                body = f"{user.username}님, [{regihistory.label}] 복용 시간 20분이 지났습니다. 건강을 위해 지금 복용해주세요."
+                log_prefix = "20분 경과"
+            else:
+                continue
+
+            plan_ids = [str(p.id) for p in plans]
+
+            message = messaging.Message(
+                token=token,
+                data={
+                    "type": "ALARM",
+                    "title": title,
+                    "body": body,
+                    "regihistory_id": str(regihistory.id),
+                    "plan_ids": ",".join(plan_ids),
+                    "plan_count": str(len(plans)),
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK"
+                },
+                android=messaging.AndroidConfig(priority='high', ttl=0),
+                apns=messaging.APNSConfig(payload=messaging.APNSPayload(aps=messaging.Aps(content_available=True)))
+            )
+            messaging.send(message)
+            success_count += 1
+
+            # ✅ [수정됨] 로그에 한국 시간(now_kst) 표시
+            logger.info(
+                f"[REMINDER] {log_prefix} 알림 전송 완료 → "
+                f"Time: {now_kst.strftime('%H:%M')} (KST), User: {user.username}"
+            )
+
+        except Exception as e:
+            logger.error(f"[REMINDER] 전송 실패 error={e}")
+
+    # 여기도 한국 시간으로 로그 남기기 (선택사항)
+    # if success_count > 0:
+    #     logger.info(f"[REMINDER] 총 {success_count}건 전송 완료 at {now_kst.strftime('%H:%M')} (KST)")
+
+    return f"재알림(10/20분) 통합 체크 완료: {success_count}건 전송"

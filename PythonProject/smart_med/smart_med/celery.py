@@ -29,10 +29,16 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute="*"), # 매 1분마다 체크 (운영 시 */10 등으로 변경 가능)
     },
 
-    "medication_check_time_window": {
-        "task": "iot.tasks.check_medication_schedule",
-        "schedule": crontab(minute="*"),  # 매 분 실행
+    # 2. [통합] 재알림 (10분, 20분 체크)
+    "medication_user_reminders_every_minute": {
+        "task": "medications.tasks.send_user_reminders_task", # 👈 새로 만든 함수
+        "schedule": crontab(minute="*"),
     },
+
+    # "medication_check_time_window": {
+    #     "task": "iot.tasks.check_medication_schedule",
+    #     "schedule": crontab(minute="*"),  # 매 분 실행
+    # },
 
     # --------------------------------------------------
     # IoT Device / IoT 장치 폴링 신호 전송
