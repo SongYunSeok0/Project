@@ -31,7 +31,6 @@ fun MedicationChart(
     val averageDelayText = stringResource(R.string.average_delay)
     val minuteText = stringResource(R.string.minute)
     val ontimeRateText = stringResource(R.string.ontime_rate)
-
     val minimumText = stringResource(R.string.minimum)
 
     Column(
