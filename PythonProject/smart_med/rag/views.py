@@ -145,13 +145,22 @@ class RAGTaskResultView(APIView):
 
         if result.state == "SUCCESS":
             data = result.result  # Celery task 반환값
+            
+            # 🔥 task 내부에서 실패한 경우 처리
+            if data.get("status") == "failed":
+                return Response(
+                    {"status": "failed", "error": data.get("error", "Unknown error")},
+                    status=500
+                )
+            
+            # 🔥 성공한 경우
             return Response(
                 {
                     "status": "done",
-                    "question": data.get("question"),
+                    "question": data.get("question", ""),
                     "result": {
-                        "answer": data["result"].get("answer"),
-                        "contexts": data["result"].get("contexts", []),
+                        "answer": data.get("result", {}).get("answer", ""),
+                        "contexts": data.get("result", {}).get("contexts", []),
                     },
                 },
                 status=200
