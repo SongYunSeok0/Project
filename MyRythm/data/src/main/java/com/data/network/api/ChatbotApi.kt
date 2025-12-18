@@ -14,7 +14,7 @@ interface ChatbotApi {
         @Body body: ChatRequest
     ): ChatResponse
 
-    @GET("/api/rag/result/{taskId}/")
+    @GET("rag/result/{taskId}/")
     suspend fun getDrugRagResult(@Path("taskId") taskId: String): ChatResponse
 
 }
