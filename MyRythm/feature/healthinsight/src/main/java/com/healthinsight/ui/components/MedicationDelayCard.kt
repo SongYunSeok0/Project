@@ -2,9 +2,6 @@ package com.healthinsight.ui.components
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -18,34 +15,21 @@ fun MedicationDelayCard(medicationDelays: List<MedicationDelayUI>) {
     val noDataMessage = stringResource(R.string.healthinsight_message_no_data)
     val mediComplianceTitle = stringResource(R.string.medi_compliance_title)
 
-    InsightCard {
-        Text(
-            text = mediComplianceTitle,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+    InsightCard (
+        title = mediComplianceTitle,
+        isEmpty = medicationDelays.isEmpty(),
+        emptyMessage = noDataMessage
+    ){
+        val groupedByMed = medicationDelays.groupBy { it.label }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (medicationDelays.isEmpty()) {
-            Text(
-                text = noDataMessage,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 32.dp)
+        groupedByMed.entries.forEachIndexed { index, (medName, delays) ->
+            MedicationChart(
+                medName = medName,
+                delays = delays
             )
-        } else {
-            val groupedByMed = medicationDelays.groupBy { it.label }
 
-            groupedByMed.entries.forEachIndexed { index, (medName, delays) ->
-                MedicationChart(
-                    medName = medName,
-                    delays = delays
-                )
-
-                if (index < groupedByMed.size - 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+            if (index < groupedByMed.size - 1) {
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
