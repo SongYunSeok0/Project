@@ -25,6 +25,7 @@ fun HeartRateCard(
     val averageText = stringResource(R.string.average)
     val maximumText = stringResource(R.string.maximum)
     val minimumText = stringResource(R.string.minimum)
+    val bpmText = stringResource(R.string.bpm)
 
     InsightCard(
         title = heartRateTitle,
@@ -61,9 +62,9 @@ fun HeartRateCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(averageText, "${avgBpm}bpm", MaterialTheme.componentTheme.heartRateAverageColor)
-            StatItem(maximumText, "${maxBpm}bpm", MaterialTheme.componentTheme.heartRateMaxColor)
-            StatItem(minimumText, "${minBpm}bpm", MaterialTheme.componentTheme.heartRateMinColor)
+            StatItem(averageText, "${avgBpm}$bpmText", MaterialTheme.componentTheme.heartRateAverageColor)
+            StatItem(maximumText, "${maxBpm}$bpmText", MaterialTheme.componentTheme.heartRateMaxColor)
+            StatItem(minimumText, "${minBpm}$bpmText", MaterialTheme.componentTheme.heartRateMinColor)
         }
     }
 }
