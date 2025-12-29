@@ -31,7 +31,7 @@ fun MedicationChart(
     val averageDelayText = stringResource(R.string.average_delay)
     val minuteText = stringResource(R.string.minute)
     val ontimeRateText = stringResource(R.string.ontime_rate)
-    val minimumText = stringResource(R.string.minimum)
+    val categoryPointer = stringResource(R.string.category_pointer)
 
     Column(
         modifier = Modifier
@@ -44,7 +44,7 @@ fun MedicationChart(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "🔹 $medName",
+                text = "$categoryPointer$medName",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color =  MaterialTheme.colorScheme.onSurface
@@ -145,7 +145,7 @@ fun MedicationChart(
 
         Divider(
             modifier = Modifier.padding(top = 16.dp),
-            color = Color(0xFFE0E0E0),
+            color = MaterialTheme.componentTheme.healthInsightDividerColor,
             thickness = 1.dp
         )
     }

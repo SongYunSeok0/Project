@@ -22,9 +22,6 @@
     <string name="auth_mini_iconlogo_description">Mini logo Icon</string>
     <string name="auth_password_hide">비밀번호 숨기기</string>
     <string name="auth_password_show">비밀번호 보기</string>
-
-
-
     <string name="chatbot">챗봇</string>
     <string name="back">뒤로 가기</string>
     <string name="chatbot_icon">🤖</string>
@@ -252,7 +249,7 @@
     <string name="ontime_rate">정시 복용률</string>
     <string name="status_done">복용 완료</string>
     <string name="status_missed">미복용</string>
-
+    <string name="category_pointer">🔹 </string>
 
     <string name="mypage_message_no_answer">아직 답변이 없습니다</string>
     <string name="mypage_message_answer_input">답변을 입력하세요</string>
@@ -318,7 +315,6 @@
     <string name="mypage_message_email_verification_required">이메일 인증이 필요합니다</string>
     <string name="mypage_message_enter_guardian_info">보호자 이름과 이메일을 입력해주세요</string>
     <string name="mypage_message_guardian_verification_required">보호자 이메일 인증 필요</string>
-
     <string name="error_profile_load_failed">프로필 불러오기 실패</string>
     <string name="auth_error_id_pw_blank">ID와 비밀번호를 입력해주세요.</string>
     <string name="auth_error_phone_blank">전화번호를 입력하세요</string>
@@ -336,7 +332,6 @@
     <string name="mypage_error_qr_invalid_code">올바른 QR 코드가 아닙니다.</string>
     <string name="mypage_error_qr_decode_failed">QR 해석 실패!</string>
     <string name="mypage_error_qr_camera_init_failed">카메라 초기화 실패: %1$s</string>
-
     <string name="error_need_login">로그인이 필요합니다</string>
     <string name="error_ble_failed">블루투스 연결에 실패했습니다</string>
     <string name="error_network_failed">네트워크 연결에 실패했습니다</string>

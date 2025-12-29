@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.domain.model.DailyStep
-import com.healthinsight.ui.StatItem
+import com.healthinsight.ui.components.StatItem
 import com.shared.R
 import com.shared.ui.components.InsightCard
 import com.shared.ui.theme.componentTheme
