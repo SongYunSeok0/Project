@@ -6,24 +6,23 @@ import android.content.pm.PackageManager
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
@@ -31,6 +30,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.map.ui.components.MapBottomSheetSection
+import com.map.ui.components.MapSearchHeader
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
 import com.naver.maps.map.CameraUpdate
@@ -45,12 +46,6 @@ import com.naver.maps.map.compose.rememberFusedLocationSource
 import com.naver.maps.map.overlay.OverlayImage
 import com.shared.R
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.snapshotFlow
-import com.shared.ui.components.AppButton
-import com.shared.ui.components.AppInputField
-import com.shared.ui.components.AppTagButton
-import com.shared.ui.theme.AppFieldHeight
 
 
 @OptIn(ExperimentalNaverMapApi::class, ExperimentalMaterial3Api::class)
@@ -74,14 +69,7 @@ fun MapScreen(
 
     val uiState = viewModel.uiState
 
-    // 문자열 리소스
-    val searchText = stringResource(R.string.search)
-    val hospitalText = stringResource(R.string.hospital)
-    val pharmacyText = stringResource(R.string.pharmacy)
-    val searchMessage = stringResource(R.string.map_message_search)
-
     /* ---------- 권한 런처 ---------- */
-
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
@@ -110,7 +98,6 @@ fun MapScreen(
     }
 
     /* ---------- 카메라 이동 감지 → ViewModel에 반영 ---------- */
-
     LaunchedEffect(cameraPositionState) {
         snapshotFlow { cameraPositionState.isMoving to cameraPositionState.position.target }
             .collectLatest { (moving, target) ->
@@ -119,7 +106,6 @@ fun MapScreen(
     }
 
     /* ---------- 현재 위치 얻기 ---------- */
-
     @SuppressLint("MissingPermission")
     fun fetchCurrentLocation(onGot: (LatLng) -> Unit) {
         if (!hasLocationPermission) return
@@ -139,7 +125,6 @@ fun MapScreen(
     }
 
     /* ---------- 권한 허용 후 초기 위치/검색 ---------- */
-
     LaunchedEffect(hasLocationPermission) {
         if (hasLocationPermission) {
             viewModel.enableLocationFollow()
@@ -156,7 +141,6 @@ fun MapScreen(
     }
 
     /* ---------- UI ---------- */
-
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -182,68 +166,21 @@ fun MapScreen(
                 )
             }
         }
-
-        // 상단 검색영역(검색창 + 토글칩)
-        Column(
+        // 1229 지도 검색 영역 컴포넌트화
+        MapSearchHeader(
+            searchQuery = uiState.searchQuery,
+            onValueChange = viewModel::updateSearchQuery,
+            onSearchAroundClick = {
+                focusManager.clearFocus(force = true)
+                val center = uiState.mapCenter ?: uiState.myLocation
+                viewModel.searchAround(center)
+            },
+            onModeChange = viewModel::onModeChange,
+            selectedChip = uiState.selectedChip,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .zIndex(1f)
-                .fillMaxWidth()
-        ) {
-
-            // 검색창 + 버튼 1203 디자인적용
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                AppInputField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::updateSearchQuery,
-                    label = searchMessage,
-                    singleLine = true,
-                    modifier = Modifier
-                        .weight(1f),
-                    height = AppFieldHeight
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                AppButton(
-                    text = searchText,
-                    textStyle = MaterialTheme.typography.labelLarge,
-                    shape = MaterialTheme.shapes.medium,
-                    onClick = {
-                        focusManager.clearFocus(force = true)
-                        val center = uiState.mapCenter ?: uiState.myLocation
-                        viewModel.searchAround(center)
-                    },
-                    modifier = Modifier
-                        .height(AppFieldHeight)
-                        .widthIn(min = 90.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 병원/약국 토글 칩
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AppTagButton(
-                    label = hospitalText,
-                    onClick = { viewModel.onModeChange("병원") },
-                    selected = uiState.selectedChip == "병원",
-                    useFilterChipStyle = true
-                )
-
-                AppTagButton(
-                    label = pharmacyText,
-                    selected = uiState.selectedChip == "약국",
-                    onClick = { viewModel.onModeChange("약국") },
-                    useFilterChipStyle = true
-                )
-            }
-        }
-
+        )
         // "이 위치에서 검색" 칩 - 디자인은 mapbottomsheet~파일에
         SearchHereChip(
             visible = uiState.showSearchHere &&
@@ -257,32 +194,19 @@ fun MapScreen(
                 .padding(top = 12.dp)
                 .offset(y = 72.dp) // 검색창 아래로 살짝 내리기
         )
-
-        // 하단 시트
-        if (uiState.selected != null && uiState.showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { viewModel.onBottomSheetDismiss() },
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            ) {
-                PlaceInfoContent(
-                    place = uiState.selected.item,
-                    onClose = { viewModel.onBottomSheetDismiss() },
-                    myLocation = uiState.myLocation
-                )
-            }
-        }
-
-        // 내 위치 버튼
-        RoundRecenterButton(
-            onClick = {
+        //1229 맵 하단 섹션 컴포넌트화
+        MapBottomSheetSection(
+            selected = uiState.selected,
+            showBottomSheet = uiState.showBottomSheet,
+            onBottomSheetDismiss = { viewModel.onBottomSheetDismiss() },
+            myLocation = uiState.myLocation,
+            onRecenterClick = {
                 uiState.myLocation?.let {
                     cameraPositionState.move(CameraUpdate.scrollTo(it))
                     viewModel.onRecenter()
                 }
             },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
+            modifier = Modifier.align(Alignment.BottomStart)
         )
     }
 }
