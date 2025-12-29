@@ -32,6 +32,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.map.ui.components.MapBottomSheetSection
 import com.map.ui.components.MapSearchHeader
+import com.map.ui.components.SearchHereChip
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
 import com.naver.maps.map.CameraUpdate

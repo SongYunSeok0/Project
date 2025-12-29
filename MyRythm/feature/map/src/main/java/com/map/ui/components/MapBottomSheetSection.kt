@@ -7,8 +7,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.map.ui.PlaceInfoContent
-import com.map.ui.RoundRecenterButton
 import com.map.ui.PlaceWithLatLng
 import com.naver.maps.geometry.LatLng
 
