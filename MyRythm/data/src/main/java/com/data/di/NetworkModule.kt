@@ -1,3 +1,4 @@
+// data/src/main/java/com/data/di/NetworkModule.kt
 package com.data.di
 
 import android.util.Log
@@ -34,6 +35,7 @@ import com.data.core.net.AuthHeaderInterceptor
 @Qualifier annotation class MapAuth
 @Qualifier annotation class ConnectionInterceptor
 @Qualifier annotation class SafeLoggingInterceptor
+@Qualifier annotation class BufferingInterceptor
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -110,7 +112,7 @@ object NetworkModule {
         }
     }
 
-    // ---- Connection Interceptor (응답 버퍼링) ----
+    // ---- Connection Interceptor ----
     @Provides
     @Singleton
     @ConnectionInterceptor
@@ -121,45 +123,90 @@ object NetworkModule {
             .removeHeader("Accept-Encoding")
             .build()
 
-        try {
-            val response = chain.proceed(request)
+        chain.proceed(request)
+    }
 
-            // ✅ 응답 본문을 미리 완전히 읽어서 버퍼링
-            val responseBody = response.body
-            if (responseBody != null) {
-                val contentLength = response.header("Content-Length")?.toLongOrNull() ?: -1
+    // ---- Buffering Interceptor (에뮬레이터 버그 회피) ----
+    @Provides
+    @Singleton
+    @BufferingInterceptor
+    fun provideBufferingInterceptor(): Interceptor = Interceptor { chain ->
+        val response = chain.proceed(chain.request())
 
-                // Content-Length가 있는 응답만 버퍼링 (10MB 미만)
-                if (contentLength in 0..10_000_000) {
-                    try {
-                        val source = responseBody.source()
-                        source.request(Long.MAX_VALUE)  // 전체 읽기
-                        val bytes = source.buffer.readByteArray()
+        val responseBody = response.body ?: return@Interceptor response
+        val contentLength = response.header("Content-Length")?.toLongOrNull() ?: -1
 
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "  ✅ 버퍼링: ${bytes.size}/${contentLength} bytes")
-                        }
+        // Content-Length가 2인 경우 (빈 JSON 배열 "[]")
+        if (contentLength == 2L) {
+            try {
+                val source = responseBody.source()
 
-                        // 새로운 ResponseBody로 교체
-                        val newBody = bytes.toResponseBody(responseBody.contentType())
+                // 2바이트 읽기 시도
+                if (source.request(2)) {
+                    val bytes = source.buffer.readByteArray(2)
+                    val newBody = bytes.toResponseBody(responseBody.contentType())
 
-                        return@Interceptor response.newBuilder()
-                            .body(newBody)
-                            .header("Content-Length", bytes.size.toString())
-                            .build()
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "버퍼링 실패: ${e.message}", e)
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "  ✅ 버퍼링: 2/2 bytes")
                     }
+
+                    return@Interceptor response.newBuilder()
+                        .body(newBody)
+                        .build()
+                } else {
+                    // 읽기 실패 시 빈 배열로 대체
+                    Log.w(TAG, "  ⚠️ 2바이트 읽기 실패, 빈 배열 대체")
+                    val emptyBody = "[]".toByteArray().toResponseBody(responseBody.contentType())
+                    return@Interceptor response.newBuilder()
+                        .body(emptyBody)
+                        .build()
                 }
+            } catch (e: ProtocolException) {
+                // ProtocolException 발생 시 빈 배열로 대체
+                Log.w(TAG, "  ⚠️ ProtocolException, 빈 배열 대체: ${e.message}")
+                val emptyBody = "[]".toByteArray().toResponseBody(responseBody.contentType())
+                return@Interceptor response.newBuilder()
+                    .body(emptyBody)
+                    .build()
+            } catch (e: Exception) {
+                // 기타 예외 시 빈 배열로 대체
+                Log.e(TAG, "  ❌ 버퍼링 실패, 빈 배열 대체: ${e.message}")
+                val emptyBody = "[]".toByteArray().toResponseBody(responseBody.contentType())
+                return@Interceptor response.newBuilder()
+                    .body(emptyBody)
+                    .build()
             }
-
-            response
-
-        } catch (e: Exception) {
-            Log.e(TAG, "요청 실패: ${e.message}", e)
-            throw e
         }
+
+        // Content-Length가 3 이상인 경우 일반 버퍼링
+        if (contentLength in 3..10_000_000) {
+            try {
+                val source = responseBody.source()
+                source.request(Long.MAX_VALUE)
+                val bytes = source.buffer.readByteArray()
+
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "  ✅ 버퍼링: ${bytes.size}/${contentLength} bytes")
+                }
+
+                val newBody = bytes.toResponseBody(responseBody.contentType())
+
+                return@Interceptor response.newBuilder()
+                    .body(newBody)
+                    .header("Content-Length", bytes.size.toString())
+                    .build()
+
+            } catch (e: ProtocolException) {
+                // 일반 크기 응답의 ProtocolException은 재시도를 위해 예외 전파
+                Log.e(TAG, "  ❌ 버퍼링 실패 (재시도 필요): ${e.message}")
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "  ❌ 버퍼링 실패: ${e.message}")
+                throw e
+            }
+        }
+
+        response
     }
 
     // ---- Auth Interceptors ----
@@ -192,13 +239,15 @@ object NetworkModule {
     fun provideUserOkHttp(
         authHeaderInterceptor: AuthHeaderInterceptor,
         @ConnectionInterceptor connectionInterceptor: Interceptor,
+        @BufferingInterceptor bufferingInterceptor: Interceptor,
         @SafeLoggingInterceptor safeLoggingInterceptor: Interceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
             .commonTimeouts()
-            .addInterceptor(safeLoggingInterceptor)         // 1️⃣ 로깅
-            .addInterceptor(connectionInterceptor)           // 2️⃣ 버퍼링 (핵심!)
-            .addInterceptor(authHeaderInterceptor)           // 3️⃣ 인증
+            .addInterceptor(bufferingInterceptor)        // 1️⃣ 버퍼링 (가장 먼저!)
+            .addInterceptor(safeLoggingInterceptor)      // 2️⃣ 로깅
+            .addInterceptor(connectionInterceptor)        // 3️⃣ Connection 헤더
+            .addInterceptor(authHeaderInterceptor)        // 4️⃣ 인증
             .build()
 
     @Provides
@@ -207,10 +256,12 @@ object NetworkModule {
     fun provideNewsOkHttp(
         logging: HttpLoggingInterceptor,
         @NewsAuth newsAuth: Interceptor,
-        @ConnectionInterceptor connectionInterceptor: Interceptor
+        @ConnectionInterceptor connectionInterceptor: Interceptor,
+        @BufferingInterceptor bufferingInterceptor: Interceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
             .commonTimeouts()
+            .addInterceptor(bufferingInterceptor)
             .addInterceptor(connectionInterceptor)
             .addInterceptor(newsAuth)
             .addInterceptor(logging)
@@ -222,10 +273,12 @@ object NetworkModule {
     fun provideMapOkHttp(
         logging: HttpLoggingInterceptor,
         @MapAuth mapAuth: Interceptor,
-        @ConnectionInterceptor connectionInterceptor: Interceptor
+        @ConnectionInterceptor connectionInterceptor: Interceptor,
+        @BufferingInterceptor bufferingInterceptor: Interceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
             .commonTimeouts()
+            .addInterceptor(bufferingInterceptor)
             .addInterceptor(connectionInterceptor)
             .addInterceptor(mapAuth)
             .addInterceptor(logging)

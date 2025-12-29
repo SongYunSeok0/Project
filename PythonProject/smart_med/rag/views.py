@@ -135,27 +135,55 @@ class RAGTaskResultView(APIView):
         result = AsyncResult(task_id)
 
         if result.state in ["PENDING", "RECEIVED"]:
-            return Response({"status": "pending"})
+            return Response({
+                "status": "pending",
+                "question": None,
+                "result": None
+            })
 
         if result.state == "STARTED":
-            return Response({"status": "processing"})
+            return Response({
+                "status": "processing",
+                "question": None,
+                "result": None
+            })
 
         if result.state == "FAILURE":
-            return Response({"status": "failed", "error": str(result.result)})
+            return Response({
+                "status": "failed",
+                "question": None,
+                "result": None,
+                "error": str(result.result)
+            }, status=500)
 
         if result.state == "SUCCESS":
             data = result.result  # Celery task 반환값
+            
+            # 🔥 task 내부에서 실패한 경우 처리
+            if data.get("status") == "failed":
+                return Response({
+                    "status": "failed",
+                    "question": data.get("question"),
+                    "result": None,
+                    "error": data.get("error", "Unknown error")
+                }, status=500)
+            
+            # 🔥 성공한 경우
             return Response(
                 {
                     "status": "done",
-                    "question": data.get("question"),
+                    "question": data.get("question", ""),
                     "result": {
-                        "answer": data["result"].get("answer"),
-                        "contexts": data["result"].get("contexts", []),
+                        "answer": data.get("result", {}).get("answer", ""),
+                        "contexts": data.get("result", {}).get("contexts", []),
                     },
                 },
                 status=200
             )
 
         # 예외적인 상태
-        return Response({"status": result.state}, status=200)
+        return Response({
+            "status": result.state,
+            "question": None,
+            "result": None
+        }, status=200)
