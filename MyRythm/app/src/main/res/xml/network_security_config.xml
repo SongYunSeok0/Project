@@ -6,7 +6,7 @@
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">pstatic.net</domain>
         <domain includeSubdomains="true">192.168.0.148</domain>
-        <domain includeSubdomains="true">192.168.0.135</domain>
+        <domain includeSubdomains="true">192.168.0.40</domain>
         <domain includeSubdomains="true">192.168.219.111</domain>
         <domain includeSubdomains="true">192.168.0.154</domain>
         <domain includeSubdomains="true">192.168.0.237</domain>
