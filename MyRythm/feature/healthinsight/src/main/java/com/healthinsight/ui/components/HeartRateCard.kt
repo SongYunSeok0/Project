@@ -41,7 +41,7 @@ fun HeartRateCard(
             if (parts.size >= 3) "${parts[1]}/${parts[2]}"
             else day.date.takeLast(5)
         }
-
+//test
         HealthLineChart(
             measurements = measurements,
             labels = labels,
