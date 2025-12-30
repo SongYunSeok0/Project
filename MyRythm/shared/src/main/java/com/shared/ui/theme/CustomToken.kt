@@ -72,6 +72,7 @@ data class ComponentThemeColor(
     val onTimeRateNormalColor: Color,
     val onTimeRateBadColor: Color,
     val successGreen: Color,
+    val healthInsightDividerColor: Color,
 )
 
 val LoginThemeColors = LoginThemeColor(
@@ -142,6 +143,7 @@ val ComponentThemeColors = ComponentThemeColor(
     onTimeRateNormalColor = OnTimeRateNormalColor,
     onTimeRateBadColor = OnTimeRateBadColor,
     successGreen = SuccessGreen,
+    healthInsightDividerColor = HealthInsightDividerColor,
 )
 
 // Login Local

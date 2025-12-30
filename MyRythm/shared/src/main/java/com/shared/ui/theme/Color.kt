@@ -57,6 +57,7 @@ val OnTimeRateGoodColor = Color(0xFF66BB6A)
 val OnTimeRateNormalColor = Color(0xFFFF9800)
 val OnTimeRateBadColor = Color(0xFFEF5350)
 val SuccessGreen = Color(0xFF4CAF50)
+val HealthInsightDividerColor = Color(0xFFE0E0E0)
 
 
 // 로그인프로세스

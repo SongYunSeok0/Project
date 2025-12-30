@@ -27,12 +27,12 @@ fun MedicationChart(
     medName: String,
     delays: List<MedicationDelayUI>
 ) {
+    val percentText = stringResource(R.string.percent_suffix)
     val countPerDayText = stringResource(R.string.count_per_day)
     val averageDelayText = stringResource(R.string.average_delay)
     val minuteText = stringResource(R.string.minute)
     val ontimeRateText = stringResource(R.string.ontime_rate)
-
-    val minimumText = stringResource(R.string.minimum)
+    val categoryPointer = stringResource(R.string.category_pointer)
 
     Column(
         modifier = Modifier
@@ -45,7 +45,7 @@ fun MedicationChart(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "🔹 $medName",
+                text = "$categoryPointer$medName",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color =  MaterialTheme.colorScheme.onSurface
@@ -118,13 +118,13 @@ fun MedicationChart(
                     color =  MaterialTheme.colorScheme.surfaceVariant
                 )
                 Text(
-                    text = "${if (avgDelay > 0) "+" else ""}%.1f분".format(avgDelay),
+                    //text = "${if (avgDelay > 0) "+" else ""}%.1f분".format(avgDelay),
+                    text = "${if (avgDelay > 0) "+" else ""}${"%.1f".format(avgDelay)}$minuteText",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color =  MaterialTheme.colorScheme.onSurface
                 )
             }
-
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = ontimeRateText,
@@ -132,7 +132,7 @@ fun MedicationChart(
                     color =  MaterialTheme.colorScheme.surfaceVariant
                 )
                 Text(
-                    text = "$onTimeRate%",
+                    text = "$onTimeRate$percentText",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = when {
@@ -143,10 +143,9 @@ fun MedicationChart(
                 )
             }
         }
-
         Divider(
             modifier = Modifier.padding(top = 16.dp),
-            color = Color(0xFFE0E0E0),
+            color = MaterialTheme.componentTheme.healthInsightDividerColor,
             thickness = 1.dp
         )
     }
