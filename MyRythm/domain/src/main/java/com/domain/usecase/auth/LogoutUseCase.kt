@@ -1,13 +1,17 @@
 package com.domain.usecase.auth
 
+import com.domain.model.ApiResult
 import com.domain.repository.AuthRepository
+import com.domain.repository.UserRepository
 import javax.inject.Inject
 
 class LogoutUseCase @Inject constructor(
-    private val repo: AuthRepository
+    private val authRepository: AuthRepository
 ) {
-    // suspend 로 선언
-    suspend operator fun invoke() {
-        repo.logout()
+    suspend operator fun invoke(): ApiResult<Unit> {
+        authRepository.clearTokens()
+        authRepository.saveAutoLoginEnabled(false)
+        return ApiResult.Success(Unit)
     }
 }
+
