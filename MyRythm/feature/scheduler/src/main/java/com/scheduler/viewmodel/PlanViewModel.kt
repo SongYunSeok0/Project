@@ -2,6 +2,7 @@ package com.scheduler.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.model.Plan
 import com.domain.model.PlanStatus
 import com.domain.model.RegiHistory
@@ -15,6 +16,7 @@ import com.domain.usecase.plan.MarkMedTakenUseCase
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
+import com.scheduler.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,6 +24,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
+import com.scheduler.ui.toUiError
 
 @HiltViewModel
 class PlanViewModel @Inject constructor(
@@ -39,7 +42,7 @@ class PlanViewModel @Inject constructor(
         val loading: Boolean = false,
         val plans: List<Plan> = emptyList(),
         val histories: List<RegiHistory> = emptyList(),
-        val error: String? = null
+        val error: UiError? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -56,19 +59,38 @@ class PlanViewModel @Inject constructor(
 
             // 기기 연동 여부 체크
             launch {
-                val devices = runCatching { getMyDevicesUseCase() }.getOrElse { emptyList() }
-                _isDeviceUser.value = devices.isNotEmpty()
+                when (val result = getMyDevicesUseCase()) {
+                    is ApiResult.Success -> {
+                        _isDeviceUser.value = result.data.isNotEmpty()
+                    }
+                    is ApiResult.Failure -> {
+                        _isDeviceUser.value = false
+                    }
+                }
             }
+
 
             // RegiHistory + Plan Flow 구독
             getRegiHistoriesUseCase()
-                .catch { e -> _uiState.update { it.copy(error = e.message) } }
+                .catch { e ->
+                    _uiState.update {
+                        it.copy(
+                            error = UiError.Message(e.message ?: "데이터를 불러오는 중 오류가 발생했어요")
+                        )
+                    }
+                }
                 .collect { histories ->
 
                     _uiState.update { it.copy(histories = histories) }
 
                     getPlansUseCase(userId)
-                        .catch { e -> _uiState.update { it.copy(error = e.message) } }
+                        .catch { e ->
+                            _uiState.update {
+                                it.copy(
+                                    error = UiError.Message(e.message ?: "데이터를 불러오는 중 오류가 발생했어요")
+                                )
+                            }
+                        }
                         .collect { plans ->
 
                             _uiState.update { it.copy(plans = plans) }
@@ -84,22 +106,37 @@ class PlanViewModel @Inject constructor(
     // -------------------------------
     fun markAsTaken(userId: Long, planId: Long) {
         viewModelScope.launch {
-            val result = markMedTakenUseCase(planId)
+            when (val result = markMedTakenUseCase(planId)) {
 
-            result.onFailure { e ->
-                _uiState.update { it.copy(error = e.message ?: "복용 완료 처리 실패") }
-                return@launch
-            }
+                is ApiResult.Success -> {
+                    when (val refreshResult = refreshPlansUseCase(userId)) {
 
-            // ✅ 서버 상태를 로컬(Room)로 동기화 → Flow가 갱신됨
-            runCatching { refreshPlansUseCase(userId) }
-                .onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "플랜 동기화 실패") }
+                        is ApiResult.Success -> {
+                            // 성공 시 아무 처리 필요 없음
+                        }
+
+                        is ApiResult.Failure -> {
+                            _uiState.update {
+                                it.copy(
+                                    error = refreshResult.error.toUiError()
+                                )
+                            }
+                        }
+                    }
                 }
-            // load()에서 getPlansUseCase(userId)를 이미 collect 중이라
-            // 여기서 다시 collect 할 필요 없이 Room이 업데이트 되면 리스트가 자동으로 갱신됨.
+
+                is ApiResult.Failure -> {
+                    _uiState.update {
+                        it.copy(
+                            error = result.error.toUiError()
+                        )
+                    }
+                }
+            }
         }
     }
+
+
 
     // -------------------------------
     // 알람 토글
