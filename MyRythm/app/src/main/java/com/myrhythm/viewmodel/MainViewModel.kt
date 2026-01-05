@@ -196,7 +196,7 @@ class MainViewModel @Inject constructor(
             it.takenAt == oldTime && it.taken != true  // 🔥 수정
         }
 
-        var allSuccess = true
+        var allSuccess = true //d
 
         samePlans.forEach { p ->
             val updated = p.copy(takenAt = newTime)
