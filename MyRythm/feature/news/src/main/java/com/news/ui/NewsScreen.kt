@@ -40,15 +40,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
-import com.news.NewsViewModel
+import com.news.viewmodel.FavoriteViewModel
+import com.news.viewmodel.NewsViewModel
 import com.shared.R
 import com.shared.ui.components.AppButton
 import com.shared.ui.components.AppInputField
 import com.shared.ui.theme.AppFieldHeight
+import com.shared.ui.theme.NewsCard
 import com.shared.ui.theme.componentTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,24 +59,31 @@ import com.shared.ui.theme.componentTheme
 fun NewsScreen(
     nav: NavController,
     onOpenDetail: (String) -> Unit,
-    viewModel: NewsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    newsViewModel: NewsViewModel = hiltViewModel(),
+    favoriteViewModel: FavoriteViewModel = hiltViewModel()
 ) {
     val searchMessage = stringResource(R.string.news_message_search)
     val searchText = stringResource(R.string.search)
     val favoritesText = stringResource(R.string.favorites)
     val naverNewsText = stringResource(R.string.naver_news)
     val bookMarkText = stringResource(R.string.bookmark)
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val isSearchMode by viewModel.isSearchMode.collectAsState()
-    val favorites by viewModel.favorites.collectAsState()
 
-    val pagingItems = viewModel.newsPagingFlow.collectAsLazyPagingItems()
+    val searchQuery by newsViewModel.searchQuery.collectAsState()
+    val isSearchMode by newsViewModel.isSearchMode.collectAsState()
+    val favorites by favoriteViewModel.favorites.collectAsState()
+
+    val pagingItems =
+        newsViewModel.newsPagingFlow.collectAsLazyPagingItems()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+
+        // --------------------
+        // 🔍 검색 영역
+        // --------------------
         AnimatedVisibility(visible = isSearchMode) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -83,12 +93,12 @@ fun NewsScreen(
             ) {
                 AppInputField(
                     value = searchQuery,
-                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    onValueChange = { newsViewModel.updateSearchQuery(it) },
                     label = searchMessage,
                     singleLine = true,
                     imeAction = ImeAction.Search,
                     keyboardActions = KeyboardActions(
-                        onSearch = { viewModel.triggerSearch() }
+                        onSearch = { newsViewModel.triggerSearch() }
                     ),
                     outlined = false,
                     modifier = Modifier.weight(7f)
@@ -99,7 +109,9 @@ fun NewsScreen(
                 AppButton(
                     text = searchText,
                     onClick = {
-                        if (searchQuery.isNotBlank()) viewModel.triggerSearch()
+                        if (searchQuery.isNotBlank()) {
+                            newsViewModel.triggerSearch()
+                        }
                     },
                     height = AppFieldHeight,
                     modifier = Modifier.weight(1.5f)
@@ -109,7 +121,9 @@ fun NewsScreen(
 
                 IconButton(
                     onClick = {
-                        if (searchQuery.isNotBlank()) viewModel.addFavorite(searchQuery)
+                        if (searchQuery.isNotBlank()) {
+                            favoriteViewModel.addFavorite(searchQuery)
+                        }
                     },
                     modifier = Modifier.weight(1.5f)
                 ) {
@@ -122,39 +136,44 @@ fun NewsScreen(
             }
         }
 
+        // --------------------
+        // ⭐ 즐겨찾기
+        // --------------------
         Text(
             text = favoritesText,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(16.dp)
         )
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             items(favorites) { fav ->
                 FavoriteBannerCard(
                     keyword = fav.keyword,
-                    onClick = { viewModel.onFavoriteClick(fav.keyword) },
-                    onDelete = { viewModel.removeFavorite(fav.keyword) },
+                    onClick = {
+                        newsViewModel.updateSearchQuery(fav.keyword)
+                        newsViewModel.triggerSearch()
+                        favoriteViewModel.onFavoriteUsed(fav.keyword)
+                    },
+                    onDelete = {
+                        favoriteViewModel.removeFavorite(fav.keyword)
+                    },
                     modifier = Modifier.size(120.dp)
                 )
             }
         }
 
-        // -----------------------------------------------------------
-        // 📰 네이버 뉴스 리스트
-        // -----------------------------------------------------------
+        // --------------------
+        // 📰 뉴스 리스트
+        // --------------------
         Text(
             text = naverNewsText,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(16.dp)
         )
 
         LazyColumn(
@@ -194,112 +213,12 @@ fun NewsScreen(
                             .fillMaxWidth()
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }
     }
 }
 
-
-@Composable
-fun FavoriteBannerCard(
-    keyword: String,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val removeFavoriteText = stringResource(R.string.remove_favorite)
-    val photoText = stringResource(R.string.photo)
-
-    Box(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .clickable { onClick() }
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.photo),
-            contentDescription = photoText,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
-                        )
-                    )
-                )
-        )
-        IconButton(
-            onClick = { onDelete() },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.bookmark_remove),
-                contentDescription = removeFavoriteText,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-        Text(
-            text = keyword,
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(10.dp)
-        )
-    }
-}
-
-@Composable
-fun NewsCard(
-    title: String,
-    info: String,
-    imageUrl: String,
-    onClick: () -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(color = MaterialTheme.colorScheme.surfaceVariant.copy(0.3f))
-            .clickable { onClick() }
-            .padding(8.dp)
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .width(100.dp)
-                .fillMaxHeight()
-                .clip(MaterialTheme.shapes.small),
-            contentScale = ContentScale.Crop
-        )
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxHeight()
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2
-            )
-            Text(
-                text = info,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
