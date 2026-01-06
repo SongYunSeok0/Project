@@ -18,13 +18,33 @@ class EncryptedPrefsTokenStore(
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
-    private val prefs = EncryptedSharedPreferences.create(
-        context,
-        FILE,
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    /**
+     * 🔐 EncryptedSharedPreferences
+     *
+     * - 환경 변경 / 디바이스 변경 / 서명 변경 시
+     *   기존 암호화 데이터 복호화 실패(AEADBadTagException) 발생 가능
+     * - 이 경우 기존 prefs를 삭제하고 새로 생성
+     */
+    private val prefs = try {
+        EncryptedSharedPreferences.create(
+            context,
+            FILE,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    } catch (e: Exception) {
+        // 🔥 깨진 암호화 데이터 제거
+        context.deleteSharedPreferences(FILE)
+
+        EncryptedSharedPreferences.create(
+            context,
+            FILE,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     @Volatile
     private var cached = AuthTokens(
@@ -67,8 +87,8 @@ class EncryptedPrefsTokenStore(
 
     override fun current(): AuthTokens = cached
 
-    private fun update(a: String?, r: String?) {
-        val now = AuthTokens(a, r)
+    private fun update(access: String?, refresh: String?) {
+        val now = AuthTokens(access, refresh)
         cached = now
         _tokens.value = now
     }
