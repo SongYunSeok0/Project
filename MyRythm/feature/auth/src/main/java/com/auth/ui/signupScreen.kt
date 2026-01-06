@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.ui.components.EmailVerificationSection
-import com.auth.viewmodel.AuthViewModel
 import com.domain.model.SignupRequest
 import com.shared.R
 import com.shared.ui.components.AuthGenderDropdown

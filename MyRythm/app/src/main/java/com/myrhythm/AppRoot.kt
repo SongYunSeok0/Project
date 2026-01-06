@@ -14,7 +14,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.auth.navigation.*
-import com.auth.viewmodel.AuthViewModel
 import com.chatbot.navigation.ChatBotRoute
 import com.chatbot.navigation.chatbotNavGraph
 import com.data.core.auth.JwtUtils
