@@ -32,7 +32,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.BuildConfig
 import com.auth.ui.components.LocalLoginSection
 import com.auth.ui.components.SocialLoginSection
-import com.auth.viewmodel.AuthViewModel
 import com.shared.R
 import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.theme.loginTheme

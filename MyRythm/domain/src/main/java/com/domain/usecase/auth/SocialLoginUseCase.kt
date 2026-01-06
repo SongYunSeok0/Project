@@ -1,6 +1,7 @@
 package com.domain.usecase.auth
 
 import com.domain.model.SocialLoginParam
+import com.domain.model.SocialLoginResult
 import com.domain.repository.AuthRepository
 import javax.inject.Inject
 
@@ -12,12 +13,14 @@ class SocialLoginUseCase @Inject constructor(
         socialId: String,
         accessToken: String?,
         idToken: String?
-    ) = repo.socialLogin(
-        SocialLoginParam(
-            provider = provider,
-            socialId = socialId,
-            accessToken = accessToken,
-            idToken = idToken
+    ): Result<SocialLoginResult> {
+        return repo.socialLogin(
+            SocialLoginParam(
+                provider = provider,
+                socialId = socialId,
+                accessToken = accessToken,
+                idToken = idToken
+            )
         )
-    )   // Result<SocialLoginResult>
+    }
 }

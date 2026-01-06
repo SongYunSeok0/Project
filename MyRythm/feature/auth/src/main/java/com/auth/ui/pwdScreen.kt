@@ -34,7 +34,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.auth.viewmodel.AuthViewModel
 import com.shared.R
 import com.shared.ui.components.AuthActionButton
 import com.shared.ui.components.AuthInputField
