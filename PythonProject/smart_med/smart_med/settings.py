@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "iot",
     "health",
     "rag.apps.RagConfig",
+    "notifications"
 ]
 
 MIDDLEWARE = [

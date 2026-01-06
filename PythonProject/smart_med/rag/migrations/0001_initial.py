@@ -2,7 +2,7 @@
 
 import pgvector.django.vector
 from django.db import migrations, models
-
+from pgvector.django import VectorExtension  # <--- [1] 여기 추가!
 
 class Migration(migrations.Migration):
 
@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
+        VectorExtension(),  # <--- [2] 이 줄이 가장 먼저 실행되어야 합니다! (필수)
+
         migrations.CreateModel(
             name="Chunk",
             fields=[
