@@ -1,5 +1,7 @@
 package com.domain.usecase.plan
 
+import com.domain.model.ApiResult
+import com.domain.model.DomainError
 import com.domain.repository.PlanRepository
 import com.domain.model.Plan
 import javax.inject.Inject
@@ -7,18 +9,19 @@ import javax.inject.Inject
 class UpdatePlanUseCase @Inject constructor(
     private val repository: PlanRepository
 ) {
-    /**
-     * planId: 수정할 약의 ID
-     * newTakenAt: 변경할 시간 (Timestamp Long)
-     * * 반환값(: Boolean)을 명시해야 ViewModel에서 if (success)로 쓸 수 있습니다.
-     */
-    suspend operator fun invoke(userId: Long, plan: Plan): Boolean {
+    suspend operator fun invoke(
+        userId: Long,
+        plan: Plan
+    ): ApiResult<Unit> {
         return try {
             repository.update(userId, plan)
-            true // 성공 시 true 반환
+            ApiResult.Success(Unit)
         } catch (e: Exception) {
-            e.printStackTrace()
-            false // 실패 시 false 반환
+            ApiResult.Failure(
+                DomainError.Unknown(
+                    message = e.message ?: "플랜 수정 실패"
+                )
+            )
         }
     }
 }

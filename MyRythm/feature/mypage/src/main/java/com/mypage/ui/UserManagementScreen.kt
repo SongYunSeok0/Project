@@ -68,13 +68,15 @@ fun UserManagementScreen(
         }
     }
 
-    // 에러 토스트
     LaunchedEffect(error) {
         error?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            Toast
+                .makeText(context, it.toMessage(context), Toast.LENGTH_SHORT)
+                .show()
             viewModel.clearError()
         }
     }
+
 
     // 화면 진입 시 사용자 목록 로드
     LaunchedEffect(Unit) {

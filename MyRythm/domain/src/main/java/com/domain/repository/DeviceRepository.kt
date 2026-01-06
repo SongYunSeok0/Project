@@ -1,5 +1,6 @@
 package com.domain.repository
 
+import com.domain.model.ApiResult
 import com.domain.model.Device
 
 interface DeviceRepository {
@@ -7,6 +8,7 @@ interface DeviceRepository {
         uuid: String,
         token: String,
         name: String
-    )
-    suspend fun getMyDevices(): List<Device>
+    ): ApiResult<Unit>
+
+    suspend fun getMyDevices(): ApiResult<List<Device>>
 }

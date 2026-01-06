@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.data.core.auth.JwtUtils
 import com.data.core.auth.TokenStore
+import com.domain.model.ApiResult
 import com.domain.model.Plan
 import com.domain.model.RegiHistory
 import com.domain.repository.PlanRepository
@@ -195,11 +196,20 @@ class MainViewModel @Inject constructor(
             it.takenAt == oldTime && it.taken != true  // 🔥 수정
         }
 
-        var allSuccess = true
+        var allSuccess = true //d
+
         samePlans.forEach { p ->
             val updated = p.copy(takenAt = newTime)
-            val ok = updatePlanUseCase(userId, updated)
-            if (!ok) allSuccess = false
+
+            when (updatePlanUseCase(userId, updated)) {
+                is ApiResult.Success -> {
+                    // 성공 → 아무 것도 안 함
+                }
+
+                is ApiResult.Failure -> {
+                    allSuccess = false
+                }
+            }
         }
 
         return allSuccess
@@ -227,13 +237,22 @@ class MainViewModel @Inject constructor(
             // 🔥 모든 Plan 복용 완료 처리
             var allSuccess = true
             samePlans.forEach { p ->
-                val result = markMedTakenUseCase(p.id)
-                result.onSuccess {
-                    Log.d("MainVM", "Plan ${p.id} (${p.medName}) 복용 완료 처리 성공")
-                }.onFailure { e ->
-                    Log.e("MainVM", "Plan ${p.id} (${p.medName}) 복용 완료 처리 실패", e)
-                    allSuccess = false
+                when (val result = markMedTakenUseCase(p.id)) {
+                    is ApiResult.Success -> {
+                        Log.d(
+                            "MainVM",
+                            "Plan ${p.id} (${p.medName}) 복용 완료 처리 성공"
+                        )
+                    }
+                    is ApiResult.Failure -> {
+                        Log.e(
+                            "MainVM",
+                            "Plan ${p.id} (${p.medName}) 복용 완료 처리 실패: ${result.error}"
+                        )
+                        allSuccess = false
+                    }
                 }
+
             }
 
             if (!allSuccess) {

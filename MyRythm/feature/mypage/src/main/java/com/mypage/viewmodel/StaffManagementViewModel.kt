@@ -2,6 +2,7 @@ package com.mypage.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.model.Inquiry
 import com.domain.model.InquiryComment
 import com.domain.model.RegiHistoryWithPlans
@@ -11,10 +12,13 @@ import com.domain.usecase.inquiry.GetAllInquiriesUseCase
 import com.domain.usecase.inquiry.GetCommentsUseCase
 import com.domain.usecase.regi.GetUserRegiHistoriesUseCase
 import com.domain.usecase.user.GetAllUsersUseCase
+import com.mypage.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.mypage.ui.toUiError
+
 
 @HiltViewModel
 class StaffManagementViewModel @Inject constructor(
@@ -62,8 +66,8 @@ class StaffManagementViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     // 에러
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _error = MutableStateFlow<UiError?>(null)
+    val error: StateFlow<UiError?> = _error.asStateFlow()
 
     // 댓글 작성 성공 이벤트
     private val _commentAdded = MutableSharedFlow<Boolean>()
@@ -124,12 +128,20 @@ class StaffManagementViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            getAllUsersUseCase()
-                .onSuccess { _users.value = it }
-                .onFailure { _error.value = it.message ?: "사용자 목록을 불러오는데 실패했습니다." }
+
+            when (val result = getAllUsersUseCase()) {
+                is ApiResult.Success<*> -> {
+                    _users.value = result.data as List<User>
+                }
+                is ApiResult.Failure -> {
+                    _error.value = result.error.toUiError()
+                }
+            }
+
             _isLoading.value = false
         }
     }
+
 
     fun selectUser(user: User) {
         _selectedUser.value = user
@@ -146,24 +158,40 @@ class StaffManagementViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            getUserRegiHistoriesUseCase(userId)
-                .onSuccess { _userRegiHistories.value = it }
-                .onFailure { _error.value = it.message ?: "복약 기록을 불러오는데 실패했습니다." }
+
+            when (val result = getUserRegiHistoriesUseCase(userId)) {
+                is ApiResult.Success -> {
+                    _userRegiHistories.value = result.data
+                }
+                is ApiResult.Failure -> {
+                    _error.value = result.error.toUiError()
+                }
+            }
+
             _isLoading.value = false
         }
     }
+
 
     // 문의사항 목록 로드
     fun loadInquiries() {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            getAllInquiriesUseCase()
-                .onSuccess { _inquiries.value = it }
-                .onFailure { _error.value = it.message ?: "문의사항 목록을 불러오는데 실패했습니다." }
+
+            when (val result = getAllInquiriesUseCase()) {
+                is ApiResult.Success<*> -> {
+                    _inquiries.value = result.data as List<Inquiry>
+                }
+                is ApiResult.Failure -> {
+                    _error.value = result.error.toUiError()
+                }
+            }
+
             _isLoading.value = false
         }
     }
+
 
     // 문의사항 선택 (댓글 보기)
     fun selectInquiry(inquiry: Inquiry) {
@@ -182,33 +210,43 @@ class StaffManagementViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            getCommentsUseCase(inquiryId)
-                .onSuccess { _inquiryComments.value = it }
-                .onFailure { _error.value = it.message ?: "댓글을 불러오는데 실패했습니다." }
+
+            when (val result = getCommentsUseCase(inquiryId)) {
+                is ApiResult.Success<*> -> {
+                    _inquiryComments.value = result.data as List<InquiryComment>
+                }
+                is ApiResult.Failure -> {
+                    _error.value = result.error.toUiError()
+                }
+            }
+
             _isLoading.value = false
         }
     }
+
 
     // 댓글 작성
     fun addComment(inquiryId: Long, content: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            addCommentUseCase(inquiryId, content)
-                .onSuccess {
-                    // 댓글 작성 성공 시 댓글 목록 새로고침
+
+            when (val result = addCommentUseCase(inquiryId, content)) {
+                is ApiResult.Success<*> -> {
                     loadInquiryComments(inquiryId)
-                    // 문의사항 목록도 새로고침 (is_answered, comment_count 업데이트)
                     loadInquiries()
                     _commentAdded.emit(true)
                 }
-                .onFailure {
-                    _error.value = it.message ?: "댓글 작성에 실패했습니다."
+                is ApiResult.Failure -> {
+                    _error.value = result.error.toUiError()
                     _commentAdded.emit(false)
                 }
+            }
+
             _isLoading.value = false
         }
     }
+
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query

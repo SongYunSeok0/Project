@@ -3,6 +3,7 @@ package com.myrhythm.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.usecase.plan.GetPlanByIdUseCase
 import com.domain.usecase.plan.MarkMedTakenUseCase
 import com.domain.usecase.plan.SnoozeMedUseCase
@@ -184,32 +185,36 @@ class AlarmViewModel @Inject constructor(
     }
 
     fun markAsTaken(planId: Long) = viewModelScope.launch {
-        Log.i(tag, "복약 완료 처리 - planId: $planId")
-
-        markMedTakenUseCase(planId)
-            .onSuccess {
+        when (val result = markMedTakenUseCase(planId)) {
+            is ApiResult.Success -> {
                 Log.i(tag, "복약 완료 성공")
                 _eventChannel.send(AlarmEvent.Success)
             }
-            .onFailure { e ->
-                Log.e(tag, "복약 완료 실패", e)
-                _eventChannel.send(AlarmEvent.Error("복약 처리에 실패했습니다."))
+            is ApiResult.Failure -> {
+                Log.e(tag, "복약 완료 실패: ${result.error}")
+                _eventChannel.send(
+                    AlarmEvent.Error("복약 처리에 실패했습니다.")
+                )
             }
+        }
     }
 
-    fun snooze(planId: Long) = viewModelScope.launch {
-        Log.i(tag, "미루기 처리 - planId: $planId")
 
-        snoozeMedUseCase(planId)
-            .onSuccess {
+    fun snooze(planId: Long) = viewModelScope.launch {
+        when (val result = snoozeMedUseCase(planId)) {
+            is ApiResult.Success -> {
                 Log.i(tag, "미루기 성공")
                 _eventChannel.send(AlarmEvent.Success)
             }
-            .onFailure { e ->
-                Log.e(tag, "미루기 실패", e)
-                _eventChannel.send(AlarmEvent.Error("미루기에 실패했습니다."))
+            is ApiResult.Failure -> {
+                Log.e(tag, "미루기 실패: ${result.error}")
+                _eventChannel.send(
+                    AlarmEvent.Error("미루기에 실패했습니다.")
+                )
             }
+        }
     }
+
 }
 
 data class AlarmUiState(

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.model.UserProfile
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.WithdrawalUseCase
@@ -153,27 +154,26 @@ class MyPageViewModel @Inject constructor(
 
     fun deleteAccount() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🗑️ ========== 회원 탈퇴 시작 ==========")
-        runCatching { withdrawalUseCase() }
-            .onSuccess { success ->
-                if (success) {
-                    Log.e("MyPageViewModel", "✅ 회원 탈퇴 성공")
 
-                    // SharedPreferences 초기화
-                    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                    prefs.edit {
-                        clear()
-                    }
-                    Log.e("MyPageViewModel", "🧹 SharedPreferences 초기화 완료")
+        when (withdrawalUseCase()) {
+            is ApiResult.Success -> {
+                Log.e("MyPageViewModel", "✅ 회원 탈퇴 성공")
 
-                    _events.send(MyPageEvent.WithdrawalSuccess)
-                } else {
-                    Log.e("MyPageViewModel", "❌ 회원 탈퇴 실패 (result=false)")
-                    _events.send(MyPageEvent.WithdrawalFailed)
+                // SharedPreferences 초기화
+                val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                prefs.edit {
+                    clear()
                 }
+                Log.e("MyPageViewModel", "🧹 SharedPreferences 초기화 완료")
+
+                _events.send(MyPageEvent.WithdrawalSuccess)
             }
-            .onFailure {
-                Log.e("MyPageViewModel", "❌ 회원 탈퇴 실패: ${it.message}", it)
+
+            is ApiResult.Failure -> {
+                Log.e("MyPageViewModel", "❌ 회원 탈퇴 실패")
                 _events.send(MyPageEvent.WithdrawalFailed)
             }
+        }
     }
+
 }

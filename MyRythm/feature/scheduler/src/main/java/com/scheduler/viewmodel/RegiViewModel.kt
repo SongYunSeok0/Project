@@ -3,6 +3,7 @@ package com.scheduler.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.model.Device
 import com.domain.model.Plan
 import com.domain.usecase.device.GetMyDevicesUseCase
@@ -11,6 +12,8 @@ import com.domain.usecase.plan.GetPlanUseCase
 import com.domain.usecase.regi.CreateRegiHistoryUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
+import com.scheduler.ui.UiError
+import com.scheduler.ui.toUiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +45,7 @@ class RegiViewModel @Inject constructor(
     data class UiState(
         val loading: Boolean = false,
         val plans: List<Plan> = emptyList(),
-        val error: String? = null
+        val error: UiError? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -61,9 +64,10 @@ class RegiViewModel @Inject constructor(
     fun loadPlans(userId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             getPlanUseCase(userId)              // Flow<List<Plan>> 라고 가정
-                .catch { e ->
-                    _uiState.update { it.copy(error = e.message) }
+                .catch {
+                    _uiState.update { it.copy(error = UiError.NetworkFailed) }
                 }
+
                 .collect { list ->
                     _uiState.update { it.copy(plans = list) }
                     _itemsByDate.value = makeItemsByDate(list)
@@ -74,15 +78,23 @@ class RegiViewModel @Inject constructor(
     /** 내 IoT 기기 목록 – GetMyDevicesUseCase 사용 */
     fun loadMyDevices() {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { getMyDevicesUseCase() }
-                .onSuccess { list ->
-                    _devices.value = list
+            when (val result = getMyDevicesUseCase()) {
+
+                is ApiResult.Success -> {
+                    _devices.value = result.data
                 }
-                .onFailure { e ->
-                    Log.e("RegiViewModel", "loadMyDevices 실패", e)
+
+                is ApiResult.Failure -> {
+                    Log.e(
+                        "RegiViewModel",
+                        "loadMyDevices 실패: ${result.error}"
+                    )
+                    _devices.value = emptyList()
                 }
+            }
         }
     }
+
 
     private var isCreating = false
 
@@ -103,15 +115,30 @@ class RegiViewModel @Inject constructor(
                 _uiState.update { it.copy(loading = true, error = null) }
 
                 // 1) RegiHistory 생성 (없을 때만)
-                val realRegiId = currentRegiHistoryId ?: run {
-                    createRegiHistoryUseCase(
-                        regiType = regiType,
-                        label = label,
-                        issuedDate = issuedDate,
-                        useAlarm = useAlarm,
-                        device = device
-                    )
-                }
+                val realRegiId: Long =
+                    if (currentRegiHistoryId != null) {
+                        currentRegiHistoryId!!
+                    } else {
+                        when (val result = createRegiHistoryUseCase(
+                            regiType = regiType,
+                            label = label,
+                            issuedDate = issuedDate, // ← 여기 변수 존재하는지 꼭 확인
+                            useAlarm = useAlarm,
+                            device = device
+                        )) {
+                            is ApiResult.Success -> result.data
+                            is ApiResult.Failure -> {
+                                // ❗ UiState 구조에 맞게 하나로 통일
+                                _uiState.update {
+                                    it.copy(error = result.error.toUiError())
+                                }
+                                return@launch
+                            }
+                        }
+                    }
+
+
+
 
                 // 2) 각 플랜 생성 – CreatePlanUseCase 파라미터에 맞춰 하나씩 호출
                 plans.forEach { plan ->

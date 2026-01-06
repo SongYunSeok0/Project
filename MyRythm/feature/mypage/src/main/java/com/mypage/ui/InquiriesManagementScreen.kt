@@ -96,10 +96,13 @@ fun InquiriesManagementScreen(
     // 에러 토스트
     LaunchedEffect(error) {
         error?.let {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            Toast
+                .makeText(context, it.toMessage(context), Toast.LENGTH_SHORT)
+                .show()
             viewModel.clearError()
         }
     }
+
 
     // 댓글 작성 결과
     LaunchedEffect(Unit) {

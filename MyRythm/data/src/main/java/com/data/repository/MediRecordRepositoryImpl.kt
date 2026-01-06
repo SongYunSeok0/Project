@@ -9,6 +9,7 @@ import com.domain.repository.MediRecordRepository
 import com.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 
 class MediRecordRepositoryImpl @Inject constructor(
@@ -20,6 +21,7 @@ class MediRecordRepositoryImpl @Inject constructor(
     override fun getRecords(): Flow<List<MediRecord>> {
 
         val userId = authRepository.getUserId()
+            ?: return flowOf(emptyList())
 
         val plansFlow = planDao.getAllByUser(userId)
         val regisFlow = regiDao.getAll()
@@ -31,4 +33,5 @@ class MediRecordRepositoryImpl @Inject constructor(
             }
         }
     }
+
 }
