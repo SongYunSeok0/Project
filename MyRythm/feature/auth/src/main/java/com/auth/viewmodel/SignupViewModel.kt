@@ -2,20 +2,24 @@ package com.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.domain.exception.DomainException
+import com.domain.model.ApiResult
+import com.domain.model.DomainError
 import com.domain.model.SignupRequest
-import com.domain.repository.AuthRepository
+import com.domain.usecase.auth.SendEmailCodeUseCase
+import com.domain.usecase.auth.VerifyEmailCodeUseCase
 import com.domain.usecase.user.SignupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SignupViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
+    private val sendEmailCodeUseCase: SendEmailCodeUseCase,
+    private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase,
     private val signupUseCase: SignupUseCase
 ) : ViewModel() {
 
@@ -40,10 +44,10 @@ class SignupViewModel @Inject constructor(
     )
 
     private val _signupForm = MutableStateFlow(SignupForm())
-    val signupForm: StateFlow<SignupForm> = _signupForm
+    val signupForm: StateFlow<SignupForm> = _signupForm.asStateFlow()
 
     private val _uiState = MutableStateFlow(UiState())
-    val uiState: StateFlow<UiState> = _uiState
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     fun updateEmail(v: String) = _signupForm.update { it.copy(email = v) }
     fun updateCode(v: String) = _signupForm.update { it.copy(code = v) }
@@ -58,43 +62,38 @@ class SignupViewModel @Inject constructor(
     fun sendCode() = viewModelScope.launch {
         _uiState.update { it.copy(loading = true, errorMessage = null) }
 
-        authRepository.sendEmailCode(_signupForm.value.email, _signupForm.value.username)
-            .onSuccess {
+        when (val result = sendEmailCodeUseCase(_signupForm.value.email, _signupForm.value.username)) {
+            is ApiResult.Success -> {
                 _uiState.update {
                     it.copy(loading = false, isCodeSent = true)
                 }
             }
-            .onFailure { error ->
-                val message = when (error) {
-                    is DomainException.ConflictException -> "이미 존재하는 이메일입니다"
-                    is DomainException.NetworkException -> "인터넷 연결을 확인해주세요"
-                    else -> "인증코드 전송 실패"
-                }
+            is ApiResult.Failure -> {
+                val message = mapErrorToMessage(result.error, "인증코드 전송 실패")
                 _uiState.update {
                     it.copy(loading = false, errorMessage = message)
                 }
             }
+        }
     }
 
     fun verifyCode() = viewModelScope.launch {
         _uiState.update { it.copy(loading = true, errorMessage = null) }
 
         val f = _signupForm.value
-        authRepository.verifyEmailCode(f.email, f.code)
-            .onSuccess {
+        when (val result = verifyEmailCodeUseCase(f.email, f.code)) {
+            is ApiResult.Success -> {
                 _uiState.update {
                     it.copy(loading = false, isCodeVerified = true)
                 }
             }
-            .onFailure { error ->
-                val message = when (error) {
-                    is DomainException.AuthException -> "인증코드가 올바르지 않습니다"
-                    else -> "인증 실패"
-                }
+            is ApiResult.Failure -> {
+                val message = mapErrorToMessage(result.error, "인증 실패")
                 _uiState.update {
                     it.copy(loading = false, errorMessage = message)
                 }
             }
+        }
     }
 
     fun signup() = viewModelScope.launch {
@@ -112,48 +111,54 @@ class SignupViewModel @Inject constructor(
 
         _uiState.update { it.copy(loading = true, errorMessage = null) }
 
-        signupUseCase(request)
-            .onSuccess {
+        when (val result = signupUseCase(request)) {
+            is ApiResult.Success -> {
                 _uiState.update {
                     it.copy(loading = false, isSignupSuccess = true)
                 }
             }
-            .onFailure { error ->
-                val message = when (error) {
-                    is DomainException.ConflictException -> "이미 존재하는 이메일입니다"
-                    is DomainException.ValidationException -> error.message
-                    is DomainException.NetworkException -> "인터넷 연결을 확인해주세요"
-                    else -> "회원가입에 실패했습니다"
-                }
+            is ApiResult.Failure -> {
+                val message = mapErrorToMessage(result.error, "회원가입에 실패했습니다")
                 _uiState.update {
                     it.copy(loading = false, errorMessage = message)
                 }
             }
+        }
     }
 
     fun signup(request: SignupRequest) = viewModelScope.launch {
         _uiState.update { it.copy(loading = true, errorMessage = null) }
 
-        signupUseCase(request)
-            .onSuccess {
+        when (val result = signupUseCase(request)) {
+            is ApiResult.Success -> {
                 _uiState.update {
                     it.copy(loading = false, isSignupSuccess = true)
                 }
             }
-            .onFailure { error ->
-                val message = when (error) {
-                    is DomainException.ConflictException -> "이미 존재하는 이메일입니다"
-                    is DomainException.ValidationException -> error.message
-                    is DomainException.NetworkException -> "인터넷 연결을 확인해주세요"
-                    else -> "회원가입에 실패했습니다"
-                }
+            is ApiResult.Failure -> {
+                val message = mapErrorToMessage(result.error, "회원가입에 실패했습니다")
                 _uiState.update {
                     it.copy(loading = false, errorMessage = message)
                 }
             }
+        }
     }
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    private fun mapErrorToMessage(error: DomainError, defaultMessage: String): String {
+        return when (error) {
+            is DomainError.Conflict -> "이미 존재하는 이메일입니다"
+            is DomainError.Auth -> "인증코드가 올바르지 않습니다"
+            is DomainError.Validation -> error.message
+            is DomainError.Network -> "인터넷 연결을 확인해주세요"
+            is DomainError.NotFound -> "존재하지 않는 사용자입니다"
+            is DomainError.Server -> "서버 오류가 발생했습니다"
+            is DomainError.InvalidToken -> "토큰이 유효하지 않습니다"
+            is DomainError.NeedAdditionalInfo -> "추가 정보가 필요합니다"
+            is DomainError.Unknown -> defaultMessage
+        }
     }
 }

@@ -34,7 +34,6 @@ class MyPageViewModel @Inject constructor(
     private val observeUserProfileUseCase: ObserveUserProfileUseCase,
     private val getInquiriesUseCase: GetInquiriesUseCase,
     private val addInquiryUseCase: AddInquiryUseCase,
-    @Suppress("unused") // MyPageScreen에서 사용됨
     private val getLatestHeartRateUseCase: GetLatestHeartRateUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -45,8 +44,6 @@ class MyPageViewModel @Inject constructor(
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> = _profile
 
-    // 🔥 최근 심박수 상태 추가
-    @Suppress("unused") // MyPageScreen에서 사용됨
     private val _latestHeartRate = MutableStateFlow<Int?>(null)
     val latestHeartRate: StateFlow<Int?> = _latestHeartRate.asStateFlow()
 
@@ -56,7 +53,7 @@ class MyPageViewModel @Inject constructor(
     init {
         Log.e("MyPageViewModel", "🎬 ========== ViewModel 초기화 시작 ==========")
         loadProfile()
-        loadLatestHeartRate() // 🔥 심박수 로드 추가
+        loadLatestHeartRate()
 
         viewModelScope.launch {
             Log.e("MyPageViewModel", "👂 observeLocalProfile 시작")
@@ -85,17 +82,18 @@ class MyPageViewModel @Inject constructor(
             }
     }
 
-    // 🔥 최근 심박수 로드
     private fun loadLatestHeartRate() = viewModelScope.launch {
         Log.e("MyPageViewModel", "💓 ========== loadLatestHeartRate() 시작 ==========")
-        runCatching {
-            getLatestHeartRateUseCase()
-        }.onSuccess { heartRate ->
-            Log.e("MyPageViewModel", "✅ 최근 심박수: $heartRate bpm")
-            _latestHeartRate.value = heartRate
-        }.onFailure { e ->
-            Log.e("MyPageViewModel", "❌ 심박수 로드 실패: ${e.message}", e)
-            _latestHeartRate.value = null
+        when (val result = getLatestHeartRateUseCase()) {
+            is ApiResult.Success -> {
+                val heartRate = result.data
+                Log.e("MyPageViewModel", "✅ 최근 심박수: $heartRate bpm")
+                _latestHeartRate.value = heartRate
+            }
+            is ApiResult.Failure -> {
+                Log.e("MyPageViewModel", "❌ 심박수 로드 실패: ${result.error}")
+                _latestHeartRate.value = null
+            }
         }
     }
 
@@ -110,7 +108,6 @@ class MyPageViewModel @Inject constructor(
                 Log.e("MyPageViewModel", "❌ Profile 새로고침 실패: ${it.message}", it)
             }
 
-        // 🔥 프로필 새로고침 시 심박수도 함께 새로고침
         loadLatestHeartRate()
     }
 
@@ -155,7 +152,7 @@ class MyPageViewModel @Inject constructor(
     fun deleteAccount() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🗑️ ========== 회원 탈퇴 시작 ==========")
 
-        when (withdrawalUseCase()) {
+        when (val result = withdrawalUseCase()) {
             is ApiResult.Success -> {
                 Log.e("MyPageViewModel", "✅ 회원 탈퇴 성공")
 
@@ -170,10 +167,9 @@ class MyPageViewModel @Inject constructor(
             }
 
             is ApiResult.Failure -> {
-                Log.e("MyPageViewModel", "❌ 회원 탈퇴 실패")
+                Log.e("MyPageViewModel", "❌ 회원 탈퇴 실패: ${result.error}")
                 _events.send(MyPageEvent.WithdrawalFailed)
             }
         }
     }
-
 }

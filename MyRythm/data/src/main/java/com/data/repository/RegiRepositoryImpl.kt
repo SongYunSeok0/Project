@@ -9,6 +9,8 @@ import com.data.network.dto.plan.PlanCreateRequest
 import com.data.network.dto.regihistory.RegiHistoryRequest
 import com.data.network.mapper.toDomain
 import com.data.network.mapper.toModelList
+import com.data.util.apiResultOf
+import com.domain.model.ApiResult
 import com.domain.model.Plan
 import com.domain.model.PlanStatus
 import com.domain.model.RegiHistory
@@ -35,7 +37,7 @@ class RegiRepositoryImpl @Inject constructor(
         issuedDate: String?,
         useAlarm: Boolean,
         device: Long?
-    ): Long {
+    ): ApiResult<Long> = apiResultOf {
         val req = RegiHistoryRequest(
             regiType = regiType,
             label = label,
@@ -57,7 +59,7 @@ class RegiRepositoryImpl @Inject constructor(
         )
         regiHistoryDao.insert(entity)
 
-        return res.id
+        res.id
     }
 
     override fun getRegiHistories(): Flow<List<RegiHistory>> =
@@ -75,7 +77,7 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun updateRegiHistory(regi: RegiHistory) {
+    override suspend fun updateRegiHistory(regi: RegiHistory): ApiResult<Unit> = apiResultOf {
         val req = RegiHistoryRequest(
             regiType = regi.regiType,
             label = regi.label,
@@ -96,14 +98,16 @@ class RegiRepositoryImpl @Inject constructor(
             device = regi.device
         )
         regiHistoryDao.insert(entity)
+        Unit
     }
 
-    override suspend fun deleteRegiHistory(id: Long) {
+    override suspend fun deleteRegiHistory(id: Long): ApiResult<Unit> = apiResultOf {
         regiHistoryApi.deleteRegiHistory(id)
         regiHistoryDao.deleteById(id)
+        Unit
     }
 
-    override suspend fun createPlans(regihistoryId: Long?, list: List<Plan>) {
+    override suspend fun createPlans(regihistoryId: Long?, list: List<Plan>): ApiResult<Unit> = apiResultOf {
         val entities = mutableListOf<PlanEntity>()
 
         for (plan in list) {
@@ -136,6 +140,7 @@ class RegiRepositoryImpl @Inject constructor(
         }
 
         planDao.insertAll(entities)
+        Unit
     }
 
     override fun observeAllPlans(userId: Long): Flow<List<Plan>> =
@@ -178,62 +183,66 @@ class RegiRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun syncRegiHistories(userId: Long) = withContext(Dispatchers.IO) {
-        val remoteRegi = regiHistoryApi.getRegiHistories()
-        val remotePlans = planApi.getPlans()
-
-        db.regiHistoryDao().deleteAllByUser(userId = userId)
-        db.planDao().deleteAllByUser(userId = userId)
-
-        val regiEntities = remoteRegi.map { res ->
-            RegiHistoryEntity(
-                id = res.id,
-                userId = res.userId,
-                regiType = res.regiType,
-                label = res.label,
-                issuedDate = res.issuedDate,
-                useAlarm = res.useAlarm,
-                device = res.device
-            )
-        }
-        regiHistoryDao.insertAll(regiEntities)
-
-        val planEntities = remotePlans.map { res ->
-            PlanEntity(
-                id = res.id,
-                regihistoryId = res.regihistoryId,
-                regihistoryLabel = res.regihistoryLabel,
-                medName = res.medName,
-                takenAt = res.takenAt,
-                exTakenAt = res.exTakenAt,
-                mealTime = res.mealTime,
-                note = res.note,
-                taken = res.taken,
-                takenTime = res.takenTime,
-                useAlarm = res.useAlarm,
-                status = res.status
-            )
-        }
-        planDao.insertAll(planEntities)
-    }
-
-    override suspend fun getUserRegiHistories(userId: Long): Result<List<RegiHistoryWithPlans>> =
+    override suspend fun syncRegiHistories(userId: Long): ApiResult<Unit> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            apiResultOf {
+                val remoteRegi = regiHistoryApi.getRegiHistories()
+                val remotePlans = planApi.getPlans()
+
+                db.regiHistoryDao().deleteAllByUser(userId = userId)
+                db.planDao().deleteAllByUser(userId = userId)
+
+                val regiEntities = remoteRegi.map { res ->
+                    RegiHistoryEntity(
+                        id = res.id,
+                        userId = res.userId,
+                        regiType = res.regiType,
+                        label = res.label,
+                        issuedDate = res.issuedDate,
+                        useAlarm = res.useAlarm,
+                        device = res.device
+                    )
+                }
+                regiHistoryDao.insertAll(regiEntities)
+
+                val planEntities = remotePlans.map { res ->
+                    PlanEntity(
+                        id = res.id,
+                        regihistoryId = res.regihistoryId,
+                        regihistoryLabel = res.regihistoryLabel,
+                        medName = res.medName,
+                        takenAt = res.takenAt,
+                        exTakenAt = res.exTakenAt,
+                        mealTime = res.mealTime,
+                        note = res.note,
+                        taken = res.taken,
+                        takenTime = res.takenTime,
+                        useAlarm = res.useAlarm,
+                        status = res.status
+                    )
+                }
+                planDao.insertAll(planEntities)
+                Unit
+            }
+        }
+
+    override suspend fun getUserRegiHistories(userId: Long): ApiResult<List<RegiHistoryWithPlans>> =
+        withContext(Dispatchers.IO) {
+            apiResultOf {
                 regiHistoryApi.getUserRegiHistories(userId).toModelList()
             }
         }
 
-    override suspend fun getAllRegiHistories(): Result<List<RegiHistoryWithPlans>> =
+    override suspend fun getAllRegiHistories(): ApiResult<List<RegiHistoryWithPlans>> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            apiResultOf {
                 regiHistoryApi.getAllRegiHistories().toModelList()
             }
         }
 
-    override suspend fun getUserPlans(userId: Long): Result<List<Plan>> =
+    override suspend fun getUserPlans(userId: Long): ApiResult<List<Plan>> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            apiResultOf {
                 planApi.getUserPlans(userId).map { it.toDomain() }
             }
         }

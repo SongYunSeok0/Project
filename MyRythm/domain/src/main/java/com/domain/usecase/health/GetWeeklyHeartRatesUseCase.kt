@@ -1,7 +1,8 @@
 package com.domain.usecase.health
 
-import com.domain.model.HeartRateHistory
+import com.domain.model.ApiResult
 import com.domain.repository.HeartRateRepository
+import com.domain.util.apiResultOf
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -16,7 +17,7 @@ data class DailyHeartRateUI(
 class GetWeeklyHeartRatesUseCase @Inject constructor(
     private val heartRateRepository: HeartRateRepository
 ) {
-    suspend operator fun invoke(): List<DailyHeartRateUI> {
+    suspend operator fun invoke(): ApiResult<List<DailyHeartRateUI>> = apiResultOf {
         val heartRates = heartRateRepository.getWeeklyHeartRates()
 
         // "yyyy-MM-dd HH:mm:ss" 형식 파서
@@ -46,7 +47,7 @@ class GetWeeklyHeartRatesUseCase @Inject constructor(
             println("Date: $date, Count: ${rates.size}")
         }
 
-        return grouped
+        grouped
             .map { (date, rates) ->
                 DailyHeartRateUI(
                     date = date.format(dateFormatter),

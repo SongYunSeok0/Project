@@ -3,6 +3,7 @@ package com.myrhythm.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.model.DailyStep
 import com.domain.repository.StepRepository
 import com.domain.sharedvm.StepVMContract
@@ -23,7 +24,7 @@ import javax.inject.Inject
 class StepViewModel @Inject constructor(
     private val repo: StepRepository,
     private val hc: HealthConnectRepository,
-    private val getWeeklyStepsUseCase: GetWeeklyStepsUseCase  // 🔥 UseCase 주입
+    private val getWeeklyStepsUseCase: GetWeeklyStepsUseCase
 ) : ViewModel(), StepVMContract {
 
     private val _permissionGranted = MutableStateFlow(false)
@@ -32,9 +33,11 @@ class StepViewModel @Inject constructor(
     private val _todaySteps = MutableStateFlow(0)
     override val todaySteps = _todaySteps.asStateFlow()
 
-    // 🔥 일주일치 걸음 수 데이터
     private val _weeklySteps = MutableStateFlow<List<DailyStep>>(emptyList())
     val weeklySteps: StateFlow<List<DailyStep>> = _weeklySteps.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private var autoJob: Job? = null
     private var autoStarted = false
@@ -98,20 +101,23 @@ class StepViewModel @Inject constructor(
         repo.uploadDailyStep(d)
         repo.clearSteps()
 
-        // 🔥 업로드 후 주간 데이터 갱신
         loadWeeklySteps()
     }
 
-    // 🔥 일주일치 걸음 수 데이터 로드
     fun loadWeeklySteps() {
         viewModelScope.launch {
-            try {
-                val steps = getWeeklyStepsUseCase()  // 🔥 UseCase 사용
-                _weeklySteps.value = steps
-                Log.d("StepVM", "Weekly steps loaded: ${steps.size} days")
-            } catch (e: Exception) {
-                Log.e("StepVM", "Failed to load weekly steps", e)
-                _weeklySteps.value = emptyList()
+            val result = getWeeklyStepsUseCase()
+            when (result) {
+                is ApiResult.Success -> {
+                    _weeklySteps.value = result.data
+                    _errorMessage.value = null
+                    Log.d("StepVM", "Weekly steps loaded: ${result.data.size} days")
+                }
+                is ApiResult.Failure -> {
+                    _weeklySteps.value = emptyList()
+                    _errorMessage.value = "걸음 수 데이터를 불러올 수 없습니다"
+                    Log.e("StepVM", "Failed to load weekly steps: ${result.error}")
+                }
             }
         }
     }
@@ -129,8 +135,13 @@ class StepViewModel @Inject constructor(
                 loadWeeklySteps()
                 Log.d("StepVM", "✅ 테스트 데이터 7건 삽입 완료")
             } catch (e: Exception) {
+                _errorMessage.value = "테스트 데이터 삽입 실패"
                 Log.e("StepVM", "❌ 테스트 데이터 삽입 실패", e)
             }
         }
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 }

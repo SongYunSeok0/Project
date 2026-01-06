@@ -11,7 +11,6 @@ sealed interface UiError {
 
 fun DomainError.toUiError(): UiError =
     when (this) {
-
         // -------- 공통 --------
         is DomainError.Network ->
             UiError.NetworkFailed
@@ -20,22 +19,28 @@ fun DomainError.toUiError(): UiError =
             UiError.ServerFailed
 
         is DomainError.Unknown ->
-            UiError.Message(message ?: "알 수 없는 오류가 발생했어요")
+            UiError.Message(message)
 
         // -------- Auth --------
-        DomainError.EmailSendFailed ->
-            UiError.Message("이메일 전송에 실패했어요")
+        is DomainError.Auth ->
+            UiError.NeedLogin
 
-        DomainError.VerifyCodeFailed ->
-            UiError.Message("인증 코드가 올바르지 않아요")
+        is DomainError.InvalidToken ->
+            UiError.NeedLogin
 
-        DomainError.DuplicateEmail ->
-            UiError.Message("이미 사용 중인 이메일이에요")
+        // -------- Validation --------
+        is DomainError.Validation ->
+            UiError.Message(message)
+
+        // -------- Conflict --------
+        is DomainError.Conflict ->
+            UiError.Message("이미 존재하는 데이터입니다")
+
+        // -------- NotFound --------
+        is DomainError.NotFound ->
+            UiError.Message("데이터를 찾을 수 없습니다")
 
         // -------- Social --------
         DomainError.NeedAdditionalInfo ->
             UiError.Message("추가 정보 입력이 필요해요")
-
-        is DomainError.InvalidToken ->
-            UiError.NeedLogin
     }

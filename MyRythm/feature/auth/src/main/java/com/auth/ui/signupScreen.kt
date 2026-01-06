@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.ui.components.EmailVerificationSection
-import com.domain.model.SignupRequest
+import com.auth.viewmodel.SignupViewModel
 import com.shared.R
 import com.shared.ui.components.AuthGenderDropdown
 import com.shared.ui.components.AuthInputField
@@ -55,35 +56,24 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignupScreen(
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = hiltViewModel(),
+    viewModel: SignupViewModel = hiltViewModel(),
     onSignupComplete: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val form by viewModel.signupForm.collectAsStateWithLifecycle()
 
     var birthYear by rememberSaveable { mutableStateOf("") }
     var birthMonth by rememberSaveable { mutableStateOf("") }
     var birthDay by rememberSaveable { mutableStateOf("") }
-
-    var height by rememberSaveable { mutableStateOf("") }
-    var weight by rememberSaveable { mutableStateOf("") }
-    var phone by rememberSaveable { mutableStateOf("") }
-
-    var gender by rememberSaveable { mutableStateOf("") }
-
-    var isEmailCodeSent by rememberSaveable { mutableStateOf(false) }
-    var isVerificationCompleted by rememberSaveable { mutableStateOf(false) }
-    var code by rememberSaveable { mutableStateOf("") }
 
     // 전송 횟수 및 타이머 관리
     var sendCount by rememberSaveable { mutableStateOf(0) }
     var remainingSeconds by rememberSaveable { mutableStateOf(0) }
     var isTimerRunning by remember { mutableStateOf(false) }
 
-    val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val nameText = stringResource(R.string.name)
     val passwordText = stringResource(R.string.auth_password)
@@ -110,27 +100,28 @@ fun SignupScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { msg ->
-            when {
-                msg.contains("회원가입 성공") -> {
-                    snackbar.showSnackbar(msg)
-                    onSignupComplete()
-                }
-                msg.contains("인증 성공") || msg.contains("인증 완료") -> {
-                    // 인증 성공은 UI에 이미 표시되므로 스낵바 표시 안 함
-                    isVerificationCompleted = true
-                    isTimerRunning = false
-                }
-                msg.contains("인증코드 전송") -> {
-                    // 전송 완료도 UI에 표시되므로 스낵바 표시 안 함
-                    isEmailCodeSent = true
-                    sendCount++
-                    remainingSeconds = 180
-                    isTimerRunning = true
-                }
-                else -> snackbar.showSnackbar(msg)
-            }
+    // 에러 메시지 표시
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
+    // 인증코드 전송 성공
+    LaunchedEffect(uiState.isCodeSent) {
+        if (uiState.isCodeSent && !isTimerRunning) {
+            sendCount++
+            remainingSeconds = 180
+            isTimerRunning = true
+        }
+    }
+
+    // 회원가입 성공
+    LaunchedEffect(uiState.isSignupSuccess) {
+        if (uiState.isSignupSuccess) {
+            snackbar.showSnackbar("회원가입 성공")
+            onSignupComplete()
         }
     }
 
@@ -163,70 +154,57 @@ fun SignupScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // 이메일인증+타이머까지 컴포넌트로 넘김_1216 EmailVerificationSection.kt
             EmailVerificationSection(
-                email = email,
-                code = code,
-                isVerificationCompleted = isVerificationCompleted,
-                isEmailCodeSent = isEmailCodeSent,
+                email = form.email,
+                code = form.code,
+                isVerificationCompleted = uiState.isCodeVerified,
+                isEmailCodeSent = uiState.isCodeSent,
                 isTimerRunning = isTimerRunning,
                 remainingSeconds = remainingSeconds,
-                canSend = email.isNotBlank() && sendCount < 5 && !isVerificationCompleted,
+                canSend = form.email.isNotBlank() && sendCount < 5 && !uiState.isCodeVerified,
                 onEmailChange = {
-                    email = it
-                    if (isVerificationCompleted) {
-                        isVerificationCompleted = false
-                        isEmailCodeSent = false
+                    viewModel.updateEmail(it)
+                    if (uiState.isCodeVerified) {
                         sendCount = 0
                         remainingSeconds = 0
                         isTimerRunning = false
                     }
                 },
                 onSendClick = {
-                    if (email.isNotBlank()) {
-                        // =============================
+                    if (form.email.isNotBlank()) {
                         // TEST용 UI 가상 인증 코드
-                        // =============================
-                        if (email == "test@test.com") {
-                            isEmailCodeSent = true
+                        if (form.email == "test@test.com") {
                             sendCount++
                             remainingSeconds = 180
                             isTimerRunning = true
-                            kotlinx.coroutines.MainScope().launch {
+                            scope.launch {
                                 snackbar.showSnackbar("인증코드가 전송되었습니다.")
                             }
                             return@EmailVerificationSection
                         }
-                        // =============================
+
                         if (sendCount >= 5) {
-                            kotlinx.coroutines.MainScope().launch {
+                            scope.launch {
                                 snackbar.showSnackbar("인증 요청 횟수가 초과되었습니다. 1시간 후 다시 시도해주세요.")
                             }
                         } else {
-                            viewModel.updateSignupEmail(email)
                             viewModel.sendCode()
                         }
                     }
                 },
                 onCodeChange = {
-                    code = it
                     viewModel.updateCode(it)
                 },
                 onVerifyClick = {
-                    // =============================
                     // TEST용 UI 가상 인증 성공 분기
-                    // =============================
-                    if (email == "test@test.com" && code == "1234") {
-                        isVerificationCompleted = true
+                    if (form.email == "test@test.com" && form.code == "1234") {
                         isTimerRunning = false
-                        kotlinx.coroutines.MainScope().launch  {
+                        scope.launch {
                             snackbar.showSnackbar("인증 완료")
                         }
                         return@EmailVerificationSection
                     }
-                    // =============================
-                    viewModel.updateSignupEmail(email)
-                    viewModel.updateCode(code)
+
                     viewModel.verifyCode()
                 }
             )
@@ -235,8 +213,8 @@ fun SignupScreen(
 
             AuthSectionTitle(nameText)
             AuthInputField(
-                value = username,
-                onValueChange = { username = it },
+                value = form.username,
+                onValueChange = { viewModel.updateUsername(it) },
                 hint = nameText,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -245,8 +223,8 @@ fun SignupScreen(
 
             AuthSectionTitle(passwordText)
             AuthInputField(
-                value = password,
-                onValueChange = { password = it },
+                value = form.password,
+                onValueChange = { viewModel.updatePassword(it) },
                 hint = passwordText,
                 isPassword = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -286,8 +264,8 @@ fun SignupScreen(
             Spacer(Modifier.height(20.dp))
 
             AuthGenderDropdown(
-                value = gender,
-                onValueChange = { gender = it },
+                value = form.gender,
+                onValueChange = { viewModel.updateGender(it) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -310,15 +288,19 @@ fun SignupScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 AuthInputField(
-                    value = height,
-                    onValueChange = { height = it },
+                    value = form.height.toString().takeIf { it != "0.0" } ?: "",
+                    onValueChange = {
+                        it.toDoubleOrNull()?.let { value -> viewModel.updateHeight(value) }
+                    },
                     hint = heightText,
                     modifier = Modifier.weight(1f),
                     keyboardType = KeyboardType.Number
                 )
                 AuthInputField(
-                    value = weight,
-                    onValueChange = { weight = it },
+                    value = form.weight.toString().takeIf { it != "0.0" } ?: "",
+                    onValueChange = {
+                        it.toDoubleOrNull()?.let { value -> viewModel.updateWeight(value) }
+                    },
                     hint = weightText,
                     modifier = Modifier.weight(1f),
                     keyboardType = KeyboardType.Number
@@ -329,8 +311,8 @@ fun SignupScreen(
 
             AuthSectionTitle(phoneNumberPlaceholderText)
             AuthInputField(
-                value = phone,
-                onValueChange = { phone = it },
+                value = form.phone,
+                onValueChange = { viewModel.updatePhone(it) },
                 hint = phoneNumberPlaceholderText,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardType = KeyboardType.Phone
@@ -339,37 +321,32 @@ fun SignupScreen(
             Spacer(Modifier.height(24.dp))
 
             AuthPrimaryButton(
-                text = if (ui.loading) signupLoading else signupText,
+                text = if (uiState.loading) signupLoading else signupText,
                 onClick = {
                     val birthDate = "${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}"
-                    val heightOk = validNumber(height)
-                    val weightOk = validNumber(weight)
 
                     if (
-                        email.isBlank() || username.isBlank() || password.isBlank() ||
+                        form.email.isBlank() || form.username.isBlank() || form.password.isBlank() ||
                         birthYear.length != 4 || birthMonth.isBlank() || birthDay.isBlank() ||
-                        !heightOk || !weightOk || phone.isBlank()
+                        form.height == 0.0 || form.weight == 0.0 || form.phone.isBlank()
                     ) {
+                        scope.launch {
+                            snackbar.showSnackbar("모든 필드를 입력해주세요")
+                        }
                         return@AuthPrimaryButton
                     }
 
-                    if (!isVerificationCompleted) {
+                    if (!uiState.isCodeVerified) {
+                        scope.launch {
+                            snackbar.showSnackbar("이메일 인증을 완료해주세요")
+                        }
                         return@AuthPrimaryButton
                     }
 
-                    val req = SignupRequest(
-                        email = email,
-                        username = username,
-                        password = password,
-                        phone = phone,
-                        birthDate = birthDate,
-                        gender = gender,
-                        height = height.toDouble(),
-                        weight = weight.toDouble()
-                    )
-                    viewModel.signup(req)
+                    viewModel.updateBirth(birthDate)
+                    viewModel.signup()
                 },
-                enabled = !ui.loading,
+                enabled = !uiState.loading,
                 modifier = Modifier.fillMaxWidth()
             )
 

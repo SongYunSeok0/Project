@@ -1,5 +1,6 @@
 package com.domain.repository
 
+import com.domain.model.ApiResult
 import com.domain.model.Plan
 import kotlinx.coroutines.flow.Flow
 
@@ -9,7 +10,7 @@ interface PlanRepository {
 
     fun getPlanById(planId: Long): Flow<Plan?>
 
-    suspend fun syncPlans(userId: Long)
+    suspend fun syncPlans(userId: Long): ApiResult<Unit>
 
     suspend fun create(
         regihistoryId: Long?,
@@ -19,27 +20,26 @@ interface PlanRepository {
         note: String?,
         taken: Boolean?,
         useAlarm: Boolean
-    )
+    ): ApiResult<Unit>
 
     suspend fun update(
         userId: Long,
         plan: Plan
-    )
+    ): ApiResult<Unit>
 
-    // ✅ [수정] userId 파라미터 추가 (refresh를 위해 필요)
     suspend fun createPlansSmart(
         regihistoryId: Long,
         startDate: String,
         duration: Int,
         times: List<String>,
         medName: String
-    )
+    ): ApiResult<Unit>
 
-    suspend fun delete(userId: Long, planId: Long)
+    suspend fun delete(userId: Long, planId: Long): ApiResult<Unit>
 
-    suspend fun markAsTaken(planId: Long): Result<Unit>
+    suspend fun markAsTaken(planId: Long): ApiResult<Unit>
 
-    suspend fun snoozePlan(planId: Long): Result<Unit>
+    suspend fun snoozePlan(planId: Long): ApiResult<Unit>
 
-    suspend fun getRecentTakenPlans(userId: Long, days: Int = 7): List<Plan>
+    suspend fun getRecentTakenPlans(userId: Long, days: Int = 7): ApiResult<List<Plan>>
 }

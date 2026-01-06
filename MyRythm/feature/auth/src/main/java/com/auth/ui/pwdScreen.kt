@@ -34,6 +34,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.auth.viewmodel.PasswordResetViewModel
 import com.shared.R
 import com.shared.ui.components.AuthActionButton
 import com.shared.ui.components.AuthInputField
@@ -47,13 +49,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun PwdScreen(
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = hiltViewModel(),
+    viewModel: PasswordResetViewModel = hiltViewModel(),
     onBackToLogin: () -> Unit = {}
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     var email by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
-    var sent by remember { mutableStateOf(false) }
-    var verified by remember { mutableStateOf(false) }
     var newPassword by remember { mutableStateOf("") }
 
     val snackbar = remember { SnackbarHostState() }
@@ -65,18 +67,24 @@ fun PwdScreen(
     val sentText = stringResource(R.string.sent)
     val verificationText = stringResource(R.string.verification)
     val verificationCodeText = stringResource(R.string.verification_code)
-    val comfirmText = stringResource(R.string.confirm)
+    val confirmText = stringResource(R.string.confirm)
     val backtologinText = stringResource(R.string.auth_backtologin)
     val verifyEmailMessage = stringResource(R.string.auth_message_verify_email)
     val enterNewPasswordMessage = stringResource(R.string.auth_message_enter_new_password)
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { msg ->
-            snackbar.showSnackbar(msg)
-            when (msg) {
-                "비밀번호 재설정 인증코드 전송" -> sent = true
-                "재설정 인증 성공" -> verified = true
-            }
+    // 에러 메시지 표시
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbar.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
+    // 비밀번호 재설정 성공 시 로그인 화면으로 이동
+    LaunchedEffect(uiState.isResetSuccess) {
+        if (uiState.isResetSuccess) {
+            snackbar.showSnackbar("비밀번호가 재설정되었습니다")
+            onBackToLogin()
         }
     }
 
@@ -111,24 +119,21 @@ fun PwdScreen(
                     value = email,
                     onValueChange = {
                         email = it
-                        if (verified) verified = false
-                        sent = false
-                        code = ""
                     },
                     hint = emailText,
                     modifier = Modifier.weight(1f),
                     keyboardType = KeyboardType.Email,
-                    enabled = !verified
+                    enabled = !uiState.isCodeVerified
                 )
 
                 Spacer(Modifier.width(8.dp))
 
                 AuthActionButton(
-                    text = if (sent) sentText else sendText,
+                    text = if (uiState.isCodeSent) sentText else sendText,
                     onClick = {
                         viewModel.sendResetCode(email)
                     },
-                    enabled = !sent && email.isNotBlank(),
+                    enabled = !uiState.isCodeSent && email.isNotBlank() && !uiState.loading,
                     modifier = Modifier.widthIn(min = 90.dp)
                 )
             }
@@ -145,7 +150,7 @@ fun PwdScreen(
                     hint = verificationCodeText,
                     modifier = Modifier.weight(1f),
                     keyboardType = KeyboardType.Number,
-                    enabled = !verified
+                    enabled = !uiState.isCodeVerified
                 )
 
                 Spacer(Modifier.width(8.dp))
@@ -155,12 +160,12 @@ fun PwdScreen(
                     onClick = {
                         viewModel.verifyResetCode(email, code)
                     },
-                    enabled = !verified && code.isNotBlank(),
+                    enabled = !uiState.isCodeVerified && code.isNotBlank() && !uiState.loading,
                     modifier = Modifier.widthIn(min = 90.dp)
                 )
             }
 
-            if (verified) {
+            if (uiState.isCodeVerified) {
                 Spacer(Modifier.height(20.dp))
 
                 AuthInputField(
@@ -175,9 +180,9 @@ fun PwdScreen(
             Spacer(Modifier.height(58.dp))
 
             AuthPrimaryButton(
-                text = comfirmText,
+                text = confirmText,
                 onClick = {
-                    if (!verified) {
+                    if (!uiState.isCodeVerified) {
                         scope.launch { snackbar.showSnackbar(verifyEmailMessage) }
                         return@AuthPrimaryButton
                     }
@@ -188,9 +193,8 @@ fun PwdScreen(
                     }
 
                     viewModel.resetPassword(email, newPassword)
-                    onBackToLogin()
                 },
-                enabled = verified,
+                enabled = uiState.isCodeVerified && !uiState.loading,
                 modifier = Modifier.fillMaxWidth(),
                 useClickEffect = true
             )

@@ -15,21 +15,16 @@ class CreateRegiHistoryUseCase @Inject constructor(
         useAlarm: Boolean,
         device: Long?
     ): ApiResult<Long> {
-        return try {
-            val id = repository.createRegiHistory(
-                regiType = regiType,
-                label = label,
-                issuedDate = issuedDate,
-                useAlarm = useAlarm,
-                device = device
-            )
-            ApiResult.Success(id)
-        } catch (e: Exception) {
-            ApiResult.Failure(
-                DomainError.Unknown(
-                    message = e.message ?: "복약 이력 생성 실패"
-                )
-            )
+        if (regiType.isBlank()) {
+            return ApiResult.Failure(DomainError.Validation("복약 유형을 선택해주세요"))
         }
+
+        return repository.createRegiHistory(
+            regiType = regiType,
+            label = label,
+            issuedDate = issuedDate,
+            useAlarm = useAlarm,
+            device = device
+        )
     }
 }

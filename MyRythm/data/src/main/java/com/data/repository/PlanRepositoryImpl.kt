@@ -7,6 +7,8 @@ import com.data.network.api.PlanApi
 import com.data.network.dto.plan.PlanCreateRequest
 import com.data.network.mapper.toDomain
 import com.data.network.mapper.toUpdateRequest
+import com.data.util.apiResultOf
+import com.domain.model.ApiResult
 import com.domain.model.Plan
 import com.domain.repository.PlanRepository
 import kotlinx.coroutines.Dispatchers
@@ -35,15 +37,17 @@ class PlanRepositoryImpl @Inject constructor(
             .map { entity -> entity?.toDomainLocal() }
     }
 
+    override suspend fun syncPlans(userId: Long): ApiResult<Unit> =
+        withContext(Dispatchers.IO) {
+            apiResultOf {
+                val remotePlans = api.getPlans()
+                val domainPlans = remotePlans.map { it.toDomain() }
+                val entities = domainPlans.map { it.toEntity() }
 
-    override suspend fun syncPlans(userId: Long) = withContext(Dispatchers.IO) {
-        val remotePlans = api.getPlans()
-        val domainPlans = remotePlans.map { it.toDomain() }
-        val entities = domainPlans.map { it.toEntity() }
-
-        dao.deleteAllByUser(userId)
-        dao.insertAll(entities)
-    }
+                dao.deleteAllByUser(userId)
+                dao.insertAll(entities)
+            }
+        }
 
     override suspend fun create(
         regihistoryId: Long?,
@@ -53,7 +57,7 @@ class PlanRepositoryImpl @Inject constructor(
         note: String?,
         taken: Boolean?,
         useAlarm: Boolean
-    ) {
+    ): ApiResult<Unit> = apiResultOf {
         val body = PlanCreateRequest(
             regihistoryId = regihistoryId,
             medName = medName,
@@ -64,18 +68,16 @@ class PlanRepositoryImpl @Inject constructor(
             useAlarm = useAlarm
         )
         api.createPlan(body)
+        Unit
     }
 
-
-    // ✅ [추가] 스마트 일괄 생성 구현
     override suspend fun createPlansSmart(
         regihistoryId: Long,
         startDate: String,
         duration: Int,
         times: List<String>,
         medName: String
-    ) {
-        // 서버 API 규격에 맞춰 Map으로 데이터를 구성합니다.
+    ): ApiResult<Unit> = apiResultOf {
         val body = mapOf(
             "regihistoryId" to regihistoryId,
             "startDate" to startDate,
@@ -83,51 +85,47 @@ class PlanRepositoryImpl @Inject constructor(
             "times" to times,
             "medName" to medName
         )
-
-        // API 호출 (PlanApi에 createPlanSmart 함수가 있어야 합니다)
         api.createPlanSmart(body)
-
+        Unit
     }
 
-    override suspend fun update(userId: Long, plan: Plan) {
+    override suspend fun update(userId: Long, plan: Plan): ApiResult<Unit> = apiResultOf {
         api.updatePlan(plan.id, plan.toUpdateRequest())
         syncPlans(userId)
+        Unit
     }
 
-    override suspend fun delete(userId: Long, planId: Long) {
+    override suspend fun delete(userId: Long, planId: Long): ApiResult<Unit> = apiResultOf {
         api.deletePlan(planId)
         syncPlans(userId)
+        Unit
     }
 
-    override suspend fun markAsTaken(planId: Long): Result<Unit> {
-        return runCatching {
-            val response = api.markAsTaken(planId)
-            if (!response.isSuccessful) {
-                throw Exception("복약 완료 실패: ${response.code()} ${response.message()}")
-            }
+    override suspend fun markAsTaken(planId: Long): ApiResult<Unit> = apiResultOf {
+        val response = api.markAsTaken(planId)
+        if (!response.isSuccessful) {
+            throw Exception("복약 완료 실패: ${response.code()} ${response.message()}")
         }
+        Unit
     }
 
-    override suspend fun snoozePlan(planId: Long): Result<Unit> {
-        return runCatching {
-            val response = api.snoozePlan(planId)
-            if (!response.isSuccessful) {
-                throw Exception("미루기 실패: ${response.code()} ${response.message()}")
-            }
+    override suspend fun snoozePlan(planId: Long): ApiResult<Unit> = apiResultOf {
+        val response = api.snoozePlan(planId)
+        if (!response.isSuccessful) {
+            throw Exception("미루기 실패: ${response.code()} ${response.message()}")
         }
+        Unit
     }
 
-    override suspend fun getRecentTakenPlans(userId: Long, days: Int): List<Plan> {
+    override suspend fun getRecentTakenPlans(userId: Long, days: Int): ApiResult<List<Plan>> = apiResultOf {
         val zone = ZoneId.systemDefault()
-        val today = LocalDate.now(zone)  // ✅ yesterday → today로 변경
+        val today = LocalDate.now(zone)
 
-        // 오늘 23:59:59 (현재 시각까지)
-        val endTime = today.atTime(LocalTime.now(zone))  // ✅ 현재 시각까지
+        val endTime = today.atTime(LocalTime.now(zone))
             .atZone(zone)
             .toInstant()
             .toEpochMilli()
 
-        // (days)일 전 00:00:00
         val startTime = today.minusDays((days - 1).toLong())
             .atStartOfDay(zone)
             .toInstant()
@@ -139,7 +137,7 @@ class PlanRepositoryImpl @Inject constructor(
 
         android.util.Log.d("PlanRepo", "조회된 데이터: ${entities.size}개")
 
-        return entities.map { entity ->
+        entities.map { entity ->
             entity.toDomainLocal()
         }
     }

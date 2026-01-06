@@ -7,7 +7,7 @@ import com.domain.model.ApiResult
 import com.domain.usecase.plan.GetPlanByIdUseCase
 import com.domain.usecase.plan.MarkMedTakenUseCase
 import com.domain.usecase.plan.SnoozeMedUseCase
-import com.domain.usecase.user.GetUserUseCase
+import com.domain.usecase.user.GetUserByIdUseCase  // ✅ 변경
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -21,7 +21,7 @@ import javax.inject.Inject
 class AlarmViewModel @Inject constructor(
     private val markMedTakenUseCase: MarkMedTakenUseCase,
     private val snoozeMedUseCase: SnoozeMedUseCase,
-    private val getUserUseCase: GetUserUseCase,
+    private val getUserByIdUseCase: GetUserByIdUseCase,  // ✅ 변경
     private val getPlanByIdUseCase: GetPlanByIdUseCase,
     private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase
 ) : ViewModel() {
@@ -130,21 +130,29 @@ class AlarmViewModel @Inject constructor(
                 if (userId != null) {
                     Log.e(tag, "User 조회 시작 - userId: $userId")
 
-                    val user = getUserUseCase(userId.toString())
+                    val result = getUserByIdUseCase(userId!!)
+                    when (result) {
+                        is ApiResult.Success -> {
+                            val user = result.data
 
-                    Log.e(tag, "User 찾음")
-                    Log.e(tag, "  - user.id: ${user.id}")
-                    Log.e(tag, "  - user.username: ${user.username}")
-                    Log.e(tag, "  - user.phoneNumber: ${user.phone}") // 필드명 맞게 조정
+                            Log.e(tag, "User 찾음")
+                            Log.e(tag, "  - user.id: ${user.id}")
+                            Log.e(tag, "  - user.username: ${user.username}")
+                            Log.e(tag, "  - user.phoneNumber: ${user.phone}")
 
-                    _uiState.update {
-                        it.copy(
-                            username = user.username ?: "사용자",
-                            phoneNumber = user.phone ?: ""   // ← 전화번호 저장
-                        )
+                            _uiState.update {
+                                it.copy(
+                                    username = user.username ?: "사용자",
+                                    phoneNumber = user.phone ?: ""
+                                )
+                            }
+
+                            Log.e(tag, "User 정보 업데이트 완료")
+                        }
+                        is ApiResult.Failure -> {
+                            Log.e(tag, "User 조회 실패: ${result.error}")
+                        }
                     }
-
-                    Log.e(tag, "User 정보 업데이트 완료")
                 } else {
                     Log.w(tag, "userId가 null입니다")
                 }
@@ -199,7 +207,6 @@ class AlarmViewModel @Inject constructor(
         }
     }
 
-
     fun snooze(planId: Long) = viewModelScope.launch {
         when (val result = snoozeMedUseCase(planId)) {
             is ApiResult.Success -> {
@@ -214,7 +221,6 @@ class AlarmViewModel @Inject constructor(
             }
         }
     }
-
 }
 
 data class AlarmUiState(

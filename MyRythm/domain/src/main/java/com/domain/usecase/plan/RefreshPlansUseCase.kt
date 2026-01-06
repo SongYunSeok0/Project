@@ -4,10 +4,10 @@ import com.domain.model.ApiResult
 import com.domain.repository.PlanRepository
 import javax.inject.Inject
 
-class MarkMedTakenUseCase @Inject constructor(
+class RefreshPlansUseCase @Inject constructor(
     private val repository: PlanRepository
 ) {
-    suspend operator fun invoke(planId: Long): ApiResult<Unit> {
-        return repository.markAsTaken(planId)
+    suspend operator fun invoke(userId: Long): ApiResult<Unit> {
+        return repository.syncPlans(userId)
     }
 }
