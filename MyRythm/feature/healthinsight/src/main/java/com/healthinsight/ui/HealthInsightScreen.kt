@@ -11,11 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,37 +31,51 @@ import com.healthinsight.ui.components.HeartRateCard
 import com.healthinsight.ui.components.MedicationDelayCard
 import com.healthinsight.ui.components.StepsCard
 import com.healthinsight.viewmodel.HealthInsightViewModel
-import com.shared.R
 import com.shared.ui.theme.AppTheme
-import com.shared.ui.theme.componentTheme
 
 @Composable
 fun HealthInsightScreen(
     viewModel: HealthInsightViewModel = hiltViewModel()
 ) {
     AppTheme {
-        val weeklySteps by viewModel.weeklySteps.collectAsStateWithLifecycle()
-        val weeklyHeartRates by viewModel.weeklyHeartRates.collectAsStateWithLifecycle()
-        val medicationDelays by viewModel.medicationDelays.collectAsStateWithLifecycle()
-        val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val snackbar = remember { SnackbarHostState() }
+
+        // 에러 메시지 표시
+        LaunchedEffect(uiState.errorMessage) {
+            uiState.errorMessage?.let {
+                snackbar.showSnackbar(it)
+                viewModel.clearError()
+            }
+        }
+
         LaunchedEffect(Unit) {
             viewModel.loadAll()
         }
 
-        LaunchedEffect(weeklyHeartRates) {
-            println("UI received ${weeklyHeartRates.size} days of heart rate data")
-            weeklyHeartRates.forEach { day ->
+        LaunchedEffect(uiState.weeklyHeartRates) {
+            println("UI received ${uiState.weeklyHeartRates.size} days of heart rate data")
+            uiState.weeklyHeartRates.forEach { day ->
                 println("UI: ${day.date} - ${day.measurements.size} measurements")
             }
         }
 
-        HealthInsightContent(
-            weeklySteps = weeklySteps,
-            weeklyHeartRates = weeklyHeartRates,
-            medicationDelays = medicationDelays,
-            isLoading = isLoading,
-            onInsertTestData = { viewModel.insertTestData() }
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            HealthInsightContent(
+                weeklySteps = uiState.weeklySteps,
+                weeklyHeartRates = uiState.weeklyHeartRates,
+                medicationDelays = uiState.medicationDelays,
+                isLoading = uiState.isLoading,
+                onInsertTestData = { viewModel.insertTestData() }
+            )
+
+            SnackbarHost(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+            )
+        }
     }
 }
 
@@ -97,10 +113,14 @@ private fun HealthInsightContent(
                 Text("걸음수 테스트 데이터 삽입")
             }
 
-            MedicationDelayCard(medicationDelays)
+            if (medicationDelays.isNotEmpty()) {
+                MedicationDelayCard(medicationDelays)
+            }
+
             if (weeklyHeartRates.isNotEmpty()) {
                 HeartRateCard(weeklyHeartRates)
             }
+
             if (weeklySteps.isNotEmpty()) {
                 StepsCard(weeklySteps)
             }

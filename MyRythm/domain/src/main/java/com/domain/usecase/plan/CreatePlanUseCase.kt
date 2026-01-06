@@ -20,6 +20,10 @@ class CreatePlanUseCase @Inject constructor(
         useAlarm: Boolean
     ): ApiResult<Unit> {
 
+        if (medName.isBlank()) {
+            return ApiResult.Failure(DomainError.Validation("약 이름을 입력해주세요"))
+        }
+
         val plan = Plan(
             id = 0L,
             regihistoryId = regihistoryId,
@@ -34,18 +38,9 @@ class CreatePlanUseCase @Inject constructor(
             useAlarm = useAlarm
         )
 
-        return try {
-            repository.createPlans(
-                regihistoryId = regihistoryId,
-                list = listOf(plan)
-            )
-            ApiResult.Success(Unit)
-        } catch (e: Exception) {
-            ApiResult.Failure(
-                DomainError.Unknown(
-                    message = e.message ?: "플랜 생성 실패"
-                )
-            )
-        }
+        return repository.createPlans(
+            regihistoryId = regihistoryId,
+            list = listOf(plan)
+        )
     }
 }

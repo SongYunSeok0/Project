@@ -36,12 +36,9 @@ fun UserProfile.toDto(): UserUpdateDto {
         username = username ?: "",
         height = height,
         weight = weight,
-        gender = gender,
-        birth_date = birth_date,
         phone = phone,
         prot_email = prot_email,
         prot_name = prot_name,
         relation = prot_name,
-        email = email ?: ""
     )
 }

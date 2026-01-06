@@ -14,7 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.auth.navigation.*
-import com.auth.viewmodel.AuthViewModel
+import com.auth.viewmodel.LoginViewModel
 import com.chatbot.navigation.ChatBotRoute
 import com.chatbot.navigation.chatbotNavGraph
 import com.data.core.auth.JwtUtils
@@ -36,7 +36,6 @@ import com.shared.bar.AppBottomBar
 import com.shared.bar.AppTopBar
 import com.shared.navigation.MainRoute
 import dagger.hilt.android.EntryPointAccessors
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -57,11 +56,11 @@ fun AppRoot(startFromLogin: Boolean = false) {
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    val authVm: AuthViewModel = hiltViewModel()
+    val loginVm: LoginViewModel = hiltViewModel()
     val stepVm: StepViewModel = hiltViewModel()
     val heartVm: HeartRateViewModel = hiltViewModel()
 
-    val ui by authVm.state.collectAsStateWithLifecycle()
+    val loginUi by loginVm.uiState.collectAsStateWithLifecycle()
 
     val ctx = LocalContext.current
     val tokenStore = EntryPointAccessors
@@ -71,7 +70,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
     val access = tokenStore.current().access
     val isLoggedIn = access?.isNotBlank() == true
     val realUserId = JwtUtils.extractUserId(access) ?: "0"
-    val userId = ui.userId ?: realUserId
+    val userId = loginUi.userId ?: realUserId
     val userIdLong = userId.toLongOrNull() ?: 0L
 
     val startDestination =
@@ -89,13 +88,13 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        authVm.events.collectLatest { ev ->
-            if (ev == "로그아웃 완료") {
-                nav.navigate(LoginRoute) {
-                    popUpTo(0)
-                    launchSingleTop = true
-                }
+    // 로그아웃 처리
+    LaunchedEffect(loginUi.isLoggedIn) {
+        if (!loginUi.isLoggedIn && isLoggedIn) {
+            // 로그아웃 되었을 때
+            nav.navigate(LoginRoute) {
+                popUpTo(0)
+                launchSingleTop = true
             }
         }
     }
@@ -143,7 +142,6 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     }
 
-    // 🔹 현재 route 기준으로 싱크 허용 여부 결정
     val syncEnabled = remember(routeName) {
         isSyncAllowedRoute(routeName)
     }
@@ -201,12 +199,11 @@ fun AppRoot(startFromLogin: Boolean = false) {
                 startDestination = startDestination
             ) {
 
-                // 항상 전체 그래프 등록
                 authNavGraph(nav)
 
                 mainNavGraph(
                     nav = nav,
-                    onLogoutClick = { authVm.logout() }
+                    onLogoutClick = { loginVm.logout() }
                 )
 
                 mapNavGraph()
@@ -216,7 +213,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
                     nav = nav,
                     heartVm = heartVm,
                     userId = userIdLong,
-                    onLogoutClick = { authVm.logout() }
+                    onLogoutClick = { loginVm.logout() }
                 )
                 chatbotNavGraph()
                 healthInsightNavGraph()
@@ -225,22 +222,15 @@ fun AppRoot(startFromLogin: Boolean = false) {
     }
 }
 
-
 private fun isSyncAllowedRoute(routeName: String): Boolean {
     return when {
-        // 홈
         routeName.startsWith(MainRoute::class.qualifiedName.orEmpty()) -> true
-
-        // 마이페이지 및 관련 화면
         routeName.startsWith(MyPageRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(EditProfileRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(HeartReportRoute::class.qualifiedName.orEmpty()) -> true
-        routeName.startsWith(HealthInsightRoute::class.qualifiedName.orEmpty()) -> true         // 일정 / 처방 관련
+        routeName.startsWith(HealthInsightRoute::class.qualifiedName.orEmpty()) -> true
         routeName.startsWith(SchedulerRoute::class.qualifiedName.orEmpty()) -> true
-
-        // 뉴스
         routeName.startsWith(NewsRoute::class.qualifiedName.orEmpty()) -> true
-
         else -> false
     }
 }

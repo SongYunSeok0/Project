@@ -1,5 +1,6 @@
 package com.domain.repository
 
+import com.domain.model.ApiResult
 import com.domain.model.RegiHistory
 import com.domain.model.Plan
 import com.domain.model.RegiHistoryWithPlans
@@ -13,23 +14,23 @@ interface RegiRepository {
         issuedDate: String?,
         useAlarm: Boolean,
         device: Long?
-    ): Long
+    ): ApiResult<Long>
 
     fun getRegiHistories(): Flow<List<RegiHistory>>
 
-    suspend fun updateRegiHistory(regi: RegiHistory)
+    suspend fun updateRegiHistory(regi: RegiHistory): ApiResult<Unit>
 
-    suspend fun deleteRegiHistory(id: Long)
+    suspend fun deleteRegiHistory(id: Long): ApiResult<Unit>
 
-    suspend fun createPlans(regihistoryId: Long?, list: List<Plan>)
+    suspend fun createPlans(regihistoryId: Long?, list: List<Plan>): ApiResult<Unit>
 
     fun observeAllPlans(userId: Long): Flow<List<Plan>>
 
     fun observePlans(regihistoryId: Long): Flow<List<Plan>>
 
-    suspend fun syncRegiHistories(userId: Long)
+    suspend fun syncRegiHistories(userId: Long): ApiResult<Unit>
 
-    suspend fun getUserRegiHistories(userId: Long): Result<List<RegiHistoryWithPlans>>
-    suspend fun getAllRegiHistories(): Result<List<RegiHistoryWithPlans>>
-    suspend fun getUserPlans(userId: Long): Result<List<Plan>>
+    suspend fun getUserRegiHistories(userId: Long): ApiResult<List<RegiHistoryWithPlans>>
+    suspend fun getAllRegiHistories(): ApiResult<List<RegiHistoryWithPlans>>
+    suspend fun getUserPlans(userId: Long): ApiResult<List<Plan>>
 }

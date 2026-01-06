@@ -1,6 +1,5 @@
 package com.auth.ui
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,7 +18,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auth.BuildConfig
 import com.auth.ui.components.LocalLoginSection
 import com.auth.ui.components.SocialLoginSection
-import com.auth.viewmodel.AuthViewModel
+import com.auth.viewmodel.LoginViewModel
+import com.auth.viewmodel.SocialLoginViewModel
 import com.shared.R
 import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.theme.loginTheme
@@ -28,34 +28,60 @@ import com.shared.ui.theme.loginTheme
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = hiltViewModel(),
+    loginViewModel: LoginViewModel = hiltViewModel(),
+    socialViewModel: SocialLoginViewModel = hiltViewModel(),
     onLogin: (String, String) -> Unit = { _, _ -> },
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {}
 ) {
-    val form by viewModel.form.collectAsStateWithLifecycle()
-    val ui by viewModel.state.collectAsStateWithLifecycle()
+    val loginUi by loginViewModel.uiState.collectAsStateWithLifecycle()
+    val autoLoginEnabled by loginViewModel.autoLoginEnabled.collectAsStateWithLifecycle()
 
-    // ✅ autoLogin은 UI 로컬 상태로 관리
-    var autoLoginEnabled by remember { mutableStateOf(false) }
+    val socialUi by socialViewModel.uiState.collectAsStateWithLifecycle()
+
+    // ✅ form은 UI 로컬 상태로 관리 (최소 수정)
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { msg ->
-            snackbar.showSnackbar(msg)
+    // ✅ 일반 로그인 에러 메시지
+    LaunchedEffect(loginUi.errorMessage) {
+        loginUi.errorMessage?.let {
+            snackbar.showSnackbar(it)
+            loginViewModel.clearError()
         }
     }
 
-    LaunchedEffect(ui.isLoggedIn, ui.userId) {
-        if (ui.isLoggedIn) {
-            val uid = ui.userId
-            if (uid != null) {
-                onLogin(uid, form.password)
+    // ✅ 소셜 로그인 에러 메시지 (SocialLoginViewModel에 clearError가 있다면 호출)
+    LaunchedEffect(socialUi.errorMessage) {
+        socialUi.errorMessage?.let {
+            snackbar.showSnackbar(it)
+            socialViewModel.clearError()
+        }
+    }
+
+    // ✅ 일반 로그인 성공
+    LaunchedEffect(loginUi.isLoggedIn, loginUi.userId) {
+        if (loginUi.isLoggedIn) {
+            loginUi.userId?.let { uid ->
+                onLogin(uid, password)
             }
         }
     }
+
+    // ✅ 소셜 로그인 성공
+    LaunchedEffect(socialUi.isLoggedIn, socialUi.userId) {
+        if (socialUi.isLoggedIn) {
+            socialUi.userId?.let { uid ->
+                // 소셜 로그인은 password 의미 없으면 ""로 넘기는 게 더 자연스럽습니다.
+                onLogin(uid, "")
+            }
+        }
+    }
+
+    val loading = loginUi.loading || socialUi.loading
 
     Scaffold(
         snackbarHost = {
@@ -90,16 +116,16 @@ fun LoginScreen(
 
                 item {
                     LocalLoginSection(
-                        email = form.email,
-                        password = form.password,
-                        onEmailChange = { viewModel.updateLoginEmail(it) },
-                        onPasswordChange = { viewModel.updateLoginPW(it) },
+                        email = email,
+                        password = password,
+                        onEmailChange = { email = it },
+                        onPasswordChange = { password = it },
                         autoLoginEnabled = autoLoginEnabled,
-                        onAutoLoginToggle = { autoLoginEnabled = it },
+                        onAutoLoginToggle = { loginViewModel.setAutoLogin(it) },
                         onForgotPasswordClick = onForgotPassword,
-                        loading = ui.loading,
+                        loading = loading,
                         onLoginClick = {
-                            viewModel.login(autoLoginEnabled)
+                            loginViewModel.login(email, password)
                         },
                         onSignUpClick = onSignUp
                     )
@@ -108,18 +134,12 @@ fun LoginScreen(
                 item {
                     SocialLoginSection(
                         onKakaoClick = {
-                            viewModel.kakaoOAuth(
-                                context,
-                                onResult = { _, _ -> },
-                                onNeedAdditionalInfo = { _, _ -> }
-                            )
+                            socialViewModel.kakaoOAuth(context = context)
                         },
                         onGoogleClick = {
-                            viewModel.googleOAuth(
-                                context,
-                                googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
-                                onResult = { _, _ -> },
-                                onNeedAdditionalInfo = { _, _ -> }
+                            socialViewModel.googleOAuth(
+                                context = context,
+                                googleClientId = BuildConfig.GOOGLE_CLIENT_ID
                             )
                         }
                     )

@@ -53,6 +53,38 @@ fun UserEntity.asDomain(): User = User(
     lastLogin = lastLogin
 )
 
+fun UserDto.toDomain(): User = User(
+    id = id,
+    uuid = uuid,
+    email = email,
+    username = username,
+    phone = phone,
+    birthDate = birth_date,
+    gender = gender,
+    height = height,
+    weight = weight,
+    preferences = preferences ?: emptyMap(),
+    protPhone = prot_email,
+    relation = relation,
+    isActive = is_active,
+    isStaff = is_staff,
+    createdAt = created_at,
+    updatedAt = updated_at,
+    lastLogin = last_login
+)
+
+fun User.toUpdateDto(): UserUpdateDto {
+    return UserUpdateDto(
+        username = username,
+        height = height,
+        weight = weight,
+        phone = phone,
+        prot_email = protPhone,
+        prot_name = relation,
+        relation = relation
+    )
+}
+
 fun UserDto.toProfile(): UserProfile {
     val age = birth_date?.let { birth ->
         try {
@@ -72,25 +104,23 @@ fun UserDto.toProfile(): UserProfile {
         birth_date = birth_date,
         gender = gender,
         phone = phone,
-        prot_name = relation,  // ✅ relation 필드를 매핑
+        prot_name = relation,
         prot_email = prot_email,
         email = email,
         isStaff = is_staff
     )
 }
 
-fun UserProfile.toDto(): UserUpdateDto {
+// ✅ 수정: 변경 불가능한 필드 제거
+fun UserProfile.toUpdateDto(): UserUpdateDto {
     return UserUpdateDto(
-        username = username ?: "",
+        username = username,
         height = height,
         weight = weight,
-        gender = gender,
-        birth_date = birth_date,
         phone = phone,
         prot_email = prot_email,
-        prot_name = prot_name,  // prot_name으로 전송
-        relation = prot_name,   // ✅ relation 필드도 함께 전송 (서버 호환성)
-        email = email ?: ""
+        prot_name = prot_name,
+        relation = prot_name
     )
 }
 
@@ -114,7 +144,7 @@ fun UserEntity.toProfile(): UserProfile {
         gender = gender,
         phone = phone,
         prot_email = protPhone,
-        prot_name = relation,  // ✅ relation 필드를 매핑
+        prot_name = relation,
         email = email,
         isStaff = isStaff
     )

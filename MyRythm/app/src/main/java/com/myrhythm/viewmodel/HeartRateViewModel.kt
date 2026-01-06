@@ -2,6 +2,7 @@ package com.myrhythm.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
 import com.domain.sharedvm.HeartRateVMContract
 import com.domain.usecase.health.GetLatestHeartRateUseCase
 import com.domain.usecase.health.GetHeartHistoryUseCase
@@ -24,8 +25,15 @@ class HeartRateViewModel @Inject constructor(
 
     override fun loadLatestHeartRate() {
         viewModelScope.launch {
-            runCatching { getLatestHeartRateUseCase() }
-                .onSuccess { bpm -> _latestHeartRate.value = bpm }
+            when (val result = getLatestHeartRateUseCase()) {
+                is ApiResult.Success -> {
+                    _latestHeartRate.value = result.data
+                }
+                is ApiResult.Failure -> {
+                    // 에러 발생 시 null 유지
+                    _latestHeartRate.value = null
+                }
+            }
         }
     }
 
@@ -34,7 +42,14 @@ class HeartRateViewModel @Inject constructor(
 
     override fun syncHeartHistory() {
         viewModelScope.launch {
-            runCatching { getHeartHistoryUseCase.sync() }
+            when (getHeartHistoryUseCase.sync()) {
+                is ApiResult.Success -> {
+                    // 동기화 성공
+                }
+                is ApiResult.Failure -> {
+                    // 동기화 실패 (로깅만 하거나 무시)
+                }
+            }
         }
     }
 
