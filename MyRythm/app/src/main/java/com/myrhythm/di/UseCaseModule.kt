@@ -38,8 +38,11 @@ object UseCaseModule {
 
     @Provides
     @Singleton
-    fun provideLogoutUseCase(repo: AuthRepository) =
-        LogoutUseCase(repo)
+    fun provideLogoutUseCase(
+        authRepository: AuthRepository,
+        userRepository: UserRepository
+    ) =
+        LogoutUseCase(authRepository, userRepository)
 
     @Provides
     @Singleton

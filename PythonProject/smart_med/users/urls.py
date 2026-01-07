@@ -5,7 +5,7 @@ from .views import (
     SignupView, MeView, RegisterFcmTokenView,
     SocialLoginView, WithdrawalView,
     check_email_duplicate,
-    SendEmailCodeView, VerifyEmailCodeView,
+    SendEmailCodeView, VerifyEmailCodeView, Logout
 )
 
 urlpatterns = [
@@ -18,5 +18,6 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="me"),
     path("fcm/", RegisterFcmTokenView.as_view()),
     path('withdrawal/', WithdrawalView.as_view(), name='withdrawal'),
+    path('logout/', Logout, name='logout'),
     path('check-email/', check_email_duplicate, name='check-email'),
 ]

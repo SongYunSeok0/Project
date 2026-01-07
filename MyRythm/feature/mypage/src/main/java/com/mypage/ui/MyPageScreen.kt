@@ -1,5 +1,6 @@
 package com.mypage.ui
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -62,8 +63,8 @@ fun MyPageScreen(
     onFaqClick: () -> Unit = {},
     onMediClick: () -> Unit = {},
     onDeviceRegisterClick: () -> Unit = {},
-    onUserManagementClick: () -> Unit = {},      // 사용자 관리
-    onInquiriesManagementClick: () -> Unit = {}, // 문의사항 관리
+    onUserManagementClick: () -> Unit = {},
+    onInquiriesManagementClick: () -> Unit = {},
     onWithdrawalSuccess: () -> Unit = {}
 ) {
     val editPageText = stringResource(R.string.editpage)
@@ -84,8 +85,6 @@ fun MyPageScreen(
     val withdrawalMessage = stringResource(R.string.mypage_message_withdrawal)
     val wifiConfigSentMessage = stringResource(R.string.mypage_message_wifi_config_sent)
     val wifiBleConnectedSuccessMessage = stringResource(R.string.mypage_message_wifi_ble_connected_success)
-    val logoutSuccessMessage = stringResource(R.string.mypage_message_logout_success)
-    val logoutFailedMessage = stringResource(R.string.mypage_message_logout_failed)
     val withdrawalSuccessMessage = stringResource(R.string.mypage_message_withdrawal_success)
     val withdrawalFailedMessage = stringResource(R.string.mypage_message_withdrawal_failed)
 
@@ -94,8 +93,8 @@ fun MyPageScreen(
     val staffMenuText = "관리자 메뉴"
 
     val profile by viewModel.profile.collectAsStateWithLifecycle()
-    val latestHeartRate  by viewModel.latestHeartRate.collectAsStateWithLifecycle()
-    val heartRateTextValue = latestHeartRate?.let {  "$it $bpmText" } ?: "- $bpmText"
+    val latestHeartRate by viewModel.latestHeartRate.collectAsStateWithLifecycle()
+    val heartRateTextValue = latestHeartRate?.let { "$it $bpmText" } ?: "- $bpmText"
     val context = LocalContext.current
 
     val bleState by bleViewModel.state.collectAsStateWithLifecycle()
@@ -141,8 +140,7 @@ fun MyPageScreen(
         }
     }
 
-
-    // 기존 MyPage 이벤트 수집
+    // MyPage 이벤트 수집
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -152,13 +150,6 @@ fun MyPageScreen(
                 }
                 is MyPageEvent.WithdrawalFailed -> {
                     Toast.makeText(context, withdrawalFailedMessage, Toast.LENGTH_SHORT).show()
-                }
-                is MyPageEvent.LogoutSuccess -> {
-                    Toast.makeText(context, logoutSuccessMessage, Toast.LENGTH_SHORT).show()
-                    onLogoutClick()
-                }
-                is MyPageEvent.LogoutFailed -> {
-                    Toast.makeText(context, logoutFailedMessage, Toast.LENGTH_SHORT).show()
                 }
                 else -> Unit
             }
@@ -188,7 +179,7 @@ fun MyPageScreen(
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            // 🔥 스태프 전용 메뉴 (내정보 수정 위에 표시)
+            // 스태프 전용 메뉴
             if (profile?.isStaff == true) {
                 Text(
                     text = staffMenuText,
@@ -198,13 +189,13 @@ fun MyPageScreen(
                 )
 
                 MenuItem(
-                    userManagementText,  // 사용자 관리
+                    userManagementText,
                     R.drawable.edit,
                     onUserManagementClick,
                     tint = MaterialTheme.colorScheme.primary
                 )
                 MenuItem(
-                    inquiriesManagementText,  // 문의사항 관리
+                    inquiriesManagementText,
                     R.drawable.faqchat,
                     onInquiriesManagementClick,
                     tint = MaterialTheme.colorScheme.primary
@@ -225,12 +216,20 @@ fun MyPageScreen(
             MenuItem(mediRecordText, R.drawable.logo, onMediClick)
             MenuItem(deviceRegisterText, R.drawable.device, { onDeviceRegisterClick() })
 
-            // 🔥 일반 사용자만 FAQ 표시 (스태프는 위에 "문의사항 관리"가 있음)
             if (profile?.isStaff != true) {
                 MenuItem(faqCategoryText, R.drawable.faqchat, onFaqClick)
             }
 
-            MenuItem(logoutText, R.drawable.logout, { viewModel.logout() })
+            MenuItem(
+                logoutText,
+                R.drawable.logout,
+                {
+                    Log.e("MyPageScreen", "🔥🔥🔥 로그아웃 버튼 클릭됨!")
+                    onLogoutClick()
+                    Log.e("MyPageScreen", "🔥🔥🔥 콜백 호출 완료!")
+                }
+            )
+
             MenuItem(withdrawalText, R.drawable.ic_delete, { showDeleteDialog = true }, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
@@ -375,19 +374,14 @@ fun MenuItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun Preview_AllDialogs_Latest() {
-
     AppTheme {
-
-        // ====================== 프리뷰용 가짜 상태 ======================
         var showDeviceDialog by remember { mutableStateOf(false) }
         var showDeleteDialog by remember { mutableStateOf(false) }
 
-        // 기기 등록 다이얼로그용 가짜 BLE 상태
         var fakeSSID by remember { mutableStateOf("") }
         var fakePW by remember { mutableStateOf("") }
         var fakeLoading by remember { mutableStateOf(true) }
 
-        // 문자열 리소스 대체 프리뷰용 텍스트
         val deviceRegisterText = "기기 등록"
         val deviceRegisterMessage = "Wi-Fi 정보를 입력하면\n기기에 BLE로 전송됩니다."
         val wifiSsidText = "Wi-Fi SSID"
@@ -400,9 +394,7 @@ fun Preview_AllDialogs_Latest() {
         val withdrawalMessage = "정말 탈퇴하시겠습니까?\n모든 데이터가 삭제됩니다."
         val withdrawalConfirmText = "탈퇴하기"
 
-        // ====================== 프리뷰 배경 UI ======================
         Box(modifier = Modifier.fillMaxSize()) {
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -411,7 +403,6 @@ fun Preview_AllDialogs_Latest() {
                 Text("다이얼로그 프리뷰", fontSize = 22.sp)
                 Spacer(Modifier.height(20.dp))
 
-                // 기기 등록 버튼
                 AppButton(
                     text = "기기 등록 다이얼로그 열기",
                     height = 48.dp,
@@ -419,7 +410,6 @@ fun Preview_AllDialogs_Latest() {
                 )
                 Spacer(Modifier.height(16.dp))
 
-                // 회원 탈퇴 버튼
                 AppButton(
                     text = "회원 탈퇴 다이얼로그 열기",
                     height = 48.dp,
@@ -429,29 +419,22 @@ fun Preview_AllDialogs_Latest() {
                 )
             }
 
-            // =====================================================================
-            //                      ⭐ 1) 기기 등록 다이얼로그
-            // =====================================================================
             if (showDeviceDialog) {
                 AlertDialog(
                     containerColor = MaterialTheme.colorScheme.background,
                     onDismissRequest = { showDeviceDialog = false },
-
                     title = { Text(deviceRegisterText) },
-
                     text = {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-
                             Text(
                                 deviceRegisterMessage,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
 
-                            // === AppInputField 적용 ===
                             AppInputField(
                                 value = fakeSSID,
                                 onValueChange = { fakeSSID = it },
@@ -477,7 +460,6 @@ fun Preview_AllDialogs_Latest() {
                             }
                         }
                     },
-
                     confirmButton = {
                         AppButton(
                             text = registerText,
@@ -489,7 +471,6 @@ fun Preview_AllDialogs_Latest() {
                             }
                         )
                     },
-
                     dismissButton = {
                         AppButton(
                             text = cancelText,
@@ -503,23 +484,17 @@ fun Preview_AllDialogs_Latest() {
                 )
             }
 
-            // =====================================================================
-            //                      ⭐ 2) 회원 탈퇴 다이얼로그
-            // =====================================================================
             if (showDeleteDialog) {
                 AlertDialog(
                     containerColor = MaterialTheme.colorScheme.background,
                     onDismissRequest = { showDeleteDialog = false },
-
                     title = { Text(withdrawalTitleMessage) },
-
                     text = {
                         Text(
                             withdrawalMessage,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     },
-
                     confirmButton = {
                         AppButton(
                             text = withdrawalConfirmText,
@@ -530,7 +505,6 @@ fun Preview_AllDialogs_Latest() {
                             onClick = { showDeleteDialog = false }
                         )
                     },
-
                     dismissButton = {
                         AppButton(
                             text = cancelText,

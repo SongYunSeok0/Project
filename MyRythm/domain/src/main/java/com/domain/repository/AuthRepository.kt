@@ -8,32 +8,19 @@ import com.domain.model.SocialLoginResult
 
 interface AuthRepository {
 
-    suspend fun sendEmailCode(
-        email: String,
-        name: String? = null
-    ): ApiResult<Unit>
+    suspend fun sendEmailCode(email: String, name: String? = null): ApiResult<Unit>
 
-    suspend fun verifyEmailCode(
-        email: String,
-        code: String
-    ): ApiResult<Unit>
+    suspend fun verifyEmailCode(email: String, code: String): ApiResult<Unit>
 
-    suspend fun login(
-        id: String,
-        pw: String,
-        autoLogin: Boolean
-    ): ApiResult<AuthTokens>
+    suspend fun login(id: String, pw: String, autoLogin: Boolean): ApiResult<AuthTokens>
 
-    suspend fun socialLogin(
-        param: SocialLoginParam
-    ): ApiResult<SocialLoginResult>
+    suspend fun socialLogin(param: SocialLoginParam): ApiResult<SocialLoginResult>
 
     suspend fun signup(request: SignupRequest): ApiResult<Unit>
 
-    suspend fun resetPassword(
-        email: String,
-        newPassword: String
-    ): ApiResult<Unit>
+    suspend fun resetPassword(email: String, newPassword: String): ApiResult<Unit>
+
+    suspend fun logout(): ApiResult<Unit>
 
     suspend fun withdrawal(): ApiResult<Unit>
 

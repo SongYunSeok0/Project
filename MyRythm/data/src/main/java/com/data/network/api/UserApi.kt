@@ -18,12 +18,6 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface UserApi {
-//    @POST("users/signup/")
-//    suspend fun signup(@Body user: UserSignupRequest): Response<Unit>
-//
-//    @POST("token/")
-//    suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>
-
     @GET("users/{uuid}")
     suspend fun getUser(@Path("uuid") uuid: String): UserDto
 
@@ -42,6 +36,9 @@ interface UserApi {
 
     @POST("users/signup/")
     suspend fun signup(@Body user: UserSignupRequest): Response<SignupResponse>
+
+    @POST("users/logout/")
+    suspend fun logout(): Response<Unit>
 
     @POST("token/")
     suspend fun login(@Body request: UserLoginRequest): Response<LoginResponse>

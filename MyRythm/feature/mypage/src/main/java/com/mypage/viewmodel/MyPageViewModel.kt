@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.ApiResult
 import com.domain.model.UserProfile
-import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.WithdrawalUseCase
 import com.domain.usecase.health.GetLatestHeartRateUseCase
 import com.domain.usecase.inquiry.GetInquiriesUseCase
@@ -28,7 +27,6 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MyPageViewModel @Inject constructor(
-    private val logoutUseCase: LogoutUseCase,
     private val withdrawalUseCase: WithdrawalUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val observeUserProfileUseCase: ObserveUserProfileUseCase,
@@ -78,7 +76,9 @@ class MyPageViewModel @Inject constructor(
             }
             .onFailure {
                 Log.e("MyPageViewModel", "❌ Profile API 실패: ${it.message}", it)
-                _events.send(MyPageEvent.LoadFailed)
+                if (_profile.value == null) {
+                    _events.send(MyPageEvent.LoadFailed)
+                }
             }
     }
 
@@ -109,28 +109,6 @@ class MyPageViewModel @Inject constructor(
             }
 
         loadLatestHeartRate()
-    }
-
-    private var isLoggingOut = false
-
-    fun logout() = viewModelScope.launch {
-        if (isLoggingOut) {
-            Log.e("MyPageViewModel", "⚠️ 이미 로그아웃 진행 중")
-            return@launch
-        }
-        isLoggingOut = true
-
-        Log.e("MyPageViewModel", "🚪 ========== 로그아웃 시작 ==========")
-        runCatching { logoutUseCase() }
-            .onSuccess {
-                Log.e("MyPageViewModel", "✅ 로그아웃 성공")
-                _events.send(MyPageEvent.LogoutSuccess)
-            }
-            .onFailure {
-                Log.e("MyPageViewModel", "❌ 로그아웃 실패: ${it.message}", it)
-                _events.send(MyPageEvent.LogoutFailed)
-            }
-            .also { isLoggingOut = false }
     }
 
     fun addInquiry(type: String, title: String, content: String) {
