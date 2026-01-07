@@ -146,29 +146,6 @@ fun LoginScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    androidx.compose.material3.TextButton(
-                        onClick = {
-                            // ✅ 필수 데이터(ID, 이메일, 이름 등)를 가짜로 생성해서 넘김
-                            val tempUserId = "dev_user_777"
-                            val tempEmail = "tester@myrhythm.com"
-                            val tempUserName = "테스트관리자"
-
-                            // onLogin 콜백에 이 정보들을 실어서 보냅니다.
-                            // 만약 onLogin이 (String, String) -> Unit 구조라면
-                            // 일단 ID만 넘기고, 스케줄러 화면에서 저 정보를 쓰도록 세팅하면 됩니다.
-                            onLogin(tempUserId, "temp_password_1234")
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        androidx.compose.material3.Text(
-                            text = "개발자용 임시 로그인 (필수정보 포함)",
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
-
-                item {
                     Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                 }
             }
