@@ -25,6 +25,7 @@ FIREBASE_CREDENTIAL_PATH = env(
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    #"http://192.168.100.13:8000" #0106 yun
 ]
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),      # access token 7일 유지
@@ -108,6 +109,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "smart_med.wsgi.application"
 
+"""
+260106 13:06 yun 메모리 문제로 주석처리
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -120,6 +123,14 @@ DATABASES = {
             "options": "-c client_encoding=UTF8",
             "application_name": "django",
         },
+    }
+}
+"""
+# 260106 13:07 yun
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
