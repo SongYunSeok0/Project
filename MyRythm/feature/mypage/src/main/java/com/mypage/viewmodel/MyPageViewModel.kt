@@ -10,6 +10,7 @@ import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.WithdrawalUseCase
 import com.domain.usecase.mypage.GetUserProfileUseCase
 import com.domain.usecase.mypage.ObserveUserProfileUseCase
+import com.mypage.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -30,8 +31,9 @@ class MyPageViewModel @Inject constructor(
     private val _events = Channel<MyPageEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private val _profile = MutableStateFlow<UserProfile?>(null)
-    val profile: StateFlow<UserProfile?> = _profile
+    private val _uiState = MutableStateFlow(MyPageUiState())
+    val uiState: StateFlow<MyPageUiState> = _uiState
+
 
 
     init {
@@ -42,25 +44,33 @@ class MyPageViewModel @Inject constructor(
             Log.e("MyPageViewModel", "👂 observeLocalProfile 시작")
             observeUserProfileUseCase().collect { local ->
                 Log.e("MyPageViewModel", "📥 로컬 Profile 수신: $local")
-                if (local != null) {
-                    _profile.value = local
-                    Log.e("MyPageViewModel", "✅ Profile 업데이트 완료")
-                } else {
-                    Log.e("MyPageViewModel", "⚠️ 로컬 Profile이 null")
-                }
+                _uiState.value = _uiState.value.copy(
+                    profile = local
+                )
             }
         }
     }
 
     fun loadProfile() = viewModelScope.launch {
         Log.e("MyPageViewModel", "📡 ========== loadProfile() 시작 ==========")
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            error = null
+        )
         runCatching { getUserProfileUseCase() }
-            .onSuccess {
-                Log.e("MyPageViewModel", "✅ Profile API 성공: $it")
-                _profile.value = it
+            .onSuccess { profile ->
+                Log.e("MyPageViewModel", "✅ Profile API 성공: $profile")
+                _uiState.value = _uiState.value.copy(
+                    profile = profile,
+                    isLoading = false
+                )
             }
             .onFailure {
                 Log.e("MyPageViewModel", "❌ Profile API 실패: ${it.message}", it)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = UiError.NetworkFailed
+                )
                 _events.send(MyPageEvent.LoadFailed)
             }
     }
@@ -69,9 +79,11 @@ class MyPageViewModel @Inject constructor(
     fun refreshProfile() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🔄 ========== refreshProfile() 시작 ==========")
         runCatching { getUserProfileUseCase() }
-            .onSuccess {
-                Log.e("MyPageViewModel", "✅ Profile 새로고침 성공: $it")
-                _profile.value = it
+            .onSuccess { profile ->
+                Log.e("MyPageViewModel", "✅ Profile 새로고침 성공: $profile")
+                _uiState.value = _uiState.value.copy(
+                    profile = profile
+                )
             }
             .onFailure {
                 Log.e("MyPageViewModel", "❌ Profile 새로고침 실패: ${it.message}", it)

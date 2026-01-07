@@ -95,7 +95,9 @@ fun MyPageScreen(
     val inquiriesManagementText = "문의사항 관리"
     val staffMenuText = "관리자 메뉴"
 
-    val profile by viewModel.profile.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val profile = uiState.profile
+
     val latestHeartRate  by healthviewModel.latestHeartRate.collectAsStateWithLifecycle()
     val heartRateTextValue = latestHeartRate?.let {  "$it $bpmText" } ?: "- $bpmText"
     val context = LocalContext.current

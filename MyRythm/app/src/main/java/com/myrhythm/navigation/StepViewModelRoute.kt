@@ -56,7 +56,9 @@ fun StepViewModelRoute(
     val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
     val previewExtend by mainViewModel.previewExtendMinutes.collectAsStateWithLifecycle()
 
-    val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
+    val uiState by myPageViewModel.uiState.collectAsStateWithLifecycle()
+    val profile = uiState.profile
+
     val hasGuardian = profile?.prot_email?.isNotBlank() == true
 
     var showProfileDialog by remember { mutableStateOf(false) }
