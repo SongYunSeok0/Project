@@ -216,7 +216,7 @@ object NetworkModule {
     fun provideNewsAuthInterceptor(): Interceptor = Interceptor { chain ->
         val req = chain.request().newBuilder()
             .addHeader("X-Naver-Client-Id", BuildConfig.NAVER_NEWS_CLIENT_ID)
-            .addHeader("X-Naver-Client-Secret", BuildConfig.NAVER_NEWS_CLIENT_SECRET)
+            //.addHeader("X-Naver-Client-Secret", BuildConfig.NAVER_NEWS_CLIENT_SECRET)
             .build()
         chain.proceed(req)
     }
