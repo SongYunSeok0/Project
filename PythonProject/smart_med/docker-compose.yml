@@ -11,7 +11,8 @@ services:
       - .:/app
       # - "C:/Users/user/Desktop/secret:/run/secrets"
       # - "C:/Users/user/Desktop/qwen_sft:/models"
-      - "C:/Users/BIT/Desktop/secret:/run/secrets"
+      #- "C:/Users/BIT/Desktop/secret:/run/secrets"
+      - "C:/secret:/run/secrets"
       #- "C:/Users/s/Desktop/qwen_sft:/models"
     ports:
       - "8000:8000"
@@ -44,7 +45,8 @@ services:
       - .:/app
       # - "C:/Users/user/Desktop/secret:/run/secrets"
       # - "C:/Users/user/Desktop/qwen_sft:/models"
-      - "C:/Users/BIT/Desktop/secret:/run/secrets"
+      #- "C:/Users/BIT/Desktop/secret:/run/secrets"
+      - "C:/secret:/run/secrets"
       #- "C:/Users/s/Desktop/qwen_sft:/models"
     env_file:
       - .env
@@ -64,7 +66,8 @@ services:
       - .:/app
       # - "C:/Users/user/Desktop/secret:/run/secrets"
       # - "C:/Users/user/Desktop/qwen_sft:/models"
-      - "C:/Users/BIT/Desktop/secret:/run/secrets"
+      #- "C:/Users/BIT/Desktop/secret:/run/secrets"
+      - "C:/secret:/run/secrets"
       #- "C:/Users/s/Desktop/qwen_sft:/models"
     env_file:
       - .env

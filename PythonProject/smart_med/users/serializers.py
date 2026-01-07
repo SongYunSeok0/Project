@@ -1,3 +1,4 @@
+#users.seriallizers.py
 from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
