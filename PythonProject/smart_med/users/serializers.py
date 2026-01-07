@@ -96,30 +96,29 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         provider = validated_data.get("provider")
         social_id = validated_data.get("socialId")
-        email = validated_data.get("email", "").lower() if validated_data.get("email") else ""
 
-        # 관리자 여부 판단
+        # 1. 데이터 추출 및 정리 (딕셔너리에서 제거)
+        email_input = validated_data.pop("email", "")
+        email = email_input.lower() if email_input else ""
+        password = validated_data.pop("password", None)
+
+        # 관리자 여부
         is_staff = (email in STAFF_EMAILS)
 
-        # A. 소셜 계정 생성 (패스워드 없음)
+        # 2. 소셜 가입
         if provider and social_id:
-            # 소셜 가입 시 username이 없으면 'provider_socialId'로 자동 생성
-            username = validated_data.get("username") or f"{provider}_{social_id}"
-
-            validated_data.pop("password", None)  # 소셜은 비번 없음
+            username = validated_data.pop("username", None) or f"{provider}_{social_id}"
 
             return User.objects.create(
                 username=username,
+                email=email or None,
                 is_staff=is_staff,
                 provider=provider,
                 social_id=social_id,
-                email=email or None,  # 빈 문자열이면 NULL 저장
-                **{k: v for k, v in validated_data.items() if k not in ['username', 'provider', 'socialId', 'email']}
+                **validated_data
             )
 
-        # B. 로컬 계정 생성 (비밀번호 해싱 필요)
-        password = validated_data.pop("password")
-
+        # 3. 로컬 가입 (create_user 사용)
         return User.objects.create_user(
             email=email,
             password=password,
