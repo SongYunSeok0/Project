@@ -16,16 +16,16 @@ class LoginUseCase @Inject constructor(
         autoLogin: Boolean
     ): ApiResult<AuthTokens> {
 
-        return when (val result =
-            authRepository.login(id, pw, autoLogin)) {
+        val result = authRepository.login(id, pw, autoLogin)
 
-            is ApiResult.Success -> {
-                runCatching { userRepository.syncUser() }
-                result
+        if (result is ApiResult.Success) {
+            // 계정 전환 대비: 이전 로컬 캐시 제거 후 현재 계정으로 재동기화
+            runCatching {
+                userRepository.clearProfile()
+                userRepository.syncUser()
             }
-
-            is ApiResult.Failure -> result
         }
+
+        return result
     }
 }
-

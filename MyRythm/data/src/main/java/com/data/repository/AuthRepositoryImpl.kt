@@ -7,8 +7,6 @@ import com.data.core.auth.TokenStore
 import com.data.mapper.auth.asAuthTokens
 import com.data.mapper.auth.toDomainTokens
 import com.data.mapper.auth.toDto
-import com.data.mapper.user.asDomain
-import com.data.mapper.user.asEntity
 import com.data.mapper.user.toDto
 import com.data.network.api.UserApi
 import com.data.network.dto.user.SendCodeRequest
@@ -20,13 +18,10 @@ import com.domain.model.DomainError
 import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
 import com.domain.model.SocialLoginResult
-import com.domain.model.User
 import com.domain.repository.AuthRepository
-import com.domain.repository.ProfileRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -87,7 +82,7 @@ class AuthRepositoryImpl @Inject constructor(
                 ?: return@withContext ApiResult.Failure(DomainError.Unknown("empty body"))
 
             val tokens = body.asAuthTokens()
-            tokenStore.set(tokens.access, tokens.refresh)
+            tokenStore.set(tokens.access, tokens.refresh, persist = autoLogin)
             prefs.setAutoLoginEnabled(autoLogin)
 
             ApiResult.Success(tokens)
@@ -120,9 +115,10 @@ class AuthRepositoryImpl @Inject constructor(
 
             val tokens = body.toDomainTokens()
             val access = tokens.access
-                ?: return@withContext ApiResult.Failure(
-                    DomainError.InvalidToken("access missing")
-                )
+                ?: return@withContext ApiResult.Failure(DomainError.InvalidToken("access missing"))
+
+            val autoLoginEnabled = prefs.isAutoLoginEnabled()
+            tokenStore.set(tokens.access, tokens.refresh, persist = autoLoginEnabled)
 
             val userId = JwtUtils.extractUserId(access)?.toLong()
                 ?: return@withContext ApiResult.Failure(
@@ -163,6 +159,24 @@ class AuthRepositoryImpl @Inject constructor(
                 )
             } else ApiResult.Success(Unit)
         }.getOrElse {
+            ApiResult.Failure(DomainError.Network(it.message))
+        }
+    }
+
+    override suspend fun logout(): ApiResult<Unit> = withContext(io) {
+        runCatching {
+            val res = api.logout()
+
+            if(!res.isSuccessful) {
+                return@withContext ApiResult.Failure(
+                    DomainError.Server(res.code(), res.errorBody()?.string())
+                )
+            }
+
+            tokenStore.clear()
+            ApiResult.Success(Unit)
+        }.getOrElse {
+            tokenStore.clear()
             ApiResult.Failure(DomainError.Network(it.message))
         }
     }

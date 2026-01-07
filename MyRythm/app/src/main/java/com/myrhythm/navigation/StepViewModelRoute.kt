@@ -13,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -59,12 +61,88 @@ fun StepViewModelRoute(
     val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
     val hasGuardian = profile?.prot_email?.isNotBlank() == true
 
+    // ✅ 프로필 로드(기존 유지)
+    LaunchedEffect(Unit) {
+        android.util.Log.e("PROFILE_LOAD", "✅ calling loadProfile()")
+        myPageViewModel.loadProfile()
+    }
+
     var showProfileDialog by remember { mutableStateOf(false) }
     var showExtendDialog by remember { mutableStateOf(false) }
 
+    // ✅ 권한 플로우 상태
+    var permissionDialogShown by remember { mutableStateOf(false) } // 런처 중복 호출 방지
+
     val scope = rememberCoroutineScope()
 
-    // 소셜 로그인 vs 일반 로그인 구분
+    // -----------------------------
+    // 1) Health Connect 권한 먼저
+    // -----------------------------
+    val sdkStatus = remember {
+        HealthConnectClient.getSdkStatus(context)
+    }
+    android.util.Log.e("HC_STATUS", "sdkStatus=$sdkStatus")
+
+    val installed = sdkStatus == HealthConnectClient.SDK_AVAILABLE
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { grantedSet ->
+        // 권한 결과 수신 로그
+        android.util.Log.e(
+            "HC_PERM",
+            "RESULT grantedSet=$grantedSet required=${stepViewModel.requestPermissions()} " +
+                    "containsAll=${grantedSet.containsAll(stepViewModel.requestPermissions())}"
+        )
+
+        if (grantedSet.containsAll(stepViewModel.requestPermissions())) {
+            stepViewModel.checkPermission()
+            stepViewModel.startAutoUpdateOnce(5_000)
+        } else {
+            Toast.makeText(context, "걸음수 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
+
+    // 최초 권한 상태 확인
+    LaunchedEffect(Unit) {
+        stepViewModel.checkPermission()
+    }
+
+    // ✅ 권한 우선 흐름
+    LaunchedEffect(granted, installed) {
+        if (!installed) {
+            android.util.Log.e("HC_PERM", "Health Connect not available on this device.")
+            return@LaunchedEffect
+        }
+
+        if (granted) {
+            android.util.Log.e("HC_PERM", "Already granted -> start updates")
+            stepViewModel.startAutoUpdateOnce(5_000)
+            return@LaunchedEffect
+        }
+
+        // granted=false 인데 아직 요청 안 했으면 요청
+        if (!permissionDialogShown) {
+            val perms = stepViewModel.requestPermissions()
+            android.util.Log.e("HC_PERM", "REQUEST granted=$granted perms=$perms size=${perms.size}")
+
+            if (perms.isEmpty()) {
+                android.util.Log.e("HC_PERM", "❌ requestPermissions() is EMPTY. 권한 팝업이 뜰 수 없음")
+                // 이 경우엔 다이얼로그든 권한이든 흐름이 꼬이니, 여기서 그냥 리턴
+                return@LaunchedEffect
+            }
+
+            permissionDialogShown = true
+            permissionLauncher.launch(perms)
+        }
+    }
+
+    // -----------------------------
+    // 2) 프로필 팝업은 "권한 허용 후"에만
+    //    (installed && !granted) 상태에서는 절대 띄우지 않음
+    // -----------------------------
     data class ProfileCheckResult(
         val isSocialLogin: Boolean,
         val needsBasicInfo: Boolean,
@@ -84,21 +162,22 @@ fun StepViewModelRoute(
 
             android.util.Log.e("ProfileCheck", "missingBasicInfo = $missingBasicInfo")
             android.util.Log.e("ProfileCheck", "missingGuardian = $missingGuardian")
-            android.util.Log.e("ProfileCheck", "isSocialLogin = $missingBasicInfo")
 
             ProfileCheckResult(
-                isSocialLogin = missingBasicInfo,  // 👈 username/phone으로 판단!
+                isSocialLogin = missingBasicInfo,
                 needsBasicInfo = missingBasicInfo,
                 needsGuardian = missingGuardian
             )
         }
     }
 
-    // 프로필 정보 입력 팝업 표시 여부
-    LaunchedEffect(profile, profileCheck) {
-        android.util.Log.e("ProfileDialog", "========== LaunchedEffect 트리거 ==========")
-        android.util.Log.e("ProfileDialog", "profile = $profile")
-        android.util.Log.e("ProfileDialog", "profileCheck = $profileCheck")
+    // ✅ 권한이 필요한 기기(installed)에서 granted=false이면 프로필 팝업 금지
+    LaunchedEffect(profile, profileCheck, granted, installed) {
+        if (installed && !granted) {
+            android.util.Log.e("ProfileDialog", "⏸️ 권한 미허용 상태 → 프로필 팝업 보류")
+            showProfileDialog = false
+            return@LaunchedEffect
+        }
 
         val check = profileCheck ?: run {
             android.util.Log.e("ProfileDialog", "❌ profileCheck is null (profile 로드 중)")
@@ -106,31 +185,30 @@ fun StepViewModelRoute(
         }
 
         val hasClosedDialog = prefs.getBoolean("closed_profile_dialog", false)
-        android.util.Log.e("ProfileDialog", "hasClosedDialog = $hasClosedDialog")
 
-        if (check.isSocialLogin) {
-            // 소셜 로그인: 기본 정보 비어있으면 무조건 표시
-            android.util.Log.e("ProfileDialog", "✅ 소셜 로그인 → 팝업 표시")
-            showProfileDialog = true
-        } else if (!hasClosedDialog && check.needsGuardian) {
-            // 일반 로그인: 보호자 이메일 없고, 닫은 적 없으면 표시
-            android.util.Log.e("ProfileDialog", "✅ 일반 로그인 + 보호자 없음 → 팝업 표시")
-            showProfileDialog = true
-        } else {
-            android.util.Log.e("ProfileDialog", "❌ 팝업 표시 조건 불충족")
+        showProfileDialog = when {
+            check.isSocialLogin -> {
+                android.util.Log.e("ProfileDialog", "✅ 소셜 로그인 → 팝업 표시")
+                true
+            }
+
+            !hasClosedDialog && check.needsGuardian -> {
+                android.util.Log.e("ProfileDialog", "✅ 일반 로그인 + 보호자 없음 → 팝업 표시")
+                true
+            }
+
+            else -> {
+                android.util.Log.e("ProfileDialog", "❌ 팝업 표시 조건 불충족")
+                false
+            }
         }
-
-        android.util.Log.e("ProfileDialog", "showProfileDialog = $showProfileDialog")
     }
 
-    // 팝업 표시
+    // ✅ 프로필 팝업 렌더링
     if (showProfileDialog && profile != null && profileCheck != null) {
-        android.util.Log.e("ProfileDialog", "========== 팝업 렌더링 시작 ==========")
         val check = profileCheck!!
-        android.util.Log.e("ProfileDialog", "isSocialLogin = ${check.isSocialLogin}")
 
         if (check.isSocialLogin) {
-            android.util.Log.e("ProfileDialog", "→ SocialLoginProfileDialog 표시")
             SocialLoginProfileDialog(
                 onDismiss = {},
                 onConfirm = {
@@ -139,7 +217,6 @@ fun StepViewModelRoute(
                 }
             )
         } else {
-            android.util.Log.e("ProfileDialog", "→ NormalLoginGuardianDialog 표시")
             NormalLoginGuardianDialog(
                 onDismiss = {
                     showProfileDialog = false
@@ -154,35 +231,9 @@ fun StepViewModelRoute(
         }
     }
 
-    val installed = HealthConnectClient.getSdkStatus(context) ==
-            HealthConnectClient.SDK_AVAILABLE
-
-    if (installed) {
-        val permissionLauncher = rememberLauncherForActivityResult(
-            PermissionController.createRequestPermissionResultContract()
-        ) { granted ->
-            if (granted.containsAll(stepViewModel.requestPermissions())) {
-                stepViewModel.checkPermission()
-            } else {
-                Toast.makeText(context, "걸음수 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        val granted by stepViewModel.permissionGranted.collectAsStateWithLifecycle()
-
-        LaunchedEffect(Unit) {
-            stepViewModel.checkPermission()
-        }
-
-        LaunchedEffect(granted) {
-            if (!granted) {
-                permissionLauncher.launch(stepViewModel.requestPermissions())
-            } else {
-                stepViewModel.startAutoUpdateOnce(5_000)
-            }
-        }
-    }
-
+    // -----------------------------
+    // 나머지 기존 로직 유지
+    // -----------------------------
     LaunchedEffect(Unit) {
         heartViewModel.syncHeartHistory()
     }
@@ -289,29 +340,46 @@ fun StepViewModelRoute(
         )
     }
 
-    MainScreen(
-        onOpenChatBot = onOpenChatBot,
-        onOpenScheduler = onOpenScheduler,
-        onOpenHeart = onOpenHeart,
-        onOpenMap = onOpenMap,
-        onOpenNews = onOpenNews,
-        onOpenHealthInsight = onOpenHealthInsight,
-        onOpenAlram = onAlarmCardClick,
-        todaySteps = if (installed) todaySteps else 0,
-        remainText = remainText,
-        nextLabel = nextLabel
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        MainScreen(
+            onOpenChatBot = onOpenChatBot,
+            onOpenScheduler = onOpenScheduler,
+            onOpenHeart = onOpenHeart,
+            onOpenMap = onOpenMap,
+            onOpenNews = onOpenNews,
+            onOpenHealthInsight = onOpenHealthInsight,
+            onOpenAlram = onAlarmCardClick,
+            todaySteps = if (installed) todaySteps else 0,
+            remainText = remainText,
+            nextLabel = nextLabel
+        )
+
+        // 디버그 텍스트(원하면 삭제)
+        Text(
+            text = "DEBUG: installed=$installed granted=$granted permShown=$permissionDialogShown showProfile=$showProfileDialog",
+            color = Color.Red,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(12.dp)
+                .zIndex(999f)
+                .background(Color.White.copy(alpha = 0.8f))
+                .padding(6.dp)
+        )
+    }
 }
 
-// 소셜 로그인 팝업 (기본 정보 필수)
-// profile 을 직접 사용하지 않도록 수정
+// -----------------------------
+// Dialogs + UI Components
+// -----------------------------
+
 @Composable
 fun SocialLoginProfileDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss, // 소셜의 경우 외부에서 {} 를 넘기면 뒤로가기/밖 터치 막힘
+        onDismissRequest = onDismiss,
         title = {
             Text(
                 "필수 정보를 입력해주세요 ✍️",
@@ -352,11 +420,10 @@ fun SocialLoginProfileDialog(
                 Text("입력하기")
             }
         },
-        dismissButton = null // "나중에" 버튼 없음
+        dismissButton = null
     )
 }
 
-// 일반 로그인 팝업 (보호자 이메일 선택)
 @Composable
 fun NormalLoginGuardianDialog(
     onDismiss: () -> Unit,

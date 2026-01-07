@@ -22,6 +22,7 @@ class AuthHeaderInterceptor(
 
         // 나머지 API는 토큰 추가
         val access = tokenStore.current().access
+        android.util.Log.e("AuthHeader", "path=$path accessEmpty=${access.isNullOrBlank()}")
         val newReq = if (!access.isNullOrBlank()) {
             req.newBuilder()
                 .header("Authorization", "$scheme $access")
