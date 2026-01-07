@@ -1,0 +1,35 @@
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 2. 깃 설정 파일
+.git/
+.gitignore
+
+# 3. IDE 설정 파일 (VSCode, PyCharm 등)
+.idea/
+.vscode/
+
+# 4. 로컬 환경변수 및 비밀 키 (이미지에 박제되면 안 됨)
+.env
+secret/
+*.pem
+*.key
+
+# 5. 정적 파일 결과물 (collectstatic으로 모인 파일들)
+# 보통 컨테이너 안에서 새로 모으거나 볼륨으로 처리합니다.
+staticfiles/
+
+# 6. Celery 비트 스케줄 파일
+celerybeat-schedule
+celerybeat.pid
+
+# 7. (선택) 로컬에 있는 무거운 모델 파일이나 데이터
+# 이런 건 COPY 하지 말고 volumes로 붙여 쓰는 게 좋습니다.
+*.pth
+*.pt
+postgres_data/

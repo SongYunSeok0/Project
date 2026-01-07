@@ -1,20 +1,25 @@
-#users.seriallizers.py
+# users/serializers.py
+
+from django.contrib.auth import get_user_model, authenticate
 from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import User, Gender
+from .models import Gender
 
+User = get_user_model()
+
+# 관리자 이메일 목록 (하드코딩보다는 환경변수나 DB 관리가 좋지만, 일단 유지)
 STAFF_EMAILS = {
     'qkfrus6623@naver.com'
 }
 
 
-def _normalize_phone(s: str) -> str:
-    return "".join(ch for ch in (s or "") if ch.isdigit() or ch == "+")
-
-
 class UserSerializer(serializers.ModelSerializer):
+    """
+    사용자 정보 조회용 Serializer
+    """
+
     class Meta:
         model = User
         fields = (
@@ -41,21 +46,16 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    """
+    회원가입(로컬/소셜 추가 정보 입력)용 Serializer
+    """
     password = serializers.CharField(
-        write_only=True,
-        required=False,
-        allow_blank=True,
-        min_length=8
+        write_only=True, required=False, allow_blank=True, min_length=8
     )
-    email = serializers.EmailField(
-        required=False,
-        allow_blank=True
-    )
-    username = serializers.CharField(
-        required=False,
-        allow_blank=True
-    )
+    email = serializers.EmailField(required=False, allow_blank=True)
+    username = serializers.CharField(required=False, allow_blank=True)
 
+    # CamelCase(프론트) -> SnakeCase(DB) 매핑을 위해 필드명 유지
     provider = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     socialId = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
@@ -79,11 +79,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
         provider = attrs.get("provider")
         social_id = attrs.get("socialId")
 
-        # 소셜 회원가입일 경우 필수값 검사 생략
+        # 1. 소셜 로그인 연동 가입인 경우 -> 필수값 체크 완화
         if provider and social_id:
             return attrs
 
-        # 로컬 회원가입은 기존 필수 검증 실행
+        # 2. 일반 로컬 회원가입인 경우 -> 필수값 체크
         if not attrs.get("email"):
             raise serializers.ValidationError({"email": "이메일은 필수입니다."})
         if not attrs.get("password"):
@@ -96,46 +96,45 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         provider = validated_data.get("provider")
         social_id = validated_data.get("socialId")
+        email = validated_data.get("email", "").lower() if validated_data.get("email") else ""
 
-        # 소셜 계정인 경우
+        # 관리자 여부 판단
+        is_staff = (email in STAFF_EMAILS)
+
+        # A. 소셜 계정 생성 (패스워드 없음)
         if provider and social_id:
-            validated_data.pop("password", None)
-            email = validated_data.pop("email", "") or None
-            username = validated_data.pop("username", f"{provider}_{social_id}")
+            # 소셜 가입 시 username이 없으면 'provider_socialId'로 자동 생성
+            username = validated_data.get("username") or f"{provider}_{social_id}"
 
-            is_staff = email in STAFF_EMAILS if email else False
-            print(f"[소셜 회원가입] email: {email}, is_staff: {is_staff}, STAFF_EMAILS: {STAFF_EMAILS}")
+            validated_data.pop("password", None)  # 소셜은 비번 없음
 
-            user = User.objects.create(
-                email=email,
+            return User.objects.create(
                 username=username,
+                is_staff=is_staff,
                 provider=provider,
                 social_id=social_id,
-                is_staff=is_staff,
-                **validated_data
+                email=email or None,  # 빈 문자열이면 NULL 저장
+                **{k: v for k, v in validated_data.items() if k not in ['username', 'provider', 'socialId', 'email']}
             )
-            return user
 
-        # 로컬 유저 회원가입
-        email = validated_data.pop("email").lower()
-        pwd = validated_data.pop("password")
+        # B. 로컬 계정 생성 (비밀번호 해싱 필요)
+        password = validated_data.pop("password")
 
-        is_staff = email in STAFF_EMAILS
-        print(f"[로컬 회원가입] email: {email}, is_staff: {is_staff}, STAFF_EMAILS: {STAFF_EMAILS}")
-
-        user = User.objects.create_user(
+        return User.objects.create_user(
             email=email,
-            password=pwd,
+            password=password,
             is_staff=is_staff,
             **validated_data
         )
-        return user
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    """
+    회원 정보 수정용 Serializer
+    """
     password = serializers.CharField(write_only=True, required=False, min_length=8)
 
-    # [수정 1] prot_name은 실제 모델 필드가 아니므로 명시적으로 선언해야 값을 받을 수 있습니다.
+    # [설명] prot_name은 DB에 없는 필드지만, 입력받아서 relation 필드에 넣기 위해 선언
     prot_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
@@ -152,42 +151,45 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "prot_email",
             "relation",
             "email",
-            "prot_name"  # [수정 2] 주석 해제 및 필드 추가
+            "prot_name",
         )
 
-    def validate_phone(self, v: str) -> str:
-        return _normalize_phone(v)
+    def validate_phone(self, value):
+        """전화번호 숫자만 남기기"""
+        return "".join(filter(str.isdigit, value)) if value else ""
 
-    def validate_gender(self, v: str) -> str | None:
-        if v in (None, ""):
+    def validate_gender(self, value):
+        """성별 입력값 정규화 (M/F)"""
+        if not value:
             return None
-        m = {
+
+        normalized = value.strip().lower()
+        map_gender = {
             "m": "M", "male": "M", "남": "M", "남자": "M",
             "f": "F", "female": "F", "여": "F", "여자": "F",
         }
-        v2 = m.get(str(v).strip().lower(), v)
-        if v2 not in dict(Gender.choices):
+
+        result = map_gender.get(normalized, value)
+        if result not in dict(Gender.choices):
             raise serializers.ValidationError("gender는 M 또는 F 중 하나여야 합니다.")
-        return v2
+
+        return result
 
     def update(self, instance, validated_data):
-        # 1. 패스워드와 보호자 이름(prot_name)을 데이터에서 꺼냄
-        pwd = validated_data.pop("password", None)
+        password = validated_data.pop("password", None)
+        prot_name = validated_data.pop("prot_name", None)
 
-        # [수정] 이제 fields에 등록되었으므로 validated_data에 값이 들어옵니다.
-        prot_name_input = validated_data.pop("prot_name", None)
+        # 1. prot_name -> relation 필드로 매핑
+        if prot_name:
+            instance.relation = prot_name
 
-        # 2. [핵심] prot_name이 들어왔다면 DB의 'relation' 필드에 저장
-        if prot_name_input:
-            instance.relation = prot_name_input
+        # 2. 나머지 필드 자동 업데이트
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
-        # 3. 나머지 데이터 업데이트
-        for k, v in validated_data.items():
-            setattr(instance, k, v)
-
-        # 4. 비밀번호 변경 시 처리
-        if pwd:
-            instance.set_password(pwd)
+        # 3. 비밀번호 변경 시 암호화
+        if password:
+            instance.set_password(password)
 
         try:
             instance.save()
@@ -195,29 +197,39 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             if "phone" in str(e).lower():
                 raise serializers.ValidationError({"phone": "이미 사용 중인 전화번호입니다."})
             raise
+
         return instance
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    이메일 + 비밀번호 로그인 전용 Serializer
+    """
     username_field = 'email'
 
     def validate(self, attrs):
+        # 1. 이메일/비번 입력 확인
         email = attrs.get("email")
         password = attrs.get("password")
 
-        if email and password:
-            from django.contrib.auth import authenticate
-            user = authenticate(request=self.context.get('request'), email=email, password=password)
-            if not user:
-                raise serializers.ValidationError("이메일 또는 비밀번호가 잘못되었습니다.")
-        else:
+        if not email or not password:
             raise serializers.ValidationError("이메일과 비밀번호를 모두 입력해야 합니다.")
 
+        # 2. 인증 시도
+        # request context를 전달해야 authenticate가 내부 로깅 등을 처리할 수 있음
+        user = authenticate(
+            request=self.context.get('request'),
+            email=email,
+            password=password
+        )
+
+        if not user:
+            raise serializers.ValidationError("이메일 또는 비밀번호가 잘못되었습니다.")
+
+        # 3. 토큰 생성
         refresh = self.get_token(user)
 
-        data = {
+        return {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }
-
-        return data
