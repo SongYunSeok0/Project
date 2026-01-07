@@ -270,7 +270,7 @@ fun AppTagButton(
             containerColor = finalBackground,
             selectedContainerColor = finalBackground,
             labelColor = finalTextColor,
-            selectedLabelColor = finalTextColor
+            selectedLabelColor = finalTextColor,
         ),
         border = if (useFilterChipStyle)
             BorderStroke(1.5.dp, finalBorderColor)

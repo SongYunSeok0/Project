@@ -81,6 +81,7 @@ fun ChatbotScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(inner)
+                    .imePadding()
             ) {
                 // 1229 챗봇 메시지 리스트 영역 컴포넌트 분리
                 // 스크롤 반복문 형태는 유지하되 데이터 상태 확인은 기존처럼 뷰모델에서 체크

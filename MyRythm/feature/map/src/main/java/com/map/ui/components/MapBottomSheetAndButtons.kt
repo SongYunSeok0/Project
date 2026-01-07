@@ -170,7 +170,7 @@ fun SearchHereChip(
             .wrapContentWidth()
             .height(36.dp),
         isCircle = false,
-        alpha = 0.7f
+        selected = false
     )
 }
 
