@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics
-
+from .tasks import send_email_task
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes
@@ -142,8 +142,9 @@ def check_email_duplicate(request):
 
 @send_email_code_docs
 class SendEmailCodeView(APIView):
+    permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'sms_send'  # settings.py에 정의한 이름 사용
+    throttle_scope = 'sms_send'
 
     def post(self, request):
         email = request.data.get("email")
@@ -152,15 +153,16 @@ class SendEmailCodeView(APIView):
         if not email:
             return Response({"detail": "email 필요"}, status=400)
 
-        try:
-            # [Refactoring] 서비스 호출
-            services.send_verification_email(email, name)
-            return Response({"detail": "인증코드가 발송되었습니다."})
-        except ValueError as e:
-            return Response({"detail": str(e)}, status=404)
-        except Exception:
-            traceback.print_exc()
-            return Response({"detail": "이메일 발송 실패"}, status=500)
+        # [수정 전] 직접 실행 (느림)
+        # services.send_verification_email(email, name)
+
+        # [수정 후] Celery에게 토스! (엄청 빠름) 🚀
+        # .delay()를 붙이면 "나중에 해" 하고 바로 넘어갑니다.
+        print("🚀 Celery에게 작업 넘기기 직전!")  # 로그 확인용
+        send_email_task.delay(email, name)
+        print("✅ Celery에게 작업 넘기기 완료! (여기까지 순식간이어야 함)")
+
+        return Response({"detail": "인증코드가 발송되었습니다."})
 
 
 @verify_email_code_docs
