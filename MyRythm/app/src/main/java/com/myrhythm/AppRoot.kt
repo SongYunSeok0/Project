@@ -56,41 +56,33 @@ fun AppRoot(startFromLogin: Boolean = false) {
     val backStack by nav.currentBackStackEntryAsState()
     val routeName = backStack?.destination?.route.orEmpty()
 
-    val ctx = LocalContext.current
-
-    // ✅ TokenStore는 AppRoot의 유일한 인증 기준
-    val tokenStore = remember {
-        EntryPointAccessors
-            .fromApplication(ctx, CoreEntryPoint::class.java)
-            .tokenStore()
-    }
-
-    val access = tokenStore.current().access
-    val isLoggedIn = remember(access) {
-        !access.isNullOrBlank()
-    }
-
-    val realUserId = remember(access) {
-        JwtUtils.extractUserId(access) ?: "0"
-    }
-    val userIdLong = realUserId.toLongOrNull() ?: 0L
-
-    Log.e("AppRoot", "========================================")
-    Log.e("AppRoot", "isLoggedIn (from token): $isLoggedIn")
-    Log.e("AppRoot", "userId: $realUserId")
-    Log.e("AppRoot", "========================================")
-
-    // ✅ startDestination은 고정
-    val startDestination = remember(isLoggedIn, startFromLogin) {
-        if (!isLoggedIn || startFromLogin) AuthGraph
-        else MainRoute(realUserId)
-    }
-
-    // ---- ViewModels (인증과 무관한 애들만) ----
+    val loginVm: LoginViewModel = hiltViewModel()
     val stepVm: StepViewModel = hiltViewModel()
     val heartVm: HeartRateViewModel = hiltViewModel()
-    val loginVm: LoginViewModel = hiltViewModel()
 
+    val loginUi by loginVm.uiState.collectAsStateWithLifecycle()
+
+    Log.e("AppRoot", "🔄 RECOMPOSE! loginUi.isLoggedIn = ${loginUi.isLoggedIn}")
+
+    val ctx = LocalContext.current
+    val tokenStore = EntryPointAccessors
+        .fromApplication(ctx, CoreEntryPoint::class.java)
+        .tokenStore()
+
+    val access = tokenStore.current().access
+    val isLoggedIn = access?.isNotBlank() == true
+    val realUserId = JwtUtils.extractUserId(access) ?: "0"
+    val userId = loginUi.userId ?: realUserId
+    val userIdLong = userId.toLongOrNull() ?: 0L
+
+    Log.e("AppRoot", "========================================")
+    Log.e("AppRoot", "loginUi.isLoggedIn: ${loginUi.isLoggedIn}")
+    Log.e("AppRoot", "isLoggedIn (from token): $isLoggedIn")
+    Log.e("AppRoot", "========================================")
+
+    val startDestination =
+        if (!isLoggedIn || startFromLogin) AuthGraph
+        else MainRoute(realUserId)
 
     LaunchedEffect(Unit) {
         stepVm.checkPermission()
@@ -103,41 +95,49 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     }
 
-    // ---- UI 설정 ----
+    var previousLoginState by remember { mutableStateOf(loginUi.isLoggedIn) }
+
+    // 로그아웃 처리
+    LaunchedEffect(loginUi.isLoggedIn) {
+        Log.e("AppRoot", "========================================")
+        Log.e("AppRoot", "🔥 로그인 상태 변화 감지")
+        Log.e("AppRoot", "이전: $previousLoginState → 현재: ${loginUi.isLoggedIn}")
+        Log.e("AppRoot", "========================================")
+
+        // 로그인 → 로그아웃으로 변경된 경우만 처리
+        if (previousLoginState && !loginUi.isLoggedIn) {
+            Log.e("AppRoot", "✅ 로그아웃 감지 - 로그인 화면으로 이동")
+            nav.navigate(LoginRoute) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+
+        previousLoginState = loginUi.isLoggedIn
+    }
+
     fun isRoute(k: KClass<*>) =
         routeName.startsWith(k.qualifiedName.orEmpty())
 
     fun isOf(vararg ks: KClass<*>) = ks.any { isRoute(it) }
 
-    val hideTopBar = isOf(
-        LoginRoute::class,
-        PwdRoute::class,
-        SignupRoute::class
-    ) || isRoute(MainRoute::class)
+    val hideTopBar = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class) ||
+            isRoute(MainRoute::class) ||
+            isRoute(UserManageRoute::class) ||
+            isRoute(InquiriesManageRoute::class)
+    val hideBottomBar = isOf(LoginRoute::class, PwdRoute::class, SignupRoute::class) ||
+            isRoute(ChatBotRoute::class)
 
-    val hideBottomBar = isOf(
-        LoginRoute::class,
-        PwdRoute::class,
-        SignupRoute::class,
-        ChatBotRoute::class
-    )
-
-    fun goHome() = nav.navigate(MainRoute(realUserId)) {
-        popUpTo(0)
-        launchSingleTop = true
+    fun goHome() = nav.navigate(MainRoute(userId)) {
+        popUpTo(0); launchSingleTop = true
     }
-
     fun goMyPage() = nav.navigate(MyPageRoute) {
-        popUpTo(0)
-        launchSingleTop = true
+        popUpTo(0); launchSingleTop = true
+    }
+    fun goScheduleFlow() = nav.navigate(CameraRoute(userId)) {
+        popUpTo(0); launchSingleTop = true
     }
 
-    fun goScheduleFlow() = nav.navigate(CameraRoute(realUserId)) {
-        popUpTo(0)
-        launchSingleTop = true
-    }
-
-    // ---- Sync ----
     val syncEntry = EntryPointAccessors.fromApplication(ctx, SyncEntryPoint::class.java)
     val regiRepo = syncEntry.regiRepository()
     val planRepo = syncEntry.planRepository()
@@ -154,6 +154,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
             planRepo.syncPlans(userIdLong)
             heartRepo.syncHeartHistory()
             userRepo.syncUser()
+            Log.d("Sync", "싱크완료")
             refreshing = false
         }
     }
@@ -162,7 +163,6 @@ fun AppRoot(startFromLogin: Boolean = false) {
         isSyncAllowedRoute(routeName)
     }
 
-    // ---- Scaffold ----
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
@@ -173,6 +173,12 @@ fun AppRoot(startFromLogin: Boolean = false) {
                     onBackClick = {
                         if (nav.previousBackStackEntry != null) nav.popBackStack()
                         else goHome()
+                    },
+                    showSearch = isRoute(NewsRoute::class),
+                    onSearchClick = {
+                        nav.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("openSearch", true)
                     }
                 )
             }
@@ -197,43 +203,45 @@ fun AppRoot(startFromLogin: Boolean = false) {
             modifier = Modifier.padding(inner),
             state = rememberSwipeRefreshState(isRefreshing = refreshing),
             swipeEnabled = syncEnabled,
-            onRefresh = { if (syncEnabled) refreshAll() }
+            onRefresh = {
+                if (syncEnabled) {
+                    refreshAll()
+                } else {
+                    Log.d("Sync", "이 화면에서는 싱크 비활성")
+                }
+            }
         ) {
-            val scope = rememberCoroutineScope()
-
             NavHost(
                 navController = nav,
                 startDestination = startDestination
             ) {
+
                 authNavGraph(nav, loginVm)
 
                 mainNavGraph(
                     nav = nav,
-                    onLogoutClick = {
-                        scope.launch {
-                            tokenStore.clear()
-                        }
-                    }
+                    onLogoutClick = { loginVm.logout() }
                 )
 
+                mapNavGraph()
+                newsNavGraph(nav, userId)
+                schedulerNavGraph(nav)
                 mypageNavGraph(
                     nav = nav,
                     heartVm = heartVm,
                     userId = userIdLong,
                     onLogoutClick = {
-                        scope.launch {
-                            tokenStore.clear()
-                        }
+                        Log.e("AppRoot", "🔥🔥🔥 onLogoutClick 콜백 받음!")
+                        loginVm.logout()
+                        Log.e("AppRoot", "🔥🔥🔥 loginVm.logout() 호출 완료!")
                     }
                 )
-
-                // 나머지 graph들...
+                chatbotNavGraph()
+                healthInsightNavGraph()
             }
-
         }
     }
 }
-
 
 private fun isSyncAllowedRoute(routeName: String): Boolean {
     return when {

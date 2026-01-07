@@ -83,7 +83,7 @@ class AuthRepositoryImpl @Inject constructor(
                 ?: return@withContext ApiResult.Failure(DomainError.Unknown("empty body"))
 
             val tokens = body.asAuthTokens()
-            tokenStore.set(tokens.access, tokens.refresh)
+            tokenStore.set(tokens.access, tokens.refresh, persist = autoLogin)
             prefs.setAutoLoginEnabled(autoLogin)
 
             ApiResult.Success(tokens)
@@ -116,9 +116,10 @@ class AuthRepositoryImpl @Inject constructor(
 
             val tokens = body.toDomainTokens()
             val access = tokens.access
-                ?: return@withContext ApiResult.Failure(
-                    DomainError.InvalidToken("access missing")
-                )
+                ?: return@withContext ApiResult.Failure(DomainError.InvalidToken("access missing"))
+
+            val autoLoginEnabled = prefs.isAutoLoginEnabled()
+            tokenStore.set(tokens.access, tokens.refresh, persist = autoLoginEnabled)
 
             val userId = JwtUtils.extractUserId(access)?.toLong()
                 ?: return@withContext ApiResult.Failure(
