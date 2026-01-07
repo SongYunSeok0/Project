@@ -9,8 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mypage.ui.components.GroupedMediRecordCard
+import com.mypage.ui.components.groupMediRecords
 import com.mypage.viewmodel.MediReportViewModel
 import com.shared.R
 

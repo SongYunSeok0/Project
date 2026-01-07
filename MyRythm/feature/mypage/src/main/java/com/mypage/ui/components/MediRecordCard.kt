@@ -1,5 +1,6 @@
-package com.mypage.ui
+package com.mypage.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,10 +40,13 @@ import com.shared.R
 import com.shared.ui.components.AppButton
 import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.componentTheme
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 
 // 그룹화된 복약 기록
 data class GroupedMediRecord(
@@ -392,9 +396,9 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
     val zone = ZoneId.systemDefault()
 
     // 🔥 로그 추가
-    android.util.Log.d("GroupMediRecords", "====== 전체 records: ${records.size}개 ======")
+    Log.d("GroupMediRecords", "====== 전체 records: ${records.size}개 ======")
     records.forEach { record ->
-        android.util.Log.d("GroupMediRecords",
+        Log.d("GroupMediRecords",
             "Record: id=${record.id}, label=${record.regiLabel}, " +
                     "name=${record.medicineName}, taken=${record.taken}, takenAt=${record.takenAt}")
     }
@@ -403,7 +407,7 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
         .groupBy { it.regiLabel ?: "미분류" }
         .map { (label, groupRecords) ->
             // 🔥 로그 추가
-            android.util.Log.d("GroupMediRecords", "====== Label: $label (${groupRecords.size}개) ======")
+            Log.d("GroupMediRecords", "====== Label: $label (${groupRecords.size}개) ======")
 
             val dates = groupRecords.mapNotNull { record ->
                 record.takenAt?.let {
@@ -422,15 +426,15 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
             val timeSlots = groupRecords.groupBy { it.takenAt }
 
             // 🔥 로그 추가
-            android.util.Log.d("GroupMediRecords", "총 ${timeSlots.size}개 시간대")
+            Log.d("GroupMediRecords", "총 ${timeSlots.size}개 시간대")
             timeSlots.forEach { (time, recordsAtSameTime) ->
-                val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
-                val timeStr = if (time != null) formatter.format(java.util.Date(time)) else "null"
+                val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                val timeStr = if (time != null) formatter.format(Date(time)) else "null"
                 val allTaken = recordsAtSameTime.all { it.taken == true }
-                android.util.Log.d("GroupMediRecords",
+                Log.d("GroupMediRecords",
                     "  시간: $timeStr, 약 ${recordsAtSameTime.size}개, 모두 복용: $allTaken")
                 recordsAtSameTime.forEach { r ->
-                    android.util.Log.d("GroupMediRecords",
+                    Log.d("GroupMediRecords",
                         "    - ${r.medicineName}: taken=${r.taken}")
                 }
             }
@@ -445,7 +449,7 @@ fun groupMediRecords(records: List<MediRecord>): List<GroupedMediRecord> {
             else 0f
 
             // 🔥 로그 추가
-            android.util.Log.d("GroupMediRecords",
+            Log.d("GroupMediRecords",
                 "결과 - 완료: $completedTimeSlots/$totalTimeSlots, 완료율: ${(completionRate * 100).toInt()}%")
 
             GroupedMediRecord(

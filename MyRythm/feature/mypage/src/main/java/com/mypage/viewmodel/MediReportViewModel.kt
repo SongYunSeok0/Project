@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.domain.model.MediRecord
 import com.domain.usecase.mypage.GetMediRecordsUseCase
 import com.domain.usecase.plan.DeletePlanUseCase
-import com.mypage.ui.GroupedMediRecord
+import com.mypage.ui.components.GroupedMediRecord
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
