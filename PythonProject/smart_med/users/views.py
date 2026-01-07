@@ -3,7 +3,7 @@ import traceback
 
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
-
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -142,8 +142,8 @@ def check_email_duplicate(request):
 
 @send_email_code_docs
 class SendEmailCodeView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'sms_send'  # settings.py에 정의한 이름 사용
 
     def post(self, request):
         email = request.data.get("email")

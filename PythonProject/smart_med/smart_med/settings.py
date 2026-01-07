@@ -12,8 +12,13 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = True
+# 배포시 로그 안나타나게 처리
+#DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
+# 배포시 로컬이랑 도메인만 접속허가
+# ALLOWED_HOSTS = ["localhost", "127.0.0.1", "your-ip-address", "your-domain.com"]
+
 
 FIREBASE_CREDENTIAL_PATH = env(
     "FIREBASE_CREDENTIAL_PATH",
@@ -155,6 +160,16 @@ CACHES = {
 
 
 REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle', # 비로그인 유저
+        'rest_framework.throttling.UserRateThrottle',# 로그인 유저
+        'rest_framework.throttling.ScopedRateThrottle' # 메일인증 횟수 제한용
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '10/minute',  # 비로그인: 분당 10회 제한
+        'user': '100/day',# 로그인: 하루 100회 제한
+        'sms_send': '3/minute',#문자 분당 3회 제한, 지금은 인증메일 횟수
+    },
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -205,8 +220,5 @@ USE_TZ = True
 STATIC_URL = "static/"
 ROOT_URLCONF = "smart_med.urls"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 AUTH_USER_MODEL = "users.User"
