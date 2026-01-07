@@ -1,48 +1,38 @@
-# med/views.py
+# medications/views.py
+
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework import status
-from medications.tasks import delete_plan_async
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
-from django.shortcuts import get_object_or_404
+from .docs import mark_as_taken_docs, snooze_docs
 import datetime
 
-from smart_med.utils.time_utils import to_ms, from_ms
-from .models import RegiHistory, Plan
+# 서비스 및 시리얼라이저 임포트
+from . import services
 from .serializers import (
-    RegiHistorySerializer,
-    RegiHistoryCreateSerializer,
-    PlanSerializer,
-    PlanCreateIn,
-    RegiHistoryWithPlansSerializer,
+    RegiHistorySerializer, RegiHistoryCreateSerializer, RegiHistoryWithPlansSerializer,
+    PlanSerializer, PlanCreateInputSerializer
 )
+from .models import RegiHistory, Plan
+from medications.tasks import delete_plan_async
 
+# 문서화 데코레이터들 (기존 유지)
 from .docs import (
     regi_list_docs, regi_create_docs, regi_update_docs, regi_delete_docs,
     plan_list_docs, plan_create_docs, plan_delete_docs,
-    plan_today_docs, plan_update_docs,
-    mark_as_taken_docs, snooze_docs
+    plan_today_docs, plan_update_docs
 )
 
-# ============================================================
-# ✔ 커스텀 권한: is_staff 사용자만 접근 가능
-# ============================================================
 
 class IsStaffUser(BasePermission):
-    """Django user.is_staff == True 인 경우만 허용"""
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.is_staff
-        )
+        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
 
 
-# ============================================================
-# ✔ RegiHistory (CRUD) - 일반 사용자용
-# ============================================================
+# ==========================
+# RegiHistory Views
+# ==========================
 
 @regi_list_docs
 class RegiHistoryListCreateView(APIView):
@@ -50,12 +40,12 @@ class RegiHistoryListCreateView(APIView):
 
     @regi_create_docs
     def post(self, request):
-        ser = RegiHistoryCreateSerializer(
+        serializer = RegiHistoryCreateSerializer(
             data=request.data,
             context={"request": request}
         )
-        ser.is_valid(raise_exception=True)
-        obj = ser.save()
+        serializer.is_valid(raise_exception=True)
+        obj = serializer.save()
         return Response(RegiHistorySerializer(obj).data, status=201)
 
     def get(self, request):
@@ -68,13 +58,15 @@ class RegiHistoryUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        obj = RegiHistory.objects.filter(id=pk, user=request.user).first()
-        if not obj:
+        # 쿼리셋에서 바로 404 처리와 필터링을 동시에
+        try:
+            obj = RegiHistory.objects.get(id=pk, user=request.user)
+        except RegiHistory.DoesNotExist:
             return Response({"error": "not found"}, status=404)
 
-        ser = RegiHistoryCreateSerializer(obj, data=request.data, partial=True)
-        ser.is_valid(raise_exception=True)
-        ser.save()
+        serializer = RegiHistoryCreateSerializer(obj, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(RegiHistorySerializer(obj).data)
 
 
@@ -83,18 +75,97 @@ class RegiHistoryDeleteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
-        row = RegiHistory.objects.filter(id=pk, user=request.user).first()
-        if not row:
+        try:
+            row = RegiHistory.objects.get(id=pk, user=request.user)
+            row.delete()
+            return Response(status=204)
+        except RegiHistory.DoesNotExist:
             return Response({"error": "not found"}, status=404)
-        row.delete()
-        return Response(status=204)
 
 
-# ============================================================
-# ✔ 관리자용: RegiHistory 조회 (Plan 포함)
-#    - GET /api/med/regihistory/user/<user_id>/
-#    - GET /api/med/regihistory/all/
-# ============================================================
+# ==========================
+# Plan Views
+# ==========================
+
+@plan_list_docs
+class PlanListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        plans = Plan.objects.filter(regihistory__user=request.user).order_by('taken_at')
+        return Response(PlanSerializer(plans, many=True).data)
+
+    @plan_create_docs
+    def post(self, request):
+        data = request.data
+
+        # 1. 스마트 일정 일괄 등록 (times 배열이 있는 경우)
+        if "times" in data and isinstance(data["times"], list):
+            try:
+                created_plans = services.create_smart_schedule(request.user, data)
+                return Response({
+                    "message": f"{len(created_plans)}개의 스마트 일정이 생성되었습니다.",
+                    "plans": PlanSerializer(created_plans, many=True).data
+                }, status=201)
+            except Exception as e:
+                # 404나 기타 에러 처리
+                return Response({"error": str(e)}, status=400)
+
+        # 2. 단건 등록
+        input_ser = PlanCreateInputSerializer(data=data)
+        input_ser.is_valid(raise_exception=True)
+
+        try:
+            plan = services.create_single_plan(request.user, input_ser.validated_data)
+            return Response(PlanSerializer(plan).data, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+
+@plan_delete_docs
+class PlanDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        # 존재 여부 확인 (권한 체크 포함)
+        if not Plan.objects.filter(id=pk, regihistory__user=request.user).exists():
+            return Response({"error": "not found"}, status=404)
+
+        # 비동기 삭제 태스크 실행
+        delete_plan_async.delay(pk)
+        return Response({"status": "delete queued"}, status=202)
+
+
+@plan_today_docs
+class TodayPlansView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        now = timezone.now()
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + datetime.timedelta(days=1)
+
+        plans = Plan.objects.filter(
+            regihistory__user=request.user,
+            taken_at__gte=start,
+            taken_at__lt=end
+        ).order_by("taken_at")
+
+        # 상태 계산 로직은 Serializer에 위임되어 있으므로 그대로 호출
+        return Response(PlanSerializer(plans, many=True).data)
+
+
+@plan_update_docs
+class PlanUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            updated_plan = services.update_plan_time(request.user, pk, request.data)
+            return Response(PlanSerializer(updated_plan).data)
+        except Exception as e:
+            # get_object_or_404에서 발생하는 404 에러 등 처리
+            return Response({"error": str(e)}, status=400)
 
 class UserRegiHistoryListView(APIView):
     """
@@ -121,262 +192,29 @@ class AllRegiHistoryListView(APIView):
         rows = RegiHistory.objects.all().order_by("-id")
         return Response(RegiHistoryWithPlansSerializer(rows, many=True).data)
 
-
-# ============================================================
-# ✔ Plan (GET / POST 단건 + 스마트 일정 생성)
-# ============================================================
-
-@plan_list_docs
-class PlanListView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        plans = Plan.objects.filter(regihistory__user=request.user)
-        return Response(PlanSerializer(plans, many=True).data)
-
-    @plan_create_docs
-    def post(self, request):
-        data = request.data
-
-        # ============================================================
-        # Case 1: 스마트 일정 일괄 등록
-        # ============================================================
-        if "times" in data and isinstance(data["times"], list):
-            rid = data.get("regihistoryId")
-            start_date_str = data.get("startDate")
-            duration = int(data.get("duration", 1))
-            times = data.get("times", [])
-            med_name = data.get("medName", "")
-
-            regi = RegiHistory.objects.filter(id=rid, user=request.user).first()
-            if not regi:
-                return Response({"error": "RegiHistory not found"}, status=404)
-
-            try:
-                current_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            except Exception:
-                current_date = timezone.localdate()
-
-            now = timezone.now()
-            created_plans = []
-            total_target = duration * len(times)
-            count = 0
-
-            while count < total_target:
-                for t in sorted(times):
-                    if count >= total_target:
-                        break
-
-                    hour, minute = map(int, t.split(":"))
-                    dt = datetime.datetime.combine(current_date, datetime.time(hour, minute))
-
-                    if timezone.is_naive(dt):
-                        dt = timezone.make_aware(dt, timezone.get_current_timezone())
-
-                    if dt <= now:
-                        continue
-
-                    p = Plan.objects.create(
-                        regihistory=regi,
-                        med_name=med_name,
-                        taken_at=dt,
-                        ex_taken_at=dt,
-                        meal_time="after",
-                        use_alarm=True,
-                    )
-                    created_plans.append(p)
-                    count += 1
-
-                current_date += datetime.timedelta(days=1)
-
-            if created_plans:
-                sync = timezone.now()
-                Plan.objects.filter(id__in=[p.id for p in created_plans]).update(updated_at=sync)
-                for p in created_plans:
-                    p.updated_at = sync
-
-            return Response({
-                "message": f"{len(created_plans)}개의 스마트 일정이 생성되었습니다.",
-                "plans": PlanSerializer(created_plans, many=True).data
-            }, status=201)
-
-        # ============================================================
-        # Case 2: 단건 등록
-        # ============================================================
-        ser = PlanCreateIn(data=data)
-        ser.is_valid(raise_exception=True)
-        v = ser.validated_data
-
-        regi = RegiHistory.objects.filter(id=v["regihistoryId"], user=request.user).first()
-        if not regi:
-            return Response({"error": "no permission"}, status=400)
-
-        dt = from_ms(v.get("takenAt"))
-
-        plan = Plan.objects.create(
-            regihistory=regi,
-            med_name=v.get("medName"),
-            taken_at=dt,
-            ex_taken_at=dt,
-            meal_time=v.get("mealTime") or "before",
-            note=v.get("note"),
-            taken=from_ms(v.get("taken")),
-            use_alarm=v.get("useAlarm", True),
-        )
-
-        return Response(PlanSerializer(plan).data, status=201)
-
-
-# ============================================================
-# ✔ Plan DELETE
-# ============================================================
-
-@plan_delete_docs
-class PlanDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, pk):
-        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
-        if not plan:
-            return Response({"error": "not found"}, status=404)
-
-        # 🔥 Celery 비동기 작업 호출
-        delete_plan_async.delay(plan.id, request.user.id)
-
-        # 클라이언트에게 즉시 성공 응답
-        return Response({"status": "delete queued"}, status=202)
-
-
-# ============================================================
-# ✔ 오늘 복약 일정 조회
-# ============================================================
-
-@plan_today_docs
-class TodayPlansView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        now = timezone.now()
-        start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = start + datetime.timedelta(days=1)
-
-        plans = Plan.objects.filter(
-            regihistory__user=request.user,
-            taken_at__gte=start,
-            taken_at__lt=end
-        ).order_by("taken_at")
-
-        result = []
-        for p in plans:
-            if p.taken:
-                status_str = "taken"
-            elif now > p.taken_at + datetime.timedelta(hours=1):
-                status_str = "missed"
-            else:
-                status_str = "pending"
-
-            item = PlanSerializer(p).data
-            item["status"] = status_str
-            result.append(item)
-
-        return Response(result)
-
-
-# ============================================================
-# ✔ Plan Update
-# ============================================================
-
-@plan_update_docs
-class PlanUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, pk):
-        plan = Plan.objects.filter(id=pk, regihistory__user=request.user).first()
-        if not plan:
-            return Response({"error": "not found"}, status=404)
-
-        data = request.data
-
-        if "takenAt" in data:
-            raw = data["takenAt"]
-
-            if isinstance(raw, (int, float)):
-                new_dt = datetime.datetime.fromtimestamp(raw / 1000, tz=datetime.timezone.utc)
-            else:
-                new_dt = parse_datetime(raw)
-
-            old_dt = plan.taken_at
-            old_updated = plan.updated_at
-
-            plan.taken_at = new_dt
-            if "medName" in data:
-                plan.med_name = data["medName"]
-            if "useAlarm" in data:
-                plan.use_alarm = data["useAlarm"]
-            plan.save()
-
-            siblings = Plan.objects.filter(
-                regihistory=plan.regihistory,
-                taken_at=old_dt,
-                updated_at=old_updated
-            ).exclude(id=plan.id)
-
-            siblings.update(
-                taken_at=new_dt,
-                updated_at=plan.updated_at
-            )
-
-        else:
-            if "medName" in data:
-                plan.med_name = data["medName"]
-            if "useAlarm" in data:
-                plan.use_alarm = data["useAlarm"]
-            plan.save()
-
-        return Response(PlanSerializer(plan).data, status=200)
-
-
-# ============================================================
-# ✔ 복약 완료
-# ============================================================
-
 @mark_as_taken_docs
 class MarkAsTakenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, plan_id):
-        plan = get_object_or_404(Plan, id=plan_id, regihistory__user=request.user)
+        try:
+            services.mark_plan_as_taken(request.user, plan_id)
+            return Response({"status": "ok", "message": "복용 완료 처리되었습니다."}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
-        if plan.taken:
-            return Response({"message": "이미 복약 완료됨"}, status=200)
-
-        plan.taken = timezone.now()
-        plan.save()
-
-        return Response({
-            "message": "복약 완료 처리됨",
-            "taken_time": plan.taken
-        }, status=200)
-
-
-# ============================================================
-# ✔ 미루기 (30분 뒤로)
-# ============================================================
 
 @snooze_docs
 class SnoozeMedicationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, plan_id):
-        plan = get_object_or_404(Plan, id=plan_id, regihistory__user=request.user)
-
-        if plan.taken:
-            return Response({"error": "이미 복약됨"}, status=400)
-
-        plan.taken_at = plan.taken_at + datetime.timedelta(minutes=30)
-        plan.save()
-
-        return Response({
-            "message": "복약 알림이 30분 뒤로 미뤄졌습니다.",
-            "new_taken_at": plan.taken_at
-        }, status=200)
+        minutes = int(request.data.get("minutes", 10))
+        try:
+            services.snooze_plan(request.user, plan_id, minutes)
+            return Response({"status": "ok", "message": f"{minutes}분 뒤로 알림을 미뤘습니다."}, status=200)
+        except ValueError as e:
+            # 이미 복용한 경우 등
+            return Response({"error": str(e)}, status=400)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
