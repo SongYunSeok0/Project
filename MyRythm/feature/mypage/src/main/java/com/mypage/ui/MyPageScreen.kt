@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mypage.viewmodel.BLERegisterViewModel
+import com.mypage.viewmodel.HealthSummaryViewModel
 import com.mypage.viewmodel.MyPageEvent
 import com.mypage.viewmodel.MyPageViewModel
 import com.shared.R
@@ -56,6 +57,7 @@ import com.shared.ui.theme.componentTheme
 fun MyPageScreen(
     viewModel: MyPageViewModel = hiltViewModel(),
     bleViewModel: BLERegisterViewModel = hiltViewModel(),
+    healthviewModel: HealthSummaryViewModel = hiltViewModel(),
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
@@ -94,7 +96,7 @@ fun MyPageScreen(
     val staffMenuText = "관리자 메뉴"
 
     val profile by viewModel.profile.collectAsStateWithLifecycle()
-    val latestHeartRate  by viewModel.latestHeartRate.collectAsStateWithLifecycle()
+    val latestHeartRate  by healthviewModel.latestHeartRate.collectAsStateWithLifecycle()
     val heartRateTextValue = latestHeartRate?.let {  "$it $bpmText" } ?: "- $bpmText"
     val context = LocalContext.current
 

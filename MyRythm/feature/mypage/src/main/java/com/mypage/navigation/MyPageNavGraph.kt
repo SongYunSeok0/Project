@@ -15,7 +15,9 @@ import com.mypage.ui.MyPageScreen
 import com.mypage.ui.QRScanScreen
 import com.mypage.ui.UserManagementScreen
 import com.mypage.viewmodel.BLERegisterViewModel
+import com.mypage.viewmodel.InquiryViewModel
 import com.mypage.viewmodel.MyPageViewModel
+import com.mypage.viewmodel.StaffManagementViewModel
 
 fun NavGraphBuilder.mypageNavGraph(
     nav: NavController,
@@ -122,4 +124,15 @@ fun NavGraphBuilder.mypageNavGraph(
             }
         )
     }
+
+    composable<InquiriesManageRoute> { backStackEntry ->
+        val staffViewModel: StaffManagementViewModel = hiltViewModel(backStackEntry)
+
+        InquiriesManagementScreen(
+            viewModel = staffViewModel,
+            onBackClick = { nav.navigateUp() }
+        )
+    }
+
+
 }
