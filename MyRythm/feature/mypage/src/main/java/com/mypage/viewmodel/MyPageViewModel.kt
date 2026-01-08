@@ -98,22 +98,6 @@ class MyPageViewModel @Inject constructor(
             }
     }
 
-    fun addInquiry(type: String, title: String, content: String) {
-        viewModelScope.launch {
-            Log.e("MyPageViewModel", "📝 ========== 문의 등록 시작 ==========")
-            Log.e("MyPageViewModel", "type: $type, title: $title")
-            runCatching { addInquiryUseCase(type, title, content) }
-                .onSuccess {
-                    Log.e("MyPageViewModel", "✅ 문의 등록 성공")
-                    _events.send(MyPageEvent.InquirySubmitSuccess)
-                }
-                .onFailure { e ->
-                    Log.e("MyPageViewModel", "❌ 문의 등록 실패: ${e.message}", e)
-                    _events.send(MyPageEvent.InquirySubmitFailed(e.message ?: "문의 실패"))
-                }
-        }
-    }
-
     fun deleteAccount() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🗑️ ========== 회원 탈퇴 시작 ==========")
 
