@@ -1,5 +1,6 @@
 package com.mypage.ui
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -86,8 +87,6 @@ fun MyPageScreen(
     val withdrawalMessage = stringResource(R.string.mypage_message_withdrawal)
     val wifiConfigSentMessage = stringResource(R.string.mypage_message_wifi_config_sent)
     val wifiBleConnectedSuccessMessage = stringResource(R.string.mypage_message_wifi_ble_connected_success)
-    val logoutSuccessMessage = stringResource(R.string.mypage_message_logout_success)
-    val logoutFailedMessage = stringResource(R.string.mypage_message_logout_failed)
     val withdrawalSuccessMessage = stringResource(R.string.mypage_message_withdrawal_success)
     val withdrawalFailedMessage = stringResource(R.string.mypage_message_withdrawal_failed)
 
@@ -157,13 +156,6 @@ fun MyPageScreen(
                 is MyPageEvent.WithdrawalFailed -> {
                     Toast.makeText(context, withdrawalFailedMessage, Toast.LENGTH_SHORT).show()
                 }
-                is MyPageEvent.LogoutSuccess -> {
-                    Toast.makeText(context, logoutSuccessMessage, Toast.LENGTH_SHORT).show()
-                    onLogoutClick()
-                }
-                is MyPageEvent.LogoutFailed -> {
-                    Toast.makeText(context, logoutFailedMessage, Toast.LENGTH_SHORT).show()
-                }
                 else -> Unit
             }
         }
@@ -192,7 +184,7 @@ fun MyPageScreen(
         Spacer(Modifier.height(32.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            // 🔥 스태프 전용 메뉴 (내정보 수정 위에 표시)
+            // 스태프 전용 메뉴
             if (profile?.isStaff == true) {
                 Text(
                     text = staffMenuText,
@@ -202,13 +194,13 @@ fun MyPageScreen(
                 )
 
                 MenuItem(
-                    userManagementText,  // 사용자 관리
+                    userManagementText,
                     R.drawable.edit,
                     onUserManagementClick,
                     tint = MaterialTheme.colorScheme.primary
                 )
                 MenuItem(
-                    inquiriesManagementText,  // 문의사항 관리
+                    inquiriesManagementText,
                     R.drawable.faqchat,
                     onInquiriesManagementClick,
                     tint = MaterialTheme.colorScheme.primary
@@ -229,12 +221,20 @@ fun MyPageScreen(
             MenuItem(mediRecordText, R.drawable.logo, onMediClick)
             MenuItem(deviceRegisterText, R.drawable.device, { onDeviceRegisterClick() })
 
-            // 🔥 일반 사용자만 FAQ 표시 (스태프는 위에 "문의사항 관리"가 있음)
             if (profile?.isStaff != true) {
                 MenuItem(faqCategoryText, R.drawable.faqchat, onFaqClick)
             }
 
-            MenuItem(logoutText, R.drawable.logout, { viewModel.logout() })
+            MenuItem(
+                logoutText,
+                R.drawable.logout,
+                {
+                    Log.e("MyPageScreen", "🔥🔥🔥 로그아웃 버튼 클릭됨!")
+                    onLogoutClick()
+                    Log.e("MyPageScreen", "🔥🔥🔥 콜백 호출 완료!")
+                }
+            )
+
             MenuItem(withdrawalText, R.drawable.ic_delete, { showDeleteDialog = true }, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
@@ -379,7 +379,6 @@ fun MenuItem(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun Preview_AllDialogs_Latest() {
-
     AppTheme {
 
         // ====================== 프리뷰용 가짜 상태 ======================

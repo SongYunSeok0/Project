@@ -1,6 +1,8 @@
 package com.mypage.viewmodel
 
+import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.ApiResult
@@ -8,20 +10,26 @@ import com.domain.model.UserProfile
 import com.domain.usecase.auth.ClearLocalAuthDataUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.WithdrawalUseCase
+import com.domain.usecase.health.GetLatestHeartRateUseCase
+import com.domain.usecase.inquiry.GetInquiriesUseCase
+import com.domain.usecase.inquiry.AddInquiryUseCase
 import com.domain.usecase.mypage.GetUserProfileUseCase
 import com.domain.usecase.mypage.ObserveUserProfileUseCase
 import com.mypage.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MyPageViewModel @Inject constructor(
-    private val logoutUseCase: LogoutUseCase,
     private val withdrawalUseCase: WithdrawalUseCase,
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val observeUserProfileUseCase: ObserveUserProfileUseCase,
@@ -90,28 +98,21 @@ class MyPageViewModel @Inject constructor(
             }
     }
 
-    private var isLoggingOut = false
-
-    fun logout() = viewModelScope.launch {
-        if (isLoggingOut) {
-            Log.e("MyPageViewModel", "⚠️ 이미 로그아웃 진행 중")
-            return@launch
+    fun addInquiry(type: String, title: String, content: String) {
+        viewModelScope.launch {
+            Log.e("MyPageViewModel", "📝 ========== 문의 등록 시작 ==========")
+            Log.e("MyPageViewModel", "type: $type, title: $title")
+            runCatching { addInquiryUseCase(type, title, content) }
+                .onSuccess {
+                    Log.e("MyPageViewModel", "✅ 문의 등록 성공")
+                    _events.send(MyPageEvent.InquirySubmitSuccess)
+                }
+                .onFailure { e ->
+                    Log.e("MyPageViewModel", "❌ 문의 등록 실패: ${e.message}", e)
+                    _events.send(MyPageEvent.InquirySubmitFailed(e.message ?: "문의 실패"))
+                }
         }
-        isLoggingOut = true
-
-        Log.e("MyPageViewModel", "🚪 ========== 로그아웃 시작 ==========")
-        runCatching { logoutUseCase() }
-            .onSuccess {
-                Log.e("MyPageViewModel", "✅ 로그아웃 성공")
-                _events.send(MyPageEvent.LogoutSuccess)
-            }
-            .onFailure {
-                Log.e("MyPageViewModel", "❌ 로그아웃 실패: ${it.message}", it)
-                _events.send(MyPageEvent.LogoutFailed)
-            }
-            .also { isLoggingOut = false }
     }
-
 
     fun deleteAccount() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🗑️ ========== 회원 탈퇴 시작 ==========")
@@ -132,5 +133,4 @@ class MyPageViewModel @Inject constructor(
             }
         }
     }
-
 }

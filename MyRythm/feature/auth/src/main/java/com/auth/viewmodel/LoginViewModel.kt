@@ -1,5 +1,6 @@
 package com.auth.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.data.core.auth.AuthPreferencesDataSource
@@ -28,7 +29,8 @@ class LoginViewModel @Inject constructor(
         val loading: Boolean = false,
         val isLoggedIn: Boolean = false,
         val userId: String? = null,
-        val errorMessage: String? = null
+        val errorMessage: String? = null,
+        val isInitializing: Boolean = true
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -42,24 +44,43 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun checkLoginStatus() = viewModelScope.launch {
-        // 저장된 자동 로그인 설정 불러오기
+        Log.e("LoginViewModel", "🔍 ========== checkLoginStatus() 시작 ==========")
+
         _autoLoginEnabled.value = authPrefs.isAutoLoginEnabled()
 
-        // 저장된 토큰 확인
         val currentTokens = tokenStore.current()
         val token = currentTokens.access
 
+        Log.e("LoginViewModel", "토큰 확인: ${token?.take(50)}...")
+        Log.e("LoginViewModel", "토큰 null? ${token == null}, 비어있음? ${token?.isBlank()}")
+
         if (!token.isNullOrBlank()) {
+            Log.e("LoginViewModel", "토큰 있음! userId 추출 시도")
             val userId = JwtUtils.extractUserId(token)
+            Log.e("LoginViewModel", "추출된 userId: $userId")
+
             if (userId != null) {
+                Log.e("LoginViewModel", "✅ userId 추출 성공! isLoggedIn = true 설정")
                 _uiState.update {
-                    it.copy(isLoggedIn = true, userId = userId)
+                    it.copy(
+                        isLoggedIn = true,
+                        userId = userId,
+                        isInitializing = false
+                    )
                 }
+                Log.e("LoginViewModel", "✅ 초기화 시 로그인 상태 설정: userId=$userId")
+                Log.e("LoginViewModel", "현재 uiState: ${_uiState.value}")
             } else {
-                // 토큰이 있지만 유효하지 않은 경우 제거
+                Log.e("LoginViewModel", "❌ userId 추출 실패! 토큰 삭제")
                 tokenStore.clear()
+                _uiState.update { it.copy(isInitializing = false) }
             }
+        } else {
+            Log.e("LoginViewModel", "❌ 토큰 없음")
+            _uiState.update { it.copy(isInitializing = false) }
         }
+
+        Log.e("LoginViewModel", "🔍 checkLoginStatus() 완료, 최종 isLoggedIn: ${_uiState.value.isLoggedIn}")
     }
 
     fun setAutoLogin(enabled: Boolean) {
@@ -75,21 +96,42 @@ class LoginViewModel @Inject constructor(
 
         _uiState.update { it.copy(loading = true, errorMessage = null) }
 
+        Log.e("LoginViewModel", "🔐 로그인 시도 시작")
+
         when (val result = loginUseCase(email, password, _autoLoginEnabled.value)) {
             is com.domain.model.ApiResult.Success -> {
+                Log.e("LoginViewModel", "✅ LoginUseCase 성공")
+                Log.e("LoginViewModel", "받은 토큰: access=${result.data.access}")
+                Log.e("LoginViewModel", "받은 토큰: refresh=${result.data.refresh}")
+
                 authPrefs.setAutoLoginEnabled(_autoLoginEnabled.value)
                 val uid = JwtUtils.extractUserId(result.data.access) ?: ""
+
+                Log.e("LoginViewModel", "추출된 userId: $uid")
 
                 _uiState.update {
                     it.copy(
                         loading = false,
                         isLoggedIn = true,
                         userId = uid,
-                        errorMessage = null
+                        errorMessage = null,
+                        isInitializing = false
                     )
                 }
+
+                Log.e("LoginViewModel", "✅ uiState 업데이트 완료: ${_uiState.value}")
+
+                // 🔥 토큰 저장 확인
+                val currentTokens = tokenStore.current()
+                Log.e("LoginViewModel", "========================================")
+                Log.e("LoginViewModel", "📦 TokenStore 확인:")
+                Log.e("LoginViewModel", "  - access 있음: ${currentTokens.access != null}")
+                Log.e("LoginViewModel", "  - access 값: ${currentTokens.access?.take(50)}...")
+                Log.e("LoginViewModel", "  - refresh 있음: ${currentTokens.refresh != null}")
+                Log.e("LoginViewModel", "========================================")
             }
             is com.domain.model.ApiResult.Failure -> {
+                Log.e("LoginViewModel", "❌ LoginUseCase 실패: ${result.error}")
                 val message = mapErrorToMessage(result.error)
                 _uiState.update {
                     it.copy(loading = false, errorMessage = message)
@@ -99,24 +141,48 @@ class LoginViewModel @Inject constructor(
     }
 
     fun logout() = viewModelScope.launch {
+        Log.e("LoginViewModel", "🚪 logout() 시작")
+
+        // 🔥 로그아웃 전 토큰 확인
+        val beforeTokens = tokenStore.current()
+        Log.e("LoginViewModel", "========================================")
+        Log.e("LoginViewModel", "📦 로그아웃 전 TokenStore:")
+        Log.e("LoginViewModel", "  - access 있음: ${beforeTokens.access != null}")
+        Log.e("LoginViewModel", "  - refresh 있음: ${beforeTokens.refresh != null}")
+        Log.e("LoginViewModel", "========================================")
+
+        // 로그아웃 시도
         when (val result = logoutUseCase()) {
             is com.domain.model.ApiResult.Success -> {
-                _uiState.update {
-                    it.copy(
-                        isLoggedIn = false,
-                        userId = null,
-                        errorMessage = null
-                    )
-                }
-                // 로그아웃 시 자동 로그인 설정도 해제
-                _autoLoginEnabled.value = false
-                authPrefs.setAutoLoginEnabled(false)
+                Log.e("LoginViewModel", "✅ LogoutUseCase 성공")
             }
             is com.domain.model.ApiResult.Failure -> {
-                val message = mapErrorToMessage(result.error)
-                _uiState.update { it.copy(errorMessage = message) }
+                Log.e("LoginViewModel", "⚠️ LogoutUseCase 서버 요청 실패: ${result.error}")
+                Log.e("LoginViewModel", "하지만 로컬 데이터는 삭제됨")
             }
         }
+
+        // 결과와 관계없이 UI 상태 업데이트
+        _uiState.update {
+            it.copy(
+                isLoggedIn = false,
+                userId = null,
+                errorMessage = null,
+                isInitializing = false
+            )
+        }
+        Log.e("LoginViewModel", "✅ 로그아웃 상태로 변경 완료")
+
+        _autoLoginEnabled.value = false
+        authPrefs.setAutoLoginEnabled(false)
+
+        // 🔥 로그아웃 후 토큰 확인
+        val afterTokens = tokenStore.current()
+        Log.e("LoginViewModel", "========================================")
+        Log.e("LoginViewModel", "📦 로그아웃 후 TokenStore:")
+        Log.e("LoginViewModel", "  - access 있음: ${afterTokens.access != null}")
+        Log.e("LoginViewModel", "  - refresh 있음: ${afterTokens.refresh != null}")
+        Log.e("LoginViewModel", "========================================")
     }
 
     fun clearError() {
