@@ -64,7 +64,9 @@ dependencies {
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.converter)
-    ksp(libs.moshi.kotlin.codegen)
+
+    implementation(libs.retrofit.converter.gson)
+
 
     implementation(libs.coil.compose)
     implementation(libs.jsoup)
@@ -78,5 +80,9 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     // 1126 자동로그인 관련 데이터스토어 의존성
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.naver.map.sdk)
+
+    implementation(libs.play.services.location)
 }

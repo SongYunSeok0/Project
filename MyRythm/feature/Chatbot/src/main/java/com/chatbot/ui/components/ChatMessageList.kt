@@ -43,7 +43,7 @@ fun ChatMessageList(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
         ) {
             ChatbotHeader(
                 onResetClick = onResetClick
@@ -58,7 +58,7 @@ fun ChatMessageList(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
 
         // 메시지 컨텐츠
         Column(

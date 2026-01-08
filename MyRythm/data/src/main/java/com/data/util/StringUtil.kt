@@ -1,4 +1,6 @@
-package com.map.ui
+package com.data.util
+
+fun cleanHtml(s: String): String = s.replace(Regex("<.*?>"), "").trim()
 
 fun cleanCategoryForDisplay(raw: String?): String {
     if (raw.isNullOrBlank()) return ""

@@ -9,6 +9,7 @@ import com.data.repository.FavoriteRepositoryImpl
 import com.data.repository.HeartRateRepositoryImpl
 import com.data.repository.InquiryRepositoryImpl
 import com.data.repository.MediRecordRepositoryImpl
+import com.data.repository.PlaceRepositoryImpl
 import com.data.repository.PlanRepositoryImpl
 import com.data.repository.ProfileRepositoryImpl
 import com.data.repository.PushRepositoryImpl
@@ -23,6 +24,7 @@ import com.domain.repository.FavoriteRepository
 import com.domain.repository.HeartRateRepository
 import com.domain.repository.InquiryRepository
 import com.domain.repository.MediRecordRepository
+import com.domain.repository.PlaceRepository
 import com.domain.repository.PlanRepository
 import com.domain.repository.ProfileRepository
 import com.domain.repository.RegiRepository
@@ -88,4 +90,8 @@ abstract class DataRepositoryBindsModule {
     @Binds
     @Singleton
     abstract fun bindDeviceRepository(impl: DeviceRepositoryImpl): DeviceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPlaceRepository(impl: PlaceRepositoryImpl): PlaceRepository
 }

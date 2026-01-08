@@ -2,7 +2,7 @@ package com.map.viewmodel
 
 import com.map.ui.PlaceWithLatLng
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.compose.LocationTrackingMode
+import com.naver.maps.map.LocationTrackingMode
 
 data class MapUiState(
     val searchQuery: String = "",
@@ -13,5 +13,6 @@ data class MapUiState(
     val places: List<PlaceWithLatLng> = emptyList(),
     val selected: PlaceWithLatLng? = null,
     val showBottomSheet: Boolean = false,
-    val showSearchHere: Boolean = false
+    val showSearchHere: Boolean = false,
+    val isLoading: Boolean = false
 )
