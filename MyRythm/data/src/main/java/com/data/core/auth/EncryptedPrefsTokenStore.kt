@@ -55,10 +55,16 @@ class EncryptedPrefsTokenStore(
     private val _tokens = MutableStateFlow(cached)
     override val tokens: StateFlow<AuthTokens> = _tokens.asStateFlow()
 
-    override suspend fun set(access: String?, refresh: String?) {
+    override suspend fun set(access: String?, refresh: String?, persist: Boolean) {
         prefs.edit {
-            if (access != null) putString(KEY_ACCESS, access) else remove(KEY_ACCESS)
-            if (refresh != null) putString(KEY_REFRESH, refresh) else remove(KEY_REFRESH)
+            if (persist) {
+                if (access != null) putString(KEY_ACCESS, access) else remove(KEY_ACCESS)
+                if (refresh != null) putString(KEY_REFRESH, refresh) else remove(KEY_REFRESH)
+            } else {
+                // 자동로그인 OFF면 디스크 토큰은 반드시 제거
+                remove(KEY_ACCESS)
+                remove(KEY_REFRESH)
+            }
         }
         update(access, refresh)
     }

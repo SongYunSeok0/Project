@@ -32,7 +32,9 @@ class SignupViewModel @Inject constructor(
         val gender: String = "",
         val height: Double = 0.0,
         val weight: Double = 0.0,
-        val password: String = ""
+        val password: String = "",
+        val socialId: String? = null,
+        val provider: String? = null
     )
 
     data class UiState(
@@ -58,6 +60,12 @@ class SignupViewModel @Inject constructor(
     fun updateHeight(v: Double) = _signupForm.update { it.copy(height = v) }
     fun updateWeight(v: Double) = _signupForm.update { it.copy(weight = v) }
     fun updatePassword(v: String) = _signupForm.update { it.copy(password = v) }
+
+    fun setSocialLoginInfo(socialId: String, provider: String) {
+        _signupForm.update {
+            it.copy(socialId = socialId, provider = provider)
+        }
+    }
 
     fun sendCode() = viewModelScope.launch {
         _uiState.update { it.copy(loading = true, errorMessage = null) }

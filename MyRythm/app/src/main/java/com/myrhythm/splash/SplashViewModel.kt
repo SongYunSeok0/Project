@@ -22,7 +22,6 @@ class SplashViewModel @Inject constructor(
     private val _state = MutableStateFlow<SplashState>(SplashState.Loading)
     val state: StateFlow<SplashState> = _state
 
-    // 1127 자동로그인 적용 - 3초 스플래시+자동로그인 여부 체크
     fun checkAutoLogin() {
         viewModelScope.launch {
             Log.d("SplashViewModel", "🔐 자동 로그인 체크 시작")
@@ -32,12 +31,14 @@ class SplashViewModel @Inject constructor(
             Log.d("SplashViewModel", "자동로그인 설정: $autoLoginEnabled")
             if (!autoLoginEnabled) {
                 Log.d("SplashViewModel", "⏸️ 자동 로그인 비활성화 → Login으로 이동")
+                tokenStore.clear()
                 _state.value = SplashState.GoLogin
                 return@launch
             }
 
 
             val tokens = tokenStore.tokens.first()
+            Log.e("SplashViewModel", "auto=$autoLoginEnabled accessEmpty=${tokens.access.isNullOrBlank()} accessPrefix=${tokens.access?.take(8)}")
             val hasToken = !tokens.access.isNullOrBlank()
 
             _state.value = if (hasToken) {

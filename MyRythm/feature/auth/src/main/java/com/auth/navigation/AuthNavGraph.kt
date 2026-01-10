@@ -7,13 +7,18 @@ import androidx.navigation.navigation
 import com.auth.ui.LoginScreen
 import com.auth.ui.PwdScreen
 import com.auth.ui.SignupScreen
+import com.auth.viewmodel.LoginViewModel
 import com.shared.navigation.MainRoute
 
-fun NavGraphBuilder.authNavGraph(nav: NavController) {
+fun NavGraphBuilder.authNavGraph(
+    nav: NavController,
+    loginViewModel: LoginViewModel
+) {
     navigation<AuthGraph>(startDestination = LoginRoute) {
 
         composable<LoginRoute> {
             LoginScreen(
+                loginViewModel = loginViewModel,
                 onLogin = { userId, password ->
                     nav.navigate(MainRoute(userId = userId)) {
                         popUpTo(AuthGraph) { inclusive = true }

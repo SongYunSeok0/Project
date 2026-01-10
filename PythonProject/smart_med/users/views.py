@@ -34,12 +34,8 @@ from .docs import (
 User = get_user_model()
 
 
-# ============================================================
-# ✔ 커스텀 권한: is_staff 사용자만 접근 가능
-# ============================================================
-
+# 스태프 사용자만 접근 가능한 커스텀 권한
 class IsStaffUser(BasePermission):
-    """Django user.is_staff == True 인 경우만 허용"""
     def has_permission(self, request, view):
         return bool(
             request.user
@@ -48,14 +44,9 @@ class IsStaffUser(BasePermission):
         )
 
 
-# ============================================================
-# ✔ Custom JWT Login (/api/token/)
-# ============================================================
-
+# JWT 로그인 - 로그인 성공 시 Redis 캐시에 'just_logged_in' 저장
 @jwt_login_docs
 class CustomTokenObtainPairView(TokenObtainPairView):
-    """JWT 로그인 → 로그인 성공 시 Redis 캐시에 'just_logged_in' 저장"""
-
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
 
@@ -82,10 +73,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-# ============================================================
-# ✔ SOCIAL LOGIN
-# ============================================================
-
+# 소셜 로그인 처리
 @social_login_docs
 class SocialLoginView(APIView):
     permission_classes = [AllowAny]
@@ -107,7 +95,7 @@ class SocialLoginView(APIView):
         if not provider or not social_id:
             return Response({"detail": "provider/socialId 필요"}, status=400)
 
-        # 기존 유저 존재?
+        # 기존 유저 확인
         user = User.objects.filter(provider=provider, social_id=social_id).first()
 
         if user:
@@ -145,29 +133,29 @@ class SocialLoginView(APIView):
         })
 
 
-# ============================================================
-# ✔ MeView — 사용자 정보 조회 & 수정
-# ============================================================
-
+# 사용자 정보 조회 및 수정
 @me_get_docs
 @me_patch_docs
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        return Response(
+            UserSerializer(request.user).data,
+            status=status.HTTP_200_OK
+        )
 
     def patch(self, request):
         ser = UserUpdateSerializer(request.user, data=request.data, partial=True)
         ser.is_valid(raise_exception=True)
         ser.save()
-        return Response(UserSerializer(request.user).data)
+        return Response(
+            UserSerializer(request.user).data,
+            status=status.HTTP_200_OK
+        )
 
 
-# ============================================================
-# ✔ Register FCM Token
-# ============================================================
-
+# FCM 토큰 등록
 @register_fcm_docs
 class RegisterFcmTokenView(APIView):
     permission_classes = [IsAuthenticated]
@@ -200,10 +188,7 @@ class RegisterFcmTokenView(APIView):
         return Response({"detail": "ok"})
 
 
-# ============================================================
-# ✔ 이메일 중복 체크
-# ============================================================
-
+# 이메일 중복 체크
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def check_email_duplicate(request):
@@ -215,10 +200,7 @@ def check_email_duplicate(request):
     return Response({"exists": exists})
 
 
-# ============================================================
-# ✔ 이메일 인증코드 발송
-# ============================================================
-
+# 이메일 인증코드 발송
 @send_email_code_docs
 class SendEmailCodeView(APIView):
     permission_classes = [AllowAny]
@@ -226,17 +208,17 @@ class SendEmailCodeView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-        name = request.data.get("name")  # 보호자 등록 시 사용
+        name = request.data.get("name")
 
         if not email:
             return Response({"detail": "email 필요"}, status=400)
 
-        # 보호자 인증일 때 이름 매칭 체크
+        # 보호자 인증 시 이름 매칭 체크
         if name:
             if not User.objects.filter(email=email, username=name).exists():
                 return Response({"detail": "해당 사용자를 찾을 수 없습니다."}, status=404)
 
-        # 코드 생성
+        # 인증 코드 생성 및 발송
         code = secrets.randbelow(900000) + 100000
         cache.set(f"email_code:{email}", code, timeout=180)
 
@@ -250,10 +232,7 @@ class SendEmailCodeView(APIView):
         return Response({"detail": "인증코드가 발송되었습니다."})
 
 
-# ============================================================
-# ✔ 이메일 코드 검증
-# ============================================================
-
+# 이메일 코드 검증
 @verify_email_code_docs
 class VerifyEmailCodeView(APIView):
     permission_classes = [AllowAny]
@@ -275,10 +254,7 @@ class VerifyEmailCodeView(APIView):
         return Response({"detail": "인증 성공"})
 
 
-# ============================================================
-# ✔ Signup (회원가입)
-# ============================================================
-
+# 회원가입
 @signup_docs
 class SignupView(APIView):
     permission_classes = [AllowAny]
@@ -308,10 +284,7 @@ class SignupView(APIView):
         return Response({"message": "회원가입 성공", "user_id": user.id}, status=201)
 
 
-# ============================================================
-# ✔ 회원 탈퇴
-# ============================================================
-
+# 회원 탈퇴
 @withdraw_docs
 class WithdrawalView(APIView):
     permission_classes = [IsAuthenticated]
@@ -321,24 +294,30 @@ class WithdrawalView(APIView):
         return Response({"message": "회원 탈퇴 완료"})
 
 
-# ============================================================
-# ✔ 관리자용: 사용자 목록 / 상세 조회 (is_staff)
-# ============================================================
+# 로그아웃 - 리프레시 토큰 블랙리스트 처리
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def Logout(request):
+    try:
+        refresh_token = request.data.get('refresh_token')
+        if refresh_token:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        
+        return Response({"message": "로그아웃 성공"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+# 전체 사용자 목록 조회 (스태프 전용)
 class UserListView(generics.ListAPIView):
-    """
-    GET /api/users/ → 전체 사용자 목록
-    is_staff=True 인 계정만 접근 가능
-    """
-    queryset = User.objects.all().order_by('-created_at')  # 🔥 date_joined → created_at
+    queryset = User.objects.all().order_by('-created_at')
     serializer_class = UserSerializer
     permission_classes = [IsStaffUser]
 
 
+# 특정 사용자 상세 조회 (스태프 전용)
 class UserDetailView(generics.RetrieveAPIView):
-    """
-    GET /api/users/<id>/ → 특정 사용자 상세
-    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsStaffUser]

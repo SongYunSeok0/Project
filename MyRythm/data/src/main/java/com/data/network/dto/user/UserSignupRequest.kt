@@ -13,7 +13,6 @@ data class UserSignupRequest(
     @Json(name = "password") val password: String,
 
 
-    // sns연동로그인 부분
     val provider: String? = null,   // ✅ kakao / google 등
     val socialId: String? = null    // ✅ SNS 유저 고유 PK
 )

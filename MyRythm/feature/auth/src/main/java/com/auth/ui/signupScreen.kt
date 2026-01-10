@@ -57,11 +57,19 @@ import kotlinx.coroutines.launch
 fun SignupScreen(
     modifier: Modifier = Modifier,
     viewModel: SignupViewModel = hiltViewModel(),
+    socialId: String? = null,
+    provider: String? = null,
     onSignupComplete: () -> Unit = {},
     onBackToLogin: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val form by viewModel.signupForm.collectAsStateWithLifecycle()
+
+    LaunchedEffect(socialId, provider) {
+        if (socialId != null && provider != null) {
+            viewModel.setSocialLoginInfo(socialId, provider)
+        }
+    }
 
     var birthYear by rememberSaveable { mutableStateOf("") }
     var birthMonth by rememberSaveable { mutableStateOf("") }

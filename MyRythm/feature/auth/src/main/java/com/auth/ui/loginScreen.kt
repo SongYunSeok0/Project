@@ -32,7 +32,8 @@ fun LoginScreen(
     socialViewModel: SocialLoginViewModel = hiltViewModel(),
     onLogin: (String, String) -> Unit = { _, _ -> },
     onForgotPassword: () -> Unit = {},
-    onSignUp: () -> Unit = {}
+    onSignUp: () -> Unit = {},
+    onNeedAdditionalInfo: (String, String) -> Unit = { _, _ -> }
 ) {
     val loginUi by loginViewModel.uiState.collectAsStateWithLifecycle()
     val autoLoginEnabled by loginViewModel.autoLoginEnabled.collectAsStateWithLifecycle()
@@ -134,12 +135,16 @@ fun LoginScreen(
                 item {
                     SocialLoginSection(
                         onKakaoClick = {
-                            socialViewModel.kakaoOAuth(context = context)
+                            socialViewModel.kakaoOAuth(
+                                context = context,
+                                autoLoginChecked = autoLoginEnabled
+                                )
                         },
                         onGoogleClick = {
                             socialViewModel.googleOAuth(
                                 context = context,
-                                googleClientId = BuildConfig.GOOGLE_CLIENT_ID
+                                googleClientId = BuildConfig.GOOGLE_CLIENT_ID,
+                                autoLoginChecked = autoLoginEnabled
                             )
                         }
                     )

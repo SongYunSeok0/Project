@@ -62,6 +62,8 @@ fun AppRoot(startFromLogin: Boolean = false) {
 
     val loginUi by loginVm.uiState.collectAsStateWithLifecycle()
 
+    Log.e("AppRoot", "🔄 RECOMPOSE! loginUi.isLoggedIn = ${loginUi.isLoggedIn}")
+
     val ctx = LocalContext.current
     val tokenStore = EntryPointAccessors
         .fromApplication(ctx, CoreEntryPoint::class.java)
@@ -72,6 +74,11 @@ fun AppRoot(startFromLogin: Boolean = false) {
     val realUserId = JwtUtils.extractUserId(access) ?: "0"
     val userId = loginUi.userId ?: realUserId
     val userIdLong = userId.toLongOrNull() ?: 0L
+
+    Log.e("AppRoot", "========================================")
+    Log.e("AppRoot", "loginUi.isLoggedIn: ${loginUi.isLoggedIn}")
+    Log.e("AppRoot", "isLoggedIn (from token): $isLoggedIn")
+    Log.e("AppRoot", "========================================")
 
     val startDestination =
         if (!isLoggedIn || startFromLogin) AuthGraph
@@ -88,15 +95,25 @@ fun AppRoot(startFromLogin: Boolean = false) {
         }
     }
 
+    var previousLoginState by remember { mutableStateOf(loginUi.isLoggedIn) }
+
     // 로그아웃 처리
     LaunchedEffect(loginUi.isLoggedIn) {
-        if (!loginUi.isLoggedIn && isLoggedIn) {
-            // 로그아웃 되었을 때
+        Log.e("AppRoot", "========================================")
+        Log.e("AppRoot", "🔥 로그인 상태 변화 감지")
+        Log.e("AppRoot", "이전: $previousLoginState → 현재: ${loginUi.isLoggedIn}")
+        Log.e("AppRoot", "========================================")
+
+        // 로그인 → 로그아웃으로 변경된 경우만 처리
+        if (previousLoginState && !loginUi.isLoggedIn) {
+            Log.e("AppRoot", "✅ 로그아웃 감지 - 로그인 화면으로 이동")
             nav.navigate(LoginRoute) {
-                popUpTo(0)
+                popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
         }
+
+        previousLoginState = loginUi.isLoggedIn
     }
 
     fun isRoute(k: KClass<*>) =
@@ -199,7 +216,7 @@ fun AppRoot(startFromLogin: Boolean = false) {
                 startDestination = startDestination
             ) {
 
-                authNavGraph(nav)
+                authNavGraph(nav, loginVm)
 
                 mainNavGraph(
                     nav = nav,
@@ -213,7 +230,11 @@ fun AppRoot(startFromLogin: Boolean = false) {
                     nav = nav,
                     heartVm = heartVm,
                     userId = userIdLong,
-                    onLogoutClick = { loginVm.logout() }
+                    onLogoutClick = {
+                        Log.e("AppRoot", "🔥🔥🔥 onLogoutClick 콜백 받음!")
+                        loginVm.logout()
+                        Log.e("AppRoot", "🔥🔥🔥 loginVm.logout() 호출 완료!")
+                    }
                 )
                 chatbotNavGraph()
                 healthInsightNavGraph()
