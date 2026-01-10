@@ -22,7 +22,8 @@ android {
 //        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.219.111:8000/api/\"") //송쓰 ip
 //        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.55.217:8000/api/\"") // 김형준
 //        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.0.40:8000/api/\"") //비트컴퓨터 ip
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.25.18:8000/api/\"") //김윤정
+//        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.55.144:8000/api/\"") //김윤정
+        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.25.60:8000/api/\"") //김윤정
 //        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8000/api/\"") //로컬
         buildConfigField("String", "NAVER_NEWS_BASE_URL", "\"https://openapi.naver.com/\"")
         buildConfigField("String", "NAVER_MAP_BASE_URL", "\"https://naveropenapi.apigw.ntruss.com/\"")
