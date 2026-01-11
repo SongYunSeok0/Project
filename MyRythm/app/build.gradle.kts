@@ -14,6 +14,29 @@ android {
     namespace = "com.myrhythm"
     compileSdk = 36
 
+    val secretProps = Properties().apply {
+        val f = rootProject.file("secret.properties")
+        if (f.exists()) load(f.inputStream())
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            // secret.properties의 개인 구글 debug.keystore.path 주소
+            // 기본 주소값이 맞지 않을 경우 개인 secret.properties에 debug.keystore.path=%본인/debug.keystore주소 기재할 것
+            val customKeystorePath = secretProps.getProperty("debug.keystore.path")
+
+            if (customKeystorePath != null) {
+                storeFile = file(customKeystorePath)
+            } else {
+                // secret.properties에 구글 키 주소가 없을 경우 기존의 키 주소 기본값 사용하기
+                storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")            }
+
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.myrhythm"
         minSdk = 26
@@ -36,6 +59,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
