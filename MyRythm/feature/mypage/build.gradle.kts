@@ -49,7 +49,6 @@ dependencies {
     implementation(project(":feature"))
     implementation(project(":shared"))
     implementation(project(":domain"))
-    implementation(project(":data"))
 
     // Compose + core libs
     implementation(libs.bundles.compose.library)
