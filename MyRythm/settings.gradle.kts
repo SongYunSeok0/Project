@@ -25,14 +25,13 @@ dependencyResolutionManagement {
 include(
     ":app",
     ":feature:auth",
-    ":feature:main",
     ":feature:map",
     ":feature:mypage",
     ":feature:news",
     ":feature:scheduler",
-    ":feature:chatbot",
     ":feature:healthinsight"
 )
 include(":data")
 include(":domain")
 include(":shared")
+include(":feature:chatbot")
