@@ -9,63 +9,51 @@ plugins {
 
 android {
     namespace = "com.map"
-    compileSdk = rootProject.extra.get("compileSdk") as Int
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = rootProject.extra.get("minSdk") as Int
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-
-        // 임시 하드코딩. 공백 제거
-        buildConfigField("String", "NAVER_CLIENT_ID", "\"ff1FDMV_KytGQEHXntal\"")
-        buildConfigField("String", "NAVER_CLIENT_SECRET", "\"k3Jxk1Of5l\"")
+        minSdk = 26
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+    buildFeatures {
+        compose = true
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions { jvmTarget = "21" }
-    buildFeatures { compose = true; buildConfig = true }
 }
 
-dependencies {
-    // 모듈
-    implementation(project(":shared"))
-    implementation(project(":domain"))
+kotlin { jvmToolchain(21) }
 
-    // Compose BOM + 기본 세트
+dependencies {
+    implementation(project(":domain"))
+    implementation(project(":shared"))
+
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose.library)
-    implementation(libs.bundles.core)
-    implementation(libs.bundles.test)
+    implementation(libs.lifecycle.viewmodel.compose)
 
-    // ★ 네이버 지도 + Compose
-    implementation(libs.naver.map.sdk)
-    implementation(libs.naver.map.compose)
-
-    // ★ 현재 코드에서 FusedLocationProviderClient 직접 사용하므로 필요
-    implementation(libs.play.services.location)
-
-    // 기타
-    implementation(libs.accompanist.permissions)
-
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.retrofit)
-
+    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    implementation("androidx.compose.material:material-icons-extended")
+    // Naver Map SDK만 사용 (naver-map-compose 제거!)
+    implementation(libs.naver.map.sdk)
 
+    // Location
+    implementation(libs.play.services.location)
+
+    // Permissions
+    implementation(libs.accompanist.permissions)
+
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    // Core
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.android)
 }

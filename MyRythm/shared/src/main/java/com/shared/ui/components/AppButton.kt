@@ -169,7 +169,7 @@ fun AppButton(
                             Text(
                                 text,
                                 color = finalTextColor,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = textStyle
                             )
                         }
                     }

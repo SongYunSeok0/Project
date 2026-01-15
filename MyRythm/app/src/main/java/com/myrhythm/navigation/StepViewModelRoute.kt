@@ -354,18 +354,6 @@ fun StepViewModelRoute(
             remainText = remainText,
             nextLabel = nextLabel
         )
-
-        // 디버그 텍스트(원하면 삭제)
-        Text(
-            text = "DEBUG: installed=$installed granted=$granted permShown=$permissionDialogShown showProfile=$showProfileDialog",
-            color = Color.Red,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-                .zIndex(999f)
-                .background(Color.White.copy(alpha = 0.8f))
-                .padding(6.dp)
-        )
     }
 }
 

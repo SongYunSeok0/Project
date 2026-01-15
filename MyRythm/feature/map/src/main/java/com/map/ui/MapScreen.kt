@@ -8,48 +8,47 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.map.ui.components.MapBottomSheetSection
 import com.map.ui.components.MapSearchHeader
-import com.map.ui.components.SearchHereChip
+import com.map.ui.components.PlaceListSection
+import com.map.ui.components.RoundRecenterButton
+import com.map.viewmodel.MapViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
 import com.naver.maps.map.CameraUpdate
-import com.naver.maps.map.compose.ExperimentalNaverMapApi
-import com.naver.maps.map.compose.MapProperties
-import com.naver.maps.map.compose.MapUiSettings
-import com.naver.maps.map.compose.Marker
-import com.naver.maps.map.compose.MarkerState
-import com.naver.maps.map.compose.NaverMap
-import com.naver.maps.map.compose.rememberCameraPositionState
-import com.naver.maps.map.compose.rememberFusedLocationSource
+import com.naver.maps.map.MapView
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.OverlayImage
+import com.naver.maps.map.util.FusedLocationSource
 import com.shared.R
-import kotlinx.coroutines.flow.collectLatest
 
-
-@OptIn(ExperimentalNaverMapApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
@@ -57,16 +56,23 @@ fun MapScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
 
-    val cameraPositionState = rememberCameraPositionState()
-    val locationSource = rememberFusedLocationSource()
-
     var hasLocationPermission by remember { mutableStateOf(false) }
+    var naverMap by remember { mutableStateOf<NaverMap?>(null) }
+    val mapView = remember { MapView(context) }
+    val markers = remember { mutableListOf<Marker>() }
+
+    val locationSource = remember {
+        FusedLocationSource(
+            context as androidx.activity.ComponentActivity,
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
 
     val uiState = viewModel.uiState
 
@@ -80,6 +86,7 @@ fun MapScreen(
         if (!hasLocationPermission) Log.d("MapScreen", "권한 거부")
     }
 
+    /* ---------- 권한 확인 ---------- */
     LaunchedEffect(Unit) {
         val fine = ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -98,12 +105,23 @@ fun MapScreen(
         }
     }
 
-    /* ---------- 카메라 이동 감지 → ViewModel에 반영 ---------- */
-    LaunchedEffect(cameraPositionState) {
-        snapshotFlow { cameraPositionState.isMoving to cameraPositionState.position.target }
-            .collectLatest { (moving, target) ->
-                viewModel.onCameraMove(moving, target)
+    /* ---------- Lifecycle 처리 ---------- */
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> mapView.onCreate(null)
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> {}
             }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     /* ---------- 현재 위치 얻기 ---------- */
@@ -126,12 +144,13 @@ fun MapScreen(
     }
 
     /* ---------- 권한 허용 후 초기 위치/검색 ---------- */
-    LaunchedEffect(hasLocationPermission) {
-        if (hasLocationPermission) {
+    LaunchedEffect(hasLocationPermission, naverMap) {
+        if (hasLocationPermission && naverMap != null) {
+            naverMap?.locationOverlay?.isVisible = true
             viewModel.enableLocationFollow()
             fetchCurrentLocation { here ->
                 viewModel.updateMyLocation(here)
-                cameraPositionState.move(
+                naverMap?.moveCamera(
                     CameraUpdate.toCameraPosition(CameraPosition(here, 15.0))
                 )
                 if (uiState.places.isEmpty()) {
@@ -141,33 +160,81 @@ fun MapScreen(
         }
     }
 
-    /* ---------- UI ---------- */
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // 지도
-        NaverMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            uiSettings = MapUiSettings(isLocationButtonEnabled = false),
-            locationSource = if (hasLocationPermission) locationSource else null,
-            properties = MapProperties(locationTrackingMode = uiState.trackingMode),
-            onMapClick = { _, _ -> viewModel.onBottomSheetDismiss() }
-        ) {
-            uiState.places.forEach { pw ->
-                Marker(
-                    state = MarkerState(position = pw.position),
-                    icon = OverlayImage.fromResource(R.drawable.icon),
-                    captionText = cleanHtml(pw.item.title),
-                    onClick = {
-                        viewModel.onMarkerSelected(pw)
-                        cameraPositionState.move(CameraUpdate.scrollTo(pw.position))
-                        true
-                    }
-                )
+    /* ---------- 위치 추적 모드 업데이트 ---------- */
+    LaunchedEffect(uiState.trackingMode, naverMap, hasLocationPermission) {
+        naverMap?.let { map ->
+            if (hasLocationPermission) {
+                map.locationTrackingMode = uiState.trackingMode
             }
         }
-        // 1229 지도 검색 영역 컴포넌트화
+    }
+
+    /* ---------- 마커 업데이트 ---------- */
+    LaunchedEffect(uiState.places, naverMap) {
+        naverMap?.let { map ->
+            // 기존 마커 제거
+            markers.forEach { it.map = null }
+            markers.clear()
+
+            // 새 마커 추가
+            uiState.places.forEach { pw ->
+                val marker = Marker().apply {
+                    position = pw.position
+                    icon = OverlayImage.fromResource(R.drawable.icon)
+                    captionText = pw.title
+                    setOnClickListener {
+                        viewModel.onMarkerSelected(pw)
+                        map.moveCamera(CameraUpdate.scrollTo(pw.position))
+                        true
+                    }
+                    this.map = map
+                }
+                markers.add(marker)
+            }
+        }
+    }
+
+    /* ---------- 카메라 이동 감지 ---------- */
+    LaunchedEffect(naverMap) {
+        naverMap?.addOnCameraChangeListener { reason, animated ->
+            val target = naverMap?.cameraPosition?.target
+            if (target != null) {
+                viewModel.onCameraMove(animated, target)
+            }
+        }
+    }
+
+    /* ---------- UI ---------- */
+    Box(modifier = modifier.fillMaxSize()) {
+        // 지도
+        AndroidView(
+            factory = {
+                mapView.apply {
+                    getMapAsync(OnMapReadyCallback { map ->
+                        naverMap = map
+
+                        // 위치 추적 설정
+                        if (hasLocationPermission) {
+                            map.locationSource = locationSource
+                            map.locationOverlay.isVisible = true
+                            map.uiSettings.isLocationButtonEnabled = false
+                        }
+
+                        // 초기 카메라 위치
+                        val initialPosition = LatLng(37.5666805, 126.9784147) // 서울시청
+                        map.moveCamera(CameraUpdate.scrollTo(initialPosition))
+
+                        // 지도 클릭 리스너
+                        map.setOnMapClickListener { _, _ ->
+                            viewModel.onBottomSheetDismiss()
+                        }
+                    })
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // 검색 헤더
         MapSearchHeader(
             searchQuery = uiState.searchQuery,
             onValueChange = viewModel::updateSearchQuery,
@@ -178,24 +245,38 @@ fun MapScreen(
             },
             onModeChange = viewModel::onModeChange,
             selectedChip = uiState.selectedChip,
+            isLoading = uiState.isLoading,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(1f)
         )
-        // "이 위치에서 검색" 칩 - 디자인은 mapbottomsheet~파일에
-        SearchHereChip(
-            visible = uiState.showSearchHere &&
-                    (uiState.mapCenter != null || uiState.myLocation != null),
+
+        RoundRecenterButton(
             onClick = {
-                focusManager.clearFocus(force = true)
-                viewModel.onSearchHere()
+                uiState.myLocation?.let {
+                    naverMap?.moveCamera(CameraUpdate.scrollTo(it))
+                    viewModel.onRecenter()
+                }
             },
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 12.dp)
-                .offset(y = 72.dp) // 검색창 아래로 살짝 내리기
+                .align(Alignment.TopEnd)
+                .padding(top = 80.dp, end = 16.dp)
+                .zIndex(1f)
         )
-        //1229 맵 하단 섹션 컴포넌트화
+
+        // ✅ 검색 결과 리스트
+        PlaceListSection(
+            places = uiState.places,
+            onPlaceClick = { place ->
+                viewModel.onMarkerSelected(place)
+                naverMap?.moveCamera(CameraUpdate.scrollTo(place.position))
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(1f)
+        )
+
+        // 하단 시트 섹션
         MapBottomSheetSection(
             selected = uiState.selected,
             showBottomSheet = uiState.showBottomSheet,
@@ -203,7 +284,7 @@ fun MapScreen(
             myLocation = uiState.myLocation,
             onRecenterClick = {
                 uiState.myLocation?.let {
-                    cameraPositionState.move(CameraUpdate.scrollTo(it))
+                    naverMap?.moveCamera(CameraUpdate.scrollTo(it))
                     viewModel.onRecenter()
                 }
             },
@@ -211,3 +292,5 @@ fun MapScreen(
         )
     }
 }
+
+private const val LOCATION_PERMISSION_REQUEST_CODE = 1000

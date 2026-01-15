@@ -86,6 +86,21 @@ val LoginOnSecondray = AuthBlue                    // 로그인화면의 서브�
 val LoginAppName = Color(0xFFC9F8F6)    // 앱 제목 컬러_이미지 말고 글씨 넣을 시 사용
 val LoginTertiary = Color(0xFF6A8B8A)              // 그 외_안내메시지 폰트 컬러
 
+val MapListBackground = Color.White
+val MapListItemCard = Color.White
+val MapListItemBorder = Color(0xFFE0E0E0)
+val MapListItemText = Color.Black
+val MapListItemSubText = Color(0xFF666666)
+val MapListCategoryChip = Color(0xFFF5F5F5)
+val MapListCategoryText = Color(0xFF666666)
+val MapListIconTint = Primary
+
+val MapBottomSheetBackground = Color.White
+val MapBottomSheetText = Color.Black
+val MapBottomSheetSubText = Color(0xFF666666)
+val MapBottomSheetButton = Primary  // Color(0xFF6AE0D9)
+val MapBottomSheetButtonText = Color.White
+
 
 /*
 100% (불투명)	FF

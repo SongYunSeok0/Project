@@ -1,27 +1,33 @@
-package com.map.ui
+// map/viewmodel/MapViewModel.kt
+package com.map.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domain.model.ApiResult
+import com.domain.usecase.SearchPlacesUseCase
+import com.map.mapper.toDomainLocation
+import com.map.mapper.toUiModel
+import com.map.ui.PlaceWithLatLng
 import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.LocationTrackingMode
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import com.naver.maps.map.compose.LocationTrackingMode
-import com.map.viewmodel.MapUiState
+import javax.inject.Inject
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    private val searchPlacesUseCase: SearchPlacesUseCase
 ) : ViewModel() {
 
     var uiState by mutableStateOf(MapUiState())
         private set
+
+    private var searchJob: Job? = null
 
     /* ---------- 상태 변경 메소드 ---------- */
 
@@ -57,7 +63,7 @@ class MapViewModel @Inject constructor(
     fun onModeChange(mode: String) {
         if (uiState.selectedChip == mode) return
         uiState = uiState.copy(selectedChip = mode)
-        searchAround()   // 모드 바꾸면 바로 재검색
+        searchAround()
     }
 
     fun onMarkerSelected(place: PlaceWithLatLng) {
@@ -87,30 +93,56 @@ class MapViewModel @Inject constructor(
 
     /* ---------- 검색 로직 ---------- */
 
-    /**
-     * 중심(centerOverride)이 있으면 그거 기준, 없으면 mapCenter / myLocation 기준으로 검색
-     */
     fun searchAround(centerOverride: LatLng? = null) {
-        val center = centerOverride ?: uiState.mapCenter ?: uiState.myLocation ?: return
+        val center = centerOverride ?: uiState.mapCenter ?: uiState.myLocation
+        if (center == null) {
+            Log.w("MapViewModel", "검색 중심 위치가 없습니다")
+            return
+        }
+
         val query = uiState.searchQuery.ifBlank { uiState.selectedChip }
 
-        viewModelScope.launch {
+        // ✅ 기존 검색 작업 취소
+        searchJob?.cancel()
+
+        // ✅ 즉시 로딩 상태로 변경
+        uiState = uiState.copy(isLoading = true)
+
+        searchJob = viewModelScope.launch {
             try {
-                val result = searchPlaces(
-                    context = context,
-                    baseQuery = query,
-                    center = center,
-                    mode = uiState.selectedChip
-                )
-                uiState = uiState.copy(
-                    places = result,
-                    showSearchHere = false,
-                    selected = null,
-                    showBottomSheet = false
-                )
+                val domainLocation = center.toDomainLocation()
+
+                when (val result = searchPlacesUseCase(
+                    query = query,
+                    center = domainLocation,
+                    mode = uiState.selectedChip,
+                    radiusMeters = 1500
+                )) {
+                    is ApiResult.Success -> {
+                        val uiPlaces = result.data.map { it.toUiModel() }
+
+                        uiState = uiState.copy(
+                            places = uiPlaces,
+                            showSearchHere = false,
+                            selected = null,
+                            showBottomSheet = false,
+                            isLoading = false  // ✅ 로딩 완료
+                        )
+                    }
+                    is ApiResult.Failure -> {
+                        Log.e("MapViewModel", "searchAround 실패: ${result.error}")
+                        uiState = uiState.copy(
+                            places = emptyList(),
+                            isLoading = false  // ✅ 로딩 완료
+                        )
+                    }
+                }
             } catch (e: Exception) {
-                Log.e("MapViewModel", "searchAround 실패", e)
-                uiState = uiState.copy(places = emptyList())
+                Log.e("MapViewModel", "searchAround 예외: ${e.message}")
+                uiState = uiState.copy(
+                    places = emptyList(),
+                    isLoading = false  // ✅ 로딩 완료
+                )
             }
         }
     }
