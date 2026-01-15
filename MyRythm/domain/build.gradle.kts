@@ -13,6 +13,4 @@ dependencies{
     implementation(libs.javax.inject)
     implementation(libs.moshi)
     implementation("androidx.paging:paging-common:3.2.1")
-
-
 }

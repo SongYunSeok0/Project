@@ -60,12 +60,12 @@ kotlin { jvmToolchain(21) }
 dependencies {
     implementation(project(":shared"))
     implementation(project(":feature:map"))
+    implementation(project(":feature:chatbot"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:mypage"))
     implementation(project(":feature:news"))
     implementation(project(":feature:healthinsight"))
     implementation(project(":feature:scheduler"))
-    implementation(project(":feature:chatbot"))
 
     implementation(project(":domain"))
     implementation(project(":data"))
