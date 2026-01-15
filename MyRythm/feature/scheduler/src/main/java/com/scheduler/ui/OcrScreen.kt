@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,13 +37,17 @@ fun OcrScreen(
     onConfirm: (names: List<String>, times: Int?, days: Int?) -> Unit,
     onRetake: () -> Unit,
 ) {
+    // 0115 ocrController.kt 생성. 상태 호이스팅 및 캡슐화 목적
+    // 기존     var viewRef by remember { mutableStateOf<OcrCropView?>(null) } 삭제
+    // 이후 하단 AndroidViewd에서 생성되는 View 인스턴스를 컨트롤러로 주입 및 제어권 위임함
+    val ocrController = rememberOcrController()
+
     val photoRecaptureButtonText = stringResource(R.string.photo_recapture_button)
     val confirmText = stringResource(R.string.confirm)
     val guideConfirmRecognitionAreaMessage = stringResource(R.string.scheduler_message_guide_confirm_recognition_area)
     val errorRecognitionNoResultTitle = stringResource(R.string.scheduler_error_recognition_no_result_title)
     val errorRecognitionNoTextDetail = stringResource(R.string.scheduler_error_recognition_no_text_detail)
 
-    var viewRef by remember { mutableStateOf<OcrCropView?>(null) }
     var showNoResult by remember { mutableStateOf(false) }
 
     if (showNoResult) {
@@ -90,9 +95,9 @@ fun OcrScreen(
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.MATCH_PARENT
                             )
-                        }.also { viewRef = it }
+                        }.also { ocrController.setView(it) }
                     },
-                    update = { v -> v.bindImage(imagePath) }
+                    update = { ocrController.bindImage(imagePath) }
                 )
             }
 
@@ -104,17 +109,14 @@ fun OcrScreen(
                     .fillMaxWidth()
                     .height(AppFieldHeight),
                 onClick = {
-                    viewRef?.setOnOcrParsed { list ->
-                        if (list.isEmpty()) {
+                    ocrController.analyze(
+                        onSuccess = { names, times, days ->
+                            onConfirm(names, times, days)
+                        },
+                        onError = {
                             showNoResult = true
-                        } else {
-                            val names = list.map { it.first }
-                            val maxTimes = list.mapNotNull { it.second }.maxOrNull()?.coerceIn(1, 6)
-                            val maxDays = list.mapNotNull { it.third }.maxOrNull()?.coerceAtLeast(1)
-                            onConfirm(names, maxTimes, maxDays)
                         }
-                    }
-                    viewRef?.runOcr {}
+                    )
                 }
             )
 
@@ -130,4 +132,12 @@ fun OcrScreen(
             )
         }
     }
+
+    // 0115 리소스 정리 목적의 코드 추가
+    DisposableEffect(Unit) {
+        onDispose {
+            ocrController.cleanup()
+        }
+    }
+
 }
