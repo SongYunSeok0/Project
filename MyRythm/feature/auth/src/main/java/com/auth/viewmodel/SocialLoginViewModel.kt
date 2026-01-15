@@ -214,8 +214,13 @@ class SocialLoginViewModel @Inject constructor(
                                 )
                             }
 
+                            // FCM 토큰 등록 (실패해도 로그인 성공 유지)
                             PushManager.fcmToken?.let { fcmToken ->
-                                viewModelScope.launch { registerFcmTokenUseCase(fcmToken) }
+                                runCatching {
+                                    registerFcmTokenUseCase(fcmToken)
+                                }.onFailure { e ->
+                                    Log.e("SocialLogin", "FCM 토큰 등록 실패: ${e.message}", e)
+                                }
                             }
                         }
 

@@ -1,4 +1,3 @@
-// domain/src/main/java/com/domain/usecase/plan/GetPlansUseCase.kt
 package com.domain.usecase.plan
 
 import com.domain.model.Plan

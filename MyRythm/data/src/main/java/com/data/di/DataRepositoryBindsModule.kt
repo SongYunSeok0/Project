@@ -1,4 +1,3 @@
-// data/src/main/java/com/data/di/DataRepositoryBindsModule.kt
 package com.data.di
 
 import com.data.repository.AuthLocalRepositoryImpl

@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.chatbot.viewmodel.ChatbotViewModel.Message
+import com.chatbot.presentation.model.ChatMessage
 import com.shared.R
 import com.shared.ui.components.AppMessageCard
 import com.shared.ui.components.ChatbotHeader
@@ -18,7 +18,7 @@ import com.shared.ui.theme.componentTheme
 
 @Composable
 fun ChatMessageList(
-    messages: List<Message>,
+    messages: List<ChatMessage>,
     onResetClick: () -> Unit,
     isLoading: Boolean,
     error: String?,
@@ -132,7 +132,6 @@ fun ChatMessageList(
                 )
             }
 
-            // ⭐ 입력 필드 공간 확보 (키보드 + 입력 필드 높이)
             Spacer(Modifier.height(140.dp))
         }
     }
