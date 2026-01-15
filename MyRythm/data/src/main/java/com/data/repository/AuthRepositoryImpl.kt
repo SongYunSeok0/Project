@@ -13,6 +13,7 @@ import com.data.network.dto.user.SendCodeRequest
 import com.data.network.dto.user.UserLoginRequest
 import com.data.network.dto.user.VerifyCodeRequest
 import com.domain.model.ApiResult
+import com.domain.model.AuthStatus
 import com.domain.model.AuthTokens
 import com.domain.model.DomainError
 import com.domain.model.SignupRequest
@@ -231,6 +232,42 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getUserId(): Long? {
         val access = tokenStore.current().access ?: return null
         return JwtUtils.extractUserId(access)?.toLong()
+    }
+
+    override suspend fun getAuthStatus(): ApiResult<AuthStatus> {
+        val tokens = tokenStore.current()
+        val accessToken = tokens.access
+
+        if (accessToken.isNullOrBlank()) {
+            return ApiResult.Success(
+                AuthStatus(
+                    isLoggedIn = false,
+                    userId = null,
+                    isAutoLoginEnabled = prefs.isAutoLoginEnabled()
+                )
+            )
+        }
+
+        val userId = JwtUtils.extractUserId(accessToken)
+
+        return if (userId != null) {
+            ApiResult.Success(
+                AuthStatus(
+                    isLoggedIn = true,
+                    userId = userId,
+                    isAutoLoginEnabled = prefs.isAutoLoginEnabled()
+                )
+            )
+        } else {
+            tokenStore.clear()
+            ApiResult.Success(
+                AuthStatus(
+                    isLoggedIn = false,
+                    userId = null,
+                    isAutoLoginEnabled = false
+                )
+            )
+        }
     }
 
 }

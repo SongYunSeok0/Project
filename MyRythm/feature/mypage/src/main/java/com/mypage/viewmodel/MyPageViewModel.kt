@@ -1,31 +1,21 @@
 package com.mypage.viewmodel
 
-import android.content.Context
+
 import android.util.Log
-import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.ApiResult
-import com.domain.model.UserProfile
 import com.domain.usecase.auth.ClearLocalAuthDataUseCase
-import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.WithdrawalUseCase
-import com.domain.usecase.health.GetLatestHeartRateUseCase
-import com.domain.usecase.inquiry.GetInquiriesUseCase
-import com.domain.usecase.inquiry.AddInquiryUseCase
 import com.domain.usecase.mypage.GetUserProfileUseCase
 import com.domain.usecase.mypage.ObserveUserProfileUseCase
 import com.mypage.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel

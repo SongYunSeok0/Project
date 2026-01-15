@@ -5,7 +5,6 @@ import androidx.credentials.*
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.data.core.push.PushManager
 import com.domain.model.ApiResult
 import com.domain.model.DomainError
 import com.domain.model.SocialLoginParam
@@ -148,10 +147,8 @@ class SocialLoginViewModel @Inject constructor(
                             }
 
                             // FCM 토큰 등록
-                            PushManager.fcmToken?.let { fcmToken ->
-                                viewModelScope.launch {
-                                    registerFcmTokenUseCase(fcmToken)
-                                }
+                            viewModelScope.launch {
+                                registerFcmTokenUseCase()
                             }
                         }
 

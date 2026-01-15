@@ -6,8 +6,8 @@ import javax.inject.Inject
 class RegisterFcmTokenUseCase @Inject constructor(
     private val repository: PushRepository
 ) {
-
-    suspend operator fun invoke(token: String) {
+    suspend operator fun invoke() {
+        val token = repository.fetchAndSaveFcmToken() ?: return
         repository.registerFcmToken(token)
     }
 }
