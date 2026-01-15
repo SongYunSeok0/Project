@@ -56,16 +56,16 @@ fun MapScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 0115 naverMap 포함 이벤트 관련 mapController.kt 생성, 권한 이동(캡슐화)
+    val mapController = rememberMapController()
 
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
 
     var hasLocationPermission by remember { mutableStateOf(false) }
-    var naverMap by remember { mutableStateOf<NaverMap?>(null) }
     val mapView = remember { MapView(context) }
-    val markers = remember { mutableListOf<Marker>() }
 
     val locationSource = remember {
         FusedLocationSource(
@@ -105,24 +105,8 @@ fun MapScreen(
         }
     }
 
-    /* ---------- Lifecycle 처리 ---------- */
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> mapView.onCreate(null)
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+    // 0115 기존의 Lifecycle 로직 -> MapLifecycleHandler.kt로 분리 (상태 호이스팅)
+    MapLifecycleHandler(mapView)
 
     /* ---------- 현재 위치 얻기 ---------- */
     @SuppressLint("MissingPermission")
@@ -144,15 +128,19 @@ fun MapScreen(
     }
 
     /* ---------- 권한 허용 후 초기 위치/검색 ---------- */
-    LaunchedEffect(hasLocationPermission, naverMap) {
-        if (hasLocationPermission && naverMap != null) {
-            naverMap?.locationOverlay?.isVisible = true
+    //0115 navermap -> MapController.kt로 상태호이스팅 진행하면서 코드 일부 변경
+    LaunchedEffect(hasLocationPermission, mapController.getNaverMap()) {
+        val map = mapController.getNaverMap()
+
+        if (hasLocationPermission && map != null) {
+            map.locationOverlay?.isVisible = true
             viewModel.enableLocationFollow()
             fetchCurrentLocation { here ->
                 viewModel.updateMyLocation(here)
-                naverMap?.moveCamera(
-                    CameraUpdate.toCameraPosition(CameraPosition(here, 15.0))
-                )
+
+                // 0115 naverMap?.moveCamera -> mapController.moveCameraWithZoom
+                mapController.moveCameraWithZoom(here, 15.0)
+
                 if (uiState.places.isEmpty()) {
                     viewModel.searchAround(here)
                 }
@@ -161,43 +149,29 @@ fun MapScreen(
     }
 
     /* ---------- 위치 추적 모드 업데이트 ---------- */
-    LaunchedEffect(uiState.trackingMode, naverMap, hasLocationPermission) {
-        naverMap?.let { map ->
-            if (hasLocationPermission) {
-                map.locationTrackingMode = uiState.trackingMode
-            }
+    // 0115 naverMap → mapController.getNaverMap()
+    // 0115 map.locationTrackingMode → mapController.setLocationTrackingMode
+    LaunchedEffect(uiState.trackingMode, mapController.getNaverMap(), hasLocationPermission) {
+        if (hasLocationPermission && mapController.getNaverMap() != null) {
+            mapController.setLocationTrackingMode(uiState.trackingMode)
         }
     }
 
     /* ---------- 마커 업데이트 ---------- */
-    LaunchedEffect(uiState.places, naverMap) {
-        naverMap?.let { map ->
-            // 기존 마커 제거
-            markers.forEach { it.map = null }
-            markers.clear()
-
-            // 새 마커 추가
-            uiState.places.forEach { pw ->
-                val marker = Marker().apply {
-                    position = pw.position
-                    icon = OverlayImage.fromResource(R.drawable.icon)
-                    captionText = pw.title
-                    setOnClickListener {
-                        viewModel.onMarkerSelected(pw)
-                        map.moveCamera(CameraUpdate.scrollTo(pw.position))
-                        true
-                    }
-                    this.map = map
-                }
-                markers.add(marker)
+    // 0115 마커 관련 코드 MapController.kt로 이동
+    LaunchedEffect(uiState.places, mapController.getNaverMap()) {
+        if (mapController.getNaverMap() != null) {
+            mapController.updateMarkers(uiState.places) { place ->
+                viewModel.onMarkerSelected(place)
             }
         }
     }
 
     /* ---------- 카메라 이동 감지 ---------- */
-    LaunchedEffect(naverMap) {
-        naverMap?.addOnCameraChangeListener { reason, animated ->
-            val target = naverMap?.cameraPosition?.target
+    // 0115 naverMap → mapController.getNaverMap()
+    // naverMap?.addOnCameraChangeListener -> mapController.setOnCameraChangeListener
+    LaunchedEffect(mapController.getNaverMap()) {
+        mapController.setOnCameraChangeListener { _, animated, target ->
             if (target != null) {
                 viewModel.onCameraMove(animated, target)
             }
@@ -210,8 +184,9 @@ fun MapScreen(
         AndroidView(
             factory = {
                 mapView.apply {
-                    getMapAsync(OnMapReadyCallback { map ->
-                        naverMap = map
+                    getMapAsync { map ->
+                        // 0115
+                        mapController.setNaverMap(map)
 
                         // 위치 추적 설정
                         if (hasLocationPermission) {
@@ -224,11 +199,11 @@ fun MapScreen(
                         val initialPosition = LatLng(37.5666805, 126.9784147) // 서울시청
                         map.moveCamera(CameraUpdate.scrollTo(initialPosition))
 
-                        // 지도 클릭 리스너
-                        map.setOnMapClickListener { _, _ ->
+                        // 0115
+                        mapController.setOnMapClickListener {
                             viewModel.onBottomSheetDismiss()
                         }
-                    })
+                    }
                 }
             },
             modifier = Modifier.fillMaxSize()
@@ -254,7 +229,8 @@ fun MapScreen(
         RoundRecenterButton(
             onClick = {
                 uiState.myLocation?.let {
-                    naverMap?.moveCamera(CameraUpdate.scrollTo(it))
+                    // 0115
+                    mapController.moveCamera(it)
                     viewModel.onRecenter()
                 }
             },
@@ -265,11 +241,12 @@ fun MapScreen(
         )
 
         // ✅ 검색 결과 리스트
+        // 0115 mapController.moveCamera로 변경
         PlaceListSection(
             places = uiState.places,
             onPlaceClick = { place ->
                 viewModel.onMarkerSelected(place)
-                naverMap?.moveCamera(CameraUpdate.scrollTo(place.position))
+                mapController.moveCamera(place.position)
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -277,6 +254,7 @@ fun MapScreen(
         )
 
         // 하단 시트 섹션
+        // 0115 mapController.moveCamera로 변경
         MapBottomSheetSection(
             selected = uiState.selected,
             showBottomSheet = uiState.showBottomSheet,
@@ -284,12 +262,19 @@ fun MapScreen(
             myLocation = uiState.myLocation,
             onRecenterClick = {
                 uiState.myLocation?.let {
-                    naverMap?.moveCamera(CameraUpdate.scrollTo(it))
+                    mapController.moveCamera(it)
                     viewModel.onRecenter()
                 }
             },
             modifier = Modifier.align(Alignment.BottomStart)
         )
+    }
+
+    // 0115 메모리 누수 방지 & 상태 초기화 용도로 리소스 정리 역할의 코드 추가
+    DisposableEffect(Unit) {
+        onDispose {
+            mapController.cleanup()
+        }
     }
 }
 
