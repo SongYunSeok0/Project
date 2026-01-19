@@ -89,6 +89,8 @@ fun AppRoot(startFromLogin: Boolean = false) {
     // ---- ViewModels (인증과 무관한 애들만) ----
     val stepVm: StepViewModel = hiltViewModel()
     val heartVm: HeartRateViewModel = hiltViewModel()
+    val loginVm: LoginViewModel = hiltViewModel()
+
 
     LaunchedEffect(Unit) {
         stepVm.checkPermission()
@@ -197,32 +199,37 @@ fun AppRoot(startFromLogin: Boolean = false) {
             swipeEnabled = syncEnabled,
             onRefresh = { if (syncEnabled) refreshAll() }
         ) {
+            val scope = rememberCoroutineScope()
+
             NavHost(
                 navController = nav,
                 startDestination = startDestination
             ) {
-                authNavGraph(nav)
+                authNavGraph(nav, loginVm)
+
                 mainNavGraph(
                     nav = nav,
                     onLogoutClick = {
-                        // ✅ 로그아웃은 이것만 하면 끝
-                        tokenStore.clear()
+                        scope.launch {
+                            tokenStore.clear()
+                        }
                     }
                 )
-                mapNavGraph()
-                newsNavGraph(nav, realUserId)
-                schedulerNavGraph(nav)
+
                 mypageNavGraph(
                     nav = nav,
                     heartVm = heartVm,
                     userId = userIdLong,
                     onLogoutClick = {
-                        tokenStore.clear()
+                        scope.launch {
+                            tokenStore.clear()
+                        }
                     }
                 )
-                chatbotNavGraph()
-                healthInsightNavGraph()
+
+                // 나머지 graph들...
             }
+
         }
     }
 }
