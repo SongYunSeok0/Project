@@ -10,13 +10,12 @@ import com.domain.usecase.device.GetMyDevicesUseCase
 import com.domain.usecase.plan.CreatePlanUseCase
 import com.domain.usecase.plan.DeletePlanUseCase
 import com.domain.usecase.plan.GetPlanUseCase
-import com.domain.usecase.plan.RefreshPlansUseCase      // ✅ 다시 사용
+import com.domain.usecase.plan.RefreshPlansUseCase
 import com.domain.usecase.plan.UpdatePlanUseCase
 import com.domain.usecase.plan.MarkMedTakenUseCase
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
-import com.scheduler.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,7 +23,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
-import com.scheduler.ui.toUiError
+import com.shared.model.UiError
+import com.shared.mapper.toUiError
 
 @HiltViewModel
 class PlanViewModel @Inject constructor(
@@ -32,7 +32,7 @@ class PlanViewModel @Inject constructor(
     private val createPlanUseCase: CreatePlanUseCase,
     private val updatePlanUseCase: UpdatePlanUseCase,
     private val deletePlanUseCase: DeletePlanUseCase,
-    private val refreshPlansUseCase: RefreshPlansUseCase,   // ✅ 추가
+    private val refreshPlansUseCase: RefreshPlansUseCase,
     private val getRegiHistoriesUseCase: GetRegiHistoriesUseCase,
     private val getMyDevicesUseCase: GetMyDevicesUseCase,
     private val markMedTakenUseCase: MarkMedTakenUseCase
@@ -101,9 +101,7 @@ class PlanViewModel @Inject constructor(
         }
     }
 
-    // -------------------------------
-    // 🔥 복용 완료 처리
-    // -------------------------------
+    // 복용 완료 처리
     fun markAsTaken(userId: Long, planId: Long) {
         viewModelScope.launch {
             when (val result = markMedTakenUseCase(planId)) {
@@ -151,9 +149,7 @@ class PlanViewModel @Inject constructor(
         }
     }
 
-    // -------------------------------
     // 화면 표시용 그룹 생성
-    // -------------------------------
     private fun makeItemsByDate(
         plans: List<Plan>,
         histories: List<RegiHistory>

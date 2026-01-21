@@ -21,6 +21,7 @@ import com.auth.ui.components.SocialLoginSection
 import com.auth.viewmodel.LoginViewModel
 import com.auth.viewmodel.SocialLoginViewModel
 import com.shared.R
+import com.shared.mapper.toMessage
 import com.shared.ui.components.AuthLogoHeader
 import com.shared.ui.theme.loginTheme
 
@@ -37,17 +38,14 @@ fun LoginScreen(
 ) {
     val loginUi by loginViewModel.uiState.collectAsStateWithLifecycle()
     val autoLoginEnabled by loginViewModel.autoLoginEnabled.collectAsStateWithLifecycle()
-
     val socialUi by socialViewModel.uiState.collectAsStateWithLifecycle()
 
-    // ✅ form은 UI 로컬 상태로 관리 (최소 수정)
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    // ✅ 일반 로그인 에러 메시지
     LaunchedEffect(loginUi.errorMessage) {
         loginUi.errorMessage?.let {
             snackbar.showSnackbar(it)
@@ -55,15 +53,20 @@ fun LoginScreen(
         }
     }
 
-    // ✅ 소셜 로그인 에러 메시지 (SocialLoginViewModel에 clearError가 있다면 호출)
-    LaunchedEffect(socialUi.errorMessage) {
-        socialUi.errorMessage?.let {
-            snackbar.showSnackbar(it)
+    LaunchedEffect(socialUi.error) {
+        socialUi.error?.let { error ->
+            snackbar.showSnackbar(error.toMessage(context))
             socialViewModel.clearError()
         }
     }
 
-    // ✅ 일반 로그인 성공
+    LaunchedEffect(socialUi.needAdditionalInfo) {
+        socialUi.needAdditionalInfo?.let { (socialId, provider) ->
+            onNeedAdditionalInfo(socialId, provider)
+            socialViewModel.clearNeedAdditionalInfo()
+        }
+    }
+
     LaunchedEffect(loginUi.isLoggedIn, loginUi.userId) {
         if (loginUi.isLoggedIn) {
             loginUi.userId?.let { uid ->
@@ -72,11 +75,9 @@ fun LoginScreen(
         }
     }
 
-    // ✅ 소셜 로그인 성공
     LaunchedEffect(socialUi.isLoggedIn, socialUi.userId) {
         if (socialUi.isLoggedIn) {
             socialUi.userId?.let { uid ->
-                // 소셜 로그인은 password 의미 없으면 ""로 넘기는 게 더 자연스럽습니다.
                 onLogin(uid, "")
             }
         }
@@ -138,7 +139,7 @@ fun LoginScreen(
                             socialViewModel.kakaoOAuth(
                                 context = context,
                                 autoLoginChecked = autoLoginEnabled
-                                )
+                            )
                         },
                         onGoogleClick = {
                             socialViewModel.googleOAuth(
