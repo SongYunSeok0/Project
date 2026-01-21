@@ -1,4 +1,3 @@
-// domain/src/main/java/com/domain/model/DomainError.kt
 package com.domain.model
 
 sealed class DomainError(val message: String) {

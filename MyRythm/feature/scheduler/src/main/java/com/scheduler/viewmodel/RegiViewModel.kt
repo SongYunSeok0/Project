@@ -12,8 +12,8 @@ import com.domain.usecase.plan.GetPlanUseCase
 import com.domain.usecase.regi.CreateRegiHistoryUseCase
 import com.scheduler.ui.IntakeStatus
 import com.scheduler.ui.MedItem
-import com.scheduler.ui.UiError
-import com.scheduler.ui.toUiError
+import com.shared.model.UiError
+import com.shared.mapper.toUiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers

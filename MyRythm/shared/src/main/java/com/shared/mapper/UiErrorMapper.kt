@@ -1,7 +1,8 @@
-package com.scheduler.ui
+package com.shared.mapper
 
 import android.content.Context
 import com.shared.R
+import com.shared.model.UiError
 
 fun UiError.toMessage(context: Context): String {
     return when (this) {
