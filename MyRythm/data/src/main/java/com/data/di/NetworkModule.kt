@@ -364,4 +364,10 @@ object NetworkModule {
     @Singleton
     fun provideInquiryApi(@UserRetrofit retrofit: Retrofit): InquiryApi =
         retrofit.create(InquiryApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNaverSearchApi(@NewsRetrofit retrofit: Retrofit): NaverSearchApi =
+        retrofit.create(NaverSearchApi::class.java)
 }
+

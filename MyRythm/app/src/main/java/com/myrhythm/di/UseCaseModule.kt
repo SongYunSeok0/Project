@@ -6,7 +6,6 @@ import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
 import com.domain.repository.HeartRateRepository
 import com.domain.repository.PushRepository
-import com.domain.usecase.auth.GetAuthStatusUseCase
 import com.domain.usecase.auth.LoginUseCase
 import com.domain.usecase.auth.LogoutUseCase
 import com.domain.usecase.auth.RefreshTokenUseCase
@@ -73,12 +72,4 @@ object UseCaseModule {
     fun provideGetHeartHistoryUseCase(
         heartRateRepository: HeartRateRepository
     ) = GetHeartHistoryUseCase(heartRateRepository)
-
-    @Provides
-    @Singleton
-    fun provideGetAuthStatusUseCase(
-        authRepository: AuthRepository
-    ): GetAuthStatusUseCase =
-        GetAuthStatusUseCase(authRepository)
-
 }

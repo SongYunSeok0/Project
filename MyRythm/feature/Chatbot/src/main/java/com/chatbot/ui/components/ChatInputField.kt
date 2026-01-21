@@ -37,7 +37,7 @@ fun ChatInputField(
                 start = 24.dp,
                 end = 24.dp,
                 top = 12.dp,
-                bottom = 35.dp
+                bottom = 8.dp
             )
     ) {
         AppInputField(

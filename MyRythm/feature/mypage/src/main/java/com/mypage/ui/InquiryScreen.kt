@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.shared.R
 import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.mypage.viewmodel.InquiryViewModel
 import com.mypage.viewmodel.MyPageEvent
+import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.components.AppInputField
 import com.shared.ui.components.AppSelectableButton
 
@@ -68,7 +68,7 @@ fun InquiryTypeSelector(
 
 @Composable
 fun NewInquiryForm(
-    viewModel: InquiryViewModel = hiltViewModel()
+    viewModel: MyPageViewModel = hiltViewModel()
 ) {
     var selectedType by remember { mutableStateOf("일반 문의") }
     var title by remember { mutableStateOf("") }

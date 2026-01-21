@@ -18,7 +18,6 @@ import com.domain.usecase.push.RegisterFcmTokenUseCase
 import com.domain.usecase.regi.GetRegiHistoriesUseCase
 import com.domain.usecase.plan.MarkMedTakenUseCase
 import com.domain.usecase.plan.RefreshPlansUseCase
-import com.domain.usecase.push.RegisterFcmTokenAfterLoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -310,18 +309,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    @Inject
-    lateinit var registerFcmTokenAfterLoginUseCase: RegisterFcmTokenAfterLoginUseCase
-
     private fun initFcmToken() {
         viewModelScope.launch {
-            runCatching {
-                registerFcmTokenAfterLoginUseCase()
-            }.onFailure {
-                Log.w("MainVM", "FCM 토큰 등록 실패", it)
+            val token = getFcmTokenUseCase()
+            if (token != null) {
+                runCatching { registerFcmTokenUseCase(token) }
+                    .onFailure { Log.w("MainVM", "토큰 등록 실패", it) }
             }
         }
     }
-
-
 }

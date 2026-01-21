@@ -58,9 +58,7 @@ fun StepViewModelRoute(
     val todaySteps by stepViewModel.todaySteps.collectAsStateWithLifecycle()
     val previewExtend by mainViewModel.previewExtendMinutes.collectAsStateWithLifecycle()
 
-    val uiState by myPageViewModel.uiState.collectAsStateWithLifecycle()
-    val profile = uiState.profile
-
+    val profile by myPageViewModel.profile.collectAsStateWithLifecycle()
     val hasGuardian = profile?.prot_email?.isNotBlank() == true
 
     // ✅ 프로필 로드(기존 유지)
@@ -355,18 +353,6 @@ fun StepViewModelRoute(
             todaySteps = if (installed) todaySteps else 0,
             remainText = remainText,
             nextLabel = nextLabel
-        )
-
-        // 디버그 텍스트(원하면 삭제)
-        Text(
-            text = "DEBUG: installed=$installed granted=$granted permShown=$permissionDialogShown showProfile=$showProfileDialog",
-            color = Color.Red,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-                .zIndex(999f)
-                .background(Color.White.copy(alpha = 0.8f))
-                .padding(6.dp)
         )
     }
 }

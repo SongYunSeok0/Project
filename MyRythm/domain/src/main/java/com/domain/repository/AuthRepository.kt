@@ -1,7 +1,6 @@
 package com.domain.repository
 
 import com.domain.model.ApiResult
-import com.domain.model.AuthStatus
 import com.domain.model.AuthTokens
 import com.domain.model.SignupRequest
 import com.domain.model.SocialLoginParam
@@ -36,7 +35,5 @@ interface AuthRepository {
     suspend fun tryRefreshFromLocal(): ApiResult<Boolean>
 
     fun getUserId(): Long?
-
-    suspend fun getAuthStatus(): ApiResult<AuthStatus>
 
 }

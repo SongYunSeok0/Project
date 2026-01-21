@@ -1,4 +1,4 @@
-package com.domain.usecase
+package com.domain.usecase.map
 
 import com.domain.model.MapData
 import com.domain.repository.MapRepository

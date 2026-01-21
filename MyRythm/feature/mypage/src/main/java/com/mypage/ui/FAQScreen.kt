@@ -20,15 +20,18 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.shared.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shared.bar.AppTopBar
 import com.domain.model.Inquiry
 import com.domain.model.InquiryComment
-import com.mypage.viewmodel.InquiryViewModel
+import com.mypage.viewmodel.MyPageViewModel
 import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.OnlyColorTheme
 import kotlinx.coroutines.launch
@@ -58,7 +61,7 @@ fun FAQScreen(
 
 @Composable
 fun FAQScreenWrapper(
-    viewModel: InquiryViewModel = hiltViewModel(),
+    viewModel: MyPageViewModel = hiltViewModel(),
 ) {
     FAQScreen(
         onSubmit = { type, title, content ->
@@ -128,7 +131,7 @@ private fun FAQTabRow(pagerState: PagerState) {
 private fun FAQTabContent(
     pagerState: PagerState,
     onSubmit: (type: String, title: String, content: String) -> Unit,
-    viewModel: InquiryViewModel = hiltViewModel()
+    viewModel: MyPageViewModel = hiltViewModel()
 ) {
     val inquiries by viewModel.inquiries.collectAsState()
 

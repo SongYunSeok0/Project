@@ -22,7 +22,6 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // --- local.properties에서 안전하게 로드 ---
         val props = Properties().apply {
             val f = rootProject.file("secret.properties")
             if (f.exists()) load(f.inputStream())
@@ -68,7 +67,6 @@ dependencies {
     implementation(project(":feature:healthinsight"))
     implementation(project(":feature:scheduler"))
 
-    // domain & data modules
     implementation(project(":domain"))
     implementation(project(":data"))
 
@@ -87,22 +85,16 @@ dependencies {
 
     implementation(libs.retrofit)
 
-    // Moshi
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.converter)
 
-    // OkHttp
     implementation(libs.okhttp.logging.interceptor)
 
-    // 테스트
     testImplementation(libs.bundles.test)
 
-    //카카오
     implementation("com.kakao.sdk:v2-user:2.11.0")
 
-
-    //firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
