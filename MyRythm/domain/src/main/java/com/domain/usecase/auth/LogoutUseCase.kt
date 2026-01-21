@@ -1,7 +1,7 @@
 package com.domain.usecase.auth
 
 import com.domain.model.ApiResult
-import com.domain.model.DomainError  // 🔥 추가
+import com.domain.model.DomainError
 import com.domain.repository.AuthRepository
 import com.domain.repository.UserRepository
 import javax.inject.Inject

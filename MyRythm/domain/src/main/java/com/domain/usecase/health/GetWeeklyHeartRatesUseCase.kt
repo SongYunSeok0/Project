@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-// 🔥 UI용 데이터 모델 (String date)
+
 data class DailyHeartRateUI(
     val date: String,
     val measurements: List<Int>

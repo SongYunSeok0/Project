@@ -2,11 +2,8 @@ package com.data.network.datasource
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.data.network.api.NewsApi
 import com.data.network.dto.news.NaverNewsItem
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.jsoup.Jsoup
+
 
 class NaverNewsPagingSource(
     private val remoteDataSource: NewsRemoteDataSource,

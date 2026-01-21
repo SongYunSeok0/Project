@@ -48,7 +48,6 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":domain"))
-    implementation(project(":shared"))
 
     // Hilt
     implementation(libs.hilt.android)
@@ -65,12 +64,8 @@ dependencies {
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.converter)
 
-    implementation(libs.retrofit.converter.gson)
-
-
-    implementation(libs.coil.compose)
     implementation(libs.jsoup)
-    implementation(libs.paging.compose)
+    implementation(libs.paging.runtime)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.core.ktx)
@@ -82,7 +77,7 @@ dependencies {
     // 1126 자동로그인 관련 데이터스토어 의존성
     implementation(libs.androidx.datastore.preferences)
 
+    //외부
     implementation(libs.naver.map.sdk)
-
     implementation(libs.play.services.location)
 }

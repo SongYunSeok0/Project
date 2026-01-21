@@ -1,4 +1,3 @@
-// com.data.network.dto.chatbot.ChatContextDto.kt
 package com.data.network.dto.chatbot
 
 import com.squareup.moshi.Json

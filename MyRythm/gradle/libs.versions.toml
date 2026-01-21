@@ -129,6 +129,7 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
 
 compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
 
