@@ -365,11 +365,16 @@ def send_user_reminders_task():
     return f"재알림(10/20분) 통합 체크 완료: {success_count}건 전송"
 
 @shared_task
-def delete_plan_async(plan_id):
+def delete_plan_async(plan_id, user_id):
     """비동기로 Plan 삭제"""
     try:
         plan = Plan.objects.get(id=plan_id)
         plan.delete()
+        logger.info(f"[DELETE] Plan {plan_id} deleted by user {user_id}")
         return f"Plan {plan_id} deleted successfully"
     except Plan.DoesNotExist:
+        logger.warning(f"[DELETE] Plan {plan_id} not found")
         return f"Plan {plan_id} not found"
+    except Exception as e:
+        logger.error(f"[DELETE] Failed to delete plan {plan_id}: {e}")
+        raise
