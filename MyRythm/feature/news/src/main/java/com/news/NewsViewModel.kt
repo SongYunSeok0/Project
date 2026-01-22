@@ -9,20 +9,17 @@ import com.domain.model.Favorite
 import com.domain.model.News
 import com.domain.usecase.news.AddFavoriteUseCase
 import com.domain.usecase.news.GetFavoritesUseCase
-import com.domain.usecase.news.GetNewsUseCase
 import com.domain.usecase.news.RemoveFavoriteUseCase
 import com.domain.usecase.news.UpdateFavoriteLastUsedUseCase
+import com.news.utils.NewsPagingFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.jsoup.Jsoup
 import javax.inject.Inject
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
-    private val getNewsUseCase: GetNewsUseCase,
+    private val newsPagingFactory: NewsPagingFactory, // ✅ GetNewsUseCase 대신
     private val getFavoritesUseCase: GetFavoritesUseCase,
     private val addFavoriteUseCase: AddFavoriteUseCase,
     private val removeFavoriteUseCase: RemoveFavoriteUseCase,
@@ -31,7 +28,8 @@ class NewsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val userId: String = savedStateHandle["userId"] ?: ""
-    //  뉴스 검색
+
+    // 뉴스 검색
     private val _selectedCategory = MutableStateFlow("건강")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
@@ -41,19 +39,15 @@ class NewsViewModel @Inject constructor(
     private val _isSearchMode = MutableStateFlow(false)
     val isSearchMode: StateFlow<Boolean> = _isSearchMode.asStateFlow()
 
-    // 뉴스 Paging Flow
+    // ✅ 뉴스 Paging Flow: factory로 생성
     val newsPagingFlow: Flow<PagingData<News>> =
         selectedCategory
-            .flatMapLatest { category ->
-                getNewsUseCase(category)
-            }
+            .flatMapLatest { category -> newsPagingFactory.create(category) }
             .cachedIn(viewModelScope)
 
     // Room에서 flow로 가져온 즐겨찾기 리스트
     val favorites = getFavoritesUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    //  즐겨찾기 관련 함수
 
     fun addFavorite(keyword: String) {
         if (keyword.isBlank()) return
@@ -71,7 +65,7 @@ class NewsViewModel @Inject constructor(
 
     fun removeFavorite(keyword: String) {
         viewModelScope.launch {
-            removeFavoriteUseCase(keyword,userId)
+            removeFavoriteUseCase(keyword, userId)
         }
     }
 
@@ -80,17 +74,13 @@ class NewsViewModel @Inject constructor(
     }
 
     fun onFavoriteClick(keyword: String) {
-        // 즐겨찾기 키워드 검색하기
         _searchQuery.value = keyword
         _selectedCategory.value = keyword
 
-        // 마지막 사용시간 업데이트
         viewModelScope.launch {
             updateFavoriteLastUsedUseCase(keyword)
         }
     }
-
-    //  UI 검색 액션 처리
 
     fun updateCategory(cat: String) {
         _selectedCategory.value = cat
@@ -108,20 +98,4 @@ class NewsViewModel @Inject constructor(
 
     fun openSearch() { _isSearchMode.value = true }
     fun closeSearch() { _isSearchMode.value = false }
-
-    //  기사 썸네일 추출 (Jsoup)
-    private suspend fun fetchThumbnail(url: String): String? = withContext(Dispatchers.IO) {
-        try {
-            val doc = Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                .timeout(3000)
-                .get()
-
-            val metaTag = doc.select("meta[property=og:image]").attr("content")
-
-            if (metaTag.isNotEmpty()) metaTag else null
-        } catch (e: Exception) {
-            null
-        }
-    }
 }

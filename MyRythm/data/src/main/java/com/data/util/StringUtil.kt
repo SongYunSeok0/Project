@@ -1,6 +1,8 @@
 package com.data.util
 
-fun cleanHtml(s: String): String = s.replace(Regex("<.*?>"), "").trim()
+fun cleanHtml(input: String?): String =
+    input?.let { org.jsoup.Jsoup.parse(it).text() }.orEmpty()
+
 
 fun cleanCategoryForDisplay(raw: String?): String {
     if (raw.isNullOrBlank()) return ""

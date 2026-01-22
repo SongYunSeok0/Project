@@ -11,7 +11,6 @@ import com.domain.model.ApiResult
 import com.domain.model.Location
 import com.domain.model.Place
 import com.domain.repository.PlaceRepository
-import com.naver.maps.geometry.LatLng
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,14 +47,14 @@ class PlaceRepositoryImpl @Inject constructor(
             try {
                 val lon = item.mapx.toDouble() / 1e7
                 val lat = item.mapy.toDouble() / 1e7
-                val latLng = LatLng(lat, lon)
+                val location = Location(latitude = lat, longitude = lon)
 
                 Log.d(
                     "PlaceRepository",
                     "이름=${item.title}, 전화=${item.telephone ?: "없음"}, 카테고리=${item.category ?: "없음"}"
                 )
 
-                item.toDomain(latLng)
+                item.toDomain(location)
             } catch (e: Exception) {
                 Log.e("PlaceRepository", "좌표 변환 실패: ${item.title}", e)
                 null

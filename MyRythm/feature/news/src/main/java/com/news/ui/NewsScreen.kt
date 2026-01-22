@@ -287,7 +287,7 @@ fun NewsCard(
         )
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier.weight(1f).fillMaxHeight()
         ) {
             Text(
                 text = title,

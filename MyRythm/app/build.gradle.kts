@@ -102,4 +102,6 @@ dependencies {
 
     implementation(libs.androidx.health.connect)
     implementation(libs.accompanist.swiperefresh)
+
+    implementation(libs.paging.compose)
 }

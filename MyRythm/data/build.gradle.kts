@@ -76,8 +76,4 @@ dependencies {
 
     // 1126 자동로그인 관련 데이터스토어 의존성
     implementation(libs.androidx.datastore.preferences)
-
-    //외부
-    implementation(libs.naver.map.sdk)
-    implementation(libs.play.services.location)
 }
