@@ -46,7 +46,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":feature"))
     implementation(project(":shared"))
     implementation(project(":domain"))
 

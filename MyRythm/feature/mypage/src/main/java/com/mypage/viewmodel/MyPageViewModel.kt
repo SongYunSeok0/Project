@@ -6,11 +6,12 @@ import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domain.model.ApiResult
+import com.domain.model.Inquiry
 import com.domain.model.UserProfile
 import com.domain.usecase.auth.WithdrawalUseCase
 import com.domain.usecase.health.GetLatestHeartRateUseCase
-import com.domain.usecase.inquiry.GetInquiriesUseCase
 import com.domain.usecase.inquiry.AddInquiryUseCase
+import com.domain.usecase.inquiry.GetInquiriesUseCase
 import com.domain.usecase.mypage.GetUserProfileUseCase
 import com.domain.usecase.mypage.ObserveUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -44,9 +47,25 @@ class MyPageViewModel @Inject constructor(
 
     private val _latestHeartRate = MutableStateFlow<Int?>(null)
     val latestHeartRate: StateFlow<Int?> = _latestHeartRate.asStateFlow()
+    private val inquiriesRefresh = MutableStateFlow(0)
 
-    val inquiries = getInquiriesUseCase()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // ✅ 추가: Screen은 이것 하나만 collect하면 됨
+    val uiState: StateFlow<MyPageUiState> =
+        combine(profile, latestHeartRate) { p, hr ->
+            MyPageUiState(
+                profile = p,
+                latestHeartRate = hr
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = MyPageUiState()
+        )
+
+    val inquiries: StateFlow<List<Inquiry>> =
+        inquiriesRefresh
+            .flatMapLatest { getInquiriesUseCase() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         Log.e("MyPageViewModel", "🎬 ========== ViewModel 초기화 시작 ==========")
@@ -97,6 +116,7 @@ class MyPageViewModel @Inject constructor(
         }
     }
 
+    // ✅ 이름/시그니처 그대로 유지
     fun refreshProfile() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🔄 ========== refreshProfile() 시작 ==========")
         runCatching { getUserProfileUseCase() }
@@ -115,10 +135,24 @@ class MyPageViewModel @Inject constructor(
         viewModelScope.launch {
             Log.e("MyPageViewModel", "📝 ========== 문의 등록 시작 ==========")
             Log.e("MyPageViewModel", "type: $type, title: $title")
+
+            // ✅ validation: UI에서 하지 말고 여기서!
+            if (title.isBlank()) {
+                Log.e("MyPageViewModel", "❌ 문의 등록 실패: 제목 비어있음")
+                _events.send(MyPageEvent.InquirySubmitFailed("제목을 입력해주세요"))
+                return@launch
+            }
+            if (content.isBlank()) {
+                Log.e("MyPageViewModel", "❌ 문의 등록 실패: 내용 비어있음")
+                _events.send(MyPageEvent.InquirySubmitFailed("내용을 입력해주세요"))
+                return@launch
+            }
+
             runCatching { addInquiryUseCase(type, title, content) }
                 .onSuccess {
                     Log.e("MyPageViewModel", "✅ 문의 등록 성공")
                     _events.send(MyPageEvent.InquirySubmitSuccess)
+                    inquiriesRefresh.value++
                 }
                 .onFailure { e ->
                     Log.e("MyPageViewModel", "❌ 문의 등록 실패: ${e.message}", e)
@@ -127,6 +161,7 @@ class MyPageViewModel @Inject constructor(
         }
     }
 
+
     fun deleteAccount() = viewModelScope.launch {
         Log.e("MyPageViewModel", "🗑️ ========== 회원 탈퇴 시작 ==========")
 
@@ -134,11 +169,8 @@ class MyPageViewModel @Inject constructor(
             is ApiResult.Success -> {
                 Log.e("MyPageViewModel", "✅ 회원 탈퇴 성공")
 
-                // SharedPreferences 초기화
                 val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                prefs.edit {
-                    clear()
-                }
+                prefs.edit { clear() }
                 Log.e("MyPageViewModel", "🧹 SharedPreferences 초기화 완료")
 
                 _events.send(MyPageEvent.WithdrawalSuccess)

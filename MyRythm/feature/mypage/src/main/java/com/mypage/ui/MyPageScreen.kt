@@ -1,7 +1,6 @@
 package com.mypage.ui
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,28 +33,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mypage.viewmodel.BLERegisterViewModel
-import com.mypage.viewmodel.MyPageEvent
-import com.mypage.viewmodel.MyPageViewModel
+import com.mypage.viewmodel.MyPageUiState
 import com.shared.R
 import com.shared.ui.components.AppButton
-import com.shared.ui.components.AppInputField
 import com.shared.ui.components.ProfileHeader
 import com.shared.ui.theme.AppTheme
 import com.shared.ui.theme.componentTheme
 
 @Composable
 fun MyPageScreen(
-    viewModel: MyPageViewModel = hiltViewModel(),
-    bleViewModel: BLERegisterViewModel = hiltViewModel(),
+    state: MyPageUiState,
+    onDeleteAccount: () -> Unit,
     onEditClick: () -> Unit = {},
     onHeartClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
@@ -64,8 +54,7 @@ fun MyPageScreen(
     onMediClick: () -> Unit = {},
     onDeviceRegisterClick: () -> Unit = {},
     onUserManagementClick: () -> Unit = {},
-    onInquiriesManagementClick: () -> Unit = {},
-    onWithdrawalSuccess: () -> Unit = {}
+    onInquiriesManagementClick: () -> Unit = {}
 ) {
     val editPageText = stringResource(R.string.editpage)
     val heartRateText = stringResource(R.string.heartrate)
@@ -83,78 +72,15 @@ fun MyPageScreen(
     val bpmText = stringResource(R.string.bpm)
     val withdrawalTitleMessage = stringResource(R.string.mypage_message_withdrawal_title)
     val withdrawalMessage = stringResource(R.string.mypage_message_withdrawal)
-    val wifiConfigSentMessage = stringResource(R.string.mypage_message_wifi_config_sent)
-    val wifiBleConnectedSuccessMessage = stringResource(R.string.mypage_message_wifi_ble_connected_success)
-    val withdrawalSuccessMessage = stringResource(R.string.mypage_message_withdrawal_success)
-    val withdrawalFailedMessage = stringResource(R.string.mypage_message_withdrawal_failed)
-
     val userManagementText = "사용자 관리"
     val inquiriesManagementText = "문의사항 관리"
     val staffMenuText = "관리자 메뉴"
 
-    val profile by viewModel.profile.collectAsStateWithLifecycle()
-    val latestHeartRate by viewModel.latestHeartRate.collectAsStateWithLifecycle()
+    val profile = state.profile
+    val latestHeartRate = state.latestHeartRate
     val heartRateTextValue = latestHeartRate?.let { "$it $bpmText" } ?: "- $bpmText"
-    val context = LocalContext.current
-
-    val bleState by bleViewModel.state.collectAsStateWithLifecycle()
-
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // BLE 상태 변화 → 토스트 표시
-    LaunchedEffect(
-        bleState.bleConnected,
-        bleState.configSent,
-        bleState.uiError
-    ) {
-        when {
-            bleState.uiError != null -> {
-                Toast
-                    .makeText(
-                        context,
-                        bleState.uiError!!.toMessage(context),
-                        Toast.LENGTH_SHORT
-                    )
-                    .show()
-            }
-
-            bleState.configSent -> {
-                Toast
-                    .makeText(
-                        context,
-                        wifiConfigSentMessage,
-                        Toast.LENGTH_SHORT
-                    )
-                    .show()
-            }
-
-            bleState.bleConnected -> {
-                Toast
-                    .makeText(
-                        context,
-                        wifiBleConnectedSuccessMessage,
-                        Toast.LENGTH_SHORT
-                    )
-                    .show()
-            }
-        }
-    }
-
-    // MyPage 이벤트 수집
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is MyPageEvent.WithdrawalSuccess -> {
-                    Toast.makeText(context, withdrawalSuccessMessage, Toast.LENGTH_SHORT).show()
-                    onWithdrawalSuccess()
-                }
-                is MyPageEvent.WithdrawalFailed -> {
-                    Toast.makeText(context, withdrawalFailedMessage, Toast.LENGTH_SHORT).show()
-                }
-                else -> Unit
-            }
-        }
-    }
 
     // ==================== UI ====================
     Column(
@@ -254,7 +180,7 @@ fun MyPageScreen(
                     backgroundColor = MaterialTheme.colorScheme.error,
                     textColor = MaterialTheme.colorScheme.onError,
                     onClick = {
-                        viewModel.deleteAccount()
+                        onDeleteAccount()
                         showDeleteDialog = false
                     }
                 )
@@ -367,156 +293,6 @@ fun MenuItem(
                 contentDescription = arrowText,
                 modifier = Modifier.size(20.dp)
             )
-        }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun Preview_AllDialogs_Latest() {
-    AppTheme {
-        var showDeviceDialog by remember { mutableStateOf(false) }
-        var showDeleteDialog by remember { mutableStateOf(false) }
-
-        var fakeSSID by remember { mutableStateOf("") }
-        var fakePW by remember { mutableStateOf("") }
-        var fakeLoading by remember { mutableStateOf(true) }
-
-        val deviceRegisterText = "기기 등록"
-        val deviceRegisterMessage = "Wi-Fi 정보를 입력하면\n기기에 BLE로 전송됩니다."
-        val wifiSsidText = "Wi-Fi SSID"
-        val wifiPasswordText = "Wi-Fi Password"
-        val wifiConnectingText = "기기 연결 중..."
-        val registerText = "등록하기"
-        val cancelText = "취소"
-
-        val withdrawalTitleMessage = "회원 탈퇴"
-        val withdrawalMessage = "정말 탈퇴하시겠습니까?\n모든 데이터가 삭제됩니다."
-        val withdrawalConfirmText = "탈퇴하기"
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            ) {
-                Text("다이얼로그 프리뷰", fontSize = 22.sp)
-                Spacer(Modifier.height(20.dp))
-
-                AppButton(
-                    text = "기기 등록 다이얼로그 열기",
-                    height = 48.dp,
-                    onClick = { showDeviceDialog = true }
-                )
-                Spacer(Modifier.height(16.dp))
-
-                AppButton(
-                    text = "회원 탈퇴 다이얼로그 열기",
-                    height = 48.dp,
-                    backgroundColor = MaterialTheme.colorScheme.error,
-                    textColor = MaterialTheme.colorScheme.onError,
-                    onClick = { showDeleteDialog = true }
-                )
-            }
-
-            if (showDeviceDialog) {
-                AlertDialog(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    onDismissRequest = { showDeviceDialog = false },
-                    title = { Text(deviceRegisterText) },
-                    text = {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                deviceRegisterMessage,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            AppInputField(
-                                value = fakeSSID,
-                                onValueChange = { fakeSSID = it },
-                                label = wifiSsidText,
-                                outlined = true,
-                                singleLine = true
-                            )
-
-                            AppInputField(
-                                value = fakePW,
-                                onValueChange = { fakePW = it },
-                                label = wifiPasswordText,
-                                outlined = true,
-                                singleLine = true
-                            )
-
-                            if (fakeLoading) {
-                                Text(
-                                    wifiConnectingText,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        AppButton(
-                            text = registerText,
-                            height = 40.dp,
-                            width = 100.dp,
-                            onClick = {
-                                fakeLoading = true
-                                showDeviceDialog = false
-                            }
-                        )
-                    },
-                    dismissButton = {
-                        AppButton(
-                            text = cancelText,
-                            height = 40.dp,
-                            width = 70.dp,
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                            textColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = { showDeviceDialog = false }
-                        )
-                    }
-                )
-            }
-
-            if (showDeleteDialog) {
-                AlertDialog(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    onDismissRequest = { showDeleteDialog = false },
-                    title = { Text(withdrawalTitleMessage) },
-                    text = {
-                        Text(
-                            withdrawalMessage,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    },
-                    confirmButton = {
-                        AppButton(
-                            text = withdrawalConfirmText,
-                            height = 40.dp,
-                            width = 100.dp,
-                            backgroundColor = MaterialTheme.colorScheme.error,
-                            textColor = MaterialTheme.colorScheme.onError,
-                            onClick = { showDeleteDialog = false }
-                        )
-                    },
-                    dismissButton = {
-                        AppButton(
-                            text = cancelText,
-                            height = 40.dp,
-                            width = 70.dp,
-                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                            textColor = MaterialTheme.colorScheme.onSurface,
-                            onClick = { showDeleteDialog = false }
-                        )
-                    }
-                )
-            }
         }
     }
 }

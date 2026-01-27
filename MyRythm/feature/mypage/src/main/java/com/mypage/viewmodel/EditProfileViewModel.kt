@@ -10,6 +10,8 @@ import com.domain.usecase.auth.SendEmailCodeUseCase
 import com.domain.usecase.auth.VerifyEmailCodeUseCase
 import com.domain.usecase.mypage.ObserveUserProfileUseCase
 import com.domain.usecase.mypage.UpdateUserProfileUseCase
+import com.domain.usecase.mypage.ValidateEditProfileUseCase
+import com.domain.validation.EditProfileValidationError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,8 +26,9 @@ class EditProfileViewModel @Inject constructor(
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val sendEmailCodeUseCase: SendEmailCodeUseCase,
     private val verifyEmailCodeUseCase: VerifyEmailCodeUseCase,
-    private val checkEmailDuplicateUseCase: CheckEmailDuplicateUseCase
-) : ViewModel() {
+    private val checkEmailDuplicateUseCase: CheckEmailDuplicateUseCase,
+    private val validateEditProfileUseCase: ValidateEditProfileUseCase
+    ) : ViewModel() {
 
     val profile = observeUserProfileUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -99,11 +102,46 @@ class EditProfileViewModel @Inject constructor(
         phone: String?,
         prot_email: String?,
         prot_name: String?,
-        email: String
+        email: String,
+        hasRealName: Boolean,
+        hasRealPhone: Boolean,
+        hasRealGender: Boolean,
+        hasRealEmail: Boolean,
+        isEmailVerified: Boolean,
+        isProtEmailVerified: Boolean,
     ) = viewModelScope.launch {
 
+        val isTestGuardian = (prot_name == "aaa" && prot_email == "aaa@aaa.com")
         val height = heightText.toDoubleOrNull()
         val weight = weightText.toDoubleOrNull()
+
+        val validationError = validateEditProfileUseCase(
+            hasRealName = hasRealName,
+            name = username,
+            hasRealPhone = hasRealPhone,
+            phone = phone.orEmpty(),
+            hasRealGender = hasRealGender,
+            gender = gender.orEmpty(),
+            hasRealEmail = hasRealEmail,
+            email = email,
+            isEmailVerified = isEmailVerified,
+            isTestGuardian = isTestGuardian,
+            protEmail = prot_email.orEmpty(),
+            isProtEmailVerified = isProtEmailVerified,
+        )
+
+        if (validationError != null) {
+            val message = when (validationError) {
+                EditProfileValidationError.EmptyName -> "이름을 입력해주세요."
+                EditProfileValidationError.EmptyPhone -> "전화번호를 입력해주세요."
+                EditProfileValidationError.EmptyGender -> "성별을 선택해주세요."
+                EditProfileValidationError.EmptyEmail -> "이메일을 입력해주세요."
+                EditProfileValidationError.EmailNotVerified -> "이메일 인증이 필요합니다."
+                EditProfileValidationError.GuardianNotVerified -> "보호자 이메일 인증이 필요합니다."
+            }
+            _events.send(EditProfileEvent.Error(message))
+            return@launch
+        }
 
         val newProfile = UserProfile(
             username = username,

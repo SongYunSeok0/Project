@@ -1,6 +1,7 @@
 package com.mypage.ui
 
 import com.domain.model.DomainError
+import com.shared.model.UiError
 
 fun DomainError.toUiError(): UiError =
     when (this) {

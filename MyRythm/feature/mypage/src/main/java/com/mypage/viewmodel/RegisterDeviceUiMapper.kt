@@ -1,7 +1,7 @@
 package com.mypage.viewmodel
 
 import com.domain.usecase.mypage.RegisterDeviceResult
-import com.mypage.ui.UiError
+import com.shared.model.UiError
 
 fun RegisterDeviceResult.Error.toUiError(): UiError =
     when (this) {
@@ -10,7 +10,7 @@ fun RegisterDeviceResult.Error.toUiError(): UiError =
 
         is RegisterDeviceResult.Error.BleConnectFailed,
         is RegisterDeviceResult.Error.BleSendFailed ->
-            UiError.BleFailed
+            UiError.Message("BLE 연결에 실패했습니다")
 
         is RegisterDeviceResult.Error.Unknown ->
             UiError.Message(message)

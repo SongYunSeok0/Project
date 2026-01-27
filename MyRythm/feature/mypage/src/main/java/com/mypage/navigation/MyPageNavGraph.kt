@@ -11,11 +11,10 @@ import com.mypage.ui.FAQScreenWrapper
 import com.mypage.ui.HeartReportScreen
 import com.mypage.ui.InquiriesManagementScreen
 import com.mypage.ui.MediReportScreen
-import com.mypage.ui.MyPageScreen
+import com.mypage.ui.MyPageRouteScreen
 import com.mypage.ui.QRScanScreen
 import com.mypage.ui.UserManagementScreen
 import com.mypage.viewmodel.BLERegisterViewModel
-import com.mypage.viewmodel.MyPageViewModel
 
 fun NavGraphBuilder.mypageNavGraph(
     nav: NavController,
@@ -25,11 +24,8 @@ fun NavGraphBuilder.mypageNavGraph(
 ) {
 
     // -------------------- MyPage 메인 --------------------
-    composable<MyPageRoute> { backStackEntry ->
-        val vm: MyPageViewModel = hiltViewModel(backStackEntry)
-
-        MyPageScreen(
-            viewModel = vm,
+    composable<MyPageRoute> {
+        MyPageRouteScreen(
             onEditClick = { nav.navigate(EditProfileRoute) },
             onHeartClick = { nav.navigate(HeartReportRoute) },
             onFaqClick   = { nav.navigate(FAQRoute) },
@@ -41,6 +37,7 @@ fun NavGraphBuilder.mypageNavGraph(
             onWithdrawalSuccess = onLogoutClick
         )
     }
+
 
     // -------------------- QR 스캔 화면 --------------------
     composable<QRScanRoute> { backStackEntry ->
@@ -110,16 +107,4 @@ fun NavGraphBuilder.mypageNavGraph(
         MediReportScreen(userId = userId)
     }
 
-    // (이미 위에 BLERegisterRoute 정의가 있어서, 아래 중복 정의는 필요 없으면 지워도 됨)
-    composable<BLERegisterRoute> { backStackEntry ->
-        val parentEntry = nav.getBackStackEntry(MyPageRoute::class)
-        val sharedBLEVM: BLERegisterViewModel = hiltViewModel(parentEntry)
-
-        BLERegisterScreen(
-            viewModel = sharedBLEVM,
-            onFinish = {
-                nav.popBackStack(MyPageRoute, false)
-            }
-        )
-    }
 }

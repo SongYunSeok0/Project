@@ -1,6 +1,6 @@
 package com.mypage.viewmodel
 
-import com.mypage.ui.UiError
+import com.shared.model.UiError
 
 data class BLERegisterState(
     val loading: Boolean = false,

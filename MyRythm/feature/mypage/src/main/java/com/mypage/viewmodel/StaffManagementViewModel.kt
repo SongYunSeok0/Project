@@ -12,12 +12,12 @@ import com.domain.usecase.inquiry.GetAllInquiriesUseCase
 import com.domain.usecase.inquiry.GetCommentsUseCase
 import com.domain.usecase.regi.GetUserRegiHistoriesUseCase
 import com.domain.usecase.user.GetAllUsersUseCase
-import com.mypage.ui.UiError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.mypage.ui.toUiError
+import com.shared.model.UiError
 
 
 @HiltViewModel

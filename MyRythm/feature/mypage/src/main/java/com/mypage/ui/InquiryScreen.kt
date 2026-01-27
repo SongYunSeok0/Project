@@ -83,12 +83,17 @@ fun NewInquiryForm(
 
     val context = LocalContext.current
 
-    // 🔥 ViewModel 이벤트 수신
+    // ViewModel 이벤트 수신
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is MyPageEvent.InquirySubmitSuccess -> {
                     Toast.makeText(context, inquirySubmittedSuccessMessage, Toast.LENGTH_SHORT).show()
+
+                    // 성공했을 때만 초기화
+                    title = ""
+                    content = ""
+                    images = emptyList()
                 }
 
                 is MyPageEvent.InquirySubmitFailed -> {
@@ -99,6 +104,7 @@ fun NewInquiryForm(
             }
         }
     }
+
 
     Column {
         InquiryTypeSelector(
@@ -158,17 +164,11 @@ fun NewInquiryForm(
             )
 
             SubmitButton {
-                if (title.isNotBlank() && content.isNotBlank()) {
-                    viewModel.addInquiry(
-                        type = selectedType,
-                        title = title,
-                        content = content
-                    )
-
-                    // 입력 초기화
-                    title = ""
-                    content = ""
-                }
+                viewModel.addInquiry(
+                    type = selectedType,
+                    title = title,
+                    content = content
+                )
             }
         }
     }

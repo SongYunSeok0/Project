@@ -36,7 +36,7 @@ class InquiryRepositoryImpl @Inject constructor(
         )
     }
 
-    // 🔥 스태프 전용 메서드들 (서버 API)
+    // 스태프 전용 메서드들 (서버 API)
     override suspend fun getAllInquiries(): Result<List<Inquiry>> =
         withContext(Dispatchers.IO) {
             runCatching {

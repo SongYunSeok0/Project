@@ -24,6 +24,7 @@ kotlin {
 
 dependencies {
     implementation(project(":domain"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.compose.library)
