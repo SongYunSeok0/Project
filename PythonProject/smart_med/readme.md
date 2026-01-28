@@ -38,7 +38,7 @@ Android 앱과 IoT 디바이스 사이에서 **중앙 제어자(Control Plane)**
 ---
 
 ## App Structure  
-smart_med/
+smart_med/  
 ├─ users/ # 인증 및 사용자  
 ├─ medications/ # 복약 계획/이력  
 ├─ iot/ # 디바이스 연동  
