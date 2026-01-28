@@ -42,7 +42,8 @@
 ### 1) `secret.properties` 생성 (루트에)
 `secret.properties`는 Git에 올리지 않습니다.
 
-예시:
+예시:  
+
 ![예시](자료/secret.properties.png)
 
 
