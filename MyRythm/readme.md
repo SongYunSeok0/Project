@@ -44,7 +44,7 @@
 
 예시:  
 
-![예시](자료/secret.properties.png)
+![예시](../자료/secret.properties.png)
 
 
 
