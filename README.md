@@ -2,10 +2,10 @@
 
 > 복약 스케줄 + 건강(심박/걸음) 모니터링 + 위치/뉴스/챗봇 기능을 한 앱에서 제공하고, 서버/IoT(별도)와 연동되는 멀티모듈 Android 프로젝트입니다.
 
-## What I built (핵심 한 줄)
+## 한 줄 요약
 - 멀티모듈 + Clean Architecture 기반으로 **Feature 단위 확장/유지보수 가능한 앱 구조**를 설계하고 구현했습니다.
 
-## Highlights (포트폴리오 관점)
+## 뭘 하려고 했는가
 - **멀티모듈 분리**: `feature/*` 단위 기능 격리 + 공통 규약은 `shared`로 수렴
 - **Clean Architecture 적용**: `domain`(순수 Kotlin) ↔ `data`(API/DB) ↔ `feature`(UI) 경계 유지
 - **일관된 결과/에러 모델**: UseCase 중심으로 성공/실패 흐름을 통일(예: ApiResult/DomainError 패턴)
