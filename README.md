@@ -184,19 +184,20 @@ backend/
 
 ## 📚 Documentation Map
 
-- Android
-  - `/android/README.md`
-  - `/android/domain/README.md`
-  - `/android/feature/*/README.md`
+- **Android**
+  - [`android/README.md`](android/README.md)
+  - [`android/domain/README.md`](android/domain/README.md)
+  - [`android/feature/`](android/feature/)
 
-- Backend
-  - `/backend/README.md`
-  - `/backend/*/README.md`
+- **Backend**
+  - [`backend/README.md`](backend/README.md)
+  - [`backend/`](backend/)
 
-- IoT
-  - `/device/README.md`
-  - `/device/PillMyRhythm/README.md`
-  - `/device/PillMyRhythm_palette/README.md`
+- **IoT**
+  - [`device/README.md`](device/README.md)
+  - [`device/PillMyRhythm/README.md`](device/PillMyRhythm/README.md)
+  - [`device/PillMyRhythm_palette/README.md`](device/PillMyRhythm_palette/README.md)
+
 
 ---
 
