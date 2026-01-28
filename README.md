@@ -185,9 +185,9 @@ backend/
 ## 📚 Documentation Map
 
 - **Android**
-  - [`android/README.md`](android/README.md)
-  - [`android/domain/README.md`](android/domain/README.md)
-  - [`android/feature/`](android/feature/)
+  - [`android/README.md`](MyRhythm/README.md)
+  - [`android/domain/README.md`](MyRhythm/domain/README.md)
+  - [`android/feature/`](MyRhythm/feature/)
 
 - **Backend**
   - [`backend/README.md`](backend/README.md)
