@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.android.library)  // ⭐ application → library
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 26  // ⭐ 36 → 26
+        minSdk = 26
     }
 
     buildFeatures {
@@ -20,7 +20,7 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21  // ⭐ 11 → 21
+        sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
 }
