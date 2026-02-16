@@ -185,18 +185,19 @@ backend/
 ## 📚 Documentation Map
 
 - **Android**
-  - [`android/README.md`](MyRhythm/README.md)
+  - [`android/README.md`](MyRhythm)
   - [`android/domain`](MyRythm/domain)
-  - [`android/feature/`](MyRhythm/feature/)
+  - [`android/data/`](MyRhythm/data)
+  - [`android/feature/`](MyRhythm/feature)
+  - 
 
 - **Backend**
-  - [`backend/README.md`](backend/README.md)
   - [`backend/`](backend/)
 
 - **IoT**
-  - [`device/README.md`](device/README.md)
-  - [`device/PillMyRhythm/README.md`](device/PillMyRhythm/README.md)
-  - [`device/PillMyRhythm_palette/README.md`](device/PillMyRhythm_palette/README.md)
+  - [`device/README.md`](device)
+  - [`device/PillMyRhythm/README.md`](device/PillMyRhythm)
+  - [`device/PillMyRhythm_palette/README.md`](device/PillMyRhythm_palette)
 
 
 ---
