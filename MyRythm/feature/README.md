@@ -88,7 +88,6 @@ AI 챗봇 UI 기능 담당
 - MapViewModel
 - MapUiState
 - PlaceMapper
-- BottomSheet 기반 UI
 
 ### 특징
 - 검색 헤더 / 리스트 / 바텀시트 분리
@@ -164,23 +163,11 @@ AI 챗봇 UI 기능 담당
 ### 특징
 - 카메라 기반 OCR 처리
 - 스케줄 등록 로직 분리
-- 네비게이션 유틸리티 별도 관리
+- 네비게이션 유틸리티 별도 관리 
 
 ---
 
-# 🎯 Feature Layer의 책임
-
-✔ UI 구성  
-✔ ViewModel 상태 관리  
-✔ UseCase 호출  
-✔ 사용자 이벤트 처리  
-
-❌ Repository 직접 호출 금지  
-❌ Data layer 참조 금지  
-
----
-
-# 💡 설계 의도
+# 설계 의도
 
 이 프로젝트의 feature 구조는 다음을 목표로 설계되었습니다:
 
