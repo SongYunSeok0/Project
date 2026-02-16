@@ -192,12 +192,10 @@ backend/
   - 
 
 - **Backend**
-  - [`backend/`](backend/)
+  - [`backend/`](PythonProject/smart_med/readme.md)
 
 - **IoT**
-  - [`device/README.md`](device)
-  - [`device/PillMyRhythm/README.md`](device/PillMyRhythm)
-  - [`device/PillMyRhythm_palette/README.md`](device/PillMyRhythm_palette)
+  - [`device/README.md`](device/readme.md)
 
 
 ---
