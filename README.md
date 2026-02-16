@@ -186,7 +186,7 @@ backend/
 
 - **Android**
   - [`android/README.md`](MyRhythm/README.md)
-  - [`android/domain/README.md`](Project/MyRythm/domain/README.md)
+  - [`android/domain`](Project/MyRythm/domain)
   - [`android/feature/`](MyRhythm/feature/)
 
 - **Backend**
