@@ -1,4 +1,4 @@
-# 🧩 MyRythm  
+# 💊 MyRythm  
 **Android · Backend · IoT 통합 시스템**
 
 MyRythm은 복약 관리와 건강 모니터링을 목표로 한  
