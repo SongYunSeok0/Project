@@ -198,6 +198,9 @@ backend/
   - [`device`](device/readme.md)
 
 
+---  
+## APK
+[Download APK](https://github.com/SongYunSeok0/Project/releases)  
 ---
 
 ## 🚀 Summary
