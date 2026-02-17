@@ -1,7 +1,7 @@
-# 💊 MyRythm  
+# 💊 MyRhythm  
 **Android · Backend · IoT 통합 시스템**
 
-MyRythm은 복약 관리와 건강 모니터링을 목표로 한  
+MyRhythm은 복약 관리와 건강 모니터링을 목표로 한  
 **Android 앱 – Backend 서버 – IoT 디바이스가 유기적으로 연동되는 시스템**입니다.
 
 이 프로젝트는 단일 플랫폼 구현이 아니라,  
@@ -185,10 +185,10 @@ backend/
 ## 📚 Documentation Map
 
 - **Android**
-  - [`android/`](MyRythm/readme.md)
-  - [`android/domain`](MyRythm/domain/README.md)
-  - [`android/data`](MyRythm/data/README.md)
-  - [`android/feature`](MyRythm/feature/README.md)
+  - [`android/`](MyRhythm_Project/readme.md)
+  - [`android/domain`](MyRhythm_Project/domain/README.md)
+  - [`android/data`](MyRhythm_Project/data/README.md)
+  - [`android/feature`](MyRhythm_Project/feature/README.md)
   - 
 
 - **Backend**
@@ -200,12 +200,12 @@ backend/
 
 ---  
 ## APK
-[Download APK](https://github.com/SongYunSeok0/Project/releases)  
+[Download APK](https://github.com/SongYunSeok0/MyRhythm_Project/releases)  
 ---
 
 ## 🚀 Summary
 
-MyRythm은  
+MyRhythm은  
 단일 앱이 아닌 **역할이 명확히 분리된 통합 시스템**을 목표로 설계되었습니다.
 
 각 구성 요소는 독립적으로 발전할 수 있으며,  
