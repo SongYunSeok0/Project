@@ -199,7 +199,6 @@ backend/
 
 
 ---  
-## APK
 [Download APK](https://github.com/SongYunSeok0/MyRhythm_Project/releases)  
 ---
 
