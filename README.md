@@ -8,10 +8,46 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 각 구성 요소가 **명확한 역할과 책임을 갖고 협력하도록 설계된 통합 아키텍처**를 중심으로 구성되었습니다.
 
 ---
-## Preview
-| 메인 화면 | 일정 화면 | 심박수 화면 |
-|-----------|-----------|-------------|
-| <img src="자료/home.jpg" width="250"> | <img src="자료/sch.jpg" width="250"> | <img src="자료/hr.jpg" width="250"> |
+## Screenshots
+### 메인 화면
+<img src="자료/home.jpg" width="200">  
+
+### 스케줄러
+<img src="자료/sch.jpg" width="200">
+<img src="자료/sch2.jpg" width="200">
+
+### 스케줄 등록
+<img src="자료/reg1.jpg" width="200">
+<img src="자료/reg2.jpg" width="200">
+<img src="자료/reg2.1.jpg" width="200">
+<img src="자료/reg3.jpg" width="200">
+
+### 병원/약국 지도
+<img src="자료/map1.jpg" width="200">
+<img src="자료/map2.jpg" width="200">
+
+### 뉴스
+<img src="자료/news.jpg" width="200">
+
+### 마이페이지
+<img src="자료/mypage.jpg" width="200">
+
+### 심박수 화면
+<img src="자료/hr.jpg" width="200">
+
+### 기기등록
+<img src="자료/dvreg.jpg" width="200">
+<img src="자료/dvreg2.jpg" width="200">
+
+### 문의사항
+<img src="자료/faq.jpg" width="200">
+<img src="자료/faq1.jpg" width="200">
+
+### 내정보 수정
+<img src="자료/edit.jpg" width="200">
+<img src="자료/edit1.jpg" width="200">
+
+
 
 
   
