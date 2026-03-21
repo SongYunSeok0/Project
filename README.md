@@ -122,14 +122,14 @@ android/
 ├─ data  
 ├─ shared  
 └─ feature/  
-├─ auth  
-├─ scheduler  
-├─ mypage  
-├─ device  
-├─ healthinsight  
-├─ map  
-├─ news  
-└─ chatbot  
+ ├─ auth  
+ ├─ scheduler  
+ ├─ mypage  
+ ├─ device  
+ ├─ healthinsight  
+ ├─ map  
+ ├─ news  
+ └─ chatbot  
 
 
 자세한 내용은 Android 하위 README 참고.
