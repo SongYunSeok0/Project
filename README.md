@@ -9,9 +9,9 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 
 ---
 ## Preview
-[`main`](MyRythm/readme.md)
-[`schedule`](MyRythm/readme.md)
-[`map`](MyRythm/readme.md)
+[`main`](자료/home.jpg)
+[`schedule`](자료/sch.jpg)
+[`heartrate`](자료/hr.jpg)
 
   
 ## System Overview  
