@@ -44,18 +44,7 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 
   
 ## System Overview  
-┌────────────┐ REST / JWT ┌────────────┐  
-│ Android │ ───────────────────────▶ │ Backend │  
-│ App │                               │ Server │  
-│ │ ◀─────────────────────── │         │  
-└─────▲──────┘ JSON / FCM  └─────▲──────┘  
-      │                          │  
-      │                 QR / BLE │ HTTP  
-      │                          │  
-┌─────┴──────┐Header Auth┌───────┴───────┐  
-│ IoT │ ───────────────────────▶ │ Ingest / Cmd │  
-│ Device │                        │ Endpoints │  
-└────────────┘            └───────────────┘    
+<img src="자료/overview.jpg" width="500">
 
 
 
