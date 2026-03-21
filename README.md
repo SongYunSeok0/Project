@@ -9,9 +9,10 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 
 ---
 ## Preview
-![`main`](자료/home.jpg)
-[`schedule`](자료/sch.jpg)
-[`heartrate`](자료/hr.jpg)
+| 메인 화면 | 일정 화면 | 심박수 화면 |
+|-----------|-----------|-------------|
+| <img src="자료/home.jpg" width="250"> | <img src="자료/sch.jpg" width="250"> | <img src="자료/hr.jpg" width="250"> |
+
 
   
 ## System Overview  
