@@ -16,7 +16,7 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 <img src="자료/sch.jpg" width="200"> <img src="자료/sch2.jpg" width="200">
 
 ### 스케줄 등록
-<img src="자료/reg1.jpg" width="200"> <img src="자료/reg2.jpg" width="200"> <img src="자료/reg2.1.jpg" width="200"> <img src="자료/reg3.jpg" width="200">
+<img src="자료/reg1.jpg" width="200"> <img src="자료/reg3.jpg" width="200"> <img src="자료/reg2.jpg" width="200"> <img src="자료/reg2.1.jpg" width="200">
 
 ### 병원/약국 지도
 <img src="자료/map1.jpg" width="200"> <img src="자료/map2.jpg" width="200">
