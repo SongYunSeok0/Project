@@ -10,7 +10,7 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 ---
 ## Screenshots
 ### 메인 화면
-<img src="자료/home.jpg" width="200">  
+<img src="자료/home.jpg" width="150">  
 
 ### 스케줄러
 <img src="자료/sch.jpg" width="200"> <img src="자료/sch2.jpg" width="200">
