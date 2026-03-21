@@ -8,8 +8,13 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 각 구성 요소가 **명확한 역할과 책임을 갖고 협력하도록 설계된 통합 아키텍처**를 중심으로 구성되었습니다.
 
 ---
+## Preview
+[`main`](MyRythm/readme.md)
+[`schedule`](MyRythm/readme.md)
+[`map`](MyRythm/readme.md)
 
-## 🔍 System Overview  
+  
+## System Overview  
 ┌────────────┐ REST / JWT ┌────────────┐  
 │ Android │ ───────────────────────▶ │ Backend │  
 │ App │                               │ Server │  
