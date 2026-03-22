@@ -33,10 +33,8 @@ MyRhythm은 복약 관리와 건강 모니터링을 목표로 한
 ### 기기등록
 <img src="자료/dvreg.jpg" width="150"> <img src="자료/dvreg2.jpg" width="150">
 
-### 문의사항
+### 부가 기능
 <img src="자료/faq.jpg" width="150"> <img src="자료/faq1.jpg" width="150">
-
-### 내정보 수정
 <img src="자료/edit.jpg" width="150"> <img src="자료/edit1.jpg" width="150">
 
 
